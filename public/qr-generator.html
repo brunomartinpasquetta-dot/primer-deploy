@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1A2E0A">
+  <title>Tarjetas QR — Cosecha</title>
+  <link rel="icon" href="img/logo.png">
+  <link rel="stylesheet" href="cosecha.css">
+  <style>
+h1 { color: #2d6a4f; text-align: center; margin-bottom: 20px; }
+    .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .btn { width: 100%; padding: 14px; font-size: 16px; font-weight: bold; border: none; border-radius: 12px; cursor: pointer; margin-top: 12px; }
+    .btn-green { background: #2d6a4f; color: white; }
+    .btn-blue { background: #1565c0; color: white; }
+    .btn-back { background: #eee; color: #444; margin-top: 16px; }
+    .juntador-item { display: flex; align-items: center; gap: 12px; padding: 12px; border: 2px solid #ddd; border-radius: 8px; margin-bottom: 8px; cursor: pointer; }
+    .juntador-item:hover { border-color: #2d6a4f; background: #f0f4f0; }
+    .juntador-item.selected { border-color: #2d6a4f; background: #e8f5e2; }
+    .juntador-nombre { font-weight: bold; font-size: 16px; color: #2d6a4f; }
+    .juntador-qr { font-size: 12px; color: #999; font-family: monospace; }
+    .check { width: 24px; height: 24px; border-radius: 50%; background: #ddd; display: flex; align-items: center; justify-content: center; font-size: 14px; margin-left: auto; }
+    .check.on { background: #2d6a4f; color: white; }
+    .tarjetas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-top: 16px; }
+    .tarjeta { background: white; border: 2px solid #2d6a4f; border-radius: 12px; padding: 16px; text-align: center; }
+    .tarjeta-nombre { font-size: 16px; font-weight: bold; color: #2d6a4f; margin-bottom: 4px; }
+    .tarjeta-codigo { font-size: 11px; color: #999; font-family: monospace; margin-top: 8px; }
+    .empty { text-align: center; color: #999; padding: 20px; }
+    .select-all { display: flex; gap: 8px; margin-bottom: 12px; }
+    .btn-sm { padding: 8px 16px; font-size: 13px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+    .btn-sm-green { background: #2d6a4f; color: white; }
+    .btn-sm-gray { background: #eee; color: #444; }
+    @media print {
+      
+      .no-print { display: none !important; }
+      .tarjetas-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+      .tarjeta { break-inside: avoid; border: 2px solid #2d6a4f; }
+      h1 { display: none; }
+    }
+    .page-logo-h1 { height: 44px; width: auto; }
+    @media (max-width: 767px) { .page-logo-h1 { height: 32px; } }
+  </style>
+  <script src="js/auth-check.js"></script>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      
+      <a href="index.html" class="nav-item"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard</a>
+      <div class="nav-section">Campo</div>
+      <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
+      <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
+      <div class="nav-section">Sistema</div>
+      <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
+      <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
+      <a href="menu-admin.html" class="nav-item"><span class="nav-icon"><i data-lucide="landmark"></i></span> Administración</a>
+      <a href="mercado.html" class="nav-item"><span class="nav-icon"><i data-lucide="trending-up"></i></span> Mercado</a>
+      <a href="menu-config.html" class="nav-item active"><span class="nav-icon"><i data-lucide="settings"></i></span> Configuración</a>
+    </nav>
+    <div class="sidebar-footer">Sistema Agrícola v2</div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
+        <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div><span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-date" id="topbar-date"></span>
+      </div>
+    </header>
+
+    <div class="content">
+      <a href="menu-config.html" class="btn-volver">← Volver</a>
+      <div class="content-header">
+        <div class="content-title">Tarjetas QR</div>
+        <div class="content-sub">Generación de tarjetas QR de trabajadores</div>
+      </div>
+
+      <div class="card no-print">
+    <h2 style="color:#2d6a4f; margin-bottom:12px;">Seleccionar juntadores</h2>
+    <div class="select-all">
+      <button class="btn-sm btn-sm-green" onclick="seleccionarTodos()">Seleccionar todos</button>
+      <button class="btn-sm btn-sm-gray" onclick="deseleccionarTodos()">Limpiar</button>
+    </div>
+    <div id="lista-juntadores">
+      <div class="empty">Cargando...</div>
+    </div>
+    <button class="btn btn-green" onclick="generarTarjetas()">Generar Tarjetas</button>
+  </div>
+
+  <div id="tarjetas-container" style="display:none;">
+    <div style="display:flex; gap:12px; margin-bottom:16px;" class="no-print">
+      <button class="btn btn-blue" onclick="window.print()" style="flex:1;">Imprimir</button>
+      <button class="btn btn-back" onclick="volver()" style="flex:1; margin-top:0;">Volver a seleccion</button>
+    </div>
+    <div class="tarjetas-grid" id="tarjetas-grid"></div>
+  </div>
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    </div>
+  </div>
+
+  <!-- ── BOTTOM NAV ── -->
+  <nav class="bottom-nav">
+    
+    <a href="index.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="home"></i></span><span>Inicio</span></a>
+    <a href="juntada.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="wheat"></i></span><span>Cosecha</span></a>
+    <a href="despalillado.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="scissors"></i></span><span>Despalillado</span></a>
+    <a href="aplicaciones.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="droplets"></i></span><span>Aplicaciones</span></a>
+    <a href="menu-campo.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="menu"></i></span><span>Menú</span></a>
+  </nav>
+
+</div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+  lucide.createIcons();
+  document.getElementById('topbar-date').textContent =
+    new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
+</script>
+<script>
+    var seleccionados = [];
+    var juntadores = [];
+
+    fetch('/api/juntadores')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        juntadores = data;
+        const lista = document.getElementById('lista-juntadores');
+        if (data.length === 0) {
+          lista.innerHTML = '<div class="empty">No hay juntadores registrados</div>';
+          return;
+        }
+        lista.innerHTML = data.map(function(j) {
+          return '<div class="juntador-item" id="item-' + j.id + '" onclick="toggleSeleccion(' + j.id + ')">' +
+            '<div>' +
+              '<div class="juntador-nombre">' + j.apellido + ', ' + j.nombre + '</div>' +
+              '<div class="juntador-qr">' + j.qr_codigo + '</div>' +
+            '</div>' +
+            '<div class="check" id="check-' + j.id + '"></div>' +
+          '</div>';
+        }).join('');
+      });
+
+    function toggleSeleccion(id) {
+      const idx = seleccionados.indexOf(id);
+      if (idx === -1) {
+        seleccionados.push(id);
+        document.getElementById('item-' + id).classList.add('selected');
+        document.getElementById('check-' + id).classList.add('on');
+        document.getElementById('check-' + id).textContent = '✓';
+      } else {
+        seleccionados.splice(idx, 1);
+        document.getElementById('item-' + id).classList.remove('selected');
+        document.getElementById('check-' + id).classList.remove('on');
+        document.getElementById('check-' + id).textContent = '';
+      }
+    }
+
+    function seleccionarTodos() {
+      juntadores.forEach(function(j) {
+        if (seleccionados.indexOf(j.id) === -1) toggleSeleccion(j.id);
+      });
+    }
+
+    function deseleccionarTodos() {
+      juntadores.forEach(function(j) {
+        if (seleccionados.indexOf(j.id) !== -1) toggleSeleccion(j.id);
+      });
+    }
+
+    function generarTarjetas() {
+      if (seleccionados.length === 0) { alert('Selecciona al menos un juntador'); return; }
+      const grid = document.getElementById('tarjetas-grid');
+      grid.innerHTML = '';
+      document.getElementById('tarjetas-container').style.display = 'block';
+      document.querySelector('.card').style.display = 'none';
+      document.querySelectorAll('.btn-volver-flotante, .btn-volver').forEach(function(el){ el.style.display = 'none'; });
+
+      const seleccionadosData = juntadores.filter(function(j) {
+        return seleccionados.indexOf(j.id) !== -1;
+      });
+
+      seleccionadosData.forEach(function(j) {
+        const div = document.createElement('div');
+        div.className = 'tarjeta';
+        div.innerHTML =
+          '<div class="tarjeta-nombre">' + j.apellido + '</div>' +
+          '<div class="tarjeta-nombre">' + j.nombre + '</div>' +
+          '<div id="qr-' + j.id + '" style="display:flex;justify-content:center;margin:12px 0;"></div>' +
+          '<div class="tarjeta-codigo">' + j.qr_codigo + '</div>';
+        grid.appendChild(div);
+
+        new QRCode(document.getElementById('qr-' + j.id), {
+          text: j.qr_codigo,
+          width: 140,
+          height: 140,
+          colorDark: '#2d6a4f',
+          colorLight: '#ffffff'
+        });
+      });
+    }
+
+    function volver() {
+      document.getElementById('tarjetas-container').style.display = 'none';
+      document.querySelector('.card').style.display = 'block';
+      document.querySelectorAll('.btn-volver-flotante, .btn-volver').forEach(function(el){ el.style.display = ''; });
+    }
+  cargarTemporadaActiva();
+</script>
+</body>
+</html>

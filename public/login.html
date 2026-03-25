@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1A2E0A">
+  <title>Ingresar — Cosecha</title>
+  <link rel="icon" href="img/logo.png">
+  <link rel="stylesheet" href="cosecha.css">
+  <style>
+    body {
+      background: var(--verde-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .login-wrap {
+      width: 100%;
+      max-width: 380px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 28px;
+    }
+    .login-brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .login-brand img {
+      height: 56px;
+      width: 56px;
+      border-radius: 14px;
+    }
+    .login-brand-text span.name {
+      color: white;
+      font-weight: 700;
+      font-size: 26px;
+      display: block;
+      line-height: 1;
+    }
+    .login-brand-text span.name em {
+      color: #F5A623;
+      font-style: normal;
+    }
+    .login-brand-text span.sub {
+      color: rgba(255,255,255,0.4);
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 4px;
+      display: block;
+    }
+    .login-card {
+      background: var(--superficie);
+      border-radius: 20px;
+      padding: 32px 28px 28px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+    }
+    .login-card h2 {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--texto);
+      margin-bottom: 24px;
+      text-align: center;
+    }
+    .field {
+      margin-bottom: 16px;
+    }
+    .field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--texto-suave);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 6px;
+    }
+    .field input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid var(--borde);
+      border-radius: var(--radius);
+      font-size: 15px !important;
+      color: var(--texto);
+      background: var(--fondo);
+      outline: none;
+      transition: border-color .15s;
+    }
+    .field input:focus {
+      border-color: var(--verde-mid);
+      background: white;
+    }
+    .btn-ingresar {
+      width: 100%;
+      padding: 14px;
+      background: var(--verde-mid);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 15px;
+      font-weight: 600;
+      margin-top: 8px;
+      transition: background .15s, opacity .15s;
+      letter-spacing: 0.3px;
+    }
+    .btn-ingresar:hover { background: var(--verde-dark); }
+    .btn-ingresar:disabled { opacity: 0.65; cursor: default; }
+    .login-error {
+      display: none;
+      background: var(--error-bg);
+      border: 1px solid var(--error-border);
+      color: var(--error-text);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      text-align: center;
+      margin-top: 14px;
+    }
+    .login-footer {
+      color: rgba(255,255,255,0.3);
+      font-size: 11px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<div class="login-wrap">
+  <div class="login-brand">
+    <img src="img/logo-icon.png" alt="Logo">
+    <div class="login-brand-text">
+      <span class="name">CO<em>SE</em>CHA</span>
+      <span class="sub">Sistema de Cultivos</span>
+    </div>
+  </div>
+
+  <div class="login-card">
+    <h2>Iniciar sesión</h2>
+
+    <div class="field">
+      <label>Usuario</label>
+      <input type="text" id="inp-usuario" autocomplete="username" placeholder="usuario" autofocus>
+    </div>
+    <div class="field">
+      <label>Contraseña</label>
+      <input type="password" id="inp-password" autocomplete="current-password" placeholder="••••••••">
+    </div>
+
+    <button class="btn-ingresar" id="btn-ingresar" onclick="login()">Ingresar</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+
+  <div class="login-footer">Sistema Agrícola · v2</div>
+</div>
+
+<script>
+  // Si ya hay sesión válida, redirigir al dashboard
+  (function () {
+    var token = localStorage.getItem('cosecha_token');
+    if (!token) return;
+    try {
+      var p = JSON.parse(atob(token.split('.')[1]));
+      if (p.exp && Date.now() / 1000 < p.exp) {
+        location.href = 'index.html';
+      }
+    } catch (e) {
+      localStorage.removeItem('cosecha_token');
+    }
+  })();
+
+  document.getElementById('inp-password').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') login();
+  });
+  document.getElementById('inp-usuario').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') document.getElementById('inp-password').focus();
+  });
+
+  async function login() {
+    var usuario  = document.getElementById('inp-usuario').value.trim();
+    var password = document.getElementById('inp-password').value;
+    var errEl    = document.getElementById('login-error');
+    var btn      = document.getElementById('btn-ingresar');
+
+    errEl.style.display = 'none';
+    if (!usuario || !password) {
+      errEl.textContent = 'Ingresá usuario y contraseña';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Ingresando...';
+
+    try {
+      var res  = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ usuario, password })
+      });
+      var data = await res.json();
+      if (!res.ok || data.error) {
+        errEl.textContent = data.error || 'Error al iniciar sesión';
+        errEl.style.display = 'block';
+        return;
+      }
+      localStorage.setItem('cosecha_token', data.token);
+      location.href = 'index.html';
+    } catch (e) {
+      errEl.textContent = 'Error de conexión con el servidor';
+      errEl.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Ingresar';
+    }
+  }
+</script>
+</body>
+</html>

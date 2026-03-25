@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1A2E0A">
+  <title>Temporadas — Cosecha</title>
+  <link rel="icon" href="img/logo.png">
+  <script src="js/utils.js"></script>
+  <link rel="stylesheet" href="cosecha.css">
+  <style>
+h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
+    h2 { color: #2D5016; margin-bottom: 12px; font-size: 18px; }
+    .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    label { font-weight: bold; color: #444; display: block; margin-bottom: 6px; margin-top: 12px; }
+    input, select { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
+    .btn { width: 100%; padding: 14px; font-size: 16px; font-weight: bold; border: none; border-radius: 12px; cursor: pointer; margin-top: 12px; }
+    .btn-orange { background: #2D5016; color: white; }
+    .btn-orange:disabled { background: #aaa; cursor: not-allowed; }
+    .btn-back { background: #eee; color: #444; margin-top: 16px; }
+    .btn-sm { padding: 6px 14px; font-size: 13px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+    .btn-activar { background: #2d6a4f; color: white; }
+    .btn-desactivar { background: #c0392b; color: white; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 12px; }
+    th { background: #2D5016; color: white; padding: 10px; text-align: left; }
+    td { padding: 10px; border-bottom: 1px solid #eee; vertical-align: middle; }
+    tr:nth-child(even) td { background: #FAFAF8; }
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+    .badge-activa { background: #e8f5e2; color: #2d6a4f; }
+    .badge-inactiva { background: #eeeeee; color: #666; }
+    .badge-primicia { background: #fff3cd; color: #f39c12; }
+    .badge-plena { background: #dbeafe; color: #1565c0; }
+    .empty { text-align: center; color: #999; padding: 20px; }
+    .msg-success { background: #e8f5e2; color: #2d6a4f; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 8px; }
+    .msg-error { background: #fde8e8; color: #c0392b; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 8px; }
+    .page-logo-h1 { height: 44px; width: auto; }
+    @media (max-width: 767px) { .page-logo-h1 { height: 32px; } }
+  </style>
+  <script src="js/auth-check.js"></script>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      
+      <a href="index.html" class="nav-item"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard</a>
+      <div class="nav-section">Campo</div>
+      <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
+      <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
+      <div class="nav-section">Sistema</div>
+      <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
+      <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
+      <a href="menu-admin.html" class="nav-item"><span class="nav-icon"><i data-lucide="landmark"></i></span> Administración</a>
+      <a href="mercado.html" class="nav-item"><span class="nav-icon"><i data-lucide="trending-up"></i></span> Mercado</a>
+      <a href="menu-config.html" class="nav-item active"><span class="nav-icon"><i data-lucide="settings"></i></span> Configuración</a>
+    </nav>
+    <div class="sidebar-footer">Sistema Agrícola v2</div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
+        <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div><span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-date" id="topbar-date"></span>
+      </div>
+    </header>
+
+    <div class="content">
+      <a href="menu-config.html" class="btn-volver">← Volver</a>
+      <div class="content-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div class="content-title">Temporadas</div>
+          <div class="content-sub">Gestión de temporadas productivas</div>
+        </div>
+        <button class="btn btn-primary" style="width:auto;margin:0;" onclick="toggleForm()">+ Nueva campaña</button>
+      </div>
+
+      <div class="form-colapsable" id="form-nuevo">
+        <div class="card-form" style="margin-bottom:12px;">
+          <div class="form-row"><label>Nombre</label>
+            <input type="text" id="nombre" placeholder="Ej: Frutilla 2026" data-tooltip="Nombre de la campaña (ej: Frutilla 2026)">
+          </div>
+          <div class="form-row"><label>Cultivo</label>
+            <select id="cultivo" data-tooltip="Cultivo principal de esta campaña">
+              <option value="">Sin especificar</option>
+              <option value="frutilla">Frutilla</option>
+              <option value="soja">Soja</option>
+              <option value="trigo">Trigo</option>
+              <option value="maiz">Maíz</option>
+              <option value="girasol">Girasol</option>
+              <option value="arandano">Arándano</option>
+              <option value="otro">Otro</option>
+            </select>
+          </div>
+          <div class="form-row"><label>Tipo</label>
+            <select id="tipo" data-tooltip="Plena = temporada completa · Primicia = producción anticipada">
+              <option value="plena">Temporada plena</option>
+              <option value="primicia">Primicia</option>
+            </select>
+          </div>
+          <div class="form-row"><label>Descripción <span style="font-weight:400;color:#888;">(opcional)</span></label>
+            <input type="text" id="descripcion" placeholder="Ej: Lote norte — variedad Camarosa">
+          </div>
+          <div class="two-col">
+            <div class="form-row" style="margin-bottom:0;"><label>Fecha inicio</label>
+              <input type="date" id="fecha_inicio" data-tooltip="Fecha de inicio de cosecha estimada">
+            </div>
+            <div class="form-row" style="margin-bottom:0;"><label>Fecha fin estimada</label>
+              <input type="date" id="fecha_fin">
+            </div>
+          </div>
+          <button class="btn btn-primary" id="btn-guardar" onclick="guardar()" style="width:auto;" data-tooltip="Crear la nueva campaña y activarla automáticamente">Crear campaña</button>
+          <div id="mensaje"></div>
+        </div>
+      </div>
+
+  <div class="card">
+    <h2>Campañas registradas</h2>
+    <table>
+      <thead>
+        <tr><th>Nombre</th><th>Cultivo</th><th>Tipo</th><th>Inicio</th><th>Fin</th><th>Estado</th><th>Acción</th></tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+    </div>
+  </div>
+
+  <!-- ── BOTTOM NAV ── -->
+  <nav class="bottom-nav">
+    
+    <a href="index.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="home"></i></span><span>Inicio</span></a>
+    <a href="juntada.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="wheat"></i></span><span>Cosecha</span></a>
+    <a href="despalillado.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="scissors"></i></span><span>Despalillado</span></a>
+    <a href="aplicaciones.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="droplets"></i></span><span>Aplicaciones</span></a>
+    <a href="menu-campo.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="menu"></i></span><span>Menú</span></a>
+  </nav>
+
+</div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+  lucide.createIcons();
+  document.getElementById('topbar-date').textContent =
+    new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
+  function toggleForm() {
+    document.getElementById('form-nuevo').classList.toggle('visible');
+  }
+</script>
+<script>
+    var CULTIVO_BADGE = {
+      frutilla: 'background:#fce7f3;color:#be185d;',
+      soja:     'background:#fef9c3;color:#854d0e;',
+      trigo:    'background:#fef3c7;color:#92400e;',
+      maiz:     'background:#ffedd5;color:#c2410c;',
+      girasol:  'background:#fef08a;color:#713f12;',
+      arandano: 'background:#ede9fe;color:#5b21b6;',
+      otro:     'background:#f3f4f6;color:#6b7280;',
+    };
+    var CULTIVO_LABEL = {
+      frutilla:'Frutilla', soja:'Soja', trigo:'Trigo',
+      maiz:'Maíz', girasol:'Girasol', arandano:'Arándano', otro:'Otro',
+    };
+    function cultivoBadge(cultivo) {
+      if (!cultivo) return '<span style="color:#aaa;">—</span>';
+      var c = cultivo.toLowerCase().replace('á','a').replace('í','i');
+      var style = CULTIVO_BADGE[c] || 'background:#f3f4f6;color:#6b7280;';
+      var label = CULTIVO_LABEL[c] || cultivo;
+      return '<span class="badge" style="' + style + '">' + label + '</span>';
+    }
+
+    function cargar(){
+      fetch('/api/temporadas').then(function(r){return r.json();}).then(function(data){
+        var tbody=document.getElementById('tbody');
+        if(!data.length){ tbody.innerHTML='<tr><td colspan="7" class="empty">Sin campañas</td></tr>'; return; }
+        tbody.innerHTML=data.map(function(t){
+          var estadoBadge=t.activa?'<span class="badge badge-activa">Activa</span>':'<span class="badge badge-inactiva">Inactiva</span>';
+          var tipoBadge=t.tipo==='primicia'?'<span class="badge badge-primicia">Primicia</span>':'<span class="badge badge-plena">Plena</span>';
+          var inicio=t.fecha_inicio?t.fecha_inicio.toString().split('T')[0]:'-';
+          var fin=t.fecha_fin?t.fecha_fin.toString().split('T')[0]:'-';
+          var btnAccion=t.activa
+            ?'<button class="btn-sm btn-desactivar" onclick="cambiarEstado('+t.id+',0)" data-tooltip="Desactivar esta campaña">Desactivar</button>'
+            :'<button class="btn-sm btn-activar"    onclick="cambiarEstado('+t.id+',1)" data-tooltip="Activar esta campaña como la campaña activa del sistema">Activar</button>';
+          return '<tr>' +
+            '<td><strong>'+t.nombre+'</strong>'+(t.descripcion?'<br><small style="color:#888;font-weight:400;">'+t.descripcion+'</small>':'')+'</td>'+
+            '<td>'+cultivoBadge(t.cultivo)+'</td>'+
+            '<td>'+tipoBadge+'</td>'+
+            '<td>'+inicio+'</td><td>'+fin+'</td>'+
+            '<td>'+estadoBadge+'</td><td>'+btnAccion+'</td></tr>';
+        }).join('');
+      });
+    }
+
+    function guardar(){
+      var nombre=document.getElementById('nombre').value.trim();
+      if(!nombre){ alert('Ingresá el nombre de la campaña'); return; }
+      // Avisar si hay campaña activa que se desactivará
+      var activa = document.querySelector('#tbody .badge-activa');
+      if (activa) {
+        var rowText = activa.closest('tr').querySelector('td:first-child strong');
+        var nombreActiva = rowText ? rowText.textContent : 'la actual';
+        if (!confirm('Se desactivará automáticamente: "' + nombreActiva + '".\n\n¿Crear igualmente la nueva campaña?')) return;
+      }
+      var btn=document.getElementById('btn-guardar');
+      btn.disabled=true; btn.textContent='Guardando...';
+      fetch('/api/temporadas',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          nombre:      nombre,
+          cultivo:     document.getElementById('cultivo').value||null,
+          tipo:        document.getElementById('tipo').value,
+          descripcion: document.getElementById('descripcion').value.trim()||null,
+          fecha_inicio:document.getElementById('fecha_inicio').value||null,
+          fecha_fin:   document.getElementById('fecha_fin').value||null,
+        })})
+      .then(function(r){return r.json();}).then(function(data){
+        if(data.ok){
+          mostrarMensaje('mensaje','success','Campaña creada correctamente');
+          document.getElementById('nombre').value='';
+          document.getElementById('cultivo').value='';
+          document.getElementById('descripcion').value='';
+          document.getElementById('fecha_inicio').value='';
+          document.getElementById('fecha_fin').value='';
+          document.getElementById('form-nuevo').classList.remove('visible');
+          cargar();
+        } else { mostrarMensaje('mensaje','error',data.error||'Error al guardar'); }
+        btn.disabled=false; btn.textContent='Crear campaña';
+      }).catch(function(){ mostrarMensaje('mensaje','error','Error de conexión'); btn.disabled=false; btn.textContent='Crear campaña'; });
+    }
+
+    function cambiarEstado(id, activa){
+      if (activa === 1) {
+        // Buscar nombre de la campaña que se va a activar
+        var row = document.querySelector('button[onclick="cambiarEstado('+id+',1)"]').closest('tr');
+        var nombre = row ? row.querySelector('td:first-child strong').textContent : 'esta campaña';
+        // Buscar campaña activa actual
+        var activaEl = document.querySelector('#tbody .badge-activa');
+        var nombreActiva = activaEl ? activaEl.closest('tr').querySelector('td:first-child strong').textContent : null;
+        var msg = '¿Activar "' + nombre + '"?';
+        if (nombreActiva) msg += '\nLa campaña "' + nombreActiva + '" se desactivará automáticamente.';
+        if (!confirm(msg)) return;
+      }
+      fetch('/api/temporadas/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({activa:activa})})
+      .then(function(r){return r.json();}).then(function(data){ if(data.ok) cargar(); });
+    }
+
+    cargar();
+    cargarTemporadaActiva();
+</script>
+</body>
+</html>

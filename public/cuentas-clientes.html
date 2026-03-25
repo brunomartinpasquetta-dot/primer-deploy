@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1A2E0A">
+  <title>Cuentas Clientes — Cosecha</title>
+  <link rel="icon" href="img/logo.png">
+  <script src="js/utils.js"></script>
+  <link rel="stylesheet" href="cosecha.css">
+  <style>
+h1 { color: #2d6a4f; text-align: center; margin-bottom: 20px; }
+    h2 { color: #2d6a4f; margin-bottom: 12px; font-size: 18px; }
+    .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    label { font-weight: bold; color: #444; display: block; margin-bottom: 6px; margin-top: 12px; }
+    input, select { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
+    .btn { width: 100%; padding: 14px; font-size: 16px; font-weight: bold; border: none; border-radius: 12px; cursor: pointer; margin-top: 12px; }
+    .btn-green { background: #2d6a4f; color: white; }
+    .btn-back { background: #eee; color: #444; margin-top: 16px; }
+    .btn-sm { padding: 6px 14px; font-size: 13px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; background: #2D5016; color: white; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { background: #2D5016; color: white; padding: 10px; text-align: left; }
+    td { padding: 10px; border-bottom: 1px solid #eee; vertical-align: middle; }
+    tr:nth-child(even) td { background: #FAFAF8; }
+    .saldo-deudor { color: #c0392b; font-weight: bold; }
+    .saldo-cero { color: #2d6a4f; font-weight: bold; }
+    .empty { text-align: center; color: #999; padding: 20px; }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
+    .modal.open { display: flex; }
+    .modal-content { background: white; border-radius: 12px; padding: 24px; width: 90%; max-width: 400px; }
+    .modal-content h3 { color: #2d6a4f; margin-bottom: 16px; }
+    .page-logo-h1 { height: 44px; width: auto; }
+    @media (max-width: 767px) { .page-logo-h1 { height: 32px; } }
+  </style>
+  <script src="js/auth-check.js"></script>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      
+      <a href="index.html" class="nav-item"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard</a>
+      <div class="nav-section">Campo</div>
+      <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
+      <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
+      <div class="nav-section">Sistema</div>
+      <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
+      <a href="menu-comercial.html" class="nav-item active"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
+      <a href="menu-admin.html" class="nav-item"><span class="nav-icon"><i data-lucide="landmark"></i></span> Administración</a>
+      <a href="mercado.html" class="nav-item"><span class="nav-icon"><i data-lucide="trending-up"></i></span> Mercado</a>
+      <a href="menu-config.html" class="nav-item"><span class="nav-icon"><i data-lucide="settings"></i></span> Configuración</a>
+    </nav>
+    <div class="sidebar-footer">Sistema Agrícola v2</div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
+        <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div><span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-date" id="topbar-date"></span>
+      </div>
+    </header>
+
+    <div class="content">
+      <a href="menu-comercial.html" class="btn-volver">← Volver</a>
+      <div class="content-header">
+        <div class="content-title">Cuentas Clientes</div>
+        <div class="content-sub">Cuentas corrientes de clientes</div>
+      </div>
+
+      <div class="card">
+    <table>
+      <thead>
+        <tr><th>Cliente</th><th>Ventas</th><th>Cobrado</th><th>Saldo</th><th></th></tr>
+      </thead>
+      <tbody id="tbody">
+        <tr><td colspan="5" class="empty">Cargando...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- MODAL COBRO -->
+  <div class="modal" id="modal-cobro">
+    <div class="modal-content">
+      <h3>Registrar cobro</h3>
+      <input type="hidden" id="cobro-cliente-id">
+      <label>Cliente</label>
+      <input type="text" id="cobro-cliente-nombre" disabled>
+      <label>Monto ($)</label>
+      <input type="number" id="cobro-monto" placeholder="Ej: 50000" step="0.01" data-miles>
+      <label>Forma de pago</label>
+      <select id="cobro-forma"></select>
+      <label>Observacion</label>
+      <input type="text" id="cobro-obs" placeholder="Opcional">
+      <button class="btn btn-green" id="btn-cobrar" onclick="registrarCobro(this)">Confirmar Cobro</button>
+      <button class="btn btn-back" onclick="cerrarModal()" style="margin-top:8px;">Cancelar</button>
+    </div>
+  </div>
+
+    </div>
+  </div>
+
+  <!-- ── BOTTOM NAV ── -->
+  <nav class="bottom-nav">
+    
+    <a href="index.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="home"></i></span><span>Inicio</span></a>
+    <a href="juntada.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="wheat"></i></span><span>Cosecha</span></a>
+    <a href="despalillado.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="scissors"></i></span><span>Despalillado</span></a>
+    <a href="aplicaciones.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="droplets"></i></span><span>Aplicaciones</span></a>
+    <a href="menu-campo.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="menu"></i></span><span>Menú</span></a>
+  </nav>
+
+</div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+  lucide.createIcons();
+  document.getElementById('topbar-date').textContent =
+    new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
+</script>
+<script>
+    function cargar() {
+      fetch('/api/cuentas-clientes/resumen')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          const tbody = document.getElementById('tbody');
+          if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="empty">Sin clientes</td></tr>';
+            return;
+          }
+          tbody.innerHTML = data.map(function(c) {
+            const saldo = parseFloat(c.saldo) || 0;
+            return '<tr>' +
+              '<td><strong>' + c.cliente + '</strong></td>' +
+              '<td>$' + parseFloat(c.total_ventas).toLocaleString('es-AR') + '</td>' +
+              '<td>$' + parseFloat(c.total_cobrado).toLocaleString('es-AR') + '</td>' +
+              '<td class="' + (saldo > 0 ? 'saldo-deudor' : 'saldo-cero') + '">$' + saldo.toLocaleString('es-AR') + '</td>' +
+              '<td><button class="btn-sm" onclick="abrirModal(' + c.id + ', \'' + c.cliente + '\')">Cobrar</button></td>' +
+              '</tr>';
+          }).join('');
+        });
+    }
+
+    function cargarFormasPago() {
+      fetch('/api/caja/formas-pago')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          document.getElementById('cobro-forma').innerHTML =
+            '<option value="">Sin especificar</option>' +
+            data.map(function(f) { return '<option value="' + f.id + '">' + f.nombre + '</option>'; }).join('');
+        });
+    }
+
+    function abrirModal(id, nombre) {
+      document.getElementById('cobro-cliente-id').value = id;
+      document.getElementById('cobro-cliente-nombre').value = nombre;
+      document.getElementById('cobro-monto').value = '';
+      document.getElementById('modal-cobro').classList.add('open');
+    }
+
+    function cerrarModal() {
+      document.getElementById('modal-cobro').classList.remove('open');
+    }
+
+    function registrarCobro(btn) {
+      const cliente_id = document.getElementById('cobro-cliente-id').value;
+      const monto = document.getElementById('cobro-monto').value;
+      if (!monto) { alert('Ingresa el monto'); return; }
+      setLoading(btn, true);
+      fetch('/api/cuentas-clientes/cobro', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cliente_id: cliente_id,
+          monto: monto,
+          forma_pago_id: document.getElementById('cobro-forma').value || null,
+          observacion: document.getElementById('cobro-obs').value
+        })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        setLoading(btn, false);
+        if (data.ok) {
+          cerrarModal();
+          cargar();
+        }
+      })
+      .catch(function() { setLoading(btn, false); });
+    }
+
+    cargar();
+    cargarFormasPago();
+  cargarTemporadaActiva();
+</script>
+</body>
+</html>

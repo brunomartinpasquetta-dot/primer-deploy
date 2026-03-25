@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1A2E0A">
+  <title>Pagos — Cosecha</title>
+  <link rel="icon" href="img/logo.png">
+  <script src="js/utils.js"></script>
+  <link rel="stylesheet" href="cosecha.css">
+  <style>
+h1 { color: #2d6a4f; text-align: center; margin-bottom: 20px; }
+    h2 { color: #2d6a4f; margin-bottom: 12px; font-size: 18px; }
+    .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    label { font-weight: bold; color: #444; display: block; margin-bottom: 6px; margin-top: 12px; }
+    input, select { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
+    .btn { width: 100%; padding: 14px; font-size: 16px; font-weight: bold; border: none; border-radius: 12px; cursor: pointer; margin-top: 12px; }
+    .btn-green { background: #2d6a4f; color: white; }
+    .btn-red { background: #c0392b; color: white; }
+    .btn-back { background: #eee; color: #444; margin-top: 16px; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+    .tab { flex: 1; padding: 12px; text-align: center; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; background: #ddd; color: #444; font-size: 13px; }
+    .tab.active { background: #2D5016; color: white; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { background: #2D5016; color: white; padding: 10px; text-align: left; }
+    td { padding: 10px; border-bottom: 1px solid #eee; vertical-align: middle; }
+    tr:nth-child(even) td { background: #FAFAF8; }
+    .msg-success { background: #e8f5e2; color: #2d6a4f; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 8px; }
+    .msg-error { background: #fde8e8; color: #c0392b; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 8px; }
+    .empty { text-align: center; color: #999; padding: 20px; }
+    .saldo-positivo { color: #c0392b; font-weight: bold; }
+    .saldo-cero { color: #2d6a4f; font-weight: bold; }
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; }
+    .badge-anticipo { background: #fff3cd; color: #f39c12; }
+    .badge-liquidacion { background: #e8f5e2; color: #2d6a4f; }
+    .resultado-liquidacion { background: #e8f5e2; border-radius: 8px; padding: 16px; margin-top: 12px; }
+    .resultado-liquidacion .linea { display: flex; justify-content: space-between; padding: 4px 0; font-size: 15px; }
+    .resultado-liquidacion .total { border-top: 2px solid #2d6a4f; margin-top: 8px; padding-top: 8px; font-weight: bold; font-size: 18px; }
+    .precio-card { background: #e8f5e2; border-radius: 8px; padding: 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+    .precio-valor { font-size: 24px; font-weight: bold; color: #2d6a4f; }
+    .page-logo-h1 { height: 44px; width: auto; }
+    @media (max-width: 767px) { .page-logo-h1 { height: 32px; } }
+  </style>
+  <script src="js/auth-check.js"></script>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      
+      <a href="index.html" class="nav-item"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard</a>
+      <div class="nav-section">Campo</div>
+      <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
+      <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
+      <div class="nav-section">Sistema</div>
+      <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
+      <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
+      <a href="menu-admin.html" class="nav-item active"><span class="nav-icon"><i data-lucide="landmark"></i></span> Administración</a>
+      <a href="mercado.html" class="nav-item"><span class="nav-icon"><i data-lucide="trending-up"></i></span> Mercado</a>
+      <a href="menu-config.html" class="nav-item"><span class="nav-icon"><i data-lucide="settings"></i></span> Configuración</a>
+    </nav>
+    <div class="sidebar-footer">Sistema Agrícola v2</div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
+        <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div><span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-date" id="topbar-date"></span>
+      </div>
+    </header>
+
+    <div class="content">
+      <a href="menu-admin.html" class="btn-volver">← Volver</a>
+      <div class="content-header">
+        <div class="content-title">Pagos</div>
+        <div class="content-sub">Liquidaciones y anticipos</div>
+      </div>
+
+      <div class="tabs">
+    <button class="tab active" onclick="showTab('resumen', this)">Resumen</button>
+    <button class="tab" onclick="showTab('liquidacion', this)">Liquidar</button>
+    <button class="tab" onclick="showTab('anticipo', this)">Anticipo</button>
+    <button class="tab" onclick="showTab('precio', this)">Precio kilo</button>
+  </div>
+
+  <!-- RESUMEN -->
+  <div id="tab-resumen" class="tab-content active">
+    <div class="card" style="margin-bottom:12px; padding:16px;">
+      <div>
+        <label>Temporada</label>
+        <select id="filtro-temporada" onchange="cargarResumen()"></select>
+      </div>
+      <label class="toggle-fecha">
+        <input type="checkbox" id="filtrar-fechas" onchange="toggleFechas()">
+        <span>Filtrar por rango de fechas</span>
+      </label>
+      <div id="rango-fechas" style="display:none;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div>
+            <label>Desde</label>
+            <input type="date" id="filtro-desde" onchange="cargarResumen()">
+          </div>
+          <div>
+            <label>Hasta</label>
+            <input type="date" id="filtro-hasta" onchange="cargarResumen()">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <table>
+        <thead>
+          <tr><th>Juntador</th><th>Tipo</th><th>Kilos</th><th>Anticipos</th><th>Liquidado</th><th>Saldo</th></tr>
+        </thead>
+        <tbody id="tbody-resumen">
+          <tr><td colspan="6" class="empty">Selecciona una temporada</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card" style="margin-top:0;">
+      <h2>Total pagado por trabajador</h2>
+      <table>
+        <thead>
+          <tr><th>Trabajador</th><th>N° pagos</th><th>Total pagado ($)</th></tr>
+        </thead>
+        <tbody id="tbody-total-trabajador">
+          <tr><td colspan="3" class="empty">Selecciona una temporada</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- LIQUIDACION -->
+  <div id="tab-liquidacion" class="tab-content">
+    <div class="card">
+      <h2>Nueva liquidacion</h2>
+      <label>Juntador</label>
+      <select id="liq-juntador" onchange="cargarInfoJuntador()"></select>
+      <div id="liq-info"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div>
+          <label>Desde</label>
+          <input type="date" id="liq-desde" onchange="calcularLiquidacion()">
+        </div>
+        <div>
+          <label>Hasta</label>
+          <input type="date" id="liq-hasta" onchange="calcularLiquidacion()">
+        </div>
+      </div>
+      <label>Precio por kilo ($)</label>
+      <input type="number" id="liq-precio" placeholder="Ej: 800" step="0.01" data-miles onchange="calcularLiquidacion()">
+      <label>Anticipos a descontar ($)</label>
+      <input type="number" id="liq-anticipos" placeholder="Ej: 5000" step="0.01" data-miles onchange="calcularLiquidacion()">
+      <label>Observacion</label>
+      <input type="text" id="liq-obs" placeholder="Opcional">
+      <div class="resultado-liquidacion" id="resultado" style="display:none;">
+        <div class="linea"><span>Kilos trabajados:</span><span id="res-kilos">0</span></div>
+        <div class="linea"><span>Precio por kilo:</span><span id="res-precio">$0</span></div>
+        <div class="linea"><span>Total bruto:</span><span id="res-bruto">$0</span></div>
+        <div class="linea"><span>Anticipos:</span><span id="res-anticipos">-$0</span></div>
+        <div class="linea total"><span>Saldo a pagar:</span><span id="res-saldo">$0</span></div>
+      </div>
+      <button class="btn btn-green" id="btn-liquidar" onclick="registrarLiquidacion(this)">Registrar Liquidacion</button>
+      <div id="msg-liq"></div>
+    </div>
+  </div>
+
+  <!-- ANTICIPO -->
+  <div id="tab-anticipo" class="tab-content">
+    <div class="card">
+      <h2>Registrar anticipo</h2>
+      <label>Juntador</label>
+      <select id="ant-juntador"></select>
+      <label>Monto ($)</label>
+      <input type="number" id="ant-monto" placeholder="Ej: 5000" step="0.01" data-miles>
+      <label>Observacion</label>
+      <input type="text" id="ant-obs" placeholder="Opcional">
+      <button class="btn btn-red" id="btn-anticipo" onclick="registrarAnticipo(this)">Registrar Anticipo</button>
+      <div id="msg-ant"></div>
+    </div>
+  </div>
+
+  <!-- PRECIO KILO -->
+  <div id="tab-precio" class="tab-content">
+    <div class="card">
+      <h2>Precio actual del kilo</h2>
+      <div class="precio-card" id="precio-actual">
+        <span style="color:#666;">Sin precio configurado</span>
+      </div>
+      <h2>Actualizar precio</h2>
+      <label>Temporada</label>
+      <select id="precio-temporada"></select>
+      <label>Precio por kilo ($)</label>
+      <input type="number" id="precio-valor" placeholder="Ej: 800" step="0.01" data-miles>
+      <label>Destino</label>
+      <select id="precio-destino">
+        <option value="fresco">Fresco</option>
+        <option value="industria">Industria</option>
+        <option value="congelado">Congelado</option>
+      </select>
+      <label>Fecha desde</label>
+      <input type="date" id="precio-fecha">
+      <button class="btn btn-green" id="btn-precio" onclick="actualizarPrecio(this)">Actualizar Precio</button>
+      <div id="msg-precio"></div>
+    </div>
+  </div>
+
+    </div>
+  </div>
+
+  <!-- ── BOTTOM NAV ── -->
+  <nav class="bottom-nav">
+    
+    <a href="index.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="home"></i></span><span>Inicio</span></a>
+    <a href="juntada.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="wheat"></i></span><span>Cosecha</span></a>
+    <a href="despalillado.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="scissors"></i></span><span>Despalillado</span></a>
+    <a href="aplicaciones.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="droplets"></i></span><span>Aplicaciones</span></a>
+    <a href="menu-campo.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="menu"></i></span><span>Menú</span></a>
+  </nav>
+
+</div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+  lucide.createIcons();
+  document.getElementById('topbar-date').textContent =
+    new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
+</script>
+<script>
+    function showTab(tab, el) {
+      document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.remove('active'); });
+      document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+      document.getElementById('tab-' + tab).classList.add('active');
+      el.classList.add('active');
+    }
+
+    function toggleFechas() {
+      var checked = document.getElementById('filtrar-fechas').checked;
+      document.getElementById('rango-fechas').style.display = checked ? '' : 'none';
+      if (!checked) {
+        document.getElementById('filtro-desde').value = '';
+        document.getElementById('filtro-hasta').value = '';
+      }
+      cargarResumen();
+    }
+
+    function cargarDatos() {
+      fetch('/api/juntadores')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          var opts = '<option value="">Seleccionar...</option>' +
+            data.map(function(j) { return '<option value="' + j.id + '">' + j.apellido + ', ' + j.nombre + '</option>'; }).join('');
+          document.getElementById('liq-juntador').innerHTML = opts;
+          document.getElementById('ant-juntador').innerHTML = opts;
+        });
+      fetch('/api/temporadas')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          var opts = '<option value="">Todas</option>' +
+            data.map(function(t) { return '<option value="' + t.id + '">' + t.nombre + '</option>'; }).join('');
+          document.getElementById('filtro-temporada').innerHTML = opts;
+          document.getElementById('precio-temporada').innerHTML = opts;
+          var activa = data.find(function(t){ return t.activa; });
+          if (activa) {
+            document.getElementById('filtro-temporada').value = activa.id;
+            cargarPrecioActual(activa.id);
+          } else if (data.length > 0) {
+            cargarPrecioActual(data[0].id);
+          }
+          cargarResumen();
+        });
+    }
+
+    function cargarResumen() {
+      const temporada_id = document.getElementById('filtro-temporada').value;
+      const desde = document.getElementById('filtro-desde').value;
+      const hasta = document.getElementById('filtro-hasta').value;
+      var url = '/api/pagos/resumen?';
+      if (temporada_id) url += 'temporada_id=' + temporada_id + '&';
+      if (desde) url += 'desde=' + desde + '&';
+      if (hasta) url += 'hasta=' + hasta + '&';
+      fetch(url)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          const tbody = document.getElementById('tbody-resumen');
+          if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="empty">Sin datos</td></tr>';
+            return;
+          }
+          tbody.innerHTML = data.map(function(j) {
+            const saldo = parseFloat(j.saldo_pendiente) || 0;
+            return '<tr>' +
+              '<td><strong>' + j.juntador + '</strong></td>' +
+              '<td>' + (j.tipo || 'juntador') + '</td>' +
+              '<td>' + parseFloat(j.total_kilos).toFixed(2) + ' kg</td>' +
+              '<td>$' + parseFloat(j.anticipos).toLocaleString('es-AR') + '</td>' +
+              '<td>$' + parseFloat(j.liquidado).toLocaleString('es-AR') + '</td>' +
+              '<td class="' + (saldo > 0 ? 'saldo-positivo' : 'saldo-cero') + '">$' + saldo.toLocaleString('es-AR') + '</td>' +
+              '</tr>';
+          }).join('');
+
+          // ── Resumen por trabajador ──
+          var tbodyTrab = document.getElementById('tbody-total-trabajador');
+          tbodyTrab.innerHTML = data.map(function(j) {
+            var totalPagado = (parseFloat(j.anticipos) || 0) + (parseFloat(j.liquidado) || 0);
+            var nPagos = (parseFloat(j.anticipos) > 0 ? 1 : 0) + (parseFloat(j.liquidado) > 0 ? 1 : 0);
+            return '<tr>' +
+              '<td><strong>' + j.juntador + '</strong></td>' +
+              '<td style="text-align:center;">' + nPagos + '</td>' +
+              '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;">$' + totalPagado.toLocaleString('es-AR') + '</td>' +
+              '</tr>';
+          }).join('');
+        });
+    }
+
+    var resumenCache = {};
+
+    function cargarInfoJuntador() {
+      var id = document.getElementById('liq-juntador').value;
+      document.getElementById('liq-info').innerHTML = '';
+      if (!id) return;
+      if (resumenCache[id]) { mostrarInfoJuntador(resumenCache[id]); return; }
+      fetch('/api/pagos/resumen')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          data.forEach(function(j) { resumenCache[j.id] = j; });
+          if (resumenCache[id]) mostrarInfoJuntador(resumenCache[id]);
+        });
+    }
+
+    function mostrarInfoJuntador(j) {
+      document.getElementById('liq-info').innerHTML =
+        '<div style="background:#e8f5e2;border-radius:8px;padding:10px;margin-top:8px;font-size:13px;">' +
+        'Kilos cosechados: <strong>' + parseFloat(j.total_kilos).toFixed(2) + ' kg</strong>' +
+        ' &nbsp;|&nbsp; Anticipos pendientes: <strong>$' + parseFloat(j.anticipos).toLocaleString('es-AR') + '</strong>' +
+        '</div>';
+      if (parseFloat(j.anticipos) > 0 && !document.getElementById('liq-anticipos').value) {
+        document.getElementById('liq-anticipos').value = parseFloat(j.anticipos).toFixed(2);
+      }
+      calcularLiquidacion();
+    }
+
+    function calcularLiquidacion() {
+      const precio = parseFloat(document.getElementById('liq-precio').value) || 0;
+      const anticipos = parseFloat(document.getElementById('liq-anticipos').value) || 0;
+      if (precio > 0) {
+        document.getElementById('resultado').style.display = 'block';
+        document.getElementById('res-precio').textContent = '$' + precio.toLocaleString('es-AR');
+        document.getElementById('res-anticipos').textContent = '-$' + anticipos.toLocaleString('es-AR');
+      }
+    }
+
+    function registrarLiquidacion(btn) {
+      const juntador_id = document.getElementById('liq-juntador').value;
+      const desde = document.getElementById('liq-desde').value;
+      const hasta = document.getElementById('liq-hasta').value;
+      const precio_kilo = document.getElementById('liq-precio').value;
+      if (!juntador_id || !desde || !hasta || !precio_kilo) { alert('Completa todos los campos'); return; }
+      setLoading(btn, true);
+      fetch('/api/pagos/liquidacion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          juntador_id: juntador_id,
+          periodo_desde: desde,
+          periodo_hasta: hasta,
+          precio_kilo: precio_kilo,
+          anticipos: document.getElementById('liq-anticipos').value || 0,
+          observacion: document.getElementById('liq-obs').value
+        })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        setLoading(btn, false);
+        if (data.ok) {
+          resumenCache = {};
+          mostrarMensaje('msg-liq', 'success', 'Liquidacion registrada — ' +
+            data.kilos.toFixed(2) + ' kg x $' + parseFloat(precio_kilo).toLocaleString('es-AR') +
+            ' = $' + data.saldo_final.toLocaleString('es-AR'), 5000);
+          cargarResumen();
+        } else {
+          mostrarMensaje('msg-liq', 'error', data.error || 'Error al registrar');
+        }
+      })
+      .catch(function() {
+        setLoading(btn, false);
+        mostrarMensaje('msg-liq', 'error', 'Error de conexión');
+      });
+    }
+
+    function registrarAnticipo(btn) {
+      const juntador_id = document.getElementById('ant-juntador').value;
+      const monto = document.getElementById('ant-monto').value;
+      if (!juntador_id || !monto) { alert('Completa juntador y monto'); return; }
+      setLoading(btn, true);
+      fetch('/api/pagos/anticipo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          juntador_id: juntador_id,
+          monto: monto,
+          observacion: document.getElementById('ant-obs').value
+        })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        setLoading(btn, false);
+        if (data.ok) {
+          resumenCache = {};
+          mostrarMensaje('msg-ant', 'success', 'Anticipo registrado correctamente');
+          document.getElementById('ant-monto').value = '';
+          document.getElementById('ant-obs').value = '';
+          cargarResumen();
+        } else {
+          mostrarMensaje('msg-ant', 'error', data.error || 'Error al registrar');
+        }
+      })
+      .catch(function() {
+        setLoading(btn, false);
+        mostrarMensaje('msg-ant', 'error', 'Error de conexión');
+      });
+    }
+
+    function cargarPrecioActual(temporada_id) {
+      fetch('/api/pagos/precio/' + temporada_id)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          const div = document.getElementById('precio-actual');
+          if (data && data.precio_kilo) {
+            div.innerHTML = '<div><strong>' + data.destino + '</strong><br><small>desde ' + data.fecha_desde.toString().split('T')[0] + '</small></div>' +
+              '<div class="precio-valor">$' + parseFloat(data.precio_kilo).toLocaleString('es-AR') + ' / kg</div>';
+          } else {
+            div.innerHTML = '<span style="color:#999;">Sin precio configurado para esta temporada</span>';
+          }
+        });
+    }
+
+    function actualizarPrecio(btn) {
+      const temporada_id = document.getElementById('precio-temporada').value;
+      const precio = document.getElementById('precio-valor').value;
+      if (!temporada_id || !precio) { alert('Selecciona temporada y precio'); return; }
+      setLoading(btn, true);
+      fetch('/api/pagos/precio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          temporada_id: temporada_id,
+          precio_kilo: precio,
+          destino: document.getElementById('precio-destino').value,
+          fecha_desde: document.getElementById('precio-fecha').value || new Date().toISOString().split('T')[0]
+        })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        setLoading(btn, false);
+        if (data.ok) {
+          mostrarMensaje('msg-precio', 'success', 'Precio actualizado correctamente');
+          cargarPrecioActual(temporada_id);
+        } else {
+          mostrarMensaje('msg-precio', 'error', data.error || 'Error al actualizar');
+        }
+      })
+      .catch(function() {
+        setLoading(btn, false);
+        mostrarMensaje('msg-precio', 'error', 'Error de conexión');
+      });
+    }
+
+    const hoy = new Date().toISOString().split('T')[0];
+    document.getElementById('precio-fecha').value = hoy;
+    cargarDatos();
+  cargarTemporadaActiva();
+</script>
+</body>
+</html>

@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1A2E0A">
+  <title>Depósitos — Cosecha</title>
+  <link rel="icon" href="img/logo.png">
+  <script src="js/auth-check.js"></script>
+  <script src="js/utils.js"></script>
+  <link rel="stylesheet" href="cosecha.css">
+  <style>
+    .dep-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; margin-bottom: 20px; }
+    .dep-card {
+      background: var(--superficie); border: 1.5px solid var(--borde);
+      border-radius: var(--radius-lg); padding: 18px 20px;
+      box-shadow: var(--shadow-sm); cursor: pointer;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .dep-card:hover { border-color: var(--verde); box-shadow: var(--shadow-md); }
+    .dep-card.selected { border-color: var(--verde); border-width: 2px; background: var(--verde-suave); }
+    .dep-name { font-size: 15px; font-weight: 700; color: var(--texto); }
+    .dep-tipo { font-size: 11px; color: var(--texto-suave); text-transform: uppercase; letter-spacing: .6px; margin-top: 2px; }
+    .dep-meta { font-size: 12px; color: var(--texto-suave); margin-top: 6px; }
+    .dep-stock { font-size: 22px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--verde); margin-top: 8px; }
+    .progress-wrap { margin-top: 10px; }
+    .progress-bar { height: 6px; background: var(--fondo-dark); border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 4px; background: var(--verde); transition: width .4s; }
+    .progress-fill.warn  { background: var(--sem-amarillo); }
+    .progress-fill.full  { background: var(--sem-rojo); }
+    .progress-label { font-size: 11px; color: var(--texto-suave); margin-top: 3px; }
+    .dep-actions { display: flex; gap: 6px; margin-top: 12px; }
+    .btn-xs { padding: 5px 12px; font-size: 12px; font-weight: 600; border: none; border-radius: 6px; cursor: pointer; }
+    .btn-xs-primary  { background: var(--verde);   color: white; }
+    .btn-xs-outline  { background: transparent; border: 1.5px solid var(--borde); color: var(--texto-2); }
+    .btn-xs-danger   { background: var(--sem-rojo-bg); color: var(--sem-rojo); }
+    /* Modal */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 500; align-items: center; justify-content: center; padding: 16px; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--superficie); border-radius: var(--radius-lg); width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+    .modal-header { padding: 18px 20px; border-bottom: 1px solid var(--borde); display: flex; align-items: center; justify-content: space-between; }
+    .modal-title { font-size: 15px; font-weight: 700; }
+    .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--texto-suave); line-height: 1; padding: 2px 6px; }
+    .modal-body { padding: 20px; }
+    /* Historial panel */
+    .hist-panel { display: none; }
+    .hist-panel.open { display: block; }
+    .mov-item { padding: 10px 0; border-bottom: 1px solid var(--borde); display: flex; align-items: flex-start; gap: 10px; }
+    .mov-item:last-child { border-bottom: none; }
+    .mov-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+    .dot-ingreso  { background: var(--sem-verde); }
+    .dot-venta    { background: var(--sem-azul); }
+    .dot-descarte { background: var(--sem-rojo); }
+    .mov-title { font-size: 13px; font-weight: 600; }
+    .mov-desc  { font-size: 12px; color: var(--texto-suave); margin-top: 2px; }
+    .empty-dep { text-align: center; padding: 32px 16px; color: var(--texto-suave); font-size: 14px; }
+    /* KPI resumen */
+    .kpi-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-bottom: 18px; }
+    .kpi-box { background: var(--superficie); border: 1.5px solid var(--borde); border-radius: var(--radius-md); padding: 14px 16px; }
+    .kpi-label { font-size: 11px; color: var(--texto-suave); text-transform: uppercase; letter-spacing: .5px; }
+    .kpi-val { font-size: 20px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--verde); margin-top: 4px; }
+    .kpi-val.rojo  { color: var(--sem-rojo); }
+    .kpi-val.azul  { color: var(--sem-azul); }
+    .kpi-val.naranja { color: #f59e0b; }
+    /* Egreso tipo toggle */
+    .tipo-toggle { display: flex; gap: 8px; margin-bottom: 14px; }
+    .tipo-btn { flex: 1; padding: 10px; border: 2px solid var(--borde); border-radius: 8px; background: none; cursor: pointer; font-weight: 600; font-size: 14px; color: var(--texto-2); }
+    .tipo-btn.activo-venta   { border-color: var(--sem-azul);  background: #eff6ff; color: #1d4ed8; }
+    .tipo-btn.activo-descarte { border-color: var(--sem-rojo); background: #fff1f1; color: var(--sem-rojo); }
+    .egreso-fields { display: none; }
+    .egreso-fields.visible { display: block; }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="img/logo-icon.png" style="height:44px;width:44px;border-radius:10px;">
+      <div style="margin-left:10px;display:flex;flex-direction:column;justify-content:center;line-height:1.1;">
+        <span style="color:white;font-weight:700;font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span>
+        <span style="color:rgba(255,255,255,0.5);font-size:10px;letter-spacing:1.5px;margin-top:2px;">SISTEMA DE CULTIVOS</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-item"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard</a>
+      <div class="nav-section">Campo</div>
+      <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
+      <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
+      <div class="nav-section">Sistema</div>
+      <a href="menu-stock.html" class="nav-item active"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
+      <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
+      <a href="menu-admin.html" class="nav-item"><span class="nav-icon"><i data-lucide="landmark"></i></span> Administración</a>
+      <a href="mercado.html" class="nav-item"><span class="nav-icon"><i data-lucide="trending-up"></i></span> Mercado</a>
+      <a href="menu-config.html" class="nav-item"><span class="nav-icon"><i data-lucide="settings"></i></span> Configuración</a>
+    </nav>
+    <div class="sidebar-footer">Sistema Agrícola v2</div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
+        <img src="img/logo-icon.png" style="height:44px;width:44px;border-radius:10px;">
+        <div style="margin-left:10px;display:flex;flex-direction:column;justify-content:center;line-height:1.1;">
+          <span style="color:white;font-weight:700;font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span>
+          <span style="color:rgba(255,255,255,0.5);font-size:10px;letter-spacing:1.5px;margin-top:2px;">SISTEMA DE CULTIVOS</span>
+        </div><span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-date" id="topbar-date"></span>
+      </div>
+    </header>
+
+    <div class="content">
+      <a href="menu-stock.html" class="btn-volver">← Volver</a>
+      <div class="content-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div class="content-title">Depósitos</div>
+          <div class="content-sub">Cámaras frías, silos y almacenes</div>
+        </div>
+        <button class="btn btn-primary" style="width:auto;margin:0;" onclick="abrirModalNuevo()">
+          <i data-lucide="plus"></i> Nuevo depósito
+        </button>
+      </div>
+
+      <!-- Filtro temporada KPI -->
+      <div style="margin-bottom:12px;">
+        <select id="filtro-temporada" onchange="cargarResumen()" style="width:auto;min-width:220px;">
+          <option value="">Todas las temporadas</option>
+        </select>
+      </div>
+
+      <!-- KPI resumen -->
+      <div class="kpi-row" id="kpi-row">
+        <div class="kpi-box"><div class="kpi-label">En depósito</div><div class="kpi-val" id="kpi-deposito">—</div></div>
+        <div class="kpi-box"><div class="kpi-label">Vendido</div><div class="kpi-val azul" id="kpi-vendido">—</div></div>
+        <div class="kpi-box"><div class="kpi-label">Descartado</div><div class="kpi-val rojo" id="kpi-descartado">—</div></div>
+        <div class="kpi-box"><div class="kpi-label">Ingresos venta</div><div class="kpi-val naranja" id="kpi-ingresos">—</div></div>
+      </div>
+
+      <!-- Lista de depósitos -->
+      <div class="dep-grid" id="dep-grid">
+        <div class="empty-dep">Cargando...</div>
+      </div>
+
+      <!-- Historial del depósito seleccionado -->
+      <div class="hist-panel" id="hist-panel">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title" id="hist-title">Historial</span>
+            <button onclick="cerrarHistorial()" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--texto-suave);">✕ Cerrar</button>
+          </div>
+          <div class="card-body" id="hist-body">
+            <div class="empty-dep">Seleccioná un depósito</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <a href="index.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="home"></i></span><span>Inicio</span></a>
+    <a href="juntada.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="wheat"></i></span><span>Cosecha</span></a>
+    <a href="despalillado.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="scissors"></i></span><span>Despalillado</span></a>
+    <a href="aplicaciones.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="droplets"></i></span><span>Aplicaciones</span></a>
+    <a href="menu-campo.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="menu"></i></span><span>Menú</span></a>
+  </nav>
+</div>
+
+<!-- Modal ingreso -->
+<div class="modal-overlay" id="modal-ingreso">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="ingreso-title">Ingresar stock</span>
+      <button class="modal-close" onclick="cerrarIngreso()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="ingreso-dep-id">
+      <div class="form-row">
+        <label>Campaña</label>
+        <select id="ingreso-temporada"></select>
+      </div>
+      <div class="form-row">
+        <label>Lote <span style="font-weight:400;color:#888;">(opcional)</span></label>
+        <select id="ingreso-lote"><option value="">— Sin lote —</option></select>
+      </div>
+      <div class="form-row">
+        <label>Kilos</label>
+        <input type="number" id="ingreso-kilos" placeholder="Ej: 500" step="0.01" min="0" data-miles>
+      </div>
+      <div class="form-row">
+        <label>Fecha</label>
+        <input type="date" id="ingreso-fecha">
+      </div>
+      <div class="form-row">
+        <label>Observación <span style="font-weight:400;color:#888;">(opcional)</span></label>
+        <input type="text" id="ingreso-obs" placeholder="Opcional">
+      </div>
+      <button class="btn btn-primary" id="btn-confirmar-ingreso" onclick="confirmarIngreso(this)">Registrar ingreso</button>
+      <div id="msg-ingreso"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal egreso -->
+<div class="modal-overlay" id="modal-egreso">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="egreso-title">Retirar stock</span>
+      <button class="modal-close" onclick="cerrarEgreso()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="egreso-dep-id">
+      <div id="egreso-stock-info" style="background:var(--fondo-dark);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:13px;color:var(--texto-2);">
+        Stock disponible: <strong id="egreso-stock-val">—</strong> kg
+      </div>
+      <div class="tipo-toggle">
+        <button class="tipo-btn" id="btn-tipo-venta"    onclick="selTipoEgreso('venta')">💰 Venta</button>
+        <button class="tipo-btn" id="btn-tipo-descarte" onclick="selTipoEgreso('descarte')">🗑️ Descarte</button>
+      </div>
+      <div class="form-row">
+        <label>Campaña</label>
+        <select id="egreso-temporada"></select>
+      </div>
+      <div class="form-row">
+        <label>Lote <span style="font-weight:400;color:#888;">(opcional)</span></label>
+        <select id="egreso-lote"><option value="">— Sin lote —</option></select>
+      </div>
+      <div class="form-row">
+        <label>Kilos</label>
+        <input type="number" id="egreso-kilos" placeholder="Ej: 200" step="0.01" min="0" data-miles>
+      </div>
+      <div class="form-row">
+        <label>Fecha</label>
+        <input type="date" id="egreso-fecha">
+      </div>
+      <!-- Venta fields -->
+      <div class="egreso-fields" id="fields-venta">
+        <div class="form-row">
+          <label>Precio $/kg</label>
+          <input type="number" id="egreso-precio" placeholder="Ej: 1200" step="0.01" min="0" data-miles>
+        </div>
+        <div class="form-row">
+          <label>Comprador</label>
+          <input type="text" id="egreso-comprador" placeholder="Nombre del comprador">
+        </div>
+        <div class="form-row">
+          <label>Destino</label>
+          <input type="text" id="egreso-destino" placeholder="Mercado, frigorífico, etc.">
+        </div>
+      </div>
+      <!-- Descarte fields -->
+      <div class="egreso-fields" id="fields-descarte">
+        <div class="form-row">
+          <label>Motivo</label>
+          <input type="text" id="egreso-motivo" placeholder="Ej: Podredumbre, daño climático">
+        </div>
+      </div>
+      <div class="form-row">
+        <label>Observación <span style="font-weight:400;color:#888;">(opcional)</span></label>
+        <input type="text" id="egreso-obs" placeholder="Opcional">
+      </div>
+      <button class="btn btn-primary" id="btn-confirmar-egreso" onclick="confirmarEgreso(this)">Confirmar retiro</button>
+      <div id="msg-egreso"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal nuevo/editar depósito -->
+<div class="modal-overlay" id="modal-deposito">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title">Nuevo depósito</span>
+      <button class="modal-close" onclick="cerrarModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-id">
+      <div class="form-row">
+        <label>Nombre</label>
+        <input type="text" id="dep-nombre" placeholder="Ej: Cámara frío 1" data-tooltip="Nombre descriptivo del depósito (ej: Cámara fría 1, Silo Norte)">
+      </div>
+      <div class="form-row">
+        <label>Tipo</label>
+        <select id="dep-tipo" data-tooltip="Tipo de instalación de almacenamiento">
+          <option value="camara_fria">Cámara fría</option>
+          <option value="silo">Silo</option>
+          <option value="silobolsa">Silobolsa</option>
+          <option value="galpon">Galpón</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+      <div class="two-col">
+        <div class="form-row">
+          <label>Capacidad (kg)</label>
+          <input type="number" id="dep-capacidad" placeholder="Ej: 50000" step="0.01" data-miles data-tooltip="Capacidad máxima del depósito en kilogramos">
+        </div>
+        <div class="form-row">
+          <label>Costo $/kg/día</label>
+          <input type="number" id="dep-costo" placeholder="Ej: 0.05" step="0.0001" data-tooltip="Costo de almacenamiento por kilogramo por día">
+        </div>
+      </div>
+      <div class="form-row">
+        <label>Ubicación</label>
+        <input type="text" id="dep-ubicacion" placeholder="Ej: Lote norte, km 3" data-tooltip="Ubicación física del depósito dentro del establecimiento">
+      </div>
+      <div class="form-row">
+        <label>Observación</label>
+        <input type="text" id="dep-obs" placeholder="Opcional" data-tooltip="Notas adicionales sobre el depósito">
+      </div>
+      <button class="btn btn-primary" id="btn-guardar-dep" onclick="guardarDeposito(this)" data-tooltip="Guardar el nuevo depósito en el sistema">Guardar</button>
+      <div id="msg-modal"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+lucide.createIcons();
+document.getElementById('topbar-date').textContent =
+  new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
+
+var depositos = [];
+
+var TIPO_LABEL = {
+  camara_fria: 'Cámara fría', silo: 'Silo',
+  silobolsa: 'Silobolsa', galpon: 'Galpón', otro: 'Otro'
+};
+
+function fmt(n) { return parseFloat(n||0).toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:1}); }
+function fmtFecha(iso) { if(!iso) return '-'; return new Date(iso).toLocaleDateString('es-AR'); }
+
+function cargar() {
+  fetch('/api/depositos')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      depositos = data;
+      renderGrid(data);
+      lucide.createIcons();
+    });
+}
+
+function renderGrid(data) {
+  var grid = document.getElementById('dep-grid');
+  if (!data.length) {
+    grid.innerHTML = '<div class="empty-dep">No hay depósitos configurados.<br>Creá el primero con el botón de arriba.</div>';
+    return;
+  }
+  grid.innerHTML = data.map(function(d) {
+    var stock = parseFloat(d.stock_actual || 0);
+    var cap   = parseFloat(d.capacidad_kg || 0);
+    var pct   = cap > 0 ? Math.min(100, (stock / cap) * 100) : 0;
+    var fillClass = pct >= 90 ? 'full' : pct >= 70 ? 'warn' : '';
+    return '<div class="dep-card" id="card-' + d.id + '" onclick="verHistorial(' + d.id + ')" data-tooltip="Click para ver historial de movimientos">' +
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;">' +
+        '<div><div class="dep-name">' + d.nombre + '</div>' +
+        '<div class="dep-tipo">' + (TIPO_LABEL[d.tipo] || d.tipo) + (d.ubicacion ? ' · ' + d.ubicacion : '') + '</div></div>' +
+        '<span class="badge badge-activo" style="font-size:10px;">Activo</span>' +
+      '</div>' +
+      '<div class="dep-stock">' + fmt(stock) + ' kg</div>' +
+      (cap > 0 ?
+        '<div class="progress-wrap">' +
+          '<div class="progress-bar"><div class="progress-fill ' + fillClass + '" style="width:' + pct.toFixed(1) + '%"></div></div>' +
+          '<div class="progress-label">' + pct.toFixed(0) + '% ocupado' + (d.costo_kg_dia ? ' · $' + parseFloat(d.costo_kg_dia) + '/kg/día' : '') + '</div>' +
+        '</div>' : '') +
+      '<div class="dep-actions" onclick="event.stopPropagation();">' +
+        '<button class="btn-xs btn-xs-primary" onclick="abrirIngreso(' + d.id + ')">+ Ingreso</button>' +
+        '<button class="btn-xs btn-xs-danger"   onclick="abrirEgreso(' + d.id + ')">- Retiro</button>' +
+        '<button class="btn-xs btn-xs-outline"  onclick="verHistorial(' + d.id + ')">Historial</button>' +
+        '<button class="btn-xs btn-xs-outline"  onclick="abrirModalEditar(' + d.id + ')">✏️</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function verHistorial(id) {
+  // Mark selected
+  document.querySelectorAll('.dep-card').forEach(function(c){ c.classList.remove('selected'); });
+  var card = document.getElementById('card-' + id);
+  if (card) card.classList.add('selected');
+
+  var dep = depositos.find(function(d){ return d.id === id; });
+  document.getElementById('hist-title').textContent = 'Historial · ' + (dep ? dep.nombre : '');
+  document.getElementById('hist-body').innerHTML = '<div class="empty-dep">Cargando...</div>';
+  document.getElementById('hist-panel').classList.add('open');
+
+  fetch('/api/depositos/' + id + '/movimientos')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if (!data.length) {
+        document.getElementById('hist-body').innerHTML = '<div class="empty-dep">Sin movimientos registrados</div>';
+        return;
+      }
+      var html = data.map(function(m){
+        var isIngreso  = m.tipo === 'ingreso';
+        var isDescarte = m.tipo === 'egreso_descarte';
+        var dotClass   = isIngreso ? 'dot-ingreso' : isDescarte ? 'dot-descarte' : 'dot-venta';
+        var label      = isIngreso ? 'Ingreso' : isDescarte ? 'Descarte' : 'Venta';
+        var desc = fmt(m.kilos) + ' kg';
+        if (!isIngreso && !isDescarte && m.precio_kilo) desc += ' · $' + parseFloat(m.precio_kilo).toFixed(2) + '/kg';
+        if (m.comprador) desc += ' · ' + m.comprador;
+        if (m.observacion) desc += ' · ' + m.observacion;
+        return '<div class="mov-item">' +
+          '<div class="mov-dot ' + dotClass + '"></div>' +
+          '<div><div class="mov-title">' + label + ' — ' + fmtFecha(m.fecha) + '</div>' +
+          '<div class="mov-desc">' + desc + (m.lote ? ' · Lote: ' + m.lote : '') + '</div></div>' +
+        '</div>';
+      }).join('');
+      document.getElementById('hist-body').innerHTML = html;
+      document.getElementById('hist-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+}
+
+function cerrarHistorial() {
+  document.getElementById('hist-panel').classList.remove('open');
+  document.querySelectorAll('.dep-card').forEach(function(c){ c.classList.remove('selected'); });
+}
+
+// ── Modal ──────────────────────────────────────────────────────
+function abrirModalNuevo() {
+  document.getElementById('modal-title').textContent = 'Nuevo depósito';
+  document.getElementById('edit-id').value = '';
+  document.getElementById('dep-nombre').value = '';
+  document.getElementById('dep-tipo').value = 'camara_fria';
+  document.getElementById('dep-capacidad').value = '';
+  document.getElementById('dep-costo').value = '';
+  document.getElementById('dep-ubicacion').value = '';
+  document.getElementById('dep-obs').value = '';
+  document.getElementById('msg-modal').innerHTML = '';
+  document.getElementById('modal-deposito').classList.add('open');
+}
+function abrirModalEditar(id) {
+  var d = depositos.find(function(x){ return x.id === id; });
+  if (!d) return;
+  document.getElementById('modal-title').textContent = 'Editar · ' + d.nombre;
+  document.getElementById('edit-id').value = d.id;
+  document.getElementById('dep-nombre').value = d.nombre;
+  document.getElementById('dep-tipo').value = d.tipo;
+  document.getElementById('dep-capacidad').value = d.capacidad_kg || '';
+  document.getElementById('dep-costo').value = d.costo_kg_dia || '';
+  document.getElementById('dep-ubicacion').value = d.ubicacion || '';
+  document.getElementById('dep-obs').value = d.observacion || '';
+  document.getElementById('msg-modal').innerHTML = '';
+  document.getElementById('modal-deposito').classList.add('open');
+}
+function cerrarModal() {
+  document.getElementById('modal-deposito').classList.remove('open');
+}
+
+function guardarDeposito(btn) {
+  var id       = document.getElementById('edit-id').value;
+  var nombre   = document.getElementById('dep-nombre').value.trim();
+  var tipo     = document.getElementById('dep-tipo').value;
+  var cap      = document.getElementById('dep-capacidad').value;
+  var costo    = document.getElementById('dep-costo').value;
+  var ubic     = document.getElementById('dep-ubicacion').value.trim();
+  var obs      = document.getElementById('dep-obs').value.trim();
+  var msgEl    = document.getElementById('msg-modal');
+  if (!nombre) { msgEl.innerHTML = '<div class="msg-error">El nombre es obligatorio</div>'; return; }
+
+  var payload = { nombre: nombre, tipo: tipo,
+    capacidad_kg: cap ? parseFloat(cap) : null,
+    costo_kg_dia: costo ? parseFloat(costo) : null,
+    ubicacion: ubic, observacion: obs };
+
+  var url    = id ? '/api/depositos/' + id : '/api/depositos';
+  var method = id ? 'PUT' : 'POST';
+  setLoading(btn, true);
+  fetch(url, { method: method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      setLoading(btn, false);
+      if (data.error) { msgEl.innerHTML = '<div class="msg-error">' + data.error + '</div>'; return; }
+      cerrarModal();
+      cargar();
+    })
+    .catch(function(){
+      setLoading(btn, false);
+      msgEl.innerHTML = '<div class="msg-error">Error de conexión</div>';
+    });
+}
+
+// Cerrar modal al hacer click fuera
+document.getElementById('modal-deposito').addEventListener('click', function(e){
+  if (e.target === this) cerrarModal();
+});
+document.getElementById('modal-ingreso').addEventListener('click', function(e){
+  if (e.target === this) cerrarIngreso();
+});
+document.getElementById('modal-egreso').addEventListener('click', function(e){
+  if (e.target === this) cerrarEgreso();
+});
+
+// ── KPI Resumen ────────────────────────────────────────────────
+function cargarResumen() {
+  var sel = document.getElementById('filtro-temporada');
+  var tid = sel ? sel.value : '';
+  if (!tid && window.temporadaActiva) tid = window.temporadaActiva.id;
+  var url = '/api/depositos/resumen' + (tid ? '?temporada_id=' + tid : '');
+  fetch(url).then(function(r){ return r.json(); }).then(function(d){
+    document.getElementById('kpi-deposito').textContent   = fmt(d.kilos_en_deposito)    + ' kg';
+    document.getElementById('kpi-vendido').textContent    = fmt(d.kilos_vendidos)        + ' kg';
+    document.getElementById('kpi-descartado').textContent = fmt(d.kilos_descartados)     + ' kg';
+    document.getElementById('kpi-ingresos').textContent   = '$' + fmt(d.ingresos_venta);
+  });
+}
+
+// ── Ingreso ────────────────────────────────────────────────────
+var _temporadasCache = [];
+var _lotesCache      = [];
+
+function cargarTemporadasModal(selId, savedId) {
+  if (_temporadasCache.length) { llenarSelTemporada(selId, savedId); return; }
+  fetch('/api/temporadas/activas').then(function(r){ return r.json(); }).then(function(data){
+    _temporadasCache = data;
+    llenarSelTemporada(selId, savedId);
+  });
+}
+function llenarSelTemporada(selId, savedId) {
+  var sel = document.getElementById(selId);
+  if (!_temporadasCache.length) {
+    sel.innerHTML = '<option value="">Sin campañas activas</option>'; return;
+  }
+  var pick = savedId || (window.temporadaActiva ? window.temporadaActiva.id : '');
+  sel.innerHTML = '<option value="">Seleccionar campaña...</option>' +
+    _temporadasCache.map(function(t){
+      return '<option value="' + t.id + '"' + (String(t.id) === String(pick) ? ' selected' : '') + '>' + t.nombre + '</option>';
+    }).join('');
+}
+function cargarLotesModal(selId) {
+  if (_lotesCache.length) { llenarSelLote(selId); return; }
+  fetch('/api/lotes').then(function(r){ return r.json(); }).then(function(data){
+    _lotesCache = data.filter(function(l){ return l.activo; });
+    llenarSelLote(selId);
+  });
+}
+function llenarSelLote(selId) {
+  var sel = document.getElementById(selId);
+  sel.innerHTML = '<option value="">— Sin lote —</option>' +
+    _lotesCache.map(function(l){
+      return '<option value="' + l.id + '">' + l.nombre + '</option>';
+    }).join('');
+}
+
+function abrirIngreso(id) {
+  var dep = depositos.find(function(d){ return d.id === id; });
+  if (!dep) return;
+  document.getElementById('ingreso-dep-id').value = id;
+  document.getElementById('ingreso-title').textContent = 'Ingresar → ' + dep.nombre;
+  document.getElementById('ingreso-kilos').value = '';
+  document.getElementById('ingreso-fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('ingreso-obs').value   = '';
+  document.getElementById('msg-ingreso').innerHTML = '';
+  cargarTemporadasModal('ingreso-temporada');
+  cargarLotesModal('ingreso-lote');
+  document.getElementById('modal-ingreso').classList.add('open');
+}
+function cerrarIngreso() {
+  document.getElementById('modal-ingreso').classList.remove('open');
+}
+function confirmarIngreso(btn) {
+  var depId = document.getElementById('ingreso-dep-id').value;
+  var tid   = document.getElementById('ingreso-temporada').value;
+  var lid   = document.getElementById('ingreso-lote').value;
+  var kilos = document.getElementById('ingreso-kilos').value;
+  var fecha = document.getElementById('ingreso-fecha').value;
+  var obs   = document.getElementById('ingreso-obs').value.trim();
+  var msgEl = document.getElementById('msg-ingreso');
+  if (!tid)   { msgEl.innerHTML = '<div class="msg-error">Seleccioná una campaña</div>'; return; }
+  if (!kilos || parseFloat(kilos) <= 0) { msgEl.innerHTML = '<div class="msg-error">Ingresá los kilos</div>'; return; }
+  setLoading(btn, true);
+  fetch('/api/depositos/ingreso', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ deposito_id: parseInt(depId), temporada_id: parseInt(tid),
+      lote_id: lid ? parseInt(lid) : null, kilos: parseFloat(kilos),
+      fecha: fecha || null, observacion: obs })
+  }).then(function(r){ return r.json(); }).then(function(data){
+    setLoading(btn, false);
+    if (data.error) { msgEl.innerHTML = '<div class="msg-error">' + data.error + '</div>'; return; }
+    cerrarIngreso();
+    cargar(); cargarResumen();
+  }).catch(function(){
+    setLoading(btn, false);
+    msgEl.innerHTML = '<div class="msg-error">Error de conexión</div>';
+  });
+}
+
+// ── Egreso ─────────────────────────────────────────────────────
+var _tipoEgreso = null;
+
+function abrirEgreso(id) {
+  var dep = depositos.find(function(d){ return d.id === id; });
+  if (!dep) return;
+  document.getElementById('egreso-dep-id').value = id;
+  document.getElementById('egreso-title').textContent = 'Retirar ← ' + dep.nombre;
+  document.getElementById('egreso-stock-val').textContent = fmt(dep.stock_actual);
+  document.getElementById('egreso-kilos').value   = '';
+  document.getElementById('egreso-fecha').value   = new Date().toISOString().split('T')[0];
+  document.getElementById('egreso-precio').value  = '';
+  document.getElementById('egreso-comprador').value = '';
+  document.getElementById('egreso-destino').value = '';
+  document.getElementById('egreso-motivo').value  = '';
+  document.getElementById('egreso-obs').value     = '';
+  document.getElementById('msg-egreso').innerHTML = '';
+  _tipoEgreso = null;
+  document.getElementById('btn-tipo-venta').className    = 'tipo-btn';
+  document.getElementById('btn-tipo-descarte').className = 'tipo-btn';
+  document.getElementById('fields-venta').classList.remove('visible');
+  document.getElementById('fields-descarte').classList.remove('visible');
+  cargarTemporadasModal('egreso-temporada');
+  cargarLotesModal('egreso-lote');
+  document.getElementById('modal-egreso').classList.add('open');
+}
+function cerrarEgreso() {
+  document.getElementById('modal-egreso').classList.remove('open');
+}
+function selTipoEgreso(tipo) {
+  _tipoEgreso = tipo;
+  document.getElementById('btn-tipo-venta').className    = 'tipo-btn' + (tipo === 'venta'    ? ' activo-venta'    : '');
+  document.getElementById('btn-tipo-descarte').className = 'tipo-btn' + (tipo === 'descarte' ? ' activo-descarte' : '');
+  document.getElementById('fields-venta').classList.toggle('visible',    tipo === 'venta');
+  document.getElementById('fields-descarte').classList.toggle('visible', tipo === 'descarte');
+}
+function confirmarEgreso(btn) {
+  var depId  = document.getElementById('egreso-dep-id').value;
+  var tid    = document.getElementById('egreso-temporada').value;
+  var lid    = document.getElementById('egreso-lote').value;
+  var kilos  = document.getElementById('egreso-kilos').value;
+  var fecha  = document.getElementById('egreso-fecha').value;
+  var obs    = document.getElementById('egreso-obs').value.trim();
+  var msgEl  = document.getElementById('msg-egreso');
+  if (!_tipoEgreso) { msgEl.innerHTML = '<div class="msg-error">Seleccioná Venta o Descarte</div>'; return; }
+  if (!tid)   { msgEl.innerHTML = '<div class="msg-error">Seleccioná una campaña</div>'; return; }
+  if (!kilos || parseFloat(kilos) <= 0) { msgEl.innerHTML = '<div class="msg-error">Ingresá los kilos</div>'; return; }
+  var payload = {
+    deposito_id: parseInt(depId), temporada_id: parseInt(tid),
+    lote_id: lid ? parseInt(lid) : null,
+    tipo_egreso: _tipoEgreso === 'venta' ? 'egreso_venta' : 'egreso_descarte',
+    kilos: parseFloat(kilos), fecha: fecha || null, observacion: obs
+  };
+  if (_tipoEgreso === 'venta') {
+    var precio = document.getElementById('egreso-precio').value;
+    payload.precio_kilo   = precio ? parseFloat(precio) : null;
+    payload.comprador     = document.getElementById('egreso-comprador').value.trim();
+    payload.destino_venta = document.getElementById('egreso-destino').value.trim();
+  } else {
+    payload.observacion = (document.getElementById('egreso-motivo').value.trim() + ' ' + obs).trim();
+  }
+  setLoading(btn, true);
+  fetch('/api/depositos/egreso', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).then(function(r){ return r.json(); }).then(function(data){
+    setLoading(btn, false);
+    if (data.error) { msgEl.innerHTML = '<div class="msg-error">' + data.error + '</div>'; return; }
+    cerrarEgreso();
+    cargar(); cargarResumen();
+  }).catch(function(){
+    setLoading(btn, false);
+    msgEl.innerHTML = '<div class="msg-error">Error de conexión</div>';
+  });
+}
+
+cargar();
+cargarTemporadaActiva();
+window.addEventListener('campanaChange', function(){ cargarResumen(); });
+fetch('/api/temporadas').then(function(r){ return r.json(); }).then(function(data){
+  var sel = document.getElementById('filtro-temporada');
+  sel.innerHTML = '<option value="">Todas las temporadas</option>' +
+    data.map(function(t){ return '<option value="'+t.id+'">'+t.nombre+'</option>'; }).join('');
+  var activa = data.find(function(t){ return t.activa; });
+  if (activa) sel.value = activa.id;
+  cargarResumen();
+});
+</script>
+</body>
+</html>

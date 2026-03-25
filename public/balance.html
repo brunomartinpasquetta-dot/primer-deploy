@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1A2E0A">
+  <title>Balance — Cosecha</title>
+  <link rel="icon" href="img/logo.png">
+  <script src="js/utils.js"></script>
+  <link rel="stylesheet" href="cosecha.css">
+  <style>
+h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
+    h2 { color: #2D5016; margin-bottom: 12px; font-size: 16px; }
+    .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    label { font-weight: bold; color: #444; display: block; margin-bottom: 6px; margin-top: 12px; }
+    input, select { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
+    .btn { width: 100%; padding: 14px; font-size: 16px; font-weight: bold; border: none; border-radius: 12px; cursor: pointer; margin-top: 12px; }
+    .btn-purple { background: #2D5016; color: white; }
+    .btn-back { background: #eee; color: #444; margin-top: 16px; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+    .tab { flex: 1; padding: 12px; text-align: center; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; background: #ddd; color: #444; font-size: 13px; }
+    .tab.active { background: #2D5016; color: white; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+    .kpi { background: white; border-radius: 12px; padding: 16px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .kpi-valor { font-size: 22px; font-weight: bold; }
+    .kpi-label { font-size: 11px; color: #666; margin-top: 4px; }
+    .verde { color: #2d6a4f; }
+    .rojo { color: #c0392b; }
+    .azul { color: #1565c0; }
+    .naranja { color: #2D5016; }
+    .fila { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+    .fila:last-child { border-bottom: none; }
+    .fila.subtotal { font-weight: bold; background: #f5f5f5; padding: 10px; border-radius: 8px; margin-top: 4px; }
+    .fila.total-final { font-weight: bold; font-size: 18px; padding: 14px; border-radius: 8px; margin-top: 8px; }
+    .fila.ganancia { background: #e8f5e2; color: #2d6a4f; }
+    .fila.perdida { background: #fde8e8; color: #c0392b; }
+    .seccion-titulo { font-weight: bold; color: #444; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin: 16px 0 8px; }
+    .ingreso-item { color: #2d6a4f; }
+    .costo-item { color: #c0392b; }
+    .empty { text-align: center; color: #999; padding: 40px; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .page-logo-h1 { height: 44px; width: auto; }
+    @media (max-width: 767px) { .page-logo-h1 { height: 32px; } }
+  </style>
+  <script src="js/auth-check.js"></script>
+  <script src="js/cotizaciones.js"></script>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      
+      <a href="index.html" class="nav-item"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard</a>
+      <div class="nav-section">Campo</div>
+      <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
+      <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
+      <div class="nav-section">Sistema</div>
+      <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
+      <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
+      <a href="menu-admin.html" class="nav-item active"><span class="nav-icon"><i data-lucide="landmark"></i></span> Administración</a>
+      <a href="mercado.html" class="nav-item"><span class="nav-icon"><i data-lucide="trending-up"></i></span> Mercado</a>
+      <a href="menu-config.html" class="nav-item"><span class="nav-icon"><i data-lucide="settings"></i></span> Configuración</a>
+    </nav>
+    <div class="sidebar-footer">Sistema Agrícola v2</div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
+        <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div><span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-date" id="topbar-date"></span>
+      </div>
+    </header>
+
+    <div class="content">
+      <a href="menu-admin.html" class="btn-volver">← Volver</a>
+      <div class="content-header">
+        <div class="content-title">Balance</div>
+        <div class="content-sub">Resumen financiero por período</div>
+      </div>
+
+      <div class="tabs">
+    <button class="tab active" onclick="showTab('temporada', this)">Por temporada</button>
+    <button class="tab" onclick="showTab('lote', this)">Por lote</button>
+    <button class="tab" onclick="showTab('periodo', this)">Por periodo</button>
+  </div>
+
+  <!-- POR TEMPORADA -->
+  <div id="tab-temporada" class="tab-content active">
+    <div class="card" style="margin-bottom:12px;">
+      <label>Temporada</label>
+      <select id="sel-temporada" onchange="cargarBalanceTemporada()"></select>
+    </div>
+    <div id="balance-temporada"><div class="empty">Selecciona una temporada</div></div>
+  </div>
+
+  <!-- POR LOTE -->
+  <div id="tab-lote" class="tab-content">
+    <div class="card" style="margin-bottom:12px;">
+      <label>Lote</label>
+      <select id="sel-lote" onchange="cargarBalanceLote()"></select>
+    </div>
+    <div id="balance-lote"><div class="empty">Selecciona un lote</div></div>
+  </div>
+
+  <!-- POR PERIODO -->
+  <div id="tab-periodo" class="tab-content">
+    <div class="card" style="margin-bottom:12px;">
+      <div class="two-col">
+        <div>
+          <label>Desde</label>
+          <input type="date" id="periodo-desde">
+        </div>
+        <div>
+          <label>Hasta</label>
+          <input type="date" id="periodo-hasta">
+        </div>
+      </div>
+      <label>Temporada (opcional)</label>
+      <select id="periodo-temporada"></select>
+      <button class="btn btn-purple" onclick="cargarBalancePeriodo()">Ver balance</button>
+    </div>
+    <div id="balance-periodo"></div>
+  </div>
+
+    </div>
+  </div>
+
+  <!-- ── BOTTOM NAV ── -->
+  <nav class="bottom-nav">
+    
+    <a href="index.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="home"></i></span><span>Inicio</span></a>
+    <a href="juntada.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="wheat"></i></span><span>Cosecha</span></a>
+    <a href="despalillado.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="scissors"></i></span><span>Despalillado</span></a>
+    <a href="aplicaciones.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="droplets"></i></span><span>Aplicaciones</span></a>
+    <a href="menu-campo.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="menu"></i></span><span>Menú</span></a>
+  </nav>
+
+</div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+  lucide.createIcons();
+  document.getElementById('topbar-date').textContent =
+    new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
+</script>
+<script>
+    function showTab(tab, el) {
+      document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.remove('active'); });
+      document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+      document.getElementById('tab-' + tab).classList.add('active');
+      el.classList.add('active');
+    }
+
+    function renderBalance(data, container) {
+      const resultado = parseFloat(data.resultado);
+      const esGanancia = resultado >= 0;
+      var html = '';
+
+      if (parseFloat(data.ingresos) === 0) {
+        html += '<div style="background:#fff3cd;border:2px solid #f39c12;border-radius:8px;padding:14px;margin-bottom:16px;color:#2D5016;font-size:14px;">' +
+          '⚠️ No hay ventas registradas aún. Los ingresos se calculan desde el módulo <strong>Stock → Cosecha</strong>.' +
+          '</div>';
+      }
+
+      var blueVenta = window.cotizacion && window.cotizacion.blue && window.cotizacion.blue.venta;
+      var cotLabel  = blueVenta
+        ? '<div style="background:var(--verde-dark);color:white;border-radius:8px;padding:6px 14px;font-size:12px;margin-bottom:14px;display:inline-flex;gap:16px;align-items:center;">' +
+            '<span>Blue <strong style="font-family:\'JetBrains Mono\',monospace;">$' + Math.round(blueVenta).toLocaleString('es-AR') + '</strong></span>' +
+            '<span>Oficial <strong style="font-family:\'JetBrains Mono\',monospace;">$' + Math.round((window.cotizacion.oficial||{}).venta||0).toLocaleString('es-AR') + '</strong></span>' +
+            '<span style="font-size:10px;color:#a8c5a0;">al momento del balance</span>' +
+          '</div>'
+        : '';
+      html += cotLabel;
+      html += '<div class="kpi-grid">';
+      html += '<div class="kpi"><div class="kpi-valor verde">$' + parseFloat(data.ingresos).toLocaleString('es-AR') + '</div><div class="kpi-label">Ingresos</div>' +
+              '<div style="font-size:11px;color:#888;font-family:\'JetBrains Mono\',monospace;">' + formatDolares(parseFloat(data.ingresos)) + '</div></div>';
+      html += '<div class="kpi"><div class="kpi-valor rojo">$' + parseFloat(data.costos.total || data.costos).toLocaleString('es-AR') + '</div><div class="kpi-label">Costos totales</div>' +
+              '<div style="font-size:11px;color:#888;font-family:\'JetBrains Mono\',monospace;">' + formatDolares(parseFloat(data.costos.total || data.costos)) + '</div></div>';
+      if (data.kilos_cosechados !== undefined) {
+        html += '<div class="kpi"><div class="kpi-valor azul">' + parseFloat(data.kilos_cosechados).toLocaleString('es-AR') + ' kg</div><div class="kpi-label">Kilos cosechados</div></div>';
+        html += '<div class="kpi"><div class="kpi-valor naranja">$' + parseFloat(data.costo_por_kilo).toLocaleString('es-AR') + '</div><div class="kpi-label">Costo por kilo</div></div>';
+      }
+      if (data.kilos_en_deposito !== undefined) {
+        html += '<div class="kpi"><div class="kpi-valor azul">' + parseFloat(data.kilos_en_deposito).toLocaleString('es-AR') + ' kg</div><div class="kpi-label">En depósito</div></div>';
+        html += '<div class="kpi"><div class="kpi-valor rojo">' + parseFloat(data.kilos_descartados || 0).toLocaleString('es-AR') + ' kg</div><div class="kpi-label">Descartados</div></div>';
+      }
+      if (data.costos && data.costos.almacenamiento > 0) {
+        html += '<div class="kpi"><div class="kpi-valor naranja">$' + parseFloat(data.costos.almacenamiento).toLocaleString('es-AR') + '</div><div class="kpi-label">Costo almacenamiento</div></div>';
+      }
+      html += '</div>';
+
+      html += '<div class="card">';
+      html += '<div class="seccion-titulo">Ingresos</div>';
+      html += '<div class="fila ingreso-item"><span>Ventas de produccion</span><span>$' + parseFloat(data.ingresos).toLocaleString('es-AR') + '</span></div>';
+
+      if (data.costos && typeof data.costos === 'object') {
+        html += '<div class="seccion-titulo">Costos</div>';
+        if (data.costos.compras !== undefined) {
+          html += '<div class="fila costo-item"><span>Insumos (compras)</span><span>$' + parseFloat(data.costos.compras).toLocaleString('es-AR') + '</span></div>';
+        }
+        if (data.costos.insumos !== undefined) {
+          html += '<div class="fila costo-item"><span>Insumos aplicados</span><span>$' + parseFloat(data.costos.insumos).toLocaleString('es-AR') + '</span></div>';
+        }
+        if (data.costos.mano_obra !== undefined) {
+          html += '<div class="fila costo-item"><span>Mano de obra</span><span>$' + parseFloat(data.costos.mano_obra).toLocaleString('es-AR') + '</span></div>';
+        }
+        if (data.costos.gastos_generales !== undefined) {
+          html += '<div class="fila costo-item"><span>Gastos generales</span><span>$' + parseFloat(data.costos.gastos_generales).toLocaleString('es-AR') + '</span></div>';
+        }
+        if (data.costos.almacenamiento !== undefined && data.costos.almacenamiento > 0) {
+          html += '<div class="fila costo-item"><span>Almacenamiento</span><span>$' + parseFloat(data.costos.almacenamiento).toLocaleString('es-AR') + '</span></div>';
+        }
+        if (data.costos.gastos_especificos !== undefined) {
+          html += '<div class="fila costo-item"><span>Gastos especificos del lote</span><span>$' + parseFloat(data.costos.gastos_especificos).toLocaleString('es-AR') + '</span></div>';
+        }
+
+        if (data.costos.detalle_gastos && data.costos.detalle_gastos.length > 0) {
+          html += '<div style="margin-top:8px;padding:12px;background:#FAFAF8;border-radius:8px;">';
+          html += '<div style="font-size:12px;font-weight:bold;color:#666;margin-bottom:8px;">Detalle gastos generales:</div>';
+          data.costos.detalle_gastos.forEach(function(g) {
+            html += '<div class="fila" style="font-size:13px;"><span style="color:#666;">— ' + g.categoria + '</span><span>$' + parseFloat(g.total).toLocaleString('es-AR') + '</span></div>';
+          });
+          html += '</div>';
+        }
+
+        html += '<div class="fila subtotal"><span>Total costos</span><span>$' + parseFloat(data.costos.total).toLocaleString('es-AR') + '</span></div>';
+      }
+
+      html += '<div class="fila total-final ' + (esGanancia ? 'ganancia' : 'perdida') + '">';
+      html += '<span>' + (esGanancia ? '✅ Ganancia' : '❌ Pérdida') + '</span>';
+      html += '<div class="monto-dual ' + (esGanancia ? 'ingreso' : 'egreso') + '" style="text-align:right;">' +
+              '<span class="monto-pesos">$' + Math.abs(resultado).toLocaleString('es-AR') + '</span>' +
+              '<span class="monto-usd">' + formatDolares(Math.abs(resultado)) + '</span>' +
+              '</div></div>';
+
+      if (data.margen) {
+        html += '<div style="text-align:center;margin-top:12px;font-size:14px;color:#666;">Margen: <strong>' + data.margen + '%</strong></div>';
+      }
+      if (data.ingreso_por_kilo) {
+        html += '<div style="text-align:center;font-size:14px;color:#666;">Ingreso por kilo: <strong>$' + parseFloat(data.ingreso_por_kilo).toLocaleString('es-AR') + '</strong></div>';
+      }
+      html += '</div>';
+
+      document.getElementById(container).innerHTML = html;
+    }
+
+    function cargarBalanceTemporada() {
+      const id = document.getElementById('sel-temporada').value;
+      if (!id) return;
+      fetch('/api/balance/temporada/' + id)
+        .then(function(r) { return r.json(); })
+        .then(function(data) { renderBalance(data, 'balance-temporada'); });
+    }
+
+    function cargarBalanceLote() {
+      const id = document.getElementById('sel-lote').value;
+      if (!id) return;
+      fetch('/api/balance/lote/' + id)
+        .then(function(r) { return r.json(); })
+        .then(function(data) { renderBalance(data, 'balance-lote'); });
+    }
+
+    function cargarBalancePeriodo() {
+      const desde = document.getElementById('periodo-desde').value;
+      const hasta = document.getElementById('periodo-hasta').value;
+      const temporada_id = document.getElementById('periodo-temporada').value;
+      if (!desde || !hasta) { alert('Selecciona rango de fechas'); return; }
+      var url = '/api/balance/periodo?desde=' + desde + '&hasta=' + hasta;
+      if (temporada_id) url += '&temporada_id=' + temporada_id;
+      fetch(url)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          const resultado = parseFloat(data.resultado);
+          const esGanancia = resultado >= 0;
+          document.getElementById('balance-periodo').innerHTML =
+            '<div class="card">' +
+            '<div class="fila ingreso-item"><span>Ingresos</span><span>$' + parseFloat(data.ingresos).toLocaleString('es-AR') + '</span></div>' +
+            '<div class="fila costo-item"><span>Costos totales</span><span>$' + parseFloat(data.costos).toLocaleString('es-AR') + '</span></div>' +
+            '<div class="fila total-final ' + (esGanancia ? 'ganancia' : 'perdida') + '"><span>' + (esGanancia ? 'Ganancia' : 'Perdida') + '</span><span>$' + Math.abs(resultado).toLocaleString('es-AR') + '</span></div>' +
+            '<div style="text-align:center;margin-top:12px;font-size:14px;color:#666;">Margen: <strong>' + data.margen + '%</strong></div>' +
+            '</div>';
+        });
+    }
+
+    function cargarDatos() {
+      fetch('/api/temporadas')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          var opts = '<option value="">Seleccionar...</option>' +
+            data.map(function(t) { return '<option value="' + t.id + '"' + (t.activa ? ' selected' : '') + '>' + t.nombre + '</option>'; }).join('');
+          document.getElementById('sel-temporada').innerHTML = opts;
+          document.getElementById('periodo-temporada').innerHTML = '<option value="">Todas</option>' +
+            data.map(function(t) { return '<option value="' + t.id + '">' + t.nombre + '</option>'; }).join('');
+          const activa = data.find(function(t) { return t.activa; });
+          if (activa) cargarBalanceTemporada();
+        });
+
+      fetch('/api/lotes')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          document.getElementById('sel-lote').innerHTML = '<option value="">Seleccionar lote...</option>' +
+            data.map(function(l) { return '<option value="' + l.id + '">' + l.nombre + '</option>'; }).join('');
+        });
+    }
+
+    const hoy = new Date().toISOString().split('T')[0];
+    const inicioAnio = new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0];
+    document.getElementById('periodo-desde').value = inicioAnio;
+    document.getElementById('periodo-hasta').value = hoy;
+    cargarCotizacion().then(cargarDatos);
+  cargarTemporadaActiva();
+</script>
+</body>
+</html>

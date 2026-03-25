@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1A2E0A">
+  <title>Gastos — Cosecha</title>
+  <link rel="icon" href="img/logo.png">
+  <script src="js/utils.js"></script>
+  <link rel="stylesheet" href="cosecha.css">
+  <style>
+h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
+    h2 { color: #2D5016; margin-bottom: 12px; font-size: 18px; }
+    .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    label { font-weight: bold; color: #444; display: block; margin-bottom: 6px; margin-top: 12px; }
+    input, select { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
+    .btn { width: 100%; padding: 14px; font-size: 16px; font-weight: bold; border: none; border-radius: 12px; cursor: pointer; margin-top: 12px; }
+    .btn-purple { background: #2D5016; color: white; }
+    .btn-back { background: #eee; color: #444; margin-top: 16px; }
+    .btn-sm { padding: 6px 12px; font-size: 12px; border: none; border-radius: 6px; cursor: pointer; background: #fde8e8; color: #c0392b; font-weight: bold; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+    .tab { flex: 1; padding: 12px; text-align: center; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; background: #ddd; color: #444; font-size: 14px; }
+    .tab.active { background: #2D5016; color: white; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { background: #2D5016; color: white; padding: 10px; text-align: left; }
+    td { padding: 10px; border-bottom: 1px solid #eee; vertical-align: middle; }
+    tr:nth-child(even) td { background: #FAFAF8; }
+    .msg-success { background: #e8f5e2; color: #2d6a4f; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 8px; }
+    .msg-error { background: #fde8e8; color: #c0392b; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 8px; }
+    .empty { text-align: center; color: #999; padding: 20px; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .total-row { font-weight: bold; background: #f0f4e8; }
+    .page-logo-h1 { height: 44px; width: auto; }
+    @media (max-width: 767px) { .page-logo-h1 { height: 32px; } }
+  </style>
+  <script src="js/auth-check.js"></script>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      
+      <a href="index.html" class="nav-item"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard</a>
+      <div class="nav-section">Campo</div>
+      <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
+      <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
+      <div class="nav-section">Sistema</div>
+      <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
+      <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
+      <a href="menu-admin.html" class="nav-item active"><span class="nav-icon"><i data-lucide="landmark"></i></span> Administración</a>
+      <a href="mercado.html" class="nav-item"><span class="nav-icon"><i data-lucide="trending-up"></i></span> Mercado</a>
+      <a href="menu-config.html" class="nav-item"><span class="nav-icon"><i data-lucide="settings"></i></span> Configuración</a>
+    </nav>
+    <div class="sidebar-footer">Sistema Agrícola v2</div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
+        <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div><span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-date" id="topbar-date"></span>
+      </div>
+    </header>
+
+    <div class="content">
+      <a href="menu-admin.html" class="btn-volver">← Volver</a>
+      <div class="content-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div class="content-title">Gastos</div>
+          <div class="content-sub">Registro de gastos y egresos</div>
+        </div>
+        <button class="btn btn-primary" style="width:auto;margin:0;" onclick="toggleForm()">+ Registrar gasto</button>
+      </div>
+
+      <!-- FORMULARIO COLAPSABLE -->
+      <div class="form-colapsable" id="form-nuevo">
+        <div class="card-form" style="margin-bottom:12px;">
+          <div class="form-row"><label>Temporada</label><select id="temporada"></select></div>
+          <div class="form-row"><label>Lote (opcional)</label><select id="lote"></select></div>
+          <div class="form-row"><label>Categoria</label><select id="categoria"></select></div>
+          <div class="form-row"><label>Concepto</label><input type="text" id="concepto" placeholder="Descripcion del gasto"></div>
+          <div class="form-row"><label>Monto ($)</label>
+            <input type="number" id="monto" placeholder="Ej: 50000" step="0.01" min="0" style="-moz-appearance:textfield;appearance:textfield;" data-miles>
+          </div>
+          <div class="two-col">
+            <div class="form-row" style="margin-bottom:0;"><label>Fecha</label><input type="date" id="fecha"></div>
+            <div class="form-row" style="margin-bottom:0;"><label>Forma de pago</label><select id="forma_pago"></select></div>
+          </div>
+          <div class="form-row"><label>Proveedor (opcional)</label><select id="proveedor"></select></div>
+          <div class="form-row"><label>Observacion</label><input type="text" id="observacion" placeholder="Opcional"></div>
+          <button class="btn btn-primary" id="btn-guardar" onclick="guardar(this)" style="width:auto;">Registrar gasto</button>
+          <div id="mensaje"></div>
+        </div>
+      </div>
+
+  <!-- HISTORIAL -->
+  <div id="tab-historial" class="tab-content active">
+    <div class="card" style="margin-bottom:12px;">
+      <div class="two-col">
+        <div>
+          <label>Temporada</label>
+          <select id="filtro-temporada" onchange="cargarLotesPorTemporada();cargarHistorial()"></select>
+        </div>
+        <div>
+          <label>Lote</label>
+          <select id="filtro-lote" onchange="cargarHistorial()">
+            <option value="">Todos los lotes</option>
+          </select>
+        </div>
+      </div>
+      <label class="toggle-fecha">
+        <input type="checkbox" id="filtrar-fechas" onchange="toggleFechas()">
+        <span>Filtrar por rango de fechas</span>
+      </label>
+      <div id="rango-fechas" style="display:none;">
+        <div class="two-col">
+          <div>
+            <label>Desde</label>
+            <input type="date" id="filtro-desde" onchange="cargarHistorial()">
+          </div>
+          <div>
+            <label>Hasta</label>
+            <input type="date" id="filtro-hasta" onchange="cargarHistorial()">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <table>
+        <thead>
+          <tr><th>Fecha</th><th>Categoria</th><th>Concepto</th><th>Lote</th><th>Monto</th><th></th></tr>
+        </thead>
+        <tbody id="tbody-historial">
+          <tr><td colspan="6" class="empty">Selecciona una temporada</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+    </div>
+  </div>
+
+  <!-- ── BOTTOM NAV ── -->
+  <nav class="bottom-nav">
+    
+    <a href="index.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="home"></i></span><span>Inicio</span></a>
+    <a href="juntada.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="wheat"></i></span><span>Cosecha</span></a>
+    <a href="despalillado.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="scissors"></i></span><span>Despalillado</span></a>
+    <a href="aplicaciones.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="droplets"></i></span><span>Aplicaciones</span></a>
+    <a href="menu-campo.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="menu"></i></span><span>Menú</span></a>
+  </nav>
+
+</div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+  lucide.createIcons();
+  document.getElementById('topbar-date').textContent =
+    new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
+  function toggleForm() {
+    var f = document.getElementById('form-nuevo');
+    f.classList.toggle('visible');
+    if (f.classList.contains('visible')) cargarHistorial();
+  }
+  function cargarLotesPorTemporada() {
+    var tid = document.getElementById('filtro-temporada').value ||
+              (window.temporadaActiva ? window.temporadaActiva.id : '');
+    var url = tid ? '/api/lotes?temporada_id=' + tid : '/api/lotes';
+    fetch(url).then(function(r){ return r.json(); }).then(function(data) {
+      var opts = data.map(function(l){ return '<option value="' + l.id + '">' + l.nombre + '</option>'; }).join('');
+      document.getElementById('lote').innerHTML = '<option value="">Sin lote especifico</option>' + opts;
+      recordarSeleccion('lote', 'gasto_lote');
+      document.getElementById('filtro-lote').innerHTML = '<option value="">Todos los lotes</option>' + opts;
+    });
+  }
+
+  function toggleFechas() {
+    var checked = document.getElementById('filtrar-fechas').checked;
+    document.getElementById('rango-fechas').style.display = checked ? '' : 'none';
+    if (!checked) {
+      document.getElementById('filtro-desde').value = '';
+      document.getElementById('filtro-hasta').value = '';
+    }
+    cargarHistorial();
+  }
+</script>
+<script>
+
+    function cargarDatos() {
+      fetch('/api/temporadas')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          var opts = '<option value="">Seleccionar...</option>' +
+            data.map(function(t) { return '<option value="' + t.id + '"' + (t.activa ? ' selected' : '') + '>' + t.nombre + '</option>'; }).join('');
+          document.getElementById('temporada').innerHTML = opts;
+          document.getElementById('filtro-temporada').innerHTML = '<option value="">Todas</option>' +
+            data.map(function(t) { return '<option value="' + t.id + '">' + t.nombre + '</option>'; }).join('');
+          var activa = data.find(function(t){ return t.activa; });
+          if (activa) document.getElementById('filtro-temporada').value = activa.id;
+          cargarLotesPorTemporada();
+          cargarHistorial();
+        });
+
+      cargarLotesPorTemporada();
+
+      fetch('/api/gastos/categorias')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          document.getElementById('categoria').innerHTML =
+            data.map(function(c) { return '<option value="' + c.id + '">' + c.nombre + '</option>'; }).join('');
+          recordarSeleccion('categoria', 'gasto_categoria');
+        });
+
+      fetch('/api/caja/formas-pago')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          document.getElementById('forma_pago').innerHTML = '<option value="">Sin especificar</option>' +
+            data.map(function(f) { return '<option value="' + f.id + '">' + f.nombre + '</option>'; }).join('');
+        });
+
+      fetch('/api/proveedores')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          document.getElementById('proveedor').innerHTML = '<option value="">Sin proveedor</option>' +
+            data.map(function(p) { return '<option value="' + p.id + '">' + p.nombre + '</option>'; }).join('');
+          recordarSeleccion('proveedor', 'gasto_proveedor');
+        });
+    }
+
+    function guardar(btn) {
+      const temporada_id = document.getElementById('temporada').value;
+      const categoria_id = document.getElementById('categoria').value;
+      const concepto = document.getElementById('concepto').value.trim();
+      const monto = document.getElementById('monto').value;
+      if (!temporada_id || !concepto || !monto) { alert('Completa temporada, concepto y monto'); return; }
+      setLoading(btn, true);
+      fetch('/api/gastos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          temporada_id: temporada_id,
+          lote_id: document.getElementById('lote').value || null,
+          categoria_id: categoria_id,
+          concepto: concepto,
+          monto: monto,
+          fecha: document.getElementById('fecha').value || null,
+          forma_pago_id: document.getElementById('forma_pago').value || null,
+          proveedor_id: document.getElementById('proveedor').value || null,
+          observacion: document.getElementById('observacion').value
+        })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        setLoading(btn, false);
+        if (data.ok) {
+          mostrarMensaje('mensaje', 'success', 'Gasto registrado correctamente');
+          document.getElementById('concepto').value = '';
+          document.getElementById('monto').value = '';
+          document.getElementById('observacion').value = '';
+          document.getElementById('form-nuevo').classList.remove('visible');
+          cargarHistorial();
+        } else {
+          mostrarMensaje('mensaje', 'error', data.error || 'Error al registrar');
+        }
+      })
+      .catch(function() {
+        setLoading(btn, false);
+        mostrarMensaje('mensaje', 'error', 'Error de conexión');
+      });
+    }
+
+    function cargarHistorial() {
+      const temporada_id = document.getElementById('filtro-temporada').value;
+      const lote_id = document.getElementById('filtro-lote').value;
+      const desde = document.getElementById('filtro-desde').value;
+      const hasta = document.getElementById('filtro-hasta').value;
+      var url = '/api/gastos?';
+      if (temporada_id) url += 'temporada_id=' + temporada_id + '&';
+      if (lote_id) url += 'lote_id=' + lote_id + '&';
+      if (desde) url += 'desde=' + desde + '&';
+      if (hasta) url += 'hasta=' + hasta;
+      fetch(url)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          const tbody = document.getElementById('tbody-historial');
+          if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="empty">Sin gastos registrados</td></tr>';
+            return;
+          }
+          var total = 0;
+          var rows = data.map(function(g) {
+            const fecha = g.fecha ? g.fecha.toString().split('T')[0] : '-';
+            total += parseFloat(g.monto);
+            return '<tr>' +
+              '<td>' + fecha + '</td>' +
+              '<td>' + g.categoria + '</td>' +
+              '<td>' + g.concepto + (g.proveedor ? '<br><small style="color:#999">' + g.proveedor + '</small>' : '') + '</td>' +
+              '<td>' + (g.lote || '-') + '</td>' +
+              '<td>$' + parseFloat(g.monto).toLocaleString('es-AR') + '</td>' +
+              '<td><button class="btn-sm" onclick="eliminar(' + g.id + ')">X</button></td>' +
+              '</tr>';
+          }).join('');
+          rows += '<tr class="total-row"><td colspan="4">TOTAL</td><td>$' + total.toLocaleString('es-AR') + '</td><td></td></tr>';
+          tbody.innerHTML = rows;
+        });
+    }
+
+    function eliminar(id) {
+      if (!confirm('Eliminar este gasto?')) return;
+      fetch('/api/gastos/' + id, { method: 'DELETE' })
+        .then(function(r) { return r.json(); })
+        .then(function(data) { if (data.ok) cargarHistorial(); });
+    }
+
+    const hoy = new Date().toISOString().split('T')[0];
+    document.getElementById('fecha').value = hoy;
+    cargarDatos();
+  cargarTemporadaActiva();
+</script>
+</body>
+</html>

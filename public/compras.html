@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1A2E0A">
+  <title>Compras — Cosecha</title>
+  <link rel="icon" href="img/logo.png">
+  <script src="js/utils.js"></script>
+  <link rel="stylesheet" href="cosecha.css">
+  <style>
+h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
+    h2 { color: #2D5016; margin-bottom: 12px; font-size: 18px; }
+    .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    label { font-weight: bold; color: #444; display: block; margin-bottom: 6px; margin-top: 12px; }
+    input, select { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
+    .btn { width: 100%; padding: 14px; font-size: 16px; font-weight: bold; border: none; border-radius: 12px; cursor: pointer; margin-top: 12px; }
+    .btn-teal { background: #2D5016; color: white; }
+    .btn-teal:disabled { background: #aaa; cursor: not-allowed; }
+    .btn-blue { background: #2D5016; color: white; }
+    .btn-back { background: #eee; color: #444; margin-top: 16px; }
+    .btn-sm { padding: 6px 12px; font-size: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; background: #2D5016; color: white; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+    .tab { flex: 1; padding: 12px; text-align: center; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; background: #ddd; color: #444; font-size: 14px; }
+    .tab.active { background: #2D5016; color: white; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { background: #2D5016; color: white; padding: 10px; text-align: left; }
+    td { padding: 10px; border-bottom: 1px solid #eee; vertical-align: middle; }
+    tr:nth-child(even) td { background: #FAFAF8; }
+    .empty { text-align: center; color: #999; padding: 20px; }
+    .items-container { border: 2px solid #ddd; border-radius: 8px; padding: 12px; margin-top: 12px; }
+    .item-row { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 8px; margin-bottom: 8px; align-items: center; }
+    .item-row input, .item-row select { padding: 8px; font-size: 14px; }
+    .total-compra { font-size: 22px; font-weight: bold; color: #2D5016; text-align: right; padding: 12px 0; }
+    .msg-success { background: #e8f5e2; color: #2d6a4f; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 8px; }
+    .msg-error { background: #fde8e8; color: #c0392b; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 8px; }
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal-box { background: white; border-radius: 16px; padding: 24px; width: 90%; max-width: 480px; max-height: 80vh; overflow-y: auto; }
+    .modal-box h3 { color: #2D5016; margin-bottom: 4px; font-size: 18px; }
+    .modal-info { font-size: 13px; color: #666; margin-bottom: 16px; }
+    .modal-info span { display: inline-block; margin-right: 12px; margin-top: 4px; }
+    .detalle-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 12px; }
+    .detalle-table th { background: #2D5016; color: white; padding: 8px; text-align: left; }
+    .detalle-table td { padding: 8px; border-bottom: 1px solid #eee; }
+    .detalle-total { font-weight: bold; text-align: right; font-size: 16px; padding: 12px 0 0; color: #2D5016; }
+    .btn-cerrar { background: #eee; color: #444; border: none; border-radius: 8px; padding: 10px 20px; font-size: 14px; font-weight: bold; cursor: pointer; margin-top: 16px; width: 100%; }
+    .page-logo-h1 { height: 44px; width: auto; }
+    @media (max-width: 767px) { .page-logo-h1 { height: 32px; } }
+  </style>
+  <script src="js/auth-check.js"></script>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      
+      <a href="index.html" class="nav-item"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard</a>
+      <div class="nav-section">Campo</div>
+      <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
+      <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
+      <div class="nav-section">Sistema</div>
+      <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
+      <a href="menu-comercial.html" class="nav-item active"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
+      <a href="menu-admin.html" class="nav-item"><span class="nav-icon"><i data-lucide="landmark"></i></span> Administración</a>
+      <a href="mercado.html" class="nav-item"><span class="nav-icon"><i data-lucide="trending-up"></i></span> Mercado</a>
+      <a href="menu-config.html" class="nav-item"><span class="nav-icon"><i data-lucide="settings"></i></span> Configuración</a>
+    </nav>
+    <div class="sidebar-footer">Sistema Agrícola v2</div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
+        <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div><span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-date" id="topbar-date"></span>
+      </div>
+    </header>
+
+    <div class="content">
+      <a href="menu-comercial.html" class="btn-volver">← Volver</a>
+      <div class="content-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div class="content-title">Compras</div>
+          <div class="content-sub">Registro de compras a proveedores</div>
+        </div>
+        <button class="btn btn-primary" style="width:auto;margin:0;" onclick="toggleForm()">+ Nueva compra</button>
+      </div>
+
+      <!-- FORMULARIO COLAPSABLE -->
+      <div class="form-colapsable" id="form-nuevo">
+        <div class="card-form" style="margin-bottom:12px;">
+          <div class="form-row"><label>Proveedor *</label><select id="proveedor"></select></div>
+          <div class="two-col">
+            <div class="form-row" style="margin-bottom:0;"><label>Temporada</label><select id="temporada"></select></div>
+            <div class="form-row" style="margin-bottom:0;"><label>Fecha</label><input type="date" id="fecha"></div>
+          </div>
+          <div class="form-row"><label>Forma de pago</label><select id="forma_pago"></select></div>
+          <div class="form-row"><label>Observacion</label><input type="text" id="observacion" placeholder="Opcional"></div>
+          <label style="font-size:12px;font-weight:600;color:var(--texto-2);">Productos comprados</label>
+          <div class="items-container" style="margin-top:4px;">
+            <div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;margin-bottom:8px;">
+              <strong style="font-size:13px;">Producto</strong>
+              <strong style="font-size:13px;">Cantidad</strong>
+              <strong style="font-size:13px;">Precio unit.</strong>
+              <span></span>
+            </div>
+            <div id="items-lista"></div>
+            <button class="btn btn-secondary" onclick="agregarItem()" style="margin-top:8px;">+ Agregar producto</button>
+          </div>
+          <div class="total-compra">Total: $<span id="total-display">0</span></div>
+          <button class="btn btn-primary" id="btn-guardar" onclick="guardarCompra()" style="width:auto;">Registrar compra</button>
+          <div id="mensaje"></div>
+        </div>
+      </div>
+
+  <div id="tab-historial" class="tab-content active">
+    <div class="card" style="margin-bottom:12px; padding:16px;">
+      <div>
+        <label>Temporada</label>
+        <select id="filtro-temporada" onchange="cargarHistorial()">
+          <option value="">Todas</option>
+        </select>
+      </div>
+      <label class="toggle-fecha">
+        <input type="checkbox" id="filtrar-fechas" onchange="toggleFechas()">
+        <span>Filtrar por rango de fechas</span>
+      </label>
+      <div id="rango-fechas" style="display:none;">
+        <div class="two-col" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div>
+            <label>Desde</label>
+            <input type="date" id="filtro-desde" onchange="cargarHistorial()">
+          </div>
+          <div>
+            <label>Hasta</label>
+            <input type="date" id="filtro-hasta" onchange="cargarHistorial()">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <table>
+        <thead>
+          <tr><th>Fecha y hora</th><th>Proveedor</th><th>Forma pago</th><th>Total</th><th></th></tr>
+        </thead>
+        <tbody id="tbody-historial">
+          <tr><td colspan="5" class="empty">Cargando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MODAL DETALLE -->
+  <div class="modal-overlay" id="modal-detalle">
+    <div class="modal-box">
+      <h3 id="modal-proveedor">Detalle de compra</h3>
+      <div class="modal-info" id="modal-info"></div>
+      <table class="detalle-table">
+        <thead><tr><th>Producto</th><th>Cantidad</th><th>Precio unit.</th><th>Subtotal</th></tr></thead>
+        <tbody id="modal-tbody"></tbody>
+      </table>
+      <div class="detalle-total" id="modal-total"></div>
+      <button class="btn-cerrar" onclick="cerrarModal()">Cerrar</button>
+    </div>
+  </div>
+
+    </div>
+  </div>
+
+  <!-- ── BOTTOM NAV ── -->
+  <nav class="bottom-nav">
+    
+    <a href="index.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="home"></i></span><span>Inicio</span></a>
+    <a href="juntada.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="wheat"></i></span><span>Cosecha</span></a>
+    <a href="despalillado.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="scissors"></i></span><span>Despalillado</span></a>
+    <a href="aplicaciones.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="droplets"></i></span><span>Aplicaciones</span></a>
+    <a href="menu-campo.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="menu"></i></span><span>Menú</span></a>
+  </nav>
+
+</div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+  lucide.createIcons();
+  document.getElementById('topbar-date').textContent =
+    new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
+  function toggleForm() {
+    document.getElementById('form-nuevo').classList.toggle('visible');
+  }
+  function toggleFechas() {
+    var checked = document.getElementById('filtrar-fechas').checked;
+    document.getElementById('rango-fechas').style.display = checked ? '' : 'none';
+    if (!checked) {
+      document.getElementById('filtro-desde').value = '';
+      document.getElementById('filtro-hasta').value = '';
+    }
+    cargarHistorial();
+  }
+</script>
+<script>
+    var productos = [];
+    var itemCount = 0;
+    var hoy = new Date().toISOString().split('T')[0];
+
+    function irAHistorial() {
+      document.getElementById('form-nuevo').classList.remove('visible');
+      cargarHistorial();
+    }
+
+    function cargarDatos() {
+      fetch('/api/proveedores').then(function(r){return r.json();}).then(function(data){
+        document.getElementById('proveedor').innerHTML = '<option value="">Seleccionar proveedor...</option>' +
+          data.map(function(p){return '<option value="'+p.id+'">'+p.nombre+'</option>';}).join('');
+        recordarSeleccion('proveedor', 'ultimo_proveedor');
+      });
+      fetch('/api/temporadas').then(function(r){return r.json();}).then(function(data){
+        var optsTemporada = data.map(function(t){return '<option value="'+t.id+'">'+t.nombre+'</option>';}).join('');
+        document.getElementById('temporada').innerHTML = '<option value="">Sin temporada</option>' + optsTemporada;
+        document.getElementById('filtro-temporada').innerHTML = '<option value="">Todas</option>' + optsTemporada;
+        var activa = data.find(function(t){ return t.activa; });
+        if (activa) document.getElementById('filtro-temporada').value = activa.id;
+      });
+      fetch('/api/caja/formas-pago').then(function(r){return r.json();}).then(function(data){
+        document.getElementById('forma_pago').innerHTML = '<option value="">Sin especificar</option>' +
+          data.map(function(f){return '<option value="'+f.id+'">'+f.nombre+'</option>';}).join('');
+      });
+      return fetch('/api/productos').then(function(r){return r.json();}).then(function(data){ productos = data; });
+    }
+
+    function autocompletarPrecio(sel) {
+      var id = sel.value;
+      var prod = productos.find(function(p) { return p.id == id; });
+      if (prod && prod.costo_unitario) {
+        var row = sel.parentElement;
+        var inputs = row.querySelectorAll('input');
+        if (inputs[1] && !inputs[1].value) inputs[1].value = parseFloat(prod.costo_unitario).toFixed(2);
+      }
+      calcularTotal();
+    }
+
+    function agregarItem() {
+      itemCount++;
+      var div = document.createElement('div');
+      div.className = 'item-row';
+      div.id = 'item-' + itemCount;
+      div.innerHTML =
+        '<select onchange="autocompletarPrecio(this)">' +
+          '<option value="">Seleccionar...</option>' +
+          productos.map(function(p){return '<option value="'+p.id+'">'+p.nombre+'</option>';}).join('') +
+        '</select>' +
+        '<input type="number" placeholder="Cant." step="0.01" min="0" style="-moz-appearance:textfield;appearance:textfield;" data-miles onchange="calcularTotal()">' +
+        '<input type="number" placeholder="Precio" step="0.01" min="0" style="-moz-appearance:textfield;appearance:textfield;" data-miles onchange="calcularTotal()">' +
+        '<button class="btn-sm" style="background:#c0392b;" onclick="eliminarItem('+itemCount+')">X</button>';
+      document.getElementById('items-lista').appendChild(div);
+    }
+
+    function eliminarItem(id) {
+      var el = document.getElementById('item-' + id);
+      if (el) el.remove();
+      calcularTotal();
+    }
+
+    function calcularTotal() {
+      var total = 0;
+      document.querySelectorAll('.item-row').forEach(function(row) {
+        var inputs = row.querySelectorAll('input');
+        var cant = parseFloat(inputs[0].value) || 0;
+        var precio = parseFloat(inputs[1].value) || 0;
+        total += cant * precio;
+      });
+      document.getElementById('total-display').textContent = total.toLocaleString('es-AR', {minimumFractionDigits: 2});
+    }
+
+    function limpiarFormulario() {
+      document.getElementById('items-lista').innerHTML = '';
+      document.getElementById('observacion').value = '';
+      document.getElementById('total-display').textContent = '0';
+      document.getElementById('proveedor').value = '';
+      document.getElementById('temporada').value = '';
+      document.getElementById('forma_pago').value = '';
+      document.getElementById('fecha').value = hoy;
+      document.getElementById('mensaje').innerHTML = '';
+      itemCount = 0;
+      agregarItem();
+    }
+
+    function guardarCompra() {
+      var proveedor_id = document.getElementById('proveedor').value;
+      if (!proveedor_id) { alert('Selecciona un proveedor'); return; }
+      var items = [];
+      document.querySelectorAll('.item-row').forEach(function(row) {
+        var sel = row.querySelector('select');
+        var inputs = row.querySelectorAll('input');
+        var producto_id = sel.value;
+        var cantidad = parseFloat(inputs[0].value);
+        var precio_unit = parseFloat(inputs[1].value);
+        if (producto_id && cantidad && precio_unit) {
+          items.push({ producto_id: producto_id, cantidad: cantidad, precio_unit: precio_unit });
+        }
+      });
+      if (items.length === 0) { alert('Agrega al menos un producto con cantidad y precio'); return; }
+      var btn = document.getElementById('btn-guardar');
+      btn.disabled = true;
+      btn.textContent = 'Guardando...';
+      fetch('/api/compras', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          proveedor_id: proveedor_id,
+          temporada_id: document.getElementById('temporada').value || null,
+          fecha: document.getElementById('fecha').value || null,
+          forma_pago_id: document.getElementById('forma_pago').value || null,
+          observacion: document.getElementById('observacion').value,
+          items: items
+        })
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        btn.disabled = false;
+        btn.textContent = 'Registrar Compra';
+        if (data.ok) {
+          limpiarFormulario();
+          irAHistorial();
+        } else {
+          mostrarMensaje('mensaje', 'error', data.error || 'Error al guardar');
+        }
+      })
+      .catch(function(){
+        btn.disabled = false;
+        btn.textContent = 'Registrar Compra';
+        mostrarMensaje('mensaje', 'error', 'Error de conexion');
+      });
+    }
+
+    function formatFechaHora(str) {
+      if (!str) return '-';
+      var d = new Date(str);
+      var fecha = d.toLocaleDateString('es-AR');
+      var hora = d.toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'});
+      return fecha + ' ' + hora;
+    }
+
+    function cargarHistorial() {
+      var params = [];
+      var tid = document.getElementById('filtro-temporada').value;
+      var desde = document.getElementById('filtro-desde').value;
+      var hasta = document.getElementById('filtro-hasta').value;
+      if (tid) params.push('temporada_id=' + tid);
+      if (desde) params.push('desde=' + desde);
+      if (hasta) params.push('hasta=' + hasta);
+      var url = '/api/compras' + (params.length ? '?' + params.join('&') : '');
+      fetch(url).then(function(r){return r.json();}).then(function(data){
+        var tbody = document.getElementById('tbody-historial');
+        if (!data.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty">Sin compras</td></tr>'; return; }
+        tbody.innerHTML = data.map(function(c) {
+          var fechaHora = formatFechaHora(c.fecha);
+          var fecha = c.fecha ? c.fecha.toString().split('T')[0] : '-';
+          return '<tr>' +
+            '<td>' + fechaHora + '</td>' +
+            '<td><strong>' + c.proveedor + '</strong>' + (c.temporada ? '<br><small style="color:#999">' + c.temporada + '</small>' : '') + '</td>' +
+            '<td>' + (c.forma_pago || '-') + '</td>' +
+            '<td><strong>$' + parseFloat(c.total).toLocaleString('es-AR') + '</strong></td>' +
+            '<td><button class="btn-sm" onclick="verDetalle('+c.id+',\''+c.proveedor+'\',\''+fechaHora+'\',\''+(c.forma_pago||'-')+'\',\''+(c.observacion||'')+'\')">Ver detalle</button></td>' +
+            '</tr>';
+        }).join('');
+      });
+    }
+
+    function verDetalle(id, proveedor, fecha, formaPago, observacion) {
+      document.getElementById('modal-proveedor').textContent = proveedor;
+      document.getElementById('modal-info').innerHTML =
+        '<span>📅 ' + fecha + '</span>' +
+        '<span>💳 ' + formaPago + '</span>' +
+        (observacion ? '<span>📝 ' + observacion + '</span>' : '');
+      document.getElementById('modal-tbody').innerHTML = '<tr><td colspan="4" style="text-align:center;color:#999;">Cargando...</td></tr>';
+      document.getElementById('modal-total').textContent = '';
+      document.getElementById('modal-detalle').classList.add('open');
+      fetch('/api/compras/' + id + '/detalle').then(function(r){return r.json();}).then(function(items){
+        if (!items.length) {
+          document.getElementById('modal-tbody').innerHTML = '<tr><td colspan="4" style="text-align:center;color:#999;">Sin detalle</td></tr>';
+          return;
+        }
+        var total = 0;
+        document.getElementById('modal-tbody').innerHTML = items.map(function(i) {
+          var sub = parseFloat(i.subtotal);
+          total += sub;
+          return '<tr>' +
+            '<td><strong>' + i.producto + '</strong><br><small style="color:#999">' + (i.presentacion||'') + '</small></td>' +
+            '<td>' + parseFloat(i.cantidad).toFixed(2) + '</td>' +
+            '<td>$' + parseFloat(i.precio_unit).toLocaleString('es-AR') + '</td>' +
+            '<td>$' + sub.toLocaleString('es-AR') + '</td>' +
+            '</tr>';
+        }).join('');
+        document.getElementById('modal-total').textContent = 'Total: $' + total.toLocaleString('es-AR');
+      });
+    }
+
+    function cerrarModal() {
+      document.getElementById('modal-detalle').classList.remove('open');
+    }
+
+    document.getElementById('fecha').value = hoy;
+    cargarDatos().then(function() { agregarItem(); cargarHistorial(); });
+  cargarTemporadaActiva();
+</script>
+</body>
+</html>

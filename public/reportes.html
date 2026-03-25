@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1A2E0A">
+  <title>Reportes — Cosecha</title>
+  <link rel="icon" href="img/logo.png">
+  <script src="js/utils.js"></script>
+  <link rel="stylesheet" href="cosecha.css">
+  <style>
+    .reportes-layout {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 16px;
+    }
+    .reportes-sidebar {
+      background: var(--superficie);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      border: 1px solid var(--borde);
+    }
+    .reportes-sidebar .cat-title {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--texto-suave);
+      letter-spacing: 1px;
+      margin: 12px 0 6px;
+    }
+    .rep-btn {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: 8px 10px;
+      border: none;
+      background: none;
+      border-radius: 6px;
+      font-size: 13px;
+      color: var(--texto);
+      cursor: pointer;
+    }
+    .rep-btn:hover,
+    .rep-btn.active {
+      background: var(--verde-suave);
+      color: var(--verde);
+      font-weight: 600;
+    }
+    .reportes-panel {
+      background: var(--superficie);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      border: 1px solid var(--borde);
+      min-height: 300px;
+    }
+    .panel-titulo {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--texto);
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--borde);
+    }
+    .filtros-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+      align-items: flex-end;
+    }
+    .filtro-grupo {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .filtro-grupo label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--texto-suave);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .filtro-grupo input,
+    .filtro-grupo select {
+      padding: 7px 10px;
+      border: 1px solid var(--borde);
+      border-radius: 6px;
+      font-size: 13px;
+      background: var(--fondo);
+      color: var(--texto);
+      min-width: 130px;
+    }
+    .acciones-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .btn-ver {
+      padding: 8px 18px;
+      background: var(--verde);
+      color: white;
+      border: none;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-ver:hover { opacity: 0.88; }
+    .btn-export {
+      padding: 8px 14px;
+      border: 1px solid var(--borde);
+      background: var(--fondo);
+      color: var(--texto);
+      border-radius: 7px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .btn-export:hover { background: var(--verde-suave); border-color: var(--verde); color: var(--verde); }
+    .resultado-tabla {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .resultado-tabla th {
+      background: var(--verde-oscuro, #2D5016);
+      color: white;
+      padding: 9px 10px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 12px;
+    }
+    .resultado-tabla td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--borde);
+      color: var(--texto);
+    }
+    .resultado-tabla tr:nth-child(even) td { background: var(--fondo); }
+    .resultado-tabla .fila-total td {
+      font-weight: 700;
+      background: var(--verde-suave);
+      border-top: 2px solid var(--verde);
+    }
+    .tabla-wrap { overflow-x: auto; margin-top: 8px; }
+    .sin-datos {
+      text-align: center;
+      color: var(--texto-suave);
+      padding: 32px 0;
+      font-size: 14px;
+    }
+    .panel-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 240px;
+      color: var(--texto-suave);
+      gap: 10px;
+    }
+    .panel-placeholder i { width: 40px; height: 40px; opacity: 0.3; }
+    .loading-msg { color: var(--texto-suave); font-size: 13px; padding: 20px 0; text-align: center; }
+    @media (max-width: 768px) {
+      .reportes-layout { grid-template-columns: 1fr; }
+      .reportes-sidebar { display: flex; flex-wrap: wrap; gap: 4px; padding: 10px; }
+      .reportes-sidebar .cat-title { width: 100%; margin: 4px 0 2px; }
+      .rep-btn { width: auto; flex: 1 0 auto; }
+    }
+  </style>
+  <script src="js/auth-check.js"></script>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ── SIDEBAR NAV ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;">
+      <div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;">
+        <span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span>
+        <span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-item"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard</a>
+      <div class="nav-section">Campo</div>
+      <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
+      <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
+      <div class="nav-section">Sistema</div>
+      <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
+      <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
+      <a href="menu-admin.html" class="nav-item active"><span class="nav-icon"><i data-lucide="landmark"></i></span> Administración</a>
+      <a href="mercado.html" class="nav-item"><span class="nav-icon"><i data-lucide="trending-up"></i></span> Mercado</a>
+      <a href="menu-config.html" class="nav-item"><span class="nav-icon"><i data-lucide="settings"></i></span> Configuración</a>
+    </nav>
+    <div class="sidebar-footer">Sistema Agrícola v2</div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
+        <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;">
+        <div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;">
+          <span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span>
+          <span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span>
+        </div>
+        <span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-date" id="topbar-date"></span>
+      </div>
+    </header>
+
+    <div class="content">
+      <a href="menu-admin.html" class="btn-volver">← Volver</a>
+      <div class="content-header">
+        <div class="content-title">Reportes</div>
+        <div class="content-sub">Generación y exportación de informes</div>
+      </div>
+
+      <div class="reportes-layout">
+
+        <!-- ── SIDEBAR REPORTES ── -->
+        <div class="reportes-sidebar">
+          <div class="cat-title">Campo</div>
+          <button class="rep-btn" onclick="abrirReporte('cosecha')">Cosecha por período</button>
+          <button class="rep-btn" onclick="abrirReporte('despalillado')">Despalillado por período</button>
+          <button class="rep-btn" onclick="abrirReporte('pagos')">Pagos a trabajadores</button>
+
+          <div class="cat-title">Administración</div>
+          <button class="rep-btn" onclick="abrirReporte('caja')">Movimientos de caja</button>
+          <button class="rep-btn" onclick="abrirReporte('gastos')">Gastos por período</button>
+          <button class="rep-btn" onclick="abrirReporte('cheques')">Cheques</button>
+
+          <div class="cat-title">Comercial</div>
+          <button class="rep-btn" onclick="abrirReporte('compras')">Compras por período</button>
+        </div>
+
+        <!-- ── PANEL REPORTE ── -->
+        <div class="reportes-panel" id="panel-reporte">
+          <div class="panel-placeholder">
+            <i data-lucide="bar-chart-2"></i>
+            <span>Seleccioná un reporte del menú lateral</span>
+          </div>
+        </div>
+
+      </div><!-- /reportes-layout -->
+    </div><!-- /content -->
+  </div><!-- /main -->
+
+  <!-- ── BOTTOM NAV ── -->
+  <nav class="bottom-nav">
+    <a href="index.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="home"></i></span><span>Inicio</span></a>
+    <a href="juntada.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="wheat"></i></span><span>Cosecha</span></a>
+    <a href="despalillado.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="scissors"></i></span><span>Despalillado</span></a>
+    <a href="aplicaciones.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="droplets"></i></span><span>Aplicaciones</span></a>
+    <a href="menu-campo.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="menu"></i></span><span>Menú</span></a>
+  </nav>
+
+</div><!-- /app-shell -->
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+// ── utilidades ──────────────────────────────────────────────────────────────
+
+const hoy = new Date().toISOString().split('T')[0];
+
+function fmt(n) {
+  if (n === null || n === undefined || n === '') return '';
+  const num = parseFloat(n);
+  if (isNaN(num)) return n;
+  return num.toLocaleString('es-AR');
+}
+
+function fmtMonto(n) {
+  if (n === null || n === undefined || n === '') return '';
+  const num = parseFloat(n);
+  if (isNaN(num)) return n;
+  return '$ ' + num.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function buildQS(params) {
+  return Object.entries(params)
+    .filter(([, v]) => v !== '' && v !== null && v !== undefined)
+    .map(([k, v]) => encodeURIComponent(k) + '=' + encodeURIComponent(v))
+    .join('&');
+}
+
+function renderTabla(cols, rows, totalCols) {
+  if (!rows || rows.length === 0) {
+    return '<div class="sin-datos">Sin datos para los filtros seleccionados.</div>';
+  }
+  let html = '<div class="tabla-wrap"><table class="resultado-tabla"><thead><tr>';
+  cols.forEach(c => { html += '<th>' + c.label + '</th>'; });
+  html += '</tr></thead><tbody>';
+
+  const totales = {};
+  totalCols && totalCols.forEach(k => { totales[k] = 0; });
+
+  rows.forEach(row => {
+    html += '<tr>';
+    cols.forEach(c => {
+      const val = row[c.key];
+      const display = c.monto ? fmtMonto(val) : c.kilos ? fmt(val) : (val !== null && val !== undefined ? val : '');
+      html += '<td>' + display + '</td>';
+    });
+    html += '</tr>';
+    if (totalCols) {
+      totalCols.forEach(k => {
+        totales[k] += parseFloat(row[k]) || 0;
+      });
+    }
+  });
+
+  // Fila total
+  if (totalCols && totalCols.length > 0) {
+    html += '<tr class="fila-total">';
+    let first = true;
+    cols.forEach(c => {
+      if (first) {
+        html += '<td>TOTAL</td>';
+        first = false;
+      } else if (totalCols.includes(c.key)) {
+        const val = totales[c.key];
+        const display = c.monto ? fmtMonto(val) : fmt(val);
+        html += '<td>' + display + '</td>';
+      } else {
+        html += '<td></td>';
+      }
+    });
+    html += '</tr>';
+  }
+
+  html += '</tbody></table></div>';
+  return html;
+}
+
+// ── estado global ────────────────────────────────────────────────────────────
+
+let reporteActual = null;
+let lotesCache = [];
+let juntadoresCache = [];
+let proveedoresCache = [];
+
+async function cargarSelects() {
+  try {
+    const [rLotes, rJunt, rProv] = await Promise.all([
+      fetch('/api/lotes').then(r => r.json()),
+      fetch('/api/juntadores').then(r => r.json()),
+      fetch('/api/proveedores').then(r => r.json())
+    ]);
+    lotesCache = Array.isArray(rLotes) ? rLotes : [];
+    juntadoresCache = Array.isArray(rJunt) ? rJunt : [];
+    proveedoresCache = Array.isArray(rProv) ? rProv : [];
+  } catch (e) {
+    // silenciar — los selects quedarán vacíos
+  }
+}
+
+function opcionesLotes() {
+  return '<option value="">Todos los lotes</option>' +
+    lotesCache.map(l => `<option value="${l.id}">${l.nombre}</option>`).join('');
+}
+
+function opcionesJuntadores() {
+  return '<option value="">Todos los trabajadores</option>' +
+    juntadoresCache.map(j => `<option value="${j.id}">${j.nombre} ${j.apellido}</option>`).join('');
+}
+
+function opcionesProveedores() {
+  return '<option value="">Todos los proveedores</option>' +
+    proveedoresCache.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
+}
+
+// ── definición de reportes ───────────────────────────────────────────────────
+
+const REPORTES = {
+
+  cosecha: {
+    titulo: 'Cosecha por período',
+    filtros: () => `
+      <div class="filtro-grupo"><label>Desde</label><input type="date" id="f-desde" value="${hoy}"></div>
+      <div class="filtro-grupo"><label>Hasta</label><input type="date" id="f-hasta" value="${hoy}"></div>
+      <div class="filtro-grupo"><label>Lote</label><select id="f-lote">${opcionesLotes()}</select></div>
+      <div class="filtro-grupo"><label>Cosechador</label><select id="f-juntador">${opcionesJuntadores()}</select></div>
+    `,
+    params: () => ({
+      desde: document.getElementById('f-desde').value,
+      hasta: document.getElementById('f-hasta').value,
+      lote_id: document.getElementById('f-lote').value,
+      juntador_id: document.getElementById('f-juntador').value
+    }),
+    endpoint: 'cosecha',
+    cols: [
+      { key: 'fecha',      label: 'Fecha' },
+      { key: 'cosechador', label: 'Cosechador' },
+      { key: 'lote',       label: 'Lote' },
+      { key: 'kilos',      label: 'Kilos', kilos: true },
+      { key: 'destino',    label: 'Destino' }
+    ],
+    totalCols: ['kilos']
+  },
+
+  despalillado: {
+    titulo: 'Despalillado por período',
+    filtros: () => `
+      <div class="filtro-grupo"><label>Desde</label><input type="date" id="f-desde" value="${hoy}"></div>
+      <div class="filtro-grupo"><label>Hasta</label><input type="date" id="f-hasta" value="${hoy}"></div>
+    `,
+    params: () => ({
+      desde: document.getElementById('f-desde').value,
+      hasta: document.getElementById('f-hasta').value
+    }),
+    endpoint: 'despalillado',
+    cols: [
+      { key: 'fecha',      label: 'Fecha' },
+      { key: 'trabajador', label: 'Trabajador' },
+      { key: 'lote',       label: 'Lote' },
+      { key: 'kilos',      label: 'Kilos', kilos: true }
+    ],
+    totalCols: ['kilos']
+  },
+
+  caja: {
+    titulo: 'Movimientos de caja',
+    filtros: () => `
+      <div class="filtro-grupo"><label>Desde</label><input type="date" id="f-desde" value="${hoy}"></div>
+      <div class="filtro-grupo"><label>Hasta</label><input type="date" id="f-hasta" value="${hoy}"></div>
+      <div class="filtro-grupo"><label>Tipo</label>
+        <select id="f-tipo">
+          <option value="todos">Todos</option>
+          <option value="ingreso">Ingreso</option>
+          <option value="egreso">Egreso</option>
+        </select>
+      </div>
+    `,
+    params: () => ({
+      desde: document.getElementById('f-desde').value,
+      hasta: document.getElementById('f-hasta').value,
+      tipo: document.getElementById('f-tipo').value
+    }),
+    endpoint: 'caja',
+    cols: [
+      { key: 'fecha',       label: 'Fecha' },
+      { key: 'tipo',        label: 'Tipo' },
+      { key: 'descripcion', label: 'Descripción' },
+      { key: 'forma_pago',  label: 'Forma de pago' },
+      { key: 'monto',       label: 'Monto', monto: true }
+    ],
+    totalCols: ['monto']
+  },
+
+  gastos: {
+    titulo: 'Gastos por período',
+    filtros: () => `
+      <div class="filtro-grupo"><label>Desde</label><input type="date" id="f-desde" value="${hoy}"></div>
+      <div class="filtro-grupo"><label>Hasta</label><input type="date" id="f-hasta" value="${hoy}"></div>
+    `,
+    params: () => ({
+      desde: document.getElementById('f-desde').value,
+      hasta: document.getElementById('f-hasta').value
+    }),
+    endpoint: 'gastos',
+    cols: [
+      { key: 'fecha',       label: 'Fecha' },
+      { key: 'categoria',   label: 'Categoría' },
+      { key: 'descripcion', label: 'Descripción' },
+      { key: 'forma_pago',  label: 'Forma de pago' },
+      { key: 'monto',       label: 'Monto', monto: true }
+    ],
+    totalCols: ['monto']
+  },
+
+  cheques: {
+    titulo: 'Cheques',
+    filtros: () => `
+      <div class="filtro-grupo"><label>Estado</label>
+        <select id="f-estado">
+          <option value="">Todos</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="cobrado">Cobrado</option>
+          <option value="rechazado">Rechazado</option>
+          <option value="depositado">Depositado</option>
+          <option value="anulado">Anulado</option>
+        </select>
+      </div>
+      <div class="filtro-grupo"><label>Vence desde</label><input type="date" id="f-desde"></div>
+      <div class="filtro-grupo"><label>Vence hasta</label><input type="date" id="f-hasta"></div>
+    `,
+    params: () => ({
+      estado: document.getElementById('f-estado').value,
+      desde: document.getElementById('f-desde').value,
+      hasta: document.getElementById('f-hasta').value
+    }),
+    endpoint: 'cheques',
+    cols: [
+      { key: 'numero',            label: 'Número' },
+      { key: 'tipo',              label: 'Tipo' },
+      { key: 'tipo_cheque',       label: 'E-Cheq / Físico' },
+      { key: 'banco',             label: 'Banco' },
+      { key: 'monto',             label: 'Monto', monto: true },
+      { key: 'fecha_emision',     label: 'Emisión' },
+      { key: 'fecha_vencimiento', label: 'Vencimiento' },
+      { key: 'estado',            label: 'Estado' },
+      { key: 'proveedor',         label: 'Proveedor' }
+    ],
+    totalCols: ['monto']
+  },
+
+  pagos: {
+    titulo: 'Pagos a trabajadores',
+    filtros: () => `
+      <div class="filtro-grupo"><label>Desde</label><input type="date" id="f-desde" value="${hoy}"></div>
+      <div class="filtro-grupo"><label>Hasta</label><input type="date" id="f-hasta" value="${hoy}"></div>
+      <div class="filtro-grupo"><label>Trabajador</label><select id="f-juntador">${opcionesJuntadores()}</select></div>
+    `,
+    params: () => ({
+      desde: document.getElementById('f-desde').value,
+      hasta: document.getElementById('f-hasta').value,
+      juntador_id: document.getElementById('f-juntador').value
+    }),
+    endpoint: 'pagos',
+    cols: [
+      { key: 'fecha',       label: 'Fecha' },
+      { key: 'trabajador',  label: 'Trabajador' },
+      { key: 'tipo',        label: 'Tipo' },
+      { key: 'descripcion', label: 'Descripción' },
+      { key: 'monto',       label: 'Monto', monto: true }
+    ],
+    totalCols: ['monto']
+  },
+
+  compras: {
+    titulo: 'Compras por período',
+    filtros: () => `
+      <div class="filtro-grupo"><label>Desde</label><input type="date" id="f-desde" value="${hoy}"></div>
+      <div class="filtro-grupo"><label>Hasta</label><input type="date" id="f-hasta" value="${hoy}"></div>
+      <div class="filtro-grupo"><label>Proveedor</label><select id="f-proveedor">${opcionesProveedores()}</select></div>
+    `,
+    params: () => ({
+      desde: document.getElementById('f-desde').value,
+      hasta: document.getElementById('f-hasta').value,
+      proveedor_id: document.getElementById('f-proveedor').value
+    }),
+    endpoint: 'compras',
+    cols: [
+      { key: 'fecha',       label: 'Fecha' },
+      { key: 'proveedor',   label: 'Proveedor' },
+      { key: 'descripcion', label: 'Descripción' },
+      { key: 'forma_pago',  label: 'Forma de pago' },
+      { key: 'monto',       label: 'Monto', monto: true }
+    ],
+    totalCols: ['monto']
+  }
+};
+
+// ── render de panel ──────────────────────────────────────────────────────────
+
+function abrirReporte(clave) {
+  reporteActual = clave;
+  const cfg = REPORTES[clave];
+
+  // Marcar botón activo
+  document.querySelectorAll('.rep-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.rep-btn').forEach(b => {
+    if (b.getAttribute('onclick') === `abrirReporte('${clave}')`) b.classList.add('active');
+  });
+
+  const panel = document.getElementById('panel-reporte');
+  panel.innerHTML = `
+    <div class="panel-titulo">${cfg.titulo}</div>
+    <div class="filtros-row" id="filtros-row">${cfg.filtros()}</div>
+    <div class="acciones-row">
+      <button class="btn-ver" onclick="verReporte()">Ver reporte</button>
+      <button class="btn-export" onclick="exportar('excel')">📥 Excel</button>
+      <button class="btn-export" onclick="exportar('pdf')">📄 PDF</button>
+    </div>
+    <div id="resultado-reporte"></div>
+  `;
+  lucide.createIcons();
+}
+
+async function verReporte() {
+  const cfg = REPORTES[reporteActual];
+  const params = cfg.params();
+  const qs = buildQS(params);
+  const url = `/api/reportes/${cfg.endpoint}?${qs}`;
+
+  const div = document.getElementById('resultado-reporte');
+  div.innerHTML = '<div class="loading-msg">Cargando...</div>';
+
+  try {
+    const resp = await fetch(url);
+    const data = await resp.json();
+    if (data.error) {
+      div.innerHTML = `<div class="sin-datos">Error: ${data.error}</div>`;
+      return;
+    }
+    div.innerHTML = renderTabla(cfg.cols, data.rows, cfg.totalCols);
+  } catch (e) {
+    div.innerHTML = `<div class="sin-datos">Error al cargar el reporte.</div>`;
+  }
+}
+
+function exportar(formato) {
+  const cfg = REPORTES[reporteActual];
+  const params = { ...cfg.params(), formato };
+  const qs = buildQS(params);
+  window.location.href = `/api/reportes/${cfg.endpoint}?${qs}`;
+}
+
+// ── init ─────────────────────────────────────────────────────────────────────
+
+lucide.createIcons();
+document.getElementById('topbar-date').textContent =
+  new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
+
+cargarSelects();
+cargarTemporadaActiva();
+</script>
+</body>
+</html>

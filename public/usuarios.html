@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1A2E0A">
+  <title>Usuarios — Cosecha</title>
+  <link rel="icon" href="img/logo.png">
+  <script src="js/auth-check.js"></script>
+  <script src="js/utils.js"></script>
+  <link rel="stylesheet" href="cosecha.css">
+  <style>
+    label { font-weight: 600; color: var(--texto-2); display: block; margin-bottom: 5px; margin-top: 12px; font-size: 13px; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .badge-admin { background: #FEF3C7; color: #92400E; }
+    .badge-enc   { background: var(--verde-suave); color: var(--verde); }
+    .badge-inact { background: var(--fondo-dark); color: var(--texto-suave); }
+    .btn-sm { padding: 5px 12px; font-size: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+    .btn-danger { background: var(--error-bg); color: var(--error-text); }
+    .msg-success { background: var(--success-bg); border: 1px solid var(--success-border); color: var(--success-text); padding: 10px 14px; border-radius: var(--radius); font-size: 13px; font-weight: 600; margin-top: 10px; }
+    .msg-error   { background: var(--error-bg);   border: 1px solid var(--error-border);   color: var(--error-text);   padding: 10px 14px; border-radius: var(--radius); font-size: 13px; font-weight: 600; margin-top: 10px; }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;">
+      <div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;">
+        <span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span>
+        <span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-item"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard</a>
+      <div class="nav-section">Campo</div>
+      <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
+      <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
+      <div class="nav-section">Sistema</div>
+      <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
+      <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
+      <a href="menu-admin.html" class="nav-item"><span class="nav-icon"><i data-lucide="landmark"></i></span> Administración</a>
+      <a href="mercado.html" class="nav-item"><span class="nav-icon"><i data-lucide="trending-up"></i></span> Mercado</a>
+      <a href="menu-config.html" class="nav-item active"><span class="nav-icon"><i data-lucide="settings"></i></span> Configuración</a>
+    </nav>
+    <div class="sidebar-footer">Sistema Agrícola v2</div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
+        <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;">
+        <div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;">
+          <span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span>
+          <span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span>
+        </div><span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-date" id="topbar-date"></span>
+      </div>
+    </header>
+
+    <div class="content">
+      <div class="content-header">
+        <div class="content-title">Usuarios</div>
+        <div class="content-sub">Gestión de accesos al sistema</div>
+      </div>
+
+      <!-- Lista de usuarios -->
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-header">
+          <span class="card-title">Usuarios registrados</span>
+          <button onclick="cargar()" style="font-size:12px;font-weight:600;color:var(--verde);background:none;border:none;cursor:pointer;">↻ Actualizar</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Usuario</th>
+                <th>Rol</th>
+                <th>Estado</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="tbody-usuarios">
+              <tr><td colspan="5" class="activity-empty">Cargando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Crear nuevo usuario -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">Nuevo usuario</span></div>
+        <div class="card-body">
+          <div class="two-col">
+            <div>
+              <label>Nombre completo</label>
+              <input type="text" id="u-nombre" class="input-field" placeholder="Ej: Juan Pérez">
+            </div>
+            <div>
+              <label>Nombre de usuario</label>
+              <input type="text" id="u-usuario" class="input-field" placeholder="Ej: jperez" autocomplete="off">
+            </div>
+          </div>
+          <div class="two-col">
+            <div>
+              <label>Contraseña</label>
+              <input type="password" id="u-password" class="input-field" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+            </div>
+            <div>
+              <label>Rol</label>
+              <select id="u-rol" class="input-field">
+                <option value="encargado">Encargado</option>
+                <option value="administrador">Administrador</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn--primary" id="btn-crear" onclick="crear(this)" style="margin-top:16px;">+ Crear usuario</button>
+          <div id="msg-crear"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── BOTTOM NAV ── -->
+  <nav class="bottom-nav">
+    <a href="index.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon"><i data-lucide="home"></i></span><span>Inicio</span>
+    </a>
+    <a href="juntada.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon"><i data-lucide="wheat"></i></span><span>Cosecha</span>
+    </a>
+    <a href="despalillado.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon"><i data-lucide="scissors"></i></span><span>Despalillado</span>
+    </a>
+    <a href="aplicaciones.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon"><i data-lucide="droplets"></i></span><span>Aplicaciones</span>
+    </a>
+    <a href="menu-campo.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon"><i data-lucide="menu"></i></span><span>Menú</span>
+    </a>
+  </nav>
+
+</div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+  lucide.createIcons();
+  document.getElementById('topbar-date').textContent =
+    new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
+
+  async function cargar() {
+    const tbody = document.getElementById('tbody-usuarios');
+    tbody.innerHTML = '<tr><td colspan="5" class="activity-empty">Cargando...</td></tr>';
+    const data = await fetch('/api/usuarios').then(r => r.json()).catch(() => []);
+    if (!data.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="activity-empty">Sin usuarios</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(u => `
+      <tr>
+        <td style="font-weight:600;">${u.nombre}</td>
+        <td style="font-family:'JetBrains Mono',monospace;font-size:13px;">${u.usuario}</td>
+        <td>
+          <span class="badge ${u.rol === 'administrador' ? 'badge-admin' : 'badge-enc'}">
+            ${u.rol === 'administrador' ? 'Admin' : 'Encargado'}
+          </span>
+        </td>
+        <td>
+          ${u.activo
+            ? '<span class="badge" style="background:var(--success-bg);color:var(--success-text);">Activo</span>'
+            : '<span class="badge badge-inact">Inactivo</span>'}
+        </td>
+        <td>
+          ${u.activo
+            ? `<button class="btn-sm btn-danger" onclick="desactivar(${u.id}, '${u.nombre}')">Desactivar</button>`
+            : ''}
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  async function crear(btn) {
+    const nombre   = document.getElementById('u-nombre').value.trim();
+    const usuario  = document.getElementById('u-usuario').value.trim();
+    const password = document.getElementById('u-password').value;
+    const rol      = document.getElementById('u-rol').value;
+    const msgEl    = document.getElementById('msg-crear');
+    msgEl.innerHTML = '';
+
+    if (!nombre || !usuario || !password || !rol) {
+      msgEl.innerHTML = '<div class="msg-error">Completá todos los campos</div>';
+      return;
+    }
+    if (password.length < 6) {
+      msgEl.innerHTML = '<div class="msg-error">La contraseña debe tener al menos 6 caracteres</div>';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Creando...';
+    try {
+      const res  = await fetch('/api/usuarios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre, usuario, password, rol })
+      });
+      const data = await res.json();
+      if (data.error) {
+        msgEl.innerHTML = '<div class="msg-error">' + data.error + '</div>';
+        return;
+      }
+      msgEl.innerHTML = '<div class="msg-success">Usuario creado correctamente</div>';
+      document.getElementById('u-nombre').value = '';
+      document.getElementById('u-usuario').value = '';
+      document.getElementById('u-password').value = '';
+      document.getElementById('u-rol').value = 'encargado';
+      cargar();
+      setTimeout(() => { msgEl.innerHTML = ''; }, 3000);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '+ Crear usuario';
+    }
+  }
+
+  async function desactivar(id, nombre) {
+    if (!confirm('¿Desactivar a ' + nombre + '?')) return;
+    const res  = await fetch('/api/usuarios/' + id, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.ok) cargar();
+  }
+
+  cargar();
+cargarTemporadaActiva();
+</script>
+</body>
+</html>

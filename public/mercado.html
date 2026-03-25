@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1A2E0A">
+  <title>Mercado — Cosecha</title>
+  <link rel="icon" href="img/logo.png">
+  <link rel="stylesheet" href="cosecha.css">
+  <script src="js/auth-check.js"></script>
+  <script src="js/utils.js"></script>
+  <style>
+    .dolar-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 4px;
+    }
+    @media (max-width: 800px) { .dolar-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 400px) { .dolar-grid { grid-template-columns: 1fr 1fr; gap: 8px; } }
+
+    .dolar-card {
+      background: var(--superficie);
+      border: 1px solid var(--borde);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      box-shadow: var(--shadow-sm);
+    }
+    .dolar-card--blue    { border-top: 3px solid #3B82F6; }
+    .dolar-card--oficial { border-top: 3px solid #16A34A; }
+    .dolar-card--mep     { border-top: 3px solid #8B5CF6; }
+    .dolar-card--ccl     { border-top: 3px solid #F59E0B; }
+
+    .dc-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--texto-suave); margin-bottom: 6px; }
+    .dc-venta { font-size: 24px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--texto); line-height: 1.1; }
+    .dc-compra { font-size: 12px; color: var(--texto-suave); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+    .dc-act   { font-size: 10px; color: var(--texto-suave); margin-top: 6px; }
+    .dc-error { font-size: 13px; color: var(--texto-suave); }
+
+    /* Tabla granos */
+    .granos-table { width: 100%; border-collapse: collapse; }
+    .granos-table th {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .6px; color: var(--texto-suave);
+      padding: 10px 12px; text-align: left; border-bottom: 2px solid var(--borde);
+    }
+    .granos-table th:not(:first-child) { text-align: right; }
+    .granos-table td { padding: 11px 12px; border-bottom: 1px solid var(--borde); vertical-align: middle; }
+    .granos-table tr:last-child td { border-bottom: none; }
+    .granos-table td:not(:first-child) { text-align: right; }
+    .cultivo-name { font-weight: 600; font-size: 14px; color: var(--texto); }
+    .precio-usd  { font-size: 14px; font-family: 'JetBrains Mono', monospace; font-weight: 600; color: var(--texto); }
+    .precio-ars  { font-size: 13px; font-family: 'JetBrains Mono', monospace; color: var(--texto); }
+    .precio-chi  { font-size: 13px; font-family: 'JetBrains Mono', monospace; color: var(--texto-suave); }
+    .precio-na   { font-size: 13px; color: var(--texto-suave); }
+    .granos-act  { font-size: 11px; color: var(--texto-suave); white-space: nowrap; }
+    .btn-refresh {
+      background: none; border: 1px solid var(--borde); border-radius: 8px;
+      padding: 6px 12px; font-size: 12px; font-weight: 600; color: var(--verde-mid);
+      cursor: pointer; display: inline-flex; align-items: center; gap: 5px;
+    }
+    .btn-refresh:hover { background: var(--fondo); }
+    .btn-refresh:disabled { opacity: .5; cursor: default; }
+    .granos-aviso { font-size: 12px; color: #F59E0B; margin-top: 6px; }
+
+    /* Simulador */
+    .sim-fields {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+    }
+    @media (max-width: 700px) { .sim-fields { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 440px) { .sim-fields { grid-template-columns: 1fr; } }
+    .sim-field { display: flex; flex-direction: column; gap: 5px; }
+    .sim-label { font-size: 11px; font-weight: 700; color: var(--texto-suave); text-transform: uppercase; letter-spacing: .5px; }
+    .sim-input, .sim-select {
+      padding: 10px 12px; border: 1px solid var(--borde); border-radius: 10px;
+      font-size: 15px; font-family: 'JetBrains Mono', monospace;
+      background: var(--fondo); color: var(--texto); width: 100%; box-sizing: border-box;
+    }
+    .sim-input:focus, .sim-select:focus { outline: none; border-color: var(--verde-mid); }
+    .sim-results {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 20px;
+    }
+    @media (max-width: 600px) { .sim-results { grid-template-columns: 1fr 1fr; } }
+    .sim-res {
+      background: var(--fondo); border: 1px solid var(--borde);
+      border-radius: 10px; padding: 12px 14px;
+    }
+    .sim-res-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--texto-suave); margin-bottom: 4px; }
+    .sim-res-value { font-size: 20px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--texto); }
+    .sim-res-value.verde { color: #16A34A; }
+    .sim-placeholder { color: var(--texto-suave); font-size: 13px; text-align: center; padding: 16px 0; }
+
+    /* Frutilla card */
+    .frutilla-card {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: var(--radius-lg);
+      padding: 20px 24px;
+    }
+    .frutilla-modal {
+      font-size: 40px; font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      color: #15803d; line-height: 1;
+    }
+    .frutilla-modal-label {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1px; color: #16a34a; margin-bottom: 6px;
+    }
+    .frutilla-minmax {
+      display: flex; gap: 20px; margin-top: 10px;
+    }
+    .frutilla-minmax-item { display: flex; flex-direction: column; gap: 2px; }
+    .frutilla-minmax-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #6b7280; }
+    .frutilla-minmax-val {
+      font-size: 16px; font-weight: 600;
+      font-family: 'JetBrains Mono', monospace; color: #374151;
+    }
+    .frutilla-meta { margin-top: 12px; font-size: 11px; color: #9ca3af; }
+    .frutilla-nota { margin-top: 8px; font-size: 11px; color: #6b7280; font-style: italic; }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="img/logo-icon.png" style="height:44px;width:44px;border-radius:10px;"><div style="margin-left:10px;display:flex;flex-direction:column;justify-content:center;line-height:1.1;"><span style="color:white;font-weight:700;font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5);font-size:10px;letter-spacing:1.5px;margin-top:2px;">SISTEMA DE CULTIVOS</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-item"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard</a>
+      <div class="nav-section">Campo</div>
+      <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
+      <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
+      <div class="nav-section">Sistema</div>
+      <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
+      <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
+      <a href="menu-admin.html" class="nav-item"><span class="nav-icon"><i data-lucide="landmark"></i></span> Administración</a>
+      <a href="mercado.html" class="nav-item active"><span class="nav-icon"><i data-lucide="trending-up"></i></span> Mercado</a>
+      <a href="menu-config.html" class="nav-item"><span class="nav-icon"><i data-lucide="settings"></i></span> Configuración</a>
+    </nav>
+    <div class="sidebar-footer">Sistema Agrícola v2</div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
+        <img src="img/logo-icon.png" style="height:44px;width:44px;border-radius:10px;"><div style="margin-left:10px;display:flex;flex-direction:column;justify-content:center;line-height:1.1;"><span style="color:white;font-weight:700;font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5);font-size:10px;letter-spacing:1.5px;margin-top:2px;">SISTEMA DE CULTIVOS</span></div><span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-date" id="topbar-date"></span>
+      </div>
+    </header>
+
+    <div class="content">
+      <a href="index.html" class="btn-volver">← Volver</a>
+      <div class="content-header">
+        <div class="content-title">Mercado</div>
+        <div class="content-sub">Cotizaciones y referencias de precios</div>
+      </div>
+
+      <!-- ── SECCIÓN 1: DÓLAR ── -->
+      <div class="section-label">Dólar</div>
+      <div class="dolar-grid">
+        <div class="dolar-card dolar-card--blue">
+          <div class="dc-label">Blue</div>
+          <div class="dc-venta" id="d-blue-venta">$---</div>
+          <div class="dc-compra" id="d-blue-compra">compra $---</div>
+          <div class="dc-act" id="d-act">—</div>
+        </div>
+        <div class="dolar-card dolar-card--oficial">
+          <div class="dc-label">Oficial</div>
+          <div class="dc-venta" id="d-ofic-venta">$---</div>
+          <div class="dc-compra" id="d-ofic-compra">compra $---</div>
+          <div class="dc-act"></div>
+        </div>
+        <div class="dolar-card dolar-card--mep">
+          <div class="dc-label">MEP / Bolsa</div>
+          <div class="dc-venta" id="d-mep-venta">$---</div>
+          <div class="dc-compra" id="d-mep-compra">compra $---</div>
+          <div class="dc-act"></div>
+        </div>
+        <div class="dolar-card dolar-card--ccl">
+          <div class="dc-label">CCL</div>
+          <div class="dc-venta" id="d-ccl-venta">$---</div>
+          <div class="dc-compra" id="d-ccl-compra">compra $---</div>
+          <div class="dc-act"></div>
+        </div>
+      </div>
+      <div id="dolar-msg" style="font-size:12px;color:var(--texto-suave);margin-top:6px;min-height:16px;"></div>
+
+      <!-- ── SECCIÓN 2: PIZARRA ROSARIO (automático) ── -->
+      <div class="section-label" style="margin-top:24px;display:flex;align-items:center;gap:10px;">
+        Pizarra Rosario
+        <button class="btn-refresh" id="btn-actualizar-granos" onclick="cargarGranos(true)">
+          <i data-lucide="refresh-cw" style="width:12px;height:12px;"></i> Actualizar
+        </button>
+      </div>
+      <div id="granos-aviso" class="granos-aviso" style="display:none;"></div>
+      <div class="card">
+        <div class="table-wrap">
+          <table class="granos-table">
+            <thead>
+              <tr>
+                <th>Cultivo</th>
+                <th>FOB Rosario $/tn</th>
+                <th>FOB Rosario USD/tn</th>
+                <th>Chicago USD/tn</th>
+                <th>Actualizado</th>
+              </tr>
+            </thead>
+            <tbody id="granos-body">
+              <tr><td colspan="5" style="text-align:center;color:var(--texto-suave);font-size:13px;padding:20px;">Cargando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── SECCIÓN: FRUTILLA — MERCADO CENTRAL ── -->
+      <div class="section-label" style="margin-top:24px;display:flex;align-items:center;gap:10px;">
+        Frutilla — Mercado Central
+        <button class="btn-refresh" id="btn-actualizar-frutilla" onclick="cargarFrutilla(true)">
+          <i data-lucide="refresh-cw" style="width:12px;height:12px;"></i> Actualizar
+        </button>
+      </div>
+      <div class="frutilla-card">
+        <div id="frutilla-content">
+          <div class="sim-placeholder">Cargando...</div>
+        </div>
+        <div class="frutilla-nota">Precio mayorista Buenos Aires — referencia</div>
+      </div>
+
+      <!-- ── CALCULADORA ── -->
+      <div class="section-label" style="margin-top:24px;">¿Cuánto vale mi cosecha?</div>
+      <div class="card">
+        <div class="card-body" style="padding:20px;">
+          <div class="sim-fields">
+            <div class="sim-field">
+              <label class="sim-label">Cultivo</label>
+              <select class="sim-select" id="s-cultivo" onchange="simOnCultivoChange()">
+                <option value="frutilla">Frutilla</option>
+                <option value="soja">Soja</option>
+                <option value="trigo">Trigo</option>
+                <option value="maiz">Maíz</option>
+                <option value="girasol">Girasol</option>
+                <option value="sorgo">Sorgo</option>
+                <option value="arandano">Arándano</option>
+                <option value="otro">Otro</option>
+              </select>
+            </div>
+            <div class="sim-field">
+              <label class="sim-label" id="s-cant-label">Cantidad (kg)</label>
+              <input type="number" class="sim-input" id="s-cant" placeholder="0" min="0" oninput="simCalc()">
+            </div>
+            <div class="sim-field">
+              <label class="sim-label" id="s-precio-label">Precio ($/kg)</label>
+              <div style="position:relative;">
+                <input type="number" class="sim-input" id="s-precio" placeholder="—" min="0"
+                  oninput="simCalc()" style="width:100%;box-sizing:border-box;padding-right:54px;">
+                <span id="s-auto-badge" style="display:none;position:absolute;right:9px;top:50%;
+                  transform:translateY(-50%);font-size:9px;background:#dcfce7;color:#16a34a;
+                  padding:2px 5px;border-radius:4px;font-weight:700;letter-spacing:.3px;">AUTO</span>
+              </div>
+              <div id="s-fuente" style="font-size:10px;color:var(--texto-suave);margin-top:3px;min-height:14px;"></div>
+            </div>
+          </div>
+          <div id="sim-results" style="margin-top:20px;">
+            <div class="sim-placeholder">Seleccioná el cultivo para cargar el precio</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── BOTTOM NAV ── -->
+  <nav class="bottom-nav">
+    <a href="index.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="home"></i></span><span>Inicio</span></a>
+    <a href="juntada.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="wheat"></i></span><span>Cosecha</span></a>
+    <a href="despalillado.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="scissors"></i></span><span>Despalillado</span></a>
+    <a href="mercado.html" class="bottom-nav-item active"><span class="bottom-nav-icon"><i data-lucide="trending-up"></i></span><span>Mercado</span></a>
+    <a href="menu-campo.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="menu"></i></span><span>Menú</span></a>
+  </nav>
+
+</div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+lucide.createIcons();
+document.getElementById('topbar-date').textContent =
+  new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
+
+// ── Helpers ──────────────────────────────────────────────────────
+var blueVenta   = 0;
+var oficialVenta = 0;
+
+function peso(n) {
+  if (!n && n !== 0) return '$---';
+  return '$\u202F' + Math.round(n).toLocaleString('es-AR');
+}
+function usd(n) {
+  if (!n && n !== 0) return 'USD ---';
+  return 'USD\u202F' + Math.round(n).toLocaleString('es-AR');
+}
+function tsRelativo(ms) {
+  if (!ms) return '—';
+  var diff = Math.floor((Date.now() - ms) / 60000);
+  if (diff < 1)   return 'ahora';
+  if (diff < 60)  return 'hace ' + diff + ' min';
+  var h = Math.floor(diff / 60);
+  if (h < 24)     return 'hace ' + h + ' h';
+  return 'hace ' + Math.floor(h / 24) + ' d';
+}
+
+// ── SECCIÓN 1: DÓLAR ─────────────────────────────────────────────
+function cargarDolar() {
+  fetch('/api/cotizaciones/dolar')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.error) {
+        document.getElementById('dolar-msg').textContent = '⚠ ' + d.error;
+        return;
+      }
+      function setCard(id, data) {
+        if (!data) return;
+        document.getElementById('d-' + id + '-venta').textContent  = peso(data.venta);
+        document.getElementById('d-' + id + '-compra').textContent = 'compra ' + peso(data.compra);
+      }
+      setCard('blue', d.blue);
+      setCard('ofic', d.oficial);
+      setCard('mep',  d.mep);
+      setCard('ccl',  d.ccl);
+      if (d.actualizado) {
+        document.getElementById('d-act').textContent = 'Act. ' + d.actualizado + (d.cached ? ' · caché' : '');
+        document.getElementById('dolar-msg').textContent = '';
+      }
+      blueVenta    = d.blue    ? (d.blue.venta    || 0) : 0;
+      oficialVenta = d.oficial ? (d.oficial.venta || 0) : 0;
+      // Re-renderizar granos si ya los tenemos (recalcular $/tn con nuevo blue)
+      if (granosData) renderGranos(granosData);
+      simCalc();
+    })
+    .catch(function() {
+      document.getElementById('dolar-msg').textContent = '⚠ No se pudo conectar con el servidor';
+    });
+}
+
+// ── SECCIÓN 2: PIZARRA ROSARIO (automático) ──────────────────────
+var granosData = null;  // último resultado de /api/cotizaciones/granos
+
+function cargarGranos(manual) {
+  var btn = document.getElementById('btn-actualizar-granos');
+  if (btn) { btn.disabled = true; btn.textContent = 'Cargando...'; }
+
+  fetch('/api/cotizaciones/granos')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.error) {
+        renderGranosError(d.error);
+      } else {
+        granosData = d;
+        renderGranos(d);
+        if (d.aviso) {
+          document.getElementById('granos-aviso').textContent = '⚠ ' + d.aviso;
+          document.getElementById('granos-aviso').style.display = '';
+        } else {
+          document.getElementById('granos-aviso').style.display = 'none';
+        }
+      }
+    })
+    .catch(function() {
+      renderGranosError('No se pudo conectar con el servidor');
+    })
+    .finally(function() {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="refresh-cw" style="width:12px;height:12px;"></i> Actualizar';
+        lucide.createIcons();
+      }
+    });
+}
+
+function renderGranos(d) {
+  var tbody   = document.getElementById('granos-body');
+  var fob     = d.fob && d.fob.items ? d.fob.items : {};
+  var chicago = d.chicago || {};
+  var fechaFob = d.fob && d.fob.fecha ? d.fob.fecha : '—';
+  var act = d.actualizado || '—';
+
+  var ORDEN = ['soja', 'trigo', 'maiz', 'girasol', 'sorgo'];
+  tbody.innerHTML = ORDEN.map(function(key) {
+    var f   = fob[key];
+    var chi = chicago[key];
+    var usdTn  = f ? f.precio_usd : null;
+    var arsTn  = (usdTn && blueVenta) ? Math.round(usdTn * blueVenta) : null;
+    var chiTn  = chi || null;
+
+    return '<tr>' +
+      '<td><span class="cultivo-name">' + (f ? f.cultivo : key.charAt(0).toUpperCase()+key.slice(1)) + '</span></td>' +
+      '<td>' + (arsTn  ? '<span class="precio-ars">$\u202F' + arsTn.toLocaleString('es-AR') + '</span>' : '<span class="precio-na">—</span>') + '</td>' +
+      '<td>' + (usdTn  ? '<span class="precio-usd">USD\u202F' + usdTn + '</span>' : '<span class="precio-na">—</span>') + '</td>' +
+      '<td>' + (chiTn  ? '<span class="precio-chi">USD\u202F' + chiTn + '</span>' : '<span class="precio-na" style="font-size:11px;">sin datos</span>') + '</td>' +
+      '<td><span class="granos-act">' + fechaFob + '</span></td>' +
+    '</tr>';
+  }).join('');
+
+  lucide.createIcons();
+}
+
+function renderGranosError(msg) {
+  document.getElementById('granos-body').innerHTML =
+    '<tr><td colspan="5" style="text-align:center;color:#DC2626;font-size:13px;padding:20px;">⚠ ' + msg + '</td></tr>';
+}
+
+// ── CALCULADORA INTELIGENTE ───────────────────────────────────────
+var GRANOS_CULTIVOS = ['soja', 'trigo', 'maiz', 'girasol', 'sorgo'];
+
+function simEsKg(cultivo) {
+  return cultivo !== 'soja' && cultivo !== 'trigo' && cultivo !== 'maiz' &&
+         cultivo !== 'girasol' && cultivo !== 'sorgo';
+}
+
+function simOnCultivoChange() {
+  var cultivo = document.getElementById('s-cultivo').value;
+  var unidad  = simEsKg(cultivo) ? 'kg' : 'tn';
+  document.getElementById('s-cant-label').textContent   = 'Cantidad (' + unidad + ')';
+  document.getElementById('s-precio-label').textContent = 'Precio ($/' + unidad + ')';
+  simCargarPrecio(cultivo);
+}
+
+function simCargarPrecio(cultivo) {
+  var priceEl  = document.getElementById('s-precio');
+  var fuenteEl = document.getElementById('s-fuente');
+  var badge    = document.getElementById('s-auto-badge');
+
+  function setPrecio(val, fuente) {
+    priceEl.value       = val || '';
+    priceEl.placeholder = val ? '0' : 'Sin cotización — ingresá el precio';
+    badge.style.display = val ? '' : 'none';
+    fuenteEl.textContent = fuente || '';
+    simCalc();
+  }
+
+  fuenteEl.textContent = 'Buscando...';
+  badge.style.display  = 'none';
+
+  if (cultivo === 'frutilla') {
+    var d = frutillaData;
+    if (d && !d.error && d.precio_modal) {
+      setPrecio(d.precio_modal, 'Mercado Central BsAs — ' + (d.fecha || 'hoy'));
+    } else {
+      fetch('/api/cotizaciones/frutilla')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (!d.error && d.precio_modal) {
+            frutillaData = d;
+            setPrecio(d.precio_modal, 'Mercado Central BsAs — ' + (d.fecha || 'hoy'));
+          } else {
+            setPrecio(null, '');
+          }
+        })
+        .catch(function() { setPrecio(null, ''); });
+    }
+
+  } else if (GRANOS_CULTIVOS.indexOf(cultivo) !== -1) {
+    function aplicarGranos(g) {
+      if (g && g.fob && g.fob.items && g.fob.items[cultivo]) {
+        var item   = g.fob.items[cultivo];
+        var usdTn  = item.precio_usd;
+        var arsTn  = (usdTn && blueVenta) ? Math.round(usdTn * blueVenta) : null;
+        if (arsTn) {
+          setPrecio(arsTn, 'Pizarra Rosario — ' + (g.fob.fecha || 'hoy') + ' (blue)');
+        } else {
+          setPrecio(null, usdTn ? 'USD ' + usdTn + '/tn — ingresá precio en ARS' : '');
+        }
+      } else {
+        setPrecio(null, '');
+      }
+    }
+    if (granosData) {
+      aplicarGranos(granosData);
+    } else {
+      fetch('/api/cotizaciones/granos')
+        .then(function(r) { return r.json(); })
+        .then(function(g) { if (!g.error) granosData = g; aplicarGranos(g); })
+        .catch(function() { setPrecio(null, ''); });
+    }
+
+  } else {
+    setPrecio(null, '');
+    fuenteEl.textContent = '';
+  }
+}
+
+function simCalc() {
+  var cant    = parseFloat(document.getElementById('s-cant').value)   || 0;
+  var precio  = parseFloat(document.getElementById('s-precio').value) || 0;
+  var fuente  = document.getElementById('s-fuente').textContent;
+  var el      = document.getElementById('sim-results');
+
+  if (!cant || !precio) {
+    el.innerHTML = '<div class="sim-placeholder">Ingresá la cantidad para ver el resultado</div>';
+    return;
+  }
+
+  var totalPesos = cant * precio;
+  var usdBlue    = blueVenta    ? Math.round(totalPesos / blueVenta)    : null;
+  var usdOficial = oficialVenta ? Math.round(totalPesos / oficialVenta) : null;
+
+  el.innerHTML =
+    '<div class="sim-results">' +
+      '<div class="sim-res"><div class="sim-res-label">Total en pesos</div>' +
+        '<div class="sim-res-value verde">' + peso(totalPesos) + '</div></div>' +
+      (usdBlue !== null ?
+        '<div class="sim-res"><div class="sim-res-label">Equiv. Blue</div>' +
+        '<div class="sim-res-value">' + usd(usdBlue) + '</div></div>' : '') +
+      (usdOficial !== null ?
+        '<div class="sim-res"><div class="sim-res-label">Equiv. Oficial</div>' +
+        '<div class="sim-res-value">' + usd(usdOficial) + '</div></div>' : '') +
+    '</div>' +
+    (fuente && fuente !== 'Buscando...' ?
+      '<div style="margin-top:10px;font-size:11px;color:var(--texto-suave);">Precio: ' + fuente + '</div>' : '');
+}
+
+// ── FRUTILLA — MERCADO CENTRAL ───────────────────────────────────
+var frutillaData = null;
+
+function cargarFrutilla(manual) {
+  var btn = document.getElementById('btn-actualizar-frutilla');
+  if (btn) { btn.disabled = true; btn.textContent = 'Cargando...'; }
+  if (manual) frutillaData = null;  // forzar re-fetch al actualizar manual
+
+  fetch('/api/cotizaciones/frutilla')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (!d.error) frutillaData = d;
+      renderFrutilla(d);
+      // Si la calculadora tiene frutilla seleccionada, actualizar precio
+      if (document.getElementById('s-cultivo').value === 'frutilla') simCargarPrecio('frutilla');
+    })
+    .catch(function()  { renderFrutilla({ error: true }); })
+    .finally(function() {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="refresh-cw" style="width:12px;height:12px;"></i> Actualizar';
+        lucide.createIcons();
+      }
+    });
+}
+
+function renderFrutilla(d) {
+  var el = document.getElementById('frutilla-content');
+  if (!d || d.error || !d.precio_modal) {
+    el.innerHTML = '<div style="color:var(--texto-suave);font-size:13px;padding:4px 0;">' +
+      (d && d.mensaje ? d.mensaje : 'Precio no disponible hoy — fuera de temporada o error de conexión') +
+      '</div>';
+    return;
+  }
+  el.innerHTML =
+    '<div class="frutilla-modal-label">Precio modal del día</div>' +
+    '<div class="frutilla-modal">$\u202F' + d.precio_modal.toLocaleString('es-AR') + '<span style="font-size:18px;font-weight:500;color:#6b7280;">/kg</span></div>' +
+    '<div class="frutilla-minmax">' +
+      (d.precio_min !== null ? '<div class="frutilla-minmax-item"><span class="frutilla-minmax-label">Mínimo</span><span class="frutilla-minmax-val">$\u202F' + d.precio_min.toLocaleString('es-AR') + '/kg</span></div>' : '') +
+      (d.precio_max !== null ? '<div class="frutilla-minmax-item"><span class="frutilla-minmax-label">Máximo</span><span class="frutilla-minmax-val">$\u202F' + d.precio_max.toLocaleString('es-AR') + '/kg</span></div>' : '') +
+    '</div>' +
+    '<div class="frutilla-meta">' +
+      (d.unidad ? 'Unidad: ' + d.unidad + ' · ' : '') +
+      (d.fecha  ? 'Actualizado: ' + d.fecha        : '') +
+      (d.cached ? ' · (caché)' : '') +
+      (d.fuente ? ' · ' + d.fuente : '') +
+    '</div>';
+}
+
+// ── INIT ─────────────────────────────────────────────────────────
+cargarDolar();
+setInterval(cargarDolar, 30 * 60 * 1000);
+// Cargar granos después del dólar para tener blueVenta disponible
+fetch('/api/cotizaciones/dolar')
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    if (d.blue) blueVenta = d.blue.venta || 0;
+    if (d.oficial) oficialVenta = d.oficial.venta || 0;
+    cargarGranos();
+  })
+  .catch(function() { cargarGranos(); });
+setInterval(cargarGranos, 60 * 60 * 1000);
+cargarFrutilla();
+setInterval(cargarFrutilla, 60 * 60 * 1000);
+simOnCultivoChange();  // inicializar calculadora con el cultivo por defecto
+cargarTemporadaActiva();
+
+</script>
+</body>
+</html>

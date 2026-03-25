@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1A2E0A">
+  <title>Aplicaciones — Campo</title>
+  <link rel="icon" href="img/logo.png">
+  <script src="js/utils.js"></script>
+  <link rel="stylesheet" href="cosecha.css">
+  <script src="js/auth-check.js"></script>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-item">
+        <span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard
+      </a>
+      <div class="nav-section">Campo</div>
+      <a href="juntada.html" class="nav-item">
+        <span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha
+      </a>
+      <a href="despalillado.html" class="nav-item">
+        <span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado
+      </a>
+      <a href="aplicaciones.html" class="nav-item active">
+        <span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones
+      </a>
+      <div class="nav-section">Sistema</div>
+      <a href="menu-stock.html" class="nav-item">
+        <span class="nav-icon"><i data-lucide="package"></i></span> Stock
+      </a>
+      <a href="menu-comercial.html" class="nav-item">
+        <span class="nav-icon"><i data-lucide="users"></i></span> Comercial
+      </a>
+      <a href="menu-admin.html" class="nav-item">
+        <span class="nav-icon"><i data-lucide="landmark"></i></span> Administración
+      </a>
+      <a href="mercado.html" class="nav-item">
+        <span class="nav-icon"><i data-lucide="trending-up"></i></span> Mercado
+      </a>
+      <a href="menu-config.html" class="nav-item">
+        <span class="nav-icon"><i data-lucide="settings"></i></span> Configuración
+      </a>
+    </nav>
+    <div class="sidebar-footer">Sistema Agrícola v2</div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
+        <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div><span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-date" id="topbar-date"></span>
+      </div>
+    </header>
+
+    <div class="content">
+      <a href="menu-campo.html" class="btn-volver">← Volver</a>
+      <div id="alertas-carencia"></div>
+
+      <div class="tabs">
+        <button class="tab active" onclick="showTab('nueva', this)">Nueva aplicación</button>
+        <button class="tab" onclick="showTab('historial', this)">Historial</button>
+      </div>
+
+      <!-- ── TAB: NUEVA ── -->
+      <div id="tab-nueva" class="tab-content active">
+        <div style="max-width:640px;">
+          <div class="card-form">
+            <h2>Registrar aplicación fitosanitaria</h2>
+
+            <div class="two-col">
+              <div class="form-row">
+                <label>Temporada</label>
+                <select id="temporada"></select>
+              </div>
+              <div class="form-row">
+                <label>Lote</label>
+                <select id="lote"></select>
+              </div>
+            </div>
+
+            <div class="form-row" style="margin-top:14px;">
+              <label>Producto</label>
+              <select id="producto" onchange="mostrarStock()"></select>
+              <div id="stock-info"></div>
+            </div>
+
+            <div class="two-col" style="margin-top:14px;">
+              <div class="form-row">
+                <label>Cantidad aplicada</label>
+                <input type="number" id="cantidad" placeholder="0.00" step="0.01" min="0"
+                  style="-moz-appearance:textfield;appearance:textfield;">
+              </div>
+              <div class="form-row">
+                <label>Unidad</label>
+                <select id="unidad-aplicacion">
+                  <option value="lt">Litro (lt)</option>
+                  <option value="ml">Mililitro (ml)</option>
+                  <option value="cc">Centímetro cúbico (cc)</option>
+                  <option value="kg">Kilogramo (kg)</option>
+                  <option value="g">Gramo (g)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="two-col" style="margin-top:14px;">
+              <div class="form-row">
+                <label>Dosis / hectárea</label>
+                <input type="number" id="dosis" placeholder="Ej: 1.5" step="0.01"
+                  style="-moz-appearance:textfield;appearance:textfield;">
+              </div>
+              <div class="form-row">
+                <label>Días de carencia</label>
+                <input type="number" id="carencia" placeholder="Ej: 7" step="1"
+                  style="-moz-appearance:textfield;appearance:textfield;">
+              </div>
+            </div>
+
+            <div class="two-col" style="margin-top:14px;">
+              <div class="form-row">
+                <label>Método de aplicación</label>
+                <select id="metodo">
+                  <option value="mochila">Mochila</option>
+                  <option value="tractor">Tractor</option>
+                  <option value="manual">Manual</option>
+                  <option value="otro">Otro</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label>Condición climática</label>
+                <select id="clima">
+                  <option value="optima">Óptima</option>
+                  <option value="viento_leve">Viento leve</option>
+                  <option value="nublado">Nublado</option>
+                  <option value="calor">Calor intenso</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row" style="margin-top:14px;">
+              <label>Empleado que aplica</label>
+              <div class="empleado-info" id="empleado-info">Escaneá el QR del empleado</div>
+              <input type="hidden" id="empleado-id">
+              <button class="btn btn-scan" onclick="toggleCamera()" style="margin-top:0;">
+                <i data-lucide="scan-line"></i> Escanear QR
+              </button>
+              <div id="camera-container" class="hidden" style="margin-top:12px;">
+                <video id="video" autoplay playsinline></video>
+                <canvas id="canvas" class="hidden"></canvas>
+              </div>
+            </div>
+
+            <div class="form-row" style="margin-top:14px;">
+              <label>Observación</label>
+              <input type="text" id="observacion" placeholder="Opcional">
+            </div>
+
+            <button class="btn btn-green" id="btn-guardar" onclick="guardar(this)" style="margin-top:18px;">
+              <i data-lucide="save"></i> Registrar aplicación
+            </button>
+            <div id="mensaje"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TAB: HISTORIAL ── -->
+      <div id="tab-historial" class="tab-content">
+        <div class="card-form" style="margin-bottom:14px;padding:16px 20px;max-width:640px;">
+          <div class="two-col">
+            <div class="form-row" style="margin-bottom:0;">
+              <label>Temporada</label>
+              <select id="filtro-temporada"></select>
+            </div>
+            <div class="form-row" style="margin-bottom:0;">
+              <label>Lote</label>
+              <select id="filtro-lote"></select>
+            </div>
+          </div>
+          <div class="two-col" style="margin-top:10px;">
+            <div class="form-row" style="margin-bottom:0;">
+              <label>Desde</label>
+              <input type="date" id="filtro-desde">
+            </div>
+            <div class="form-row" style="margin-bottom:0;">
+              <label>Hasta</label>
+              <input type="date" id="filtro-hasta">
+            </div>
+          </div>
+          <button class="btn btn-green" onclick="cargarHistorial()" style="margin-top:12px;width:auto;padding:10px 20px;font-size:14px;">
+            🔍 Filtrar
+          </button>
+        </div>
+        <div class="card" style="max-width:100%;">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Lote</th>
+                  <th>Producto</th>
+                  <th style="text-align:right;">Dosis</th>
+                  <th>Libre desde</th>
+                  <th>Estado carencia</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-historial">
+                <tr><td colspan="6" class="activity-empty">Cargando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── BOTTOM NAV ── -->
+  <nav class="bottom-nav">
+    <a href="index.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon"><i data-lucide="home"></i></span><span>Inicio</span>
+    </a>
+    <a href="juntada.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon"><i data-lucide="wheat"></i></span><span>Cosecha</span>
+    </a>
+    <a href="despalillado.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon"><i data-lucide="scissors"></i></span><span>Despalillado</span>
+    </a>
+    <a href="aplicaciones.html" class="bottom-nav-item active">
+      <span class="bottom-nav-icon"><i data-lucide="droplets"></i></span><span>Aplicaciones</span>
+    </a>
+    <a href="menu-campo.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon"><i data-lucide="menu"></i></span><span>Menú</span>
+    </a>
+  </nav>
+
+</div>
+
+<script src="js/jsqr.min.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+  lucide.createIcons();
+  document.getElementById('topbar-date').textContent =
+    new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
+
+  var scanning = false, stream = null, productos = [];
+
+  function showTab(tab, el) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    el.classList.add('active');
+    if (tab === 'historial') cargarHistorial();
+  }
+
+  function cargarLotesForm() {
+    fetch('/api/temporadas/activa').then(r => r.json()).then(function(t) {
+      var sel = document.getElementById('lote');
+      if (!t) {
+        sel.innerHTML = '<option value="">No hay campaña activa — ir a Configuración</option>';
+        return;
+      }
+      fetch('/api/lotes?temporada_id=' + t.id).then(r => r.json()).then(function(lotes) {
+        if (!lotes.length) {
+          sel.innerHTML = '<option value="">Sin lotes en esta campaña</option>';
+          return;
+        }
+        sel.innerHTML = '<option value="">Seleccionar lote...</option>' +
+          lotes.map(l => '<option value="' + l.id + '">' + l.nombre + '</option>').join('');
+        recordarSeleccion('lote', 'ultimo_lote');
+      });
+    });
+  }
+  window.addEventListener('campanaChange', cargarLotesForm);
+
+  function cargarDatos() {
+    fetch('/api/temporadas').then(r => r.json()).then(function(data) {
+      var opts = '<option value="">Seleccionar...</option>' +
+        data.map(t => '<option value="' + t.id + '"' + (t.activa ? ' selected' : '') + '>' + t.nombre + '</option>').join('');
+      document.getElementById('temporada').innerHTML = opts;
+      document.getElementById('filtro-temporada').innerHTML = '<option value="">Todas</option>' +
+        data.map(t => '<option value="' + t.id + '">' + t.nombre + '</option>').join('');
+      var activa = data.find(t => t.activa);
+      if (activa) document.getElementById('filtro-temporada').value = activa.id;
+    });
+    // filtro-lote: todos los lotes (para historial)
+    fetch('/api/lotes').then(r => r.json()).then(function(data) {
+      document.getElementById('filtro-lote').innerHTML = '<option value="">Todos</option>' +
+        data.map(l => '<option value="' + l.id + '">' + l.nombre + '</option>').join('');
+    });
+    // lote del formulario: solo los de la campaña activa
+    cargarLotesForm();
+    fetch('/api/productos').then(r => r.json()).then(function(data) {
+      productos = data;
+      document.getElementById('producto').innerHTML = '<option value="">Seleccionar producto...</option>' +
+        data.map(p => '<option value="' + p.id + '">' + p.nombre + ' (' + (p.tipo || '') + ')</option>').join('');
+    });
+  }
+
+  function mostrarStock() {
+    var id = document.getElementById('producto').value;
+    var prod = productos.find(p => p.id == id);
+    if (prod) {
+      var info = 'Stock: ' + (parseFloat(prod.stock_actual) || 0).toFixed(2) + ' ' + (prod.presentacion || '');
+      if (prod.costo_unitario) info += ' · $' + parseFloat(prod.costo_unitario).toLocaleString('es-AR');
+      document.getElementById('stock-info').textContent = info;
+      if (prod.carencia_dias) document.getElementById('carencia').value = prod.carencia_dias;
+      var pres = (prod.presentacion || '').toLowerCase(), us = document.getElementById('unidad-aplicacion');
+      if (pres.includes('ml')) us.value = 'ml';
+      else if (pres.includes('cc')) us.value = 'cc';
+      else if (pres.includes('kg') || pres.includes('kilo')) us.value = 'kg';
+      else if (pres.includes('gr') || (pres.includes('g') && !pres.includes('kg'))) us.value = 'g';
+      else if (pres.includes('lt') || pres.includes('litro')) us.value = 'lt';
+    } else { document.getElementById('stock-info').textContent = ''; }
+  }
+
+  function cargarAlertas() {
+    fetch('/api/aplicaciones/carencia').then(r => r.json()).then(function(data) {
+      var div = document.getElementById('alertas-carencia');
+      if (data.length === 0) { div.innerHTML = ''; return; }
+      div.innerHTML = '<div class="alerta-carencia"><h3>Lotes en período de carencia</h3>' +
+        data.map(a => {
+          var libre = a.fecha_libre ? a.fecha_libre.toString().split('T')[0] : '-';
+          return '<div class="alerta-item"><strong>' + a.lote + '</strong> — ' + a.producto + ' — Libre desde: ' + libre + '</div>';
+        }).join('') + '</div>';
+    });
+  }
+
+  function toggleCamera() { if (scanning) { stopCamera(); } else { startCamera(); } }
+  function startCamera() {
+    scanning = true;
+    document.getElementById('camera-container').classList.remove('hidden');
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then(function(s) {
+      stream = s; document.getElementById('video').srcObject = s; requestAnimationFrame(scanQR);
+    });
+  }
+  function stopCamera() {
+    scanning = false;
+    if (stream) stream.getTracks().forEach(t => t.stop());
+    document.getElementById('camera-container').classList.add('hidden');
+  }
+  function scanQR() {
+    if (!scanning) return;
+    var video = document.getElementById('video'), canvas = document.getElementById('canvas');
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+      canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+      var ctx = canvas.getContext('2d'); ctx.drawImage(video, 0, 0);
+      var code = jsQR(ctx.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
+      if (code) { stopCamera(); buscarEmpleado(code.data); return; }
+    }
+    requestAnimationFrame(scanQR);
+  }
+  function buscarEmpleado(codigo) {
+    fetch('/api/juntadores/qr/' + codigo).then(r => r.json()).then(function(j) {
+      var el = document.getElementById('empleado-info');
+      if (j.error) {
+        el.textContent = 'QR no encontrado';
+        el.style.cssText = 'background:#FEE2E2;color:#991B1B;border-color:#FECACA;';
+      } else {
+        document.getElementById('empleado-id').value = j.id;
+        el.textContent = j.apellido + ', ' + j.nombre;
+        el.style.cssText = '';
+      }
+    });
+  }
+
+  function guardar(btn) {
+    var lote_id = document.getElementById('lote').value;
+    var producto_id = document.getElementById('producto').value;
+    var cantidad = document.getElementById('cantidad').value;
+    if (!lote_id || !producto_id || !cantidad) { alert('Completá lote, producto y cantidad'); return; }
+    setLoading(btn, true);
+    fetch('/api/aplicaciones', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        lote_id, producto_id,
+        temporada_id: document.getElementById('temporada').value || null,
+        empleado_id: document.getElementById('empleado-id').value || null,
+        cantidad_usada: cantidad,
+        metodo: document.getElementById('metodo').value,
+        condicion_climatica: document.getElementById('clima').value,
+        dosis_por_hectarea: document.getElementById('dosis').value || null,
+        carencia_dias: document.getElementById('carencia').value || null,
+        observacion: document.getElementById('observacion').value
+      })
+    }).then(r => r.json()).then(function(data) {
+      setLoading(btn, false);
+      if (data.ok) {
+        mostrarMensaje('mensaje', 'success', 'Aplicación registrada correctamente');
+        ['cantidad', 'dosis', 'observacion'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('empleado-id').value = '';
+        document.getElementById('empleado-info').textContent = 'Escaneá el QR del empleado';
+        document.getElementById('empleado-info').style.cssText = '';
+        cargarDatos(); cargarAlertas();
+      } else if (data.error) { mostrarMensaje('mensaje', 'error', data.error); }
+    }).catch(function() { setLoading(btn, false); mostrarMensaje('mensaje', 'error', 'Error de conexión'); });
+  }
+
+  function cargarHistorial() {
+    var tid = document.getElementById('filtro-temporada').value;
+    var lid = document.getElementById('filtro-lote').value;
+    var desde = document.getElementById('filtro-desde') ? document.getElementById('filtro-desde').value : '';
+    var hasta = document.getElementById('filtro-hasta') ? document.getElementById('filtro-hasta').value : '';
+    var params = [];
+    if (tid) params.push('temporada_id=' + tid);
+    if (lid) params.push('lote_id=' + lid);
+    if (desde) params.push('desde=' + desde);
+    if (hasta) params.push('hasta=' + hasta);
+    var url = '/api/aplicaciones' + (params.length ? '?' + params.join('&') : '');
+    var hoy = new Date().toISOString().split('T')[0];
+    fetch(url).then(r => r.json()).then(function(data) {
+      var tbody = document.getElementById('tbody-historial');
+      if (data.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="activity-empty">Sin aplicaciones registradas</td></tr>'; return; }
+      tbody.innerHTML = data.map(a => {
+        var fecha = a.fecha_hora ? a.fecha_hora.toString().split('T')[0] : '-';
+        var fechaLibre = a.fecha_libre ? a.fecha_libre.toString().split('T')[0] : '-';
+        var enCarencia = a.fecha_libre && a.fecha_libre.toString().split('T')[0] > hoy;
+        var badgeStyle = enCarencia
+          ? 'background:#FEE2E2;color:#991B1B;border-radius:12px;padding:2px 10px;font-size:11px;font-weight:700;'
+          : 'background:#D1FAE5;color:#065F46;border-radius:12px;padding:2px 10px;font-size:11px;font-weight:700;';
+        var badgeLabel = enCarencia ? 'En carencia' : 'Libre';
+        return '<tr>' +
+          '<td style="color:var(--texto-suave);font-size:12px;">' + fecha + '</td>' +
+          '<td style="font-weight:600;">' + a.lote + '</td>' +
+          '<td>' + a.producto + '</td>' +
+          '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;">' + (a.dosis_por_hectarea ? parseFloat(a.dosis_por_hectarea).toFixed(2) : (parseFloat(a.cantidad_usada).toFixed(2))) + '</td>' +
+          '<td style="font-size:12px;">' + fechaLibre + '</td>' +
+          '<td><span style="' + badgeStyle + '">' + badgeLabel + '</span></td>' +
+          '</tr>';
+      }).join('');
+    });
+  }
+
+  cargarDatos();
+  cargarAlertas();
+cargarTemporadaActiva();
+</script>
+</body>
+</html>

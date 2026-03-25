@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1A2E0A">
+  <title>Personal — Cosecha</title>
+  <link rel="icon" href="img/logo.png">
+  <script src="js/utils.js"></script>
+  <link rel="stylesheet" href="cosecha.css">
+  <style>
+    h2 { color: #2D5016; margin-bottom: 12px; font-size: 18px; }
+    .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    label { font-weight: bold; color: #444; display: block; margin-bottom: 6px; margin-top: 12px; }
+    input, select, textarea { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+    textarea { resize: vertical; min-height: 80px; font-family: inherit; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 600px) { .two-col { grid-template-columns: 1fr; } }
+    .btn { width: 100%; padding: 14px; font-size: 16px; font-weight: bold; border: none; border-radius: 12px; cursor: pointer; margin-top: 12px; }
+    .btn-green { background: #2D5016; color: white; }
+    .btn-green:disabled { background: #aaa; cursor: not-allowed; }
+    .btn-sm { padding: 6px 14px; font-size: 13px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+    .btn-baja { background: #c0392b; color: white; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 12px; }
+    th { background: #2D5016; color: white; padding: 10px; text-align: left; }
+    td { padding: 10px; border-bottom: 1px solid #eee; vertical-align: middle; }
+    tr:nth-child(even) td { background: #FAFAF8; }
+    tr.fila-empleado { cursor: pointer; }
+    tr.fila-empleado:hover td { background: #f0f7e8; }
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+    .badge-activo { background: #e8f5e2; color: #2d6a4f; }
+    .badge-inactivo { background: #eeeeee; color: #666; }
+    .empty { text-align: center; color: #999; padding: 20px; }
+    .msg-success { background: #e8f5e2; color: #2d6a4f; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 8px; }
+    .msg-error { background: #fde8e8; color: #c0392b; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 8px; }
+    .filtros-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+    .filtros-row input { flex: 1; min-width: 160px; }
+    .filtros-row select { width: auto; min-width: 140px; flex-shrink: 0; }
+    /* Modal */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1000; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal-box { background: white; border-radius: 14px; padding: 28px; max-width: 520px; width: 94%; max-height: 90vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+    .modal-title { font-size: 20px; font-weight: 700; color: #2D5016; margin-bottom: 16px; }
+    .modal-field { margin-bottom: 10px; font-size: 15px; }
+    .modal-field strong { color: #444; display: inline-block; min-width: 130px; }
+    .modal-field span { color: #222; }
+    .modal-section { font-size: 13px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 1px; margin: 16px 0 8px; border-top: 1px solid #eee; padding-top: 12px; }
+    .modal-cosechador { background: #e8f5e2; border-radius: 8px; padding: 10px 14px; margin-top: 12px; color: #2d6a4f; font-weight: 600; font-size: 14px; }
+    .btn-cerrar { background: #eee; color: #444; width: auto; padding: 10px 28px; margin-top: 16px; }
+  </style>
+  <script src="js/auth-check.js"></script>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-item"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard</a>
+      <div class="nav-section">Campo</div>
+      <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
+      <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
+      <div class="nav-section">Sistema</div>
+      <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
+      <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
+      <a href="menu-admin.html" class="nav-item"><span class="nav-icon"><i data-lucide="landmark"></i></span> Administración</a>
+      <a href="mercado.html" class="nav-item"><span class="nav-icon"><i data-lucide="trending-up"></i></span> Mercado</a>
+      <a href="menu-config.html" class="nav-item"><span class="nav-icon"><i data-lucide="settings"></i></span> Configuración</a>
+    </nav>
+    <div class="sidebar-footer">Sistema Agrícola v2</div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
+        <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div><span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-date" id="topbar-date"></span>
+      </div>
+    </header>
+
+    <div class="content">
+      <a href="menu-config.html" class="btn-volver">← Volver</a>
+      <div class="content-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div class="content-title">Personal</div>
+          <div class="content-sub">Gestión de empleados</div>
+        </div>
+        <button class="btn btn-primary" style="width:auto;margin:0;" onclick="toggleForm()">+ Nuevo empleado</button>
+      </div>
+
+      <!-- ── FORMULARIO NUEVO EMPLEADO ── -->
+      <div class="form-colapsable" id="form-nuevo">
+      <div class="card-form" style="margin-bottom:12px;">
+        <div style="font-weight:700;font-size:15px;margin-bottom:12px;color:var(--verde);">Nuevo empleado</div>
+        <div class="two-col">
+          <div>
+            <label>Nombre <span style="color:#c0392b;">*</span></label>
+            <input type="text" id="nombre" placeholder="Ej: Juan">
+          </div>
+          <div>
+            <label>Apellido <span style="color:#c0392b;">*</span></label>
+            <input type="text" id="apellido" placeholder="Ej: Pérez">
+          </div>
+        </div>
+        <div class="two-col">
+          <div>
+            <label>Tipo documento</label>
+            <select id="tipo_documento">
+              <option value="">Sin especificar</option>
+              <option value="DNI">DNI</option>
+              <option value="PASAPORTE">Pasaporte</option>
+              <option value="CE">CE</option>
+            </select>
+          </div>
+          <div>
+            <label>Documento</label>
+            <input type="text" id="documento" placeholder="Número de documento">
+          </div>
+        </div>
+        <label>CUIL</label>
+        <input type="text" id="cuil" placeholder="Ej: 20-12345678-9">
+        <div class="two-col">
+          <div>
+            <label>Fecha de nacimiento</label>
+            <input type="date" id="fecha_nacimiento">
+          </div>
+          <div>
+            <label>Nacionalidad</label>
+            <input type="text" id="nacionalidad" placeholder="Ej: Argentina">
+          </div>
+        </div>
+        <div class="two-col">
+          <div>
+            <label>Teléfono</label>
+            <input type="text" id="telefono" placeholder="Ej: 261-4123456">
+          </div>
+          <div>
+            <label>Email</label>
+            <input type="email" id="email" placeholder="correo@ejemplo.com">
+          </div>
+        </div>
+        <div class="two-col">
+          <div>
+            <label>Dirección</label>
+            <input type="text" id="direccion" placeholder="Calle y número">
+          </div>
+          <div>
+            <label>Localidad</label>
+            <input type="text" id="localidad" placeholder="Ciudad / localidad">
+          </div>
+        </div>
+        <label>Tipo de contrato</label>
+        <select id="tipo_contrato">
+          <option value="">Sin especificar</option>
+          <option value="temporario">Temporario</option>
+          <option value="permanente">Permanente</option>
+          <option value="jornal">Jornal</option>
+        </select>
+        <label>Fecha de ingreso</label>
+        <input type="date" id="fecha_ingreso">
+        <label>Observaciones</label>
+        <textarea id="observaciones" placeholder="Notas adicionales..."></textarea>
+        <button class="btn btn-primary" id="btn-guardar" onclick="guardar()" style="width:auto;">Guardar empleado</button>
+        <div id="mensaje"></div>
+      </div>
+      </div>
+
+      <!-- ── TABLA DE PERSONAL ── -->
+      <div class="card">
+        <h2>Empleados registrados</h2>
+        <div class="filtros-row">
+          <input type="text" id="filtro-buscar" placeholder="Buscar por nombre, apellido o documento..." oninput="filtrarTabla()">
+          <select id="filtro-estado" onchange="cargar()">
+            <option value="">Todos</option>
+            <option value="1">Activos</option>
+            <option value="0">Inactivos</option>
+          </select>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Apellido y nombre</th>
+              <th>CUIL</th>
+              <th>Tipo contrato</th>
+              <th>Fecha ingreso</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── BOTTOM NAV ── -->
+  <nav class="bottom-nav">
+    <a href="index.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="home"></i></span><span>Inicio</span></a>
+    <a href="juntada.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="wheat"></i></span><span>Cosecha</span></a>
+    <a href="despalillado.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="scissors"></i></span><span>Despalillado</span></a>
+    <a href="aplicaciones.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="droplets"></i></span><span>Aplicaciones</span></a>
+    <a href="menu-campo.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="menu"></i></span><span>Menú</span></a>
+  </nav>
+
+</div>
+
+<!-- ── MODAL DETALLE ── -->
+<div class="modal-overlay" id="modal-overlay" onclick="cerrarModal(event)">
+  <div class="modal-box" id="modal-box">
+    <div class="modal-title" id="modal-titulo"></div>
+    <div id="modal-contenido"></div>
+    <button class="btn btn-cerrar" onclick="cerrarModalBtn()">Cerrar</button>
+  </div>
+</div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+  lucide.createIcons();
+  document.getElementById('topbar-date').textContent =
+    new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
+  cargarTemporadaActiva();
+  function toggleForm() {
+    document.getElementById('form-nuevo').classList.toggle('visible');
+  }
+
+  // ── Datos en memoria para filtrado ──────────────────────────────
+  var _datos = [];
+
+  function fmtFecha(f) {
+    if (!f) return '—';
+    return String(f).split('T')[0];
+  }
+
+  function fmtContrato(c) {
+    if (!c) return '—';
+    var map = { temporario: 'Temporario', permanente: 'Permanente', jornal: 'Jornal' };
+    return map[c.toLowerCase()] || c;
+  }
+
+  // ── Cargar tabla ─────────────────────────────────────────────────
+  function cargar() {
+    var estado = document.getElementById('filtro-estado').value;
+    var url = '/api/personal' + (estado !== '' ? '?activo=' + estado : '');
+    fetch(url)
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        _datos = data;
+        renderTabla(data);
+      })
+      .catch(function() {
+        document.getElementById('tbody').innerHTML =
+          '<tr><td colspan="6" class="empty">Error al cargar datos</td></tr>';
+      });
+  }
+
+  function renderTabla(data) {
+    var tbody = document.getElementById('tbody');
+    if (!data.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty">Sin empleados registrados</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(function(e) {
+      var badge = e.activo
+        ? '<span class="badge badge-activo">Activo</span>'
+        : '<span class="badge badge-inactivo">Inactivo</span>';
+      var btnBaja = e.activo
+        ? '<button class="btn-sm btn-baja" onclick="darBaja(event,' + e.id + ')">Baja</button>'
+        : '<span style="color:#aaa;font-size:13px;">—</span>';
+      return '<tr class="fila-empleado" onclick="verDetalle(' + e.id + ')">' +
+        '<td><strong>' + esc(e.apellido) + '</strong>, ' + esc(e.nombre) + '</td>' +
+        '<td>' + (e.cuil ? esc(e.cuil) : '—') + '</td>' +
+        '<td>' + fmtContrato(e.tipo_contrato) + '</td>' +
+        '<td>' + fmtFecha(e.fecha_ingreso) + '</td>' +
+        '<td>' + badge + '</td>' +
+        '<td onclick="event.stopPropagation()">' + btnBaja + '</td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  // ── Filtrado en tiempo real ──────────────────────────────────────
+  function filtrarTabla() {
+    var q = document.getElementById('filtro-buscar').value.toLowerCase().trim();
+    if (!q) { renderTabla(_datos); return; }
+    var filtrados = _datos.filter(function(e) {
+      return (e.nombre  && e.nombre.toLowerCase().includes(q)) ||
+             (e.apellido && e.apellido.toLowerCase().includes(q)) ||
+             (e.documento && e.documento.toLowerCase().includes(q));
+    });
+    renderTabla(filtrados);
+  }
+
+  // ── Guardar nuevo empleado ───────────────────────────────────────
+  function guardar() {
+    var nombre   = document.getElementById('nombre').value.trim();
+    var apellido = document.getElementById('apellido').value.trim();
+    if (!nombre)   { mostrarMensaje('mensaje', 'error', 'El nombre es obligatorio'); return; }
+    if (!apellido) { mostrarMensaje('mensaje', 'error', 'El apellido es obligatorio'); return; }
+
+    var btn = document.getElementById('btn-guardar');
+    setLoading(btn, true);
+
+    var payload = {
+      nombre:           nombre,
+      apellido:         apellido,
+      tipo_documento:   document.getElementById('tipo_documento').value || null,
+      documento:        document.getElementById('documento').value.trim() || null,
+      cuil:             document.getElementById('cuil').value.trim() || null,
+      fecha_nacimiento: document.getElementById('fecha_nacimiento').value || null,
+      nacionalidad:     document.getElementById('nacionalidad').value.trim() || null,
+      telefono:         document.getElementById('telefono').value.trim() || null,
+      email:            document.getElementById('email').value.trim() || null,
+      direccion:        document.getElementById('direccion').value.trim() || null,
+      localidad:        document.getElementById('localidad').value.trim() || null,
+      tipo_contrato:    document.getElementById('tipo_contrato').value || null,
+      fecha_ingreso:    document.getElementById('fecha_ingreso').value || null,
+      observaciones:    document.getElementById('observaciones').value.trim() || null,
+    };
+
+    fetch('/api/personal', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.ok) {
+        mostrarMensaje('mensaje', 'success', 'Empleado agregado correctamente');
+        limpiarFormulario();
+        document.getElementById('form-nuevo').classList.remove('visible');
+        cargar();
+      } else {
+        mostrarMensaje('mensaje', 'error', data.error || 'Error al guardar');
+      }
+      setLoading(btn, false);
+    })
+    .catch(function() {
+      mostrarMensaje('mensaje', 'error', 'Error de conexión');
+      setLoading(btn, false);
+    });
+  }
+
+  function limpiarFormulario() {
+    var ids = ['nombre','apellido','tipo_documento','documento','cuil',
+               'fecha_nacimiento','nacionalidad','telefono','email',
+               'direccion','localidad','tipo_contrato','fecha_ingreso','observaciones'];
+    ids.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+  }
+
+  // ── Dar de baja ──────────────────────────────────────────────────
+  function darBaja(evt, id) {
+    evt.stopPropagation();
+    if (!confirm('¿Confirmar baja del empleado? Esta acción es una baja lógica (el registro se conserva como inactivo).')) return;
+    fetch('/api/personal/' + id, { method: 'DELETE' })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.ok) cargar();
+        else alert('Error: ' + (data.error || 'No se pudo dar de baja'));
+      })
+      .catch(function() { alert('Error de conexión'); });
+  }
+
+  // ── Modal detalle ────────────────────────────────────────────────
+  function verDetalle(id) {
+    fetch('/api/personal/' + id)
+      .then(function(r) { return r.json(); })
+      .then(function(e) {
+        document.getElementById('modal-titulo').textContent =
+          esc(e.apellido) + ', ' + esc(e.nombre);
+
+        var html = '';
+
+        html += '<div class="modal-section">Identificación</div>';
+        html += campo('Tipo doc.',      e.tipo_documento);
+        html += campo('Documento',      e.documento);
+        html += campo('CUIL',           e.cuil);
+        html += campo('Nacionalidad',   e.nacionalidad);
+        html += campo('Fecha nac.',     fmtFecha(e.fecha_nacimiento));
+
+        html += '<div class="modal-section">Contacto</div>';
+        html += campo('Teléfono',  e.telefono);
+        html += campo('Email',     e.email);
+        html += campo('Dirección', e.direccion);
+        html += campo('Localidad', e.localidad);
+
+        html += '<div class="modal-section">Contrato</div>';
+        html += campo('Tipo contrato',   fmtContrato(e.tipo_contrato));
+        html += campo('Fecha ingreso',   fmtFecha(e.fecha_ingreso));
+        html += campo('Fecha egreso',    fmtFecha(e.fecha_egreso));
+        html += campo('Estado', e.activo
+          ? '<span class="badge badge-activo">Activo</span>'
+          : '<span class="badge badge-inactivo">Inactivo</span>');
+
+        if (e.observaciones) {
+          html += '<div class="modal-section">Observaciones</div>';
+          html += '<div class="modal-field"><span>' + esc(e.observaciones) + '</span></div>';
+        }
+
+        if (e.juntador_id) {
+          html += '<div class="modal-cosechador"><i data-lucide="wheat" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i>Vinculado como cosechador (ID: ' + e.juntador_id + ')</div>';
+        }
+
+        document.getElementById('modal-contenido').innerHTML = html;
+        document.getElementById('modal-overlay').classList.add('open');
+        lucide.createIcons();
+      })
+      .catch(function() { alert('Error al cargar detalle'); });
+  }
+
+  function campo(label, valor) {
+    var val = (valor === null || valor === undefined || valor === '') ? '—' : valor;
+    return '<div class="modal-field"><strong>' + label + ':</strong> <span>' + val + '</span></div>';
+  }
+
+  function cerrarModalBtn() {
+    document.getElementById('modal-overlay').classList.remove('open');
+  }
+
+  function cerrarModal(evt) {
+    if (evt.target === document.getElementById('modal-overlay')) {
+      document.getElementById('modal-overlay').classList.remove('open');
+    }
+  }
+
+  // ── Escape HTML ──────────────────────────────────────────────────
+  function esc(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;');
+  }
+
+  cargar();
+</script>
+</body>
+</html>

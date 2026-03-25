@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Fondo verde redondeado -->
+  <rect width="64" height="64" rx="14" fill="#2D5016"/>
+  <!-- Maíz: escalado al 133% y centrado en 64x64 -->
+  <!-- viewBox original: 0 0 24 32, escala 1.4 → 33.6x44.8, offset x=15.2 y=9.6 -->
+  <g transform="translate(15.2, 9.6) scale(1.4)">
+    <!-- Hojas de chala -->
+    <path d="M6 22 C-1 18 -2 9 2 8 C4 7.5 6.5 14 6 22Z" fill="#3D6B1F"/>
+    <path d="M18 22 C25 18 26 9 22 8 C20 7.5 17.5 14 18 22Z" fill="#3D6B1F"/>
+    <!-- Cuerpo del choclo -->
+    <rect x="6" y="5" width="12" height="22" rx="6" fill="#F5A623"/>
+    <!-- Granos (3 columnas x 4 filas) -->
+    <circle cx="9.5"  cy="10" r="1.25" fill="#C47A15"/>
+    <circle cx="12"   cy="10" r="1.25" fill="#C47A15"/>
+    <circle cx="14.5" cy="10" r="1.25" fill="#C47A15"/>
+    <circle cx="9.5"  cy="14" r="1.25" fill="#C47A15"/>
+    <circle cx="12"   cy="14" r="1.25" fill="#C47A15"/>
+    <circle cx="14.5" cy="14" r="1.25" fill="#C47A15"/>
+    <circle cx="9.5"  cy="18" r="1.25" fill="#C47A15"/>
+    <circle cx="12"   cy="18" r="1.25" fill="#C47A15"/>
+    <circle cx="14.5" cy="18" r="1.25" fill="#C47A15"/>
+    <circle cx="9.5"  cy="22" r="1.25" fill="#C47A15"/>
+    <circle cx="12"   cy="22" r="1.25" fill="#C47A15"/>
+    <circle cx="14.5" cy="22" r="1.25" fill="#C47A15"/>
+    <!-- Pelos del choclo (estigmas) -->
+    <path d="M10 5 C9.5 3 9 1 9.5 0" stroke="#8B4513" stroke-width="1" stroke-linecap="round" fill="none"/>
+    <path d="M12 5 C12 3 12 1 12.5 0" stroke="#8B4513" stroke-width="1" stroke-linecap="round" fill="none"/>
+    <path d="M14 5 C14.5 3 15 1 14.5 0" stroke="#8B4513" stroke-width="1" stroke-linecap="round" fill="none"/>
+  </g>
+</svg>

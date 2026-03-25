@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1A2E0A">
+  <title>Lotes — Cosecha</title>
+  <link rel="icon" href="img/logo.png">
+  <script src="js/utils.js"></script>
+  <link rel="stylesheet" href="cosecha.css">
+  <style>
+h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
+    h2 { color: #2D5016; margin-bottom: 12px; font-size: 18px; }
+    .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    label { font-weight: bold; color: #444; display: block; margin-bottom: 6px; margin-top: 12px; }
+    input, select { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
+    .btn { width: 100%; padding: 14px; font-size: 16px; font-weight: bold; border: none; border-radius: 12px; cursor: pointer; margin-top: 12px; }
+    .btn-orange { background: #2D5016; color: white; }
+    .btn-orange:disabled { background: #aaa; cursor: not-allowed; }
+    .btn-back { background: #eee; color: #444; margin-top: 16px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 12px; }
+    th { background: #2D5016; color: white; padding: 10px; text-align: left; }
+    td { padding: 10px; border-bottom: 1px solid #eee; vertical-align: middle; }
+    tr:nth-child(even) td { background: #FAFAF8; }
+    .badge-activo { background: #e8f5e2; color: #2d6a4f; display: inline-block; padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: bold; }
+    .badge-inactivo { background: #eee; color: #666; display: inline-block; padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: bold; }
+    .empty { text-align: center; color: #999; padding: 20px; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .msg-success { background: #e8f5e2; color: #2d6a4f; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 8px; }
+    .msg-error { background: #fde8e8; color: #c0392b; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 8px; }
+    .page-logo-h1 { height: 44px; width: auto; }
+    @media (max-width: 767px) { .page-logo-h1 { height: 32px; } }
+  </style>
+  <script src="js/auth-check.js"></script>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      
+      <a href="index.html" class="nav-item"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard</a>
+      <div class="nav-section">Campo</div>
+      <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
+      <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
+      <div class="nav-section">Sistema</div>
+      <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
+      <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
+      <a href="menu-admin.html" class="nav-item"><span class="nav-icon"><i data-lucide="landmark"></i></span> Administración</a>
+      <a href="mercado.html" class="nav-item"><span class="nav-icon"><i data-lucide="trending-up"></i></span> Mercado</a>
+      <a href="menu-config.html" class="nav-item active"><span class="nav-icon"><i data-lucide="settings"></i></span> Configuración</a>
+    </nav>
+    <div class="sidebar-footer">Sistema Agrícola v2</div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
+        <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div><span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-date" id="topbar-date"></span>
+      </div>
+    </header>
+
+    <div class="content">
+      <a href="menu-config.html" class="btn-volver">← Volver</a>
+      <div class="content-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div class="content-title">Lotes</div>
+          <div class="content-sub">Gestión de lotes productivos</div>
+        </div>
+        <button class="btn btn-primary" style="width:auto;margin:0;" onclick="toggleForm()">+ Nuevo lote</button>
+      </div>
+
+      <div class="form-colapsable" id="form-nuevo">
+      <div class="card-form" style="margin-bottom:12px;">
+        <div style="font-weight:700;font-size:15px;margin-bottom:12px;color:var(--verde);">Nuevo lote</div>
+    <label>Nombre *</label>
+    <input type="text" id="nombre" placeholder="Ej: Lote A" data-tooltip="Nombre descriptivo del lote (ej: Lote Norte, Sector 3)">
+    <label>Temporada *</label>
+    <select id="temporada_id" onchange="onTemporadaChange()" data-tooltip="Campaña a la que pertenece este lote"><option value="">Seleccionar temporada...</option></select>
+    <label>Cultivo</label>
+    <select id="cultivo" onchange="onCultivoChange()" data-tooltip="Tipo de cultivo implantado en este lote">
+      <option value="">Sin especificar</option>
+      <option value="frutilla">Frutilla</option>
+      <option value="arandano">Arándano</option>
+      <option value="vid">Vid</option>
+      <option value="frambuesa">Frambuesa</option>
+      <option value="soja">Soja</option>
+      <option value="trigo">Trigo</option>
+      <option value="maiz">Maíz</option>
+      <option value="girasol">Girasol</option>
+      <option value="sorgo">Sorgo</option>
+      <option value="cebada">Cebada</option>
+      <option value="otro">Otro</option>
+    </select>
+    <div class="two-col">
+      <div><label>Hectáreas</label><input type="number" id="hectareas" placeholder="Ej: 2.5" step="0.01" min="0" style="-moz-appearance:textfield;appearance:textfield;" data-miles data-tooltip="Superficie del lote en hectáreas"></div>
+      <div id="grupo-plantines"><label id="lbl-plantines">Plantines</label><input type="number" id="plantines" placeholder="Ej: 50000" min="0" style="-moz-appearance:textfield;appearance:textfield;" data-miles data-tooltip="Cantidad de plantines implantados"></div>
+      <div id="grupo-densidad" style="display:none"><label>Densidad de siembra</label><input type="number" id="densidad_siembra" placeholder="Ej: 80 kg/ha" step="0.01" min="0" style="-moz-appearance:textfield;appearance:textfield;" data-tooltip="Densidad de siembra (kg/ha o semillas/ha)"></div>
+    </div>
+    <div id="grupo-distancia" style="display:none">
+      <label>Distancia entre plantas (cm) <span style="font-weight:400;color:#888;">opcional</span></label>
+      <input type="number" id="distancia_plantas" placeholder="Ej: 30" step="0.1" min="0" style="-moz-appearance:textfield;appearance:textfield;">
+    </div>
+    <div id="grupo-fecha-siembra" style="display:none">
+      <label>Fecha de siembra estimada</label>
+      <input type="date" id="fecha_siembra">
+    </div>
+    <label>Variedad</label>
+    <input type="text" id="variedad" placeholder="Ej: Camarosa, Festival">
+    <button class="btn btn-primary" id="btn-guardar" onclick="guardar()" style="width:auto;" data-tooltip="Guardar el nuevo lote en la campaña seleccionada">Guardar lote</button>
+    <div id="mensaje"></div>
+      </div>
+      </div>
+  <div class="card">
+    <h2>Lotes registrados</h2>
+    <div style="display:flex;gap:0;margin-bottom:14px;border-bottom:2px solid #eee;">
+      <button id="tab-activa" onclick="mostrarTab('activa')" style="padding:8px 18px;border:none;background:none;font-weight:700;color:#2D5016;border-bottom:2px solid #2D5016;margin-bottom:-2px;cursor:pointer;font-size:14px;">Campaña activa</button>
+      <button id="tab-todos" onclick="mostrarTab('todos')" style="padding:8px 18px;border:none;background:none;font-weight:600;color:#888;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;font-size:14px;">Todos los lotes</button>
+    </div>
+    <div id="panel-activa">
+      <table>
+        <thead><tr><th>Nombre</th><th>Hectáreas</th><th>Variedad</th><th>Implantación / Densidad</th><th>Estado</th><th></th></tr></thead>
+        <tbody id="tbody-activa"><tr><td colspan="6" class="empty">Cargando...</td></tr></tbody>
+      </table>
+    </div>
+    <div id="panel-todos" style="display:none;">
+      <table>
+        <thead><tr><th>Nombre</th><th>Campaña</th><th>Hectáreas</th><th>Variedad</th><th>Implantación / Densidad</th><th>Estado</th><th></th></tr></thead>
+        <tbody id="tbody-todos"><tr><td colspan="7" class="empty">Cargando...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+    </div>
+  </div>
+
+  <!-- Modal edición lote -->
+  <div id="modal-editar" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:white;border-radius:16px;padding:24px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <strong style="font-size:16px;color:#2D5016;">Editar lote</strong>
+        <button onclick="cerrarModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#666;">✕</button>
+      </div>
+      <input type="hidden" id="edit-id">
+      <label>Nombre *</label><input type="text" id="edit-nombre" style="width:100%;margin-bottom:8px;">
+      <label>Hectáreas</label><input type="number" id="edit-hectareas" step="0.01" min="0" style="width:100%;margin-bottom:8px;-moz-appearance:textfield;appearance:textfield;">
+      <label>Variedad</label><input type="text" id="edit-variedad" style="width:100%;margin-bottom:8px;">
+      <label>Plantines</label><input type="number" id="edit-plantines" min="0" style="width:100%;margin-bottom:8px;-moz-appearance:textfield;appearance:textfield;">
+      <div id="msg-edit" style="margin-top:8px;"></div>
+      <button onclick="guardarEdicion(this)" style="margin-top:12px;width:100%;padding:12px;background:#2D5016;color:white;border:none;border-radius:10px;font-size:15px;font-weight:bold;cursor:pointer;">Guardar cambios</button>
+    </div>
+  </div>
+
+  <!-- ── BOTTOM NAV -- -->
+  <nav class="bottom-nav">
+    
+    <a href="index.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="home"></i></span><span>Inicio</span></a>
+    <a href="juntada.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="wheat"></i></span><span>Cosecha</span></a>
+    <a href="despalillado.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="scissors"></i></span><span>Despalillado</span></a>
+    <a href="aplicaciones.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="droplets"></i></span><span>Aplicaciones</span></a>
+    <a href="menu-campo.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="menu"></i></span><span>Menú</span></a>
+  </nav>
+
+</div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+  lucide.createIcons();
+  document.getElementById('topbar-date').textContent =
+    new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
+  function toggleForm() {
+    document.getElementById('form-nuevo').classList.toggle('visible');
+  }
+</script>
+<script>
+    var CULTIVO_LABEL_LOTES = {
+      frutilla:'Frutilla', soja:'Soja', trigo:'Trigo', maiz:'Maíz',
+      girasol:'Girasol', arandano:'Arándano', vid:'Vid', frambuesa:'Frambuesa',
+      sorgo:'Sorgo', cebada:'Cebada', otro:'Otro',
+    };
+    var CULTIVOS_PLANTINES = ['frutilla','arandano','vid','frambuesa'];
+    var CULTIVOS_SIEMBRA   = ['soja','trigo','maiz','girasol','sorgo','cebada'];
+    var VARIEDAD_PH = {
+      frutilla:'Ej: Camarosa, Festival', arandano:"Ej: O'Neal, Misty",
+      vid:'Ej: Malbec, Cabernet', frambuesa:'Ej: Heritage, Autumn Bliss',
+      soja:'Ej: DM 4612, NA 4990', trigo:'Ej: Buck Meteoro, Klein Rayo',
+      maiz:'Ej: DK 7210, P1630', girasol:'Ej: Paraíso 103, Dekasol 3900',
+      sorgo:'Ej: Sugargraze, Nutri Plus', cebada:'Ej: Scarlett, Explorer',
+    };
+    var DENSIDAD_PH = {
+      soja:'Ej: 80 kg/ha', trigo:'Ej: 120 kg/ha', cebada:'Ej: 130 kg/ha',
+      sorgo:'Ej: 8 kg/ha', maiz:'Ej: 65000 semillas/ha', girasol:'Ej: 55000 semillas/ha',
+    };
+
+    // Mapa id→cultivo para auto-rellenar al cambiar temporada
+    var temporadaCultivoMap = {};
+
+    function onCultivoChange() {
+      var c = document.getElementById('cultivo').value;
+      var esPlantines = CULTIVOS_PLANTINES.indexOf(c) >= 0;
+      var esSiembra   = CULTIVOS_SIEMBRA.indexOf(c) >= 0;
+
+      document.getElementById('grupo-plantines').style.display    = esSiembra ? 'none' : '';
+      document.getElementById('grupo-densidad').style.display     = esSiembra ? ''     : 'none';
+      document.getElementById('grupo-distancia').style.display    = esPlantines ? ''   : 'none';
+      document.getElementById('grupo-fecha-siembra').style.display = esSiembra ? ''    : 'none';
+
+      var lbl = document.getElementById('lbl-plantines');
+      lbl.textContent = esPlantines ? 'Cantidad de plantines' : (!esSiembra && c === 'otro' ? 'Cantidad' : 'Plantines');
+
+      document.getElementById('plantines').placeholder = esPlantines ? 'Ej: 50000 plantines' : 'Ej: 100';
+
+      var ph = VARIEDAD_PH[c] || 'Ej: variedad o híbrido';
+      document.getElementById('variedad').placeholder = ph;
+
+      if (esSiembra) {
+        document.getElementById('densidad_siembra').placeholder = DENSIDAD_PH[c] || 'Ej: 80 kg/ha';
+      }
+    }
+
+    function onTemporadaChange() {
+      var tid = document.getElementById('temporada_id').value;
+      var cultivo = tid ? (temporadaCultivoMap[tid] || '') : '';
+      document.getElementById('cultivo').value = cultivo;
+      onCultivoChange();
+    }
+
+    function cargarTemporadas(){
+      fetch('/api/temporadas/activas').then(function(r){return r.json();}).then(function(activas){
+        var sel = document.getElementById('temporada_id');
+        if (!activas.length) {
+          sel.innerHTML = '<option value="">Sin campañas activas — ir a Configuración</option>';
+          return;
+        }
+        var savedId = localStorage.getItem('campana_seleccionada_id');
+        activas.forEach(function(t) {
+          if (t.cultivo) temporadaCultivoMap[t.id] = t.cultivo.toLowerCase().replace(/á/g,'a').replace(/í/g,'i');
+        });
+        sel.innerHTML = '<option value="">Seleccionar campaña...</option>' +
+          activas.map(function(t) {
+            var c = t.cultivo ? t.cultivo.toLowerCase().replace(/á/g,'a').replace(/í/g,'i') : '';
+            var cultivoStr = c ? ' — ' + (CULTIVO_LABEL_LOTES[c] || t.cultivo) : '';
+            var selected = (activas.length === 1 || String(t.id) === String(savedId)) ? ' selected' : '';
+            return '<option value="' + t.id + '"' + selected + '>' + t.nombre + cultivoStr + '</option>';
+          }).join('');
+        // Si hay una sola o hay selección guardada, auto-rellenar cultivo
+        if (activas.length === 1 || savedId) { onTemporadaChange(); }
+      });
+    }
+
+    function renderImplantacion(l) {
+      var c = (l.cultivo || '').toLowerCase().replace(/á/g,'a').replace(/í/g,'i');
+      if (CULTIVOS_SIEMBRA.indexOf(c) >= 0) {
+        return l.densidad_siembra ? parseFloat(l.densidad_siembra).toLocaleString('es-AR') + ' kg/ha' : '-';
+      }
+      return l.cantidad_plantines ? parseInt(l.cantidad_plantines).toLocaleString('es-AR') + ' pl.' : '-';
+    }
+
+    var tabActual = 'activa';
+    function mostrarTab(tab) {
+      tabActual = tab;
+      document.getElementById('panel-activa').style.display = tab === 'activa' ? '' : 'none';
+      document.getElementById('panel-todos').style.display  = tab === 'todos'  ? '' : 'none';
+      document.getElementById('tab-activa').style.color       = tab === 'activa' ? '#2D5016' : '#888';
+      document.getElementById('tab-activa').style.borderBottom = tab === 'activa' ? '2px solid #2D5016' : '2px solid transparent';
+      document.getElementById('tab-todos').style.color        = tab === 'todos'  ? '#2D5016' : '#888';
+      document.getElementById('tab-todos').style.borderBottom  = tab === 'todos'  ? '2px solid #2D5016' : '2px solid transparent';
+    }
+
+    function cargar(){
+      // Pestaña todos
+      function btnEditar(l) {
+        return '<button onclick="abrirEditar('+l.id+',\''+encodeURIComponent(l.nombre||'')+'\',' +
+          (l.hectareas||'')+',' +
+          '\''+encodeURIComponent(l.variedad||'')+'\',' +
+          (l.cantidad_plantines||'')+')" ' +
+          'style="padding:4px 10px;font-size:12px;background:#f0f4e8;color:#2D5016;border:1px solid #a8d5b5;border-radius:6px;cursor:pointer;font-weight:600;">Editar</button>';
+      }
+      fetch('/api/lotes').then(function(r){return r.json();}).then(function(data){
+        var tbody = document.getElementById('tbody-todos');
+        if(!data.length){ tbody.innerHTML='<tr><td colspan="7" class="empty">Sin lotes</td></tr>'; return; }
+        tbody.innerHTML=data.map(function(l){
+          return '<tr><td><strong>'+l.nombre+'</strong></td><td>'+(l.temporada||'-')+'</td>'+
+            '<td>'+(l.hectareas?l.hectareas+' ha':'-')+'</td><td>'+(l.variedad||'-')+'</td>'+
+            '<td>'+renderImplantacion(l)+'</td>'+
+            '<td><span class="'+(l.activo?'badge-activo':'badge-inactivo')+'">'+(l.activo?'Activo':'Inactivo')+'</span></td>'+
+            '<td>'+btnEditar(l)+'</td></tr>';
+        }).join('');
+      });
+      fetch('/api/temporadas/activa').then(function(r){return r.json();}).then(function(t){
+        var tbody = document.getElementById('tbody-activa');
+        if (!t) {
+          tbody.innerHTML = '<tr><td colspan="6" class="empty">No hay campaña activa — ir a Configuración</td></tr>';
+          return;
+        }
+        fetch('/api/lotes?temporada_id='+t.id).then(function(r){return r.json();}).then(function(data){
+          if(!data.length){ tbody.innerHTML='<tr><td colspan="6" class="empty">Sin lotes en la campaña activa</td></tr>'; return; }
+          tbody.innerHTML=data.map(function(l){
+            return '<tr><td><strong>'+l.nombre+'</strong></td>'+
+              '<td>'+(l.hectareas?l.hectareas+' ha':'-')+'</td><td>'+(l.variedad||'-')+'</td>'+
+              '<td>'+renderImplantacion(l)+'</td>'+
+              '<td><span class="'+(l.activo?'badge-activo':'badge-inactivo')+'">'+(l.activo?'Activo':'Inactivo')+'</span></td>'+
+              '<td>'+btnEditar(l)+'</td></tr>';
+          }).join('');
+        });
+      });
+    }
+
+    function guardar(){
+      var nombre=document.getElementById('nombre').value.trim();
+      var temporada_id=document.getElementById('temporada_id').value;
+      if(!nombre){ alert('Ingresa el nombre del lote'); return; }
+      if(!temporada_id){ alert('Selecciona una temporada'); return; }
+      var c = document.getElementById('cultivo').value;
+      var esSiembra = CULTIVOS_SIEMBRA.indexOf(c) >= 0;
+      var btn=document.getElementById('btn-guardar');
+      btn.disabled=true; btn.textContent='Guardando...';
+      fetch('/api/lotes',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          nombre:          nombre,
+          temporada_id:    temporada_id,
+          hectareas:       document.getElementById('hectareas').value||null,
+          cantidad_plantines: !esSiembra ? (document.getElementById('plantines').value||null) : null,
+          densidad_siembra:   esSiembra  ? (document.getElementById('densidad_siembra').value||null) : null,
+          fecha_siembra:      esSiembra  ? (document.getElementById('fecha_siembra').value||null) : null,
+          distancia_plantas:  !esSiembra ? (document.getElementById('distancia_plantas').value||null) : null,
+          variedad:        document.getElementById('variedad').value||null,
+        })})
+      .then(function(r){return r.json();}).then(function(data){
+        if(data.ok){
+          mostrarMensaje('mensaje','success','Lote agregado correctamente');
+          ['nombre','hectareas','plantines','densidad_siembra','distancia_plantas','variedad'].forEach(function(id){
+            var el=document.getElementById(id); if(el) el.value='';
+          });
+          document.getElementById('fecha_siembra').value='';
+          document.getElementById('form-nuevo').classList.remove('visible');
+          cargar();
+        } else { mostrarMensaje('mensaje','error',data.error||'Error al guardar'); }
+        btn.disabled=false; btn.textContent='Guardar lote';
+      }).catch(function(){ mostrarMensaje('mensaje','error','Error de conexion'); btn.disabled=false; btn.textContent='Guardar lote'; });
+    }
+    cargarTemporadas();
+    cargar();
+    
+    function abrirEditar(id, nombre, hectareas, variedad, plantines) {
+      document.getElementById('edit-id').value = id;
+      document.getElementById('edit-nombre').value = decodeURIComponent(nombre||'');
+      document.getElementById('edit-hectareas').value = hectareas||'';
+      document.getElementById('edit-variedad').value = decodeURIComponent(variedad||'');
+      document.getElementById('edit-plantines').value = plantines||'';
+      document.getElementById('msg-edit').innerHTML = '';
+      var modal = document.getElementById('modal-editar');
+      modal.style.display = 'flex';
+    }
+    function cerrarModal() {
+      document.getElementById('modal-editar').style.display = 'none';
+    }
+    function guardarEdicion(btn) {
+      var id = document.getElementById('edit-id').value;
+      var nombre = document.getElementById('edit-nombre').value.trim();
+      if (!nombre) { alert('El nombre es obligatorio'); return; }
+      btn.disabled = true; btn.textContent = 'Guardando...';
+      fetch('/api/lotes/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: nombre,
+          hectareas: document.getElementById('edit-hectareas').value || null,
+          variedad: document.getElementById('edit-variedad').value || null,
+          cantidad_plantines: document.getElementById('edit-plantines').value || null
+        })
+      }).then(function(r){ return r.json(); }).then(function(data) {
+        btn.disabled = false; btn.textContent = 'Guardar cambios';
+        if (data.ok) {
+          document.getElementById('msg-edit').innerHTML = '<div class="msg-success">Guardado correctamente</div>';
+          setTimeout(function(){ cerrarModal(); cargar(); }, 800);
+        } else {
+          document.getElementById('msg-edit').innerHTML = '<div class="msg-error">' + (data.error||'Error') + '</div>';
+        }
+      }).catch(function(){
+        btn.disabled = false; btn.textContent = 'Guardar cambios';
+        document.getElementById('msg-edit').innerHTML = '<div class="msg-error">Error de conexión</div>';
+      });
+    }
+
+cargarTemporadaActiva();
+</script>
+</body>
+</html>

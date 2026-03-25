@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "mssql": {
+      "command": "/Users/brunopasquetta/.npm-global/bin/mcp-mssql",
+      "args": [
+        "--server=localhost",
+        "--port=1433",
+        "--database=CosechaFrutilla",
+        "--user=sa",
+        "--password=Frutilla2026!"
+      ]
+    }
+  }
+}

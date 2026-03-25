@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1A2E0A">
+  <title>Despalillado — Campo</title>
+  <link rel="icon" href="img/logo.png">
+  <script src="js/utils.js"></script>
+  <link rel="stylesheet" href="cosecha.css">
+  <style>
+    .peso { color: #C0392B; }
+    .btn-primary { background: #C0392B; }
+  </style>
+  <script src="js/auth-check.js"></script>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-item">
+        <span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard
+      </a>
+      <div class="nav-section">Campo</div>
+      <a href="juntada.html" class="nav-item">
+        <span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha
+      </a>
+      <a href="despalillado.html" class="nav-item active">
+        <span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado
+      </a>
+      <a href="aplicaciones.html" class="nav-item">
+        <span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones
+      </a>
+      <div class="nav-section">Sistema</div>
+      <a href="menu-stock.html" class="nav-item">
+        <span class="nav-icon"><i data-lucide="package"></i></span> Stock
+      </a>
+      <a href="menu-comercial.html" class="nav-item">
+        <span class="nav-icon"><i data-lucide="users"></i></span> Comercial
+      </a>
+      <a href="menu-admin.html" class="nav-item">
+        <span class="nav-icon"><i data-lucide="landmark"></i></span> Administración
+      </a>
+      <a href="mercado.html" class="nav-item">
+        <span class="nav-icon"><i data-lucide="trending-up"></i></span> Mercado
+      </a>
+      <a href="menu-config.html" class="nav-item">
+        <span class="nav-icon"><i data-lucide="settings"></i></span> Configuración
+      </a>
+    </nav>
+    <div class="sidebar-footer">Sistema Agrícola v2</div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
+        <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div><span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-date" id="topbar-date"></span>
+      </div>
+    </header>
+
+    <div class="content">
+      <a href="menu-campo.html" class="btn-volver">← Volver</a>
+      <div class="content-header">
+        <div class="content-title">Registrar despalillado</div>
+        <div class="content-sub">Seleccioná el lote, escaneá el despalillador y confirmá el peso</div>
+      </div>
+
+      <div style="max-width:560px;">
+        <div class="card-form">
+          <div class="form-row">
+            <label>Lote</label>
+            <select id="lote" onchange="checkReady()" data-tooltip="Lote de la campaña activa donde se despalilló">
+              <option value="">Cargando lotes...</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="card-form">
+          <div class="section-label" style="margin-top:0;">Despalillador</div>
+          <div class="trabajador-info" id="trabajador-info">Escaneá el QR del despalillador</div>
+          <input type="hidden" id="trabajador-id">
+          <button class="btn btn-scan" onclick="toggleCamera()" data-tooltip="Escaneá el QR del despalillador para identificarlo">
+            <i data-lucide="scan-line"></i> Escanear QR
+          </button>
+          <div id="camera-container" class="hidden" style="margin-top:12px;">
+            <video id="video" autoplay playsinline></video>
+            <canvas id="canvas" class="hidden"></canvas>
+          </div>
+          <div style="text-align:center;margin-top:10px;">
+            <a href="#" onclick="toggleListaTrabajadores();return false;" style="font-size:13px;color:var(--verde);font-weight:600;text-decoration:none;" data-tooltip="Elegí el despalillador manualmente si no tenés QR">o seleccionar de la lista</a>
+          </div>
+          <div id="lista-trabajadores-wrap" style="display:none;margin-top:8px;">
+            <select id="lista-trabajadores" onchange="seleccionarTrabajadorLista(this.value)" style="width:100%;padding:10px;border:2px solid var(--borde);border-radius:8px;font-size:15px;">
+              <option value="">— seleccionar despalillador —</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="card-form">
+          <div class="section-label" style="margin-top:0;">Peso</div>
+          <div class="peso" id="peso-display">— kg</div>
+          <div class="form-row" style="margin-top:8px;">
+            <label>Ingreso manual</label>
+            <input type="number" id="peso-manual" placeholder="0.00" step="0.01" min="0"
+              style="-moz-appearance:textfield;appearance:textfield;"
+              data-miles
+              data-tooltip="Ingresá el peso en kg si la balanza no está conectada"
+              oninput="pesoActual=parseFloat(this.value)||null;checkReady()">
+          </div>
+        </div>
+
+        <div id="mensaje"></div>
+        <button class="btn btn-primary" id="btn-confirmar" onclick="confirmar()" disabled style="margin-top:4px;" data-tooltip="Registra el despalillado con el lote, despalillador y peso indicados">
+          <i data-lucide="check"></i> Confirmar registro
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── BOTTOM NAV ── -->
+  <nav class="bottom-nav">
+    <a href="index.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon"><i data-lucide="home"></i></span><span>Inicio</span>
+    </a>
+    <a href="juntada.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon"><i data-lucide="wheat"></i></span><span>Cosecha</span>
+    </a>
+    <a href="despalillado.html" class="bottom-nav-item active">
+      <span class="bottom-nav-icon"><i data-lucide="scissors"></i></span><span>Despalillado</span>
+    </a>
+    <a href="aplicaciones.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon"><i data-lucide="droplets"></i></span><span>Aplicaciones</span>
+    </a>
+    <a href="menu-campo.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon"><i data-lucide="menu"></i></span><span>Menú</span>
+    </a>
+  </nav>
+
+</div>
+
+<script src="js/jsqr.min.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+  lucide.createIcons();
+  document.getElementById('topbar-date').textContent =
+    new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
+
+  var trabajadorId = null, pesoActual = null, scanning = false, stream = null;
+
+  // ── Selección de despalillador por lista ───────────────────────
+  var listaTrabajadoresLoaded = false;
+  function toggleListaTrabajadores() {
+    var wrap = document.getElementById('lista-trabajadores-wrap');
+    var visible = wrap.style.display !== 'none';
+    wrap.style.display = visible ? 'none' : 'block';
+    if (!visible && !listaTrabajadoresLoaded) {
+      listaTrabajadoresLoaded = true;
+      fetch('/api/juntadores').then(function(r){ return r.json(); }).then(function(data) {
+        var sel = document.getElementById('lista-trabajadores');
+        if (!data.length) { sel.innerHTML = '<option value="">Sin trabajadores registrados</option>'; return; }
+        sel.innerHTML = '<option value="">— seleccionar despalillador —</option>' +
+          data.map(function(j) {
+            return '<option value="' + j.id + '" data-nombre="' + j.apellido + ', ' + j.nombre + '">' + j.apellido + ', ' + j.nombre + '</option>';
+          }).join('');
+      });
+    }
+  }
+  function seleccionarTrabajadorLista(id) {
+    if (!id) return;
+    var sel = document.getElementById('lista-trabajadores');
+    var opt = sel.options[sel.selectedIndex];
+    trabajadorId = parseInt(id);
+    var el = document.getElementById('trabajador-info');
+    el.textContent = opt.dataset.nombre;
+    el.style.cssText = '';
+    document.getElementById('lista-trabajadores-wrap').style.display = 'none';
+    checkReady();
+  }
+
+  function cargarLotes() {
+    fetch('/api/temporadas/activa').then(r => r.json()).then(function(t) {
+      var sel = document.getElementById('lote');
+      if (!t) {
+        sel.innerHTML = '<option value="">No hay campaña activa — ir a Configuración</option>';
+        return;
+      }
+      fetch('/api/lotes?temporada_id=' + t.id).then(r => r.json()).then(function(lotes) {
+        if (!lotes.length) {
+          sel.innerHTML = '<option value="">Sin lotes en esta campaña</option>';
+          return;
+        }
+        sel.innerHTML = '<option value="">Seleccionar lote...</option>';
+        lotes.forEach(function(l) { sel.innerHTML += '<option value="' + l.id + '">' + l.nombre + '</option>'; });
+        recordarSeleccion('lote', 'ultimo_lote');
+      });
+    });
+  }
+  cargarLotes();
+  window.addEventListener('campanaChange', cargarLotes);
+
+  var ws = new WebSocket('ws://' + location.host);
+  ws.onmessage = function(e) {
+    var data = JSON.parse(e.data);
+    if (data.tipo === 'peso') { pesoActual = data.valor; document.getElementById('peso-display').textContent = data.valor + ' kg'; checkReady(); }
+  };
+
+  function toggleCamera() { if (scanning) { stopCamera(); } else { startCamera(); } }
+  function startCamera() {
+    scanning = true;
+    document.getElementById('camera-container').classList.remove('hidden');
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then(function(s) {
+      stream = s; document.getElementById('video').srcObject = s; requestAnimationFrame(scanQR);
+    });
+  }
+  function stopCamera() {
+    scanning = false;
+    if (stream) stream.getTracks().forEach(function(t) { t.stop(); });
+    document.getElementById('camera-container').classList.add('hidden');
+  }
+  function scanQR() {
+    if (!scanning) return;
+    var video = document.getElementById('video'), canvas = document.getElementById('canvas');
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+      canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+      var ctx = canvas.getContext('2d'); ctx.drawImage(video, 0, 0);
+      var code = jsQR(ctx.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
+      if (code) { stopCamera(); buscarTrabajador(code.data); return; }
+    }
+    requestAnimationFrame(scanQR);
+  }
+  function buscarTrabajador(codigo) {
+    fetch('/api/juntadores/qr/' + codigo).then(r => r.json()).then(function(j) {
+      var el = document.getElementById('trabajador-info');
+      if (j.error) {
+        el.textContent = 'QR no encontrado';
+        el.style.cssText = 'background:#FEE2E2;color:#991B1B;border-color:#FECACA;';
+      } else {
+        trabajadorId = j.id;
+        el.textContent = j.apellido + ', ' + j.nombre;
+        el.style.cssText = '';
+        checkReady();
+      }
+    });
+  }
+  function checkReady() {
+    document.getElementById('btn-confirmar').disabled =
+      !(document.getElementById('lote').value && trabajadorId && pesoActual);
+  }
+  function confirmar() {
+    var lote_id = document.getElementById('lote').value;
+    var kilos = pesoActual || parseFloat(document.getElementById('peso-manual').value);
+    if (!lote_id || !trabajadorId || !kilos) { alert('Completá todos los campos'); return; }
+    var btn = document.getElementById('btn-confirmar');
+    setLoading(btn, true);
+    fetch('/api/despalillado', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lote_id, despalillador_id: trabajadorId, kilos })
+    }).then(r => r.json()).then(function(data) {
+      setLoading(btn, false);
+      if (data.ok) {
+        mostrarMensaje('mensaje', 'success', 'Registro guardado correctamente');
+        document.getElementById('trabajador-info').textContent = 'Escaneá el QR del despalillador';
+        document.getElementById('trabajador-info').style.cssText = '';
+        document.getElementById('peso-manual').value = '';
+        document.getElementById('peso-display').textContent = '— kg';
+        document.getElementById('lista-trabajadores-wrap').style.display = 'none';
+        document.getElementById('lista-trabajadores').value = '';
+        trabajadorId = null; pesoActual = null; checkReady();
+      } else {
+        mostrarMensaje('mensaje', 'error', data.error || 'Error al guardar');
+      }
+    }).catch(function() { setLoading(btn, false); mostrarMensaje('mensaje', 'error', 'Error de conexión'); });
+  }
+cargarTemporadaActiva();
+</script>
+</body>
+</html>

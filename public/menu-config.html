@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1A2E0A">
+  <title>Configuración — Cosecha</title>
+  <link rel="icon" href="img/logo.png">
+  <script src="js/utils.js"></script>
+  <link rel="stylesheet" href="cosecha.css">
+  <style>
+h1 { color: #2D5016; font-size: 26px; margin-bottom: 6px; text-align: center; }
+    p { color: #666; margin-bottom: 32px; text-align: center; font-size: 14px; }
+    .menu { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; max-width: 420px; }
+    .btn { background: #2D5016; color: white; border: none; border-radius: 14px; padding: 28px 16px; font-size: 16px; font-weight: bold; cursor: pointer; text-align: center; text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 8px; transition: background 0.2s; }
+    .btn:hover { background: #2D5016; }
+    .btn span { font-size: 30px; }
+    .btn-back { background: none; border: 2px solid #ccc; color: #666; border-radius: 12px; padding: 12px; font-size: 15px; font-weight: bold; cursor: pointer; width: 100%; max-width: 420px; margin-top: 20px; }
+    .btn-back:hover { background: #eee; }
+    .page-logo-h1 { height: 44px; width: auto; }
+    @media (max-width: 767px) { .page-logo-h1 { height: 32px; } }
+  </style>
+  <script src="js/auth-check.js"></script>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      
+      <a href="index.html" class="nav-item"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard</a>
+      <div class="nav-section">Campo</div>
+      <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
+      <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
+      <div class="nav-section">Sistema</div>
+      <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
+      <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
+      <a href="menu-admin.html" class="nav-item"><span class="nav-icon"><i data-lucide="landmark"></i></span> Administración</a>
+      <a href="mercado.html" class="nav-item"><span class="nav-icon"><i data-lucide="trending-up"></i></span> Mercado</a>
+      <a href="menu-config.html" class="nav-item active"><span class="nav-icon"><i data-lucide="settings"></i></span> Configuración</a>
+    </nav>
+    <div class="sidebar-footer">Sistema Agrícola v2</div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
+        <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div><span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-date" id="topbar-date"></span>
+      </div>
+    </header>
+
+    <div class="content">
+      <a href="index.html" class="btn-volver">← Volver</a>
+      <div class="content-header">
+        <div class="content-title">Configuración</div>
+        <div class="content-sub">Estructura base del sistema</div>
+      </div>
+
+      <div class="action-grid">
+        <a href="temporadas.html" class="action-card action-card--primary" data-tooltip="Gestionar campañas activas">
+          <span class="action-card-icon"><i data-lucide="calendar"></i></span>
+          <span class="action-card-label">Temporadas</span>
+          <span class="action-card-sub">Gestión de temporadas</span>
+        </a>
+        <a href="lotes.html" class="action-card" data-tooltip="Gestionar lotes vinculados a la campaña activa">
+          <span class="action-card-icon"><i data-lucide="map"></i></span>
+          <span class="action-card-label">Lotes</span>
+          <span class="action-card-sub">Gestión de lotes</span>
+        </a>
+        <a href="admin.html" class="action-card" data-tooltip="Cosechadores y despalilladores con QR">
+          <span class="action-card-icon"><i data-lucide="users"></i></span>
+          <span class="action-card-label">Trabajadores</span>
+          <span class="action-card-sub">Alta y gestión</span>
+        </a>
+<a href="qr-generator.html" class="action-card" data-tooltip="Generar e imprimir tarjetas QR para cosechadores">
+          <span class="action-card-icon"><i data-lucide="qr-code"></i></span>
+          <span class="action-card-label">Tarjetas QR</span>
+          <span class="action-card-sub">Generar tarjetas</span>
+        </a>
+        <a href="usuarios.html" class="action-card" id="card-usuarios" data-tooltip="Gestionar accesos al sistema">
+          <span class="action-card-icon"><i data-lucide="shield-check"></i></span>
+          <span class="action-card-label">Usuarios</span>
+          <span class="action-card-sub">Accesos y roles</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── BOTTOM NAV ── -->
+  <nav class="bottom-nav">
+    
+    <a href="index.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="home"></i></span><span>Inicio</span></a>
+    <a href="juntada.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="wheat"></i></span><span>Cosecha</span></a>
+    <a href="despalillado.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="scissors"></i></span><span>Despalillado</span></a>
+    <a href="aplicaciones.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="droplets"></i></span><span>Aplicaciones</span></a>
+    <a href="menu-campo.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="menu"></i></span><span>Menú</span></a>
+  </nav>
+
+</div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+  lucide.createIcons();
+  document.getElementById('topbar-date').textContent =
+    new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
+
+  // Ocultar card Usuarios para encargados
+  (function() {
+    var token = localStorage.getItem('cosecha_token');
+    if (!token) return;
+    try {
+      var p = JSON.parse(atob(token.split('.')[1]));
+      if (p.rol !== 'administrador') {
+        var card = document.getElementById('card-usuarios');
+        if (card) card.style.display = 'none';
+      }
+    } catch(e) {}
+  })();
+cargarTemporadaActiva();
+</script>
+
+</body>
+</html>

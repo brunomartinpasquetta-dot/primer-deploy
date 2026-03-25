@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1A2E0A">
+  <title>Productos — Cosecha</title>
+  <link rel="icon" href="img/logo.png">
+  <script src="js/utils.js"></script>
+  <link rel="stylesheet" href="cosecha.css">
+  <style>
+h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
+    h2 { color: #2D5016; margin-bottom: 12px; font-size: 18px; }
+    .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    label { font-weight: bold; color: #444; display: block; margin-bottom: 6px; margin-top: 12px; }
+    input, select { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
+    .btn { width: 100%; padding: 14px; font-size: 16px; font-weight: bold; border: none; border-radius: 12px; cursor: pointer; margin-top: 12px; }
+    .btn-orange { background: #2D5016; color: white; }
+    .btn-orange:disabled { background: #aaa; cursor: not-allowed; }
+    .btn-back { background: #eee; color: #444; margin-top: 16px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 12px; }
+    th { background: #2D5016; color: white; padding: 10px; text-align: left; }
+    td { padding: 10px; border-bottom: 1px solid #eee; vertical-align: middle; }
+    tr:nth-child(even) td { background: #FAFAF8; }
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+    .badge-fungicida { background: #fde8e8; color: #c0392b; }
+    .badge-herbicida { background: #fff3cd; color: #f39c12; }
+    .badge-fertilizante { background: #e8f5e2; color: #2d6a4f; }
+    .badge-nutriente { background: #dbeafe; color: #1565c0; }
+    .badge-otro { background: #eeeeee; color: #666; }
+    .empty { text-align: center; color: #999; padding: 20px; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .msg-success { background: #e8f5e2; color: #2d6a4f; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 8px; }
+    .msg-error { background: #fde8e8; color: #c0392b; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 8px; }
+    .page-logo-h1 { height: 44px; width: auto; }
+    @media (max-width: 767px) { .page-logo-h1 { height: 32px; } }
+  </style>
+  <script src="js/auth-check.js"></script>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      
+      <a href="index.html" class="nav-item"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard</a>
+      <div class="nav-section">Campo</div>
+      <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
+      <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
+      <div class="nav-section">Sistema</div>
+      <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
+      <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
+      <a href="menu-admin.html" class="nav-item"><span class="nav-icon"><i data-lucide="landmark"></i></span> Administración</a>
+      <a href="mercado.html" class="nav-item"><span class="nav-icon"><i data-lucide="trending-up"></i></span> Mercado</a>
+      <a href="menu-config.html" class="nav-item active"><span class="nav-icon"><i data-lucide="settings"></i></span> Configuración</a>
+    </nav>
+    <div class="sidebar-footer">Sistema Agrícola v2</div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
+        <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div><span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-date" id="topbar-date"></span>
+      </div>
+    </header>
+
+    <div class="content">
+      <a href="menu-config.html" class="btn-volver">← Volver</a>
+      <div class="content-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div class="content-title">Productos</div>
+          <div class="content-sub">Insumos y fitosanitarios</div>
+        </div>
+        <button class="btn btn-primary" style="width:auto;margin:0;" onclick="toggleForm()">+ Nuevo producto</button>
+      </div>
+
+      <div class="form-colapsable" id="form-nuevo">
+        <div class="card-form" style="margin-bottom:12px;">
+          <div class="form-row"><label>Nombre *</label><input type="text" id="nombre" placeholder="Ej: Fungicida X"></div>
+          <div class="form-row"><label>Tipo</label>
+            <select id="tipo">
+              <option value="fungicida">Fungicida</option>
+              <option value="herbicida">Herbicida</option>
+              <option value="fertilizante">Fertilizante</option>
+              <option value="nutriente">Nutriente</option>
+              <option value="otro">Otro</option>
+            </select>
+          </div>
+          <div class="form-row"><label>Descripcion</label><input type="text" id="descripcion" placeholder="Descripcion opcional"></div>
+          <div class="two-col">
+            <div class="form-row" style="margin-bottom:0;"><label>Presentacion</label>
+              <select id="presentacion">
+                <option value="lt">Litro (lt)</option>
+                <option value="ml">Mililitro (ml)</option>
+                <option value="cc">Centimetro cubico (cc)</option>
+                <option value="kg">Kilogramo (kg)</option>
+                <option value="g">Gramo (g)</option>
+                <option value="u">Unidad (u)</option>
+                <option value="sobre">Sobre</option>
+                <option value="bolsa">Bolsa</option>
+              </select>
+            </div>
+            <div class="form-row" style="margin-bottom:0;"><label>Contenido</label>
+              <input type="number" id="contenido" placeholder="Ej: 5" step="0.01" min="0" style="-moz-appearance:textfield;appearance:textfield;">
+            </div>
+          </div>
+          <div class="form-row"><label>Costo unitario ($)</label>
+            <input type="number" id="costo" placeholder="Ej: 1500" step="0.01" min="0" style="-moz-appearance:textfield;appearance:textfield;">
+          </div>
+          <button class="btn btn-primary" id="btn-guardar" onclick="guardar()" style="width:auto;">Guardar producto</button>
+          <div id="mensaje"></div>
+        </div>
+      </div>
+
+  <div class="card">
+    <h2>Productos registrados</h2>
+    <table>
+      <thead>
+        <tr><th>Nombre</th><th>Tipo</th><th>Presentacion</th><th>Contenido</th><th>Stock</th><th>Costo</th></tr>
+      </thead>
+      <tbody id="tbody"><tr><td colspan="6" class="empty">Cargando...</td></tr></tbody>
+    </table>
+  </div>
+    </div>
+  </div>
+
+  <!-- ── BOTTOM NAV ── -->
+  <nav class="bottom-nav">
+    
+    <a href="index.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="home"></i></span><span>Inicio</span></a>
+    <a href="juntada.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="wheat"></i></span><span>Cosecha</span></a>
+    <a href="despalillado.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="scissors"></i></span><span>Despalillado</span></a>
+    <a href="aplicaciones.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="droplets"></i></span><span>Aplicaciones</span></a>
+    <a href="menu-campo.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="menu"></i></span><span>Menú</span></a>
+  </nav>
+
+</div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+  lucide.createIcons();
+  document.getElementById('topbar-date').textContent =
+    new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
+  function toggleForm() {
+    document.getElementById('form-nuevo').classList.toggle('visible');
+  }
+</script>
+<script>
+    function cargar(){
+      fetch('/api/productos').then(function(r){return r.json();}).then(function(data){
+        var tbody=document.getElementById('tbody');
+        if(!data.length){ tbody.innerHTML='<tr><td colspan="6" class="empty">Sin productos</td></tr>'; return; }
+        tbody.innerHTML=data.map(function(p){
+          var tipos={fungicida:'badge-fungicida',herbicida:'badge-herbicida',fertilizante:'badge-fertilizante',nutriente:'badge-nutriente',otro:'badge-otro'};
+          var bc=tipos[p.tipo]||'badge-otro';
+          return '<tr><td><strong>'+p.nombre+'</strong>'+(p.descripcion?'<br><small style="color:#999">'+p.descripcion+'</small>':'')+'</td>'+
+            '<td><span class="badge '+bc+'">'+(p.tipo||'-')+'</span></td>'+
+            '<td>'+(p.presentacion||'-')+'</td>'+
+            '<td>'+(p.contenido_litros?p.contenido_litros+' '+(p.presentacion||''):'-')+'</td>'+
+            '<td>'+(parseFloat(p.stock_actual)||0).toFixed(2)+' '+(p.presentacion||'')+'</td>'+
+            '<td>$'+(p.costo_unitario?parseFloat(p.costo_unitario).toLocaleString('es-AR'):'-')+'</td></tr>';
+        }).join('');
+      });
+    }
+    function guardar(){
+      var nombre=document.getElementById('nombre').value.trim();
+      if(!nombre){ alert('Ingresa el nombre del producto'); return; }
+      var btn=document.getElementById('btn-guardar');
+      btn.disabled=true; btn.textContent='Guardando...';
+      fetch('/api/productos',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({nombre:nombre,tipo:document.getElementById('tipo').value,
+          descripcion:document.getElementById('descripcion').value,
+          presentacion:document.getElementById('presentacion').value,
+          contenido_litros:document.getElementById('contenido').value||null,
+          costo_unitario:document.getElementById('costo').value||null})})
+      .then(function(r){return r.json();}).then(function(data){
+        if(data.ok){
+          mostrarMensaje('mensaje','success','Producto agregado correctamente');
+          document.getElementById('nombre').value='';
+          document.getElementById('descripcion').value='';
+          document.getElementById('contenido').value='';
+          document.getElementById('costo').value='';
+          document.getElementById('form-nuevo').classList.remove('visible');
+          cargar();
+        } else { mostrarMensaje('mensaje','error',data.error||'Error al guardar'); }
+        btn.disabled=false; btn.textContent='Guardar producto';
+      }).catch(function(){ mostrarMensaje('mensaje','error','Error de conexion'); btn.disabled=false; btn.textContent='Guardar producto'; });
+    }
+    cargar();
+  cargarTemporadaActiva();
+</script>
+</body>
+</html>

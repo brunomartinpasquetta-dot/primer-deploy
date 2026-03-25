@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1A2E0A">
+  <title>Cosecha — Campo</title>
+  <link rel="icon" href="img/logo.png">
+  <script src="js/utils.js"></script>
+  <link rel="stylesheet" href="cosecha.css">
+  <script src="js/auth-check.js"></script>
+  <style>
+    .destino-section {
+      border: 1.5px solid #e0e0e0;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+    .destino-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      cursor: pointer;
+      background: #f9f9f9;
+      user-select: none;
+    }
+    .destino-header:hover { background: #f0f0f0; }
+    .destino-toggle {
+      width: 22px; height: 22px;
+      border: 2px solid #ccc;
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: bold; color: #999;
+      flex-shrink: 0;
+    }
+    .destino-section.enabled .destino-toggle {
+      background: #2D5016; border-color: #2D5016; color: white;
+    }
+    .destino-section.enabled .destino-header { background: #f0f4e8; }
+    .destino-body {
+      display: none;
+      padding: 14px 16px;
+      border-top: 1px solid #e0e0e0;
+      background: white;
+    }
+    .destino-section.enabled .destino-body { display: block; }
+
+    .kilos-badge {
+      background: #2D5016;
+      color: white;
+      border-radius: 20px;
+      padding: 2px 12px;
+      font-size: 14px;
+      font-weight: bold;
+      margin-left: auto;
+    }
+    .kilos-restantes {
+      text-align: center;
+      font-size: 14px;
+      color: #666;
+      padding: 8px;
+      background: #f9f9f9;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+    .kilos-restantes.ok { color: #2d6a4f; background: #e8f5e2; }
+    .kilos-restantes.error { color: #c0392b; background: #fde8e8; }
+
+    #resumen-kilos {
+      font-size: 18px;
+      font-weight: bold;
+      color: #2D5016;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    /* ── Layout dos columnas ── */
+    .juntada-layout {
+      display: grid;
+      grid-template-columns: 40% 60%;
+      gap: 24px;
+      align-items: start;
+    }
+    .juntada-form { min-width: 0; }
+    .juntada-historial {
+      background: var(--superficie);
+      border: 1px solid var(--borde);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .juntada-historial-header {
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid var(--borde);
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+    .juntada-historial-header h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--texto);
+      margin: 0;
+    }
+    .juntada-historial-header small {
+      font-size: 12px;
+      color: var(--texto-suave);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .juntada-historial-body {
+      overflow-y: auto;
+      max-height: 520px;
+    }
+    .juntada-historial-body table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .juntada-historial-body th {
+      text-align: left;
+      padding: 8px 12px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--texto-suave);
+      background: var(--fondo);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      position: sticky;
+      top: 0;
+    }
+    .juntada-historial-body td {
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--borde);
+      color: var(--texto);
+    }
+    .juntada-historial-body tr:last-child td { border-bottom: none; }
+    .juntada-historial-body tr:hover td { background: var(--fondo); }
+    .juntada-historial-footer {
+      padding: 10px 12px;
+      border-top: 1px solid var(--borde);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--texto-suave);
+      background: var(--fondo);
+      display: flex;
+      justify-content: flex-end;
+      gap: 4px;
+    }
+    .juntada-historial-footer span { color: var(--verde); font-family: 'JetBrains Mono', monospace; }
+    .hist-vacio {
+      padding: 32px 16px;
+      text-align: center;
+      color: var(--texto-suave);
+      font-size: 13px;
+    }
+    .dest-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+    .dest-badge.deposito { background: var(--sem-azul-bg); color: var(--sem-azul); }
+    .dest-badge.venta { background: var(--sem-verde-bg); color: var(--sem-verde); }
+    .dest-badge.descarte { background: var(--sem-rojo-bg); color: var(--sem-rojo); }
+    .dest-badge.sin { background: var(--sem-gris-bg); color: var(--sem-gris); }
+
+    /* ── Cosechador modos ── */
+    .cosechador-modos { display:flex; gap:8px; margin-bottom:10px; }
+    .modo-btn {
+      flex:1; padding:10px 8px; border:2px solid var(--borde); border-radius:8px;
+      background:var(--fondo); color:var(--texto-2); font-size:13px; font-weight:600;
+      cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;
+      transition:all .15s;
+    }
+    .modo-btn.active { border-color:var(--verde); background:var(--verde-suave); color:var(--verde); }
+    /* ── Juntador chip ── */
+    .juntador-chip {
+      display:flex; align-items:center; gap:8px; margin-top:10px;
+      background:var(--sem-verde-bg); border:1px solid var(--sem-verde-borde);
+      border-radius:8px; padding:10px 12px; color:var(--sem-verde);
+    }
+    .juntador-chip strong { flex:1; font-size:14px; }
+    .juntador-chip-clear { background:none; border:none; cursor:pointer; color:var(--sem-verde); font-size:16px; padding:0 4px; }
+    /* ── Kilos input grande ── */
+    .kilos-input-wrap { display:flex; flex-direction:column; align-items:stretch; padding:8px 0 4px; }
+    .kilos-input-grande {
+      width:100% !important; height:120px !important; text-align:center !important;
+      font-size:64px !important; font-weight:700 !important; line-height:120px !important;
+      font-family:'JetBrains Mono',monospace !important; color:#2D5016 !important;
+      border:2px solid #2D5016 !important; border-radius:8px !important;
+      padding:0 !important; background:#fff !important;
+      box-sizing:border-box; -moz-appearance:textfield; appearance:textfield;
+      transition:border-color .2s;
+    }
+    .kilos-input-grande::-webkit-outer-spin-button,
+    .kilos-input-grande::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+    .kilos-input-grande:focus { outline:none; border-color:#1a3a0a !important; }
+    .kilos-unidad { font-size:24px; font-weight:600; color:#2D5016; margin-top:8px; text-align:center; }
+    /* ── Destino tipo grid ── */
+    .destino-tipo-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:10px 0; }
+    .destino-tipo-btn {
+      border:2px solid var(--borde); border-radius:10px; background:var(--superficie);
+      cursor:pointer; padding:12px 6px; display:flex; flex-direction:column;
+      align-items:center; gap:5px; font-size:12px; font-weight:600; color:var(--texto-2);
+      transition:all .15s;
+    }
+    .destino-tipo-btn:hover { border-color:var(--verde); background:var(--verde-suave); }
+    .destino-tipo-btn.active { border-color:var(--verde); background:var(--verde-suave); color:var(--verde); }
+    .destino-btn-icon { font-size:20px; }
+    /* ── KG total badge ── */
+    .kg-total-badge {
+      text-align:center; font-size:17px; font-weight:700; color:var(--verde);
+      font-family:'JetBrains Mono',monospace; padding:8px; background:var(--verde-suave);
+      border-radius:8px; margin-bottom:6px;
+    }
+    /* ── Kilos restantes alerta ── */
+    .kilos-restantes-alerta {
+      background:var(--sem-amarillo-bg); border:1px solid var(--sem-amarillo-borde);
+      color:#7a5c00; border-radius:8px; padding:10px 14px;
+      font-size:13px; font-weight:600; margin:10px 0 4px;
+    }
+    .destino-form-inner { background:var(--fondo); border-radius:10px; padding:12px; margin-top:4px; }
+    @media (max-width: 768px) {
+      .juntada-layout { grid-template-columns: 1fr; }
+      .juntada-historial { order: 2; }
+      .juntada-form { order: 1; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-item">
+        <span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard
+      </a>
+      <div class="nav-section">Campo</div>
+      <a href="juntada.html" class="nav-item active">
+        <span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha
+      </a>
+      <a href="despalillado.html" class="nav-item">
+        <span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado
+      </a>
+      <a href="aplicaciones.html" class="nav-item">
+        <span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones
+      </a>
+      <div class="nav-section">Sistema</div>
+      <a href="menu-stock.html" class="nav-item">
+        <span class="nav-icon"><i data-lucide="package"></i></span> Stock
+      </a>
+      <a href="menu-comercial.html" class="nav-item">
+        <span class="nav-icon"><i data-lucide="users"></i></span> Comercial
+      </a>
+      <a href="menu-admin.html" class="nav-item">
+        <span class="nav-icon"><i data-lucide="landmark"></i></span> Administración
+      </a>
+      <a href="mercado.html" class="nav-item">
+        <span class="nav-icon"><i data-lucide="trending-up"></i></span> Mercado
+      </a>
+      <a href="menu-config.html" class="nav-item">
+        <span class="nav-icon"><i data-lucide="settings"></i></span> Configuración
+      </a>
+    </nav>
+    <div class="sidebar-footer">Sistema Agrícola v2</div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
+        <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div><span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-date" id="topbar-date"></span>
+      </div>
+    </header>
+
+    <div class="content">
+      <a href="menu-campo.html" class="btn-volver">← Volver</a>
+      <div class="content-header">
+        <div class="content-title">Registrar juntada</div>
+        <div class="content-sub">Seleccioná el lote, escaneá el cosechador y confirmá el peso</div>
+      </div>
+
+      <div class="juntada-layout">
+      <div class="juntada-form">
+
+        <!-- ── Lote ── -->
+        <div class="card-form">
+          <div class="form-row">
+            <label>Lote</label>
+            <select id="lote" onchange="checkReady()" data-tooltip="Seleccioná el lote que se está cosechando hoy">
+              <option value="">Cargando lotes...</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- ── PASO 1: Cosechador ── -->
+        <div class="card-form">
+          <div class="section-label" style="margin-top:0;">Cosechador</div>
+          <div class="cosechador-modos">
+            <button id="btn-modo-lista" class="modo-btn active" onclick="setModo('lista')">
+              <i data-lucide="list" style="width:14px;height:14px;"></i> Seleccionar
+            </button>
+            <button id="btn-modo-qr" class="modo-btn" onclick="setModo('qr')">
+              <i data-lucide="scan-line" style="width:14px;height:14px;"></i> Escanear QR
+            </button>
+          </div>
+          <div id="modo-lista">
+            <select id="lista-juntadores" onchange="seleccionarJuntadorLista(this.value)">
+              <option value="">— seleccionar cosechador —</option>
+            </select>
+          </div>
+          <div id="modo-qr" style="display:none;">
+            <div class="juntador-info" id="juntador-info">Escaneá el QR del cosechador</div>
+            <button class="btn btn-scan" onclick="toggleCamera()" style="margin-top:8px;" data-tooltip="Escaneá el código QR del cosechador">
+              <i data-lucide="scan-line"></i> Escanear QR
+            </button>
+            <div id="camera-container" class="hidden" style="margin-top:12px;">
+              <video id="video" autoplay playsinline></video>
+              <canvas id="canvas" class="hidden"></canvas>
+            </div>
+          </div>
+          <div id="juntador-chip" class="juntador-chip" style="display:none;">
+            <i data-lucide="user-check" style="width:16px;height:16px;flex-shrink:0;"></i>
+            <strong id="juntador-chip-nombre"></strong>
+            <button onclick="limpiarJuntador()" class="juntador-chip-clear" title="Cambiar cosechador">✕</button>
+          </div>
+        </div>
+
+        <!-- ── PASO 2: Kilos ── -->
+        <div class="card-form">
+          <div class="section-label" style="margin-top:0;font-size:13px;letter-spacing:0.1em;color:#666;">KILOS COSECHADOS</div>
+          <div class="kilos-input-wrap">
+            <input type="number" id="peso-manual"
+              class="kilos-input-grande"
+              placeholder="0"
+              step="0.01" min="0"
+              style="-moz-appearance:textfield;appearance:textfield;"
+              oninput="onKilosChange()"
+              data-tooltip="Peso registrado en la balanza en kilogramos">
+            <div class="kilos-unidad">kg</div>
+          </div>
+        </div>
+
+        <!-- ── PASO 3: Destino (obligatorio) ── -->
+        <div class="card-form" id="sec-destino" style="display:none;">
+          <div class="section-label" style="margin-top:0;color:#2D5016;">Destino (obligatorio)</div>
+          <div id="kg-para-distribuir" class="kg-total-badge"></div>
+          <div class="destino-tipo-grid" id="destino-grid-principal">
+            <button class="destino-tipo-btn" onclick="seleccionarDestino('deposito',this,true)">
+              <span class="destino-btn-icon">📦</span><span>Depósito</span>
+            </button>
+            <button class="destino-tipo-btn" onclick="seleccionarDestino('descarte',this,true)">
+              <span class="destino-btn-icon">🗑️</span><span>Descarte</span>
+            </button>
+            <button class="destino-tipo-btn" onclick="seleccionarDestino('sin_asignar',this,true)">
+              <span class="destino-btn-icon">⏳</span><span>Sin asignar</span>
+            </button>
+          </div>
+          <div id="destino-form-principal"></div>
+
+          <!-- Bloque kilos restantes -->
+          <div id="sec-restantes" style="display:none;">
+            <div id="kilos-restantes-msg" class="kilos-restantes-alerta"></div>
+            <div class="destino-tipo-grid" id="destino-grid-secundario"></div>
+            <div id="destino-form-secundario"></div>
+          </div>
+        </div>
+
+        <!-- ── Botón registrar ── -->
+        <div id="mensaje"></div>
+        <button class="btn btn-primary" id="btn-registrar" onclick="registrar()" disabled style="margin-top:4px;" data-tooltip="Guardar el registro de cosecha">
+          <i data-lucide="check-circle"></i> Registrar cosecha
+        </button>
+
+      </div><!-- /juntada-form -->
+
+      <!-- ── Historial de hoy ── -->
+      <div class="juntada-historial">
+        <div class="juntada-historial-header">
+          <h3>Registros de hoy</h3>
+          <small id="hist-contador"></small>
+        </div>
+        <div class="juntada-historial-body" id="hist-body">
+          <div class="hist-vacio">Cargando...</div>
+        </div>
+        <div class="juntada-historial-footer">
+          Total: <span id="hist-total">—</span>
+        </div>
+      </div>
+
+      </div><!-- /juntada-layout -->
+    </div>
+  </div>
+
+  <!-- ── BOTTOM NAV ── -->
+  <nav class="bottom-nav">
+    <a href="index.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon"><i data-lucide="home"></i></span><span>Inicio</span>
+    </a>
+    <a href="juntada.html" class="bottom-nav-item active">
+      <span class="bottom-nav-icon"><i data-lucide="wheat"></i></span><span>Cosecha</span>
+    </a>
+    <a href="despalillado.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon"><i data-lucide="scissors"></i></span><span>Despalillado</span>
+    </a>
+    <a href="aplicaciones.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon"><i data-lucide="droplets"></i></span><span>Aplicaciones</span>
+    </a>
+    <a href="menu-campo.html" class="bottom-nav-item">
+      <span class="bottom-nav-icon"><i data-lucide="menu"></i></span><span>Menú</span>
+    </a>
+  </nav>
+
+</div>
+
+<script src="js/jsqr.min.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+  lucide.createIcons();
+  document.getElementById('topbar-date').textContent =
+    new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
+
+  var juntadorId = null, pesoActual = null, scanning = false, stream = null;
+  var modoActual = 'lista';
+  var tipoDestinoPrincipal = null, tipoDestinoSecundario = null;
+  var lotesData = [], depositos = [];
+
+  // ── Cargar lotes ───────────────────────────────────────────────
+  function cargarLotes() {
+    fetch('/api/temporadas/activa').then(r => r.json()).then(function(t) {
+      var sel = document.getElementById('lote');
+      if (!t) { sel.innerHTML = '<option value="">No hay campaña activa</option>'; lotesData = []; return; }
+      fetch('/api/lotes?temporada_id=' + t.id).then(r => r.json()).then(function(lotes) {
+        lotesData = lotes;
+        if (!lotes.length) { sel.innerHTML = '<option value="">Sin lotes en esta campaña</option>'; return; }
+        sel.innerHTML = '<option value="">Seleccionar lote...</option>';
+        lotes.forEach(function(l) {
+          sel.innerHTML += '<option value="' + l.id + '">' + l.nombre + '</option>';
+        });
+        recordarSeleccion('lote', 'ultimo_lote');
+      });
+    });
+  }
+  cargarLotes();
+  window.addEventListener('campanaChange', cargarLotes);
+
+  // ── Cargar cosechadores en lista ───────────────────────────────
+  fetch('/api/juntadores').then(r => r.json()).then(function(data) {
+    var sel = document.getElementById('lista-juntadores');
+    if (!data.length) { sel.innerHTML = '<option value="">Sin cosechadores registrados</option>'; return; }
+    sel.innerHTML = '<option value="">— seleccionar cosechador —</option>' +
+      data.map(function(j) {
+        return '<option value="' + j.id + '" data-nombre="' + j.apellido + ', ' + j.nombre + '">' +
+               j.apellido + ', ' + j.nombre + '</option>';
+      }).join('');
+  });
+
+  // ── Cargar depósitos ───────────────────────────────────────────
+  fetch('/api/depositos').then(r => r.json()).then(function(deps) {
+    depositos = deps;
+  });
+
+  // ── WebSocket balanza ──────────────────────────────────────────
+  var ws = new WebSocket('ws://' + location.host);
+  ws.onmessage = function(e) {
+    var data = JSON.parse(e.data);
+    if (data.tipo === 'peso') {
+      document.getElementById('peso-manual').value = data.valor;
+      onKilosChange();
+    }
+  };
+
+  // ── Modos cosechador ───────────────────────────────────────────
+  function setModo(modo) {
+    modoActual = modo;
+    document.getElementById('btn-modo-lista').classList.toggle('active', modo === 'lista');
+    document.getElementById('btn-modo-qr').classList.toggle('active', modo === 'qr');
+    document.getElementById('modo-lista').style.display = modo === 'lista' ? '' : 'none';
+    document.getElementById('modo-qr').style.display = modo === 'qr' ? '' : 'none';
+    limpiarJuntador();
+  }
+
+  function seleccionarJuntadorLista(id) {
+    if (!id) return;
+    var sel = document.getElementById('lista-juntadores');
+    var opt = sel.options[sel.selectedIndex];
+    juntadorId = parseInt(id);
+    mostrarChip(opt.dataset.nombre || opt.text);
+    checkReady();
+  }
+
+  function mostrarChip(nombre) {
+    document.getElementById('juntador-chip-nombre').textContent = nombre;
+    document.getElementById('juntador-chip').style.display = 'flex';
+    lucide.createIcons();
+  }
+
+  function limpiarJuntador() {
+    juntadorId = null;
+    document.getElementById('juntador-chip').style.display = 'none';
+    if (modoActual === 'lista') document.getElementById('lista-juntadores').value = '';
+    else {
+      document.getElementById('juntador-info').textContent = 'Escaneá el QR del cosechador';
+      document.getElementById('juntador-info').style.cssText = '';
+    }
+    checkReady();
+  }
+
+  // ── QR ─────────────────────────────────────────────────────────
+  function toggleCamera() { if (scanning) stopCamera(); else startCamera(); }
+  function startCamera() {
+    scanning = true;
+    document.getElementById('camera-container').classList.remove('hidden');
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then(function(s) {
+      stream = s; document.getElementById('video').srcObject = s; requestAnimationFrame(scanQR);
+    });
+  }
+  function stopCamera() {
+    scanning = false;
+    if (stream) stream.getTracks().forEach(function(t) { t.stop(); });
+    document.getElementById('camera-container').classList.add('hidden');
+  }
+  function scanQR() {
+    if (!scanning) return;
+    var video = document.getElementById('video'), canvas = document.getElementById('canvas');
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+      canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+      var ctx = canvas.getContext('2d'); ctx.drawImage(video, 0, 0);
+      var code = jsQR(ctx.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
+      if (code) { stopCamera(); buscarJuntador(code.data); return; }
+    }
+    requestAnimationFrame(scanQR);
+  }
+  function buscarJuntador(codigo) {
+    fetch('/api/juntadores/qr/' + codigo).then(r => r.json()).then(function(j) {
+      var el = document.getElementById('juntador-info');
+      if (j.error) {
+        el.textContent = 'QR no encontrado';
+        el.style.cssText = 'background:#FEE2E2;color:#991B1B;border-color:#FECACA;';
+      } else {
+        juntadorId = j.id;
+        mostrarChip(j.apellido + ', ' + j.nombre);
+        checkReady();
+      }
+    });
+  }
+
+  // ── Kilos ──────────────────────────────────────────────────────
+  function onKilosChange() {
+    var val = parseFloat(document.getElementById('peso-manual').value) || 0;
+    pesoActual = val > 0 ? val : null;
+    var sec = document.getElementById('sec-destino');
+    sec.style.display = val > 0 ? '' : 'none';
+    if (val > 0) {
+      document.getElementById('kg-para-distribuir').textContent =
+        val.toLocaleString('es-AR', {maximumFractionDigits:2}) + ' kg para distribuir';
+    }
+    // Reset destino when kilos change
+    tipoDestinoPrincipal = null;
+    tipoDestinoSecundario = null;
+    document.querySelectorAll('.destino-tipo-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.getElementById('destino-form-principal').innerHTML = '';
+    document.getElementById('destino-form-secundario').innerHTML = '';
+    document.getElementById('sec-restantes').style.display = 'none';
+    document.getElementById('destino-grid-secundario').innerHTML = '';
+    checkReady();
+  }
+
+  // ── Destino ────────────────────────────────────────────────────
+  function renderDestinoForm(tipo, kilos, prefix) {
+    var k = (parseFloat(kilos) || 0).toFixed(2);
+    var depOpts = depositos.map(function(d) {
+      return '<option value="' + d.id + '">' + d.nombre + '</option>';
+    }).join('');
+
+    if (tipo === 'deposito') {
+      return '<div class="destino-form-inner">' +
+        '<div class="form-row"><label>Kilos a depositar</label>' +
+        '<input type="number" id="' + prefix + '-kilos-deposito" value="' + k + '" step="0.01" min="0" ' +
+        'style="-moz-appearance:textfield;appearance:textfield;" oninput="actualizarRestantes()"></div>' +
+        '<div class="form-row"><label>Depósito</label>' +
+        '<select id="' + prefix + '-select-deposito">' +
+        '<option value="">Seleccionar depósito...</option>' + depOpts + '</select></div></div>';
+    }
+    if (tipo === 'descarte') {
+      return '<div class="destino-form-inner">' +
+        '<div class="form-row"><label>Kilos a descartar</label>' +
+        '<input type="number" id="' + prefix + '-kilos-descarte" value="' + k + '" step="0.01" min="0" ' +
+        'style="-moz-appearance:textfield;appearance:textfield;" oninput="actualizarRestantes()"></div>' +
+        '<div class="form-row"><label>Motivo</label>' +
+        '<select id="' + prefix + '-motivo-descarte">' +
+        '<option value="calidad">Baja calidad</option><option value="daño">Daño físico</option>' +
+        '<option value="enfermedad">Enfermedad/plaga</option><option value="otro">Otro</option>' +
+        '</select></div></div>';
+    }
+    if (tipo === 'sin_asignar') {
+      return '<div class="destino-form-inner" style="text-align:center;color:var(--texto-suave);font-size:13px;padding:16px;">⏳ Se registrará sin destino asignado — podés asignarlo después</div>';
+    }
+    return '';
+  }
+
+  function renderDestinoGrid(prefix) {
+    var items = [
+      {tipo:'deposito',    icon:'📦', label:'Depósito'},
+      {tipo:'descarte',    icon:'🗑️', label:'Descarte'},
+      {tipo:'sin_asignar', icon:'⏳', label:'Sin asignar'}
+    ];
+    return items.map(function(it) {
+      return '<button class="destino-tipo-btn" onclick="seleccionarDestino(\'' + it.tipo + '\',this,false)">' +
+             '<span class="destino-btn-icon">' + it.icon + '</span><span>' + it.label + '</span></button>';
+    }).join('');
+  }
+
+  function seleccionarDestino(tipo, btn, esPrincipal) {
+    var kilosTotal = pesoActual || 0;
+    var grid = esPrincipal ? '#destino-grid-principal' : '#destino-grid-secundario';
+    document.querySelectorAll(grid + ' .destino-tipo-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+
+    if (esPrincipal) {
+      tipoDestinoPrincipal = tipo;
+      tipoDestinoSecundario = null;
+      document.getElementById('destino-form-principal').innerHTML = renderDestinoForm(tipo, kilosTotal, 'p');
+      document.getElementById('sec-restantes').style.display = 'none';
+      document.getElementById('destino-form-secundario').innerHTML = '';
+      document.getElementById('destino-grid-secundario').innerHTML = '';
+      lucide.createIcons();
+    } else {
+      tipoDestinoSecundario = tipo;
+      var restantes = kilosTotal - getKilosAsignados('p');
+      document.getElementById('destino-form-secundario').innerHTML = renderDestinoForm(tipo, Math.max(0, restantes), 's');
+      lucide.createIcons();
+    }
+    setTimeout(actualizarRestantes, 50);
+    checkReady();
+  }
+
+  function getKilosAsignados(prefix) {
+    var suma = 0;
+    ['kilos-deposito', 'kilos-venta', 'kilos-descarte'].forEach(function(campo) {
+      var el = document.getElementById(prefix + '-' + campo);
+      if (el) suma += parseFloat(el.value) || 0;
+    });
+    return suma;
+  }
+
+  function actualizarRestantes() {
+    var kilosTotal = pesoActual || 0;
+    if (kilosTotal <= 0 || !tipoDestinoPrincipal) { checkReady(); return; }
+    var asignadoPrincipal = getKilosAsignados('p');
+    var asignadoSecundario = getKilosAsignados('s');
+    var totalAsignado = asignadoPrincipal + asignadoSecundario;
+    var restantes = kilosTotal - totalAsignado;
+    var sec = document.getElementById('sec-restantes');
+
+    if (asignadoPrincipal <= 0) { sec.style.display = 'none'; checkReady(); return; }
+
+    if (restantes > 0.01) {
+      sec.style.display = '';
+      document.getElementById('kilos-restantes-msg').textContent =
+        '⚠ Quedan ' + restantes.toFixed(2) + ' kg sin destino — ¿qué hacemos con ellos?';
+      var grid = document.getElementById('destino-grid-secundario');
+      if (!grid.innerHTML.trim()) grid.innerHTML = renderDestinoGrid('s');
+    } else if (restantes < -0.01) {
+      sec.style.display = '';
+      document.getElementById('kilos-restantes-msg').textContent =
+        '⚠ Excedido en ' + Math.abs(restantes).toFixed(2) + ' kg — reducí algún destino';
+      // Don't show secondary selector when exceeded
+      document.getElementById('destino-grid-secundario').innerHTML = '';
+    } else {
+      sec.style.display = 'none';
+    }
+    checkReady();
+  }
+
+  // ── Validación y registro ──────────────────────────────────────
+  function checkReady() {
+    var kilos = pesoActual || 0;
+    var loteOk = !!document.getElementById('lote').value;
+    var juntadorOk = !!juntadorId;
+    var kilosOk = kilos > 0;
+    var destinoOk = false;
+
+    if (tipoDestinoPrincipal === 'sin_asignar') {
+      destinoOk = true;
+    } else if (tipoDestinoPrincipal) {
+      var totalAsignado = getKilosAsignados('p') + getKilosAsignados('s');
+      destinoOk = Math.abs(totalAsignado - kilos) < 0.11 && totalAsignado > 0;
+    }
+
+    document.getElementById('btn-registrar').disabled = !(loteOk && juntadorOk && kilosOk && destinoOk);
+  }
+
+  function _recopilarDestinos() {
+    var destinos = [];
+
+    if (tipoDestinoPrincipal === 'sin_asignar') return destinos;
+
+    function addFromPrefix(prefix, tipo) {
+      if (!tipo || tipo === 'sin_asignar') return null;
+      var tipos = [tipo];
+      for (var i = 0; i < tipos.length; i++) {
+        var t = tipos[i];
+        var kilosEl = document.getElementById(prefix + '-kilos-' + t);
+        var kilos = parseFloat(kilosEl ? kilosEl.value : 0) || 0;
+        if (kilos <= 0) continue;
+        if (t === 'deposito') {
+          var dep = document.getElementById(prefix + '-select-deposito');
+          if (!dep || !dep.value) return { error: 'Seleccioná un depósito para los kilos en depósito' };
+          destinos.push({ tipo: 'deposito', kilos: kilos, deposito_id: parseInt(dep.value) });
+        } else if (t === 'descarte') {
+          destinos.push({
+            tipo: 'descarte', kilos: kilos,
+            motivo: document.getElementById(prefix + '-motivo-descarte').value
+          });
+        }
+      }
+      return null;
+    }
+
+    var err = addFromPrefix('p', tipoDestinoPrincipal);
+    if (err) return err;
+    err = addFromPrefix('s', tipoDestinoSecundario);
+    if (err) return err;
+    return destinos;
+  }
+
+  function registrar() {
+    var lote_id = document.getElementById('lote').value;
+    var kilos = pesoActual || parseFloat(document.getElementById('peso-manual').value);
+    if (!lote_id || !juntadorId || !kilos) {
+      mostrarMensaje('mensaje', 'error', 'Completá lote, cosechador y peso'); return;
+    }
+    if (!tipoDestinoPrincipal) {
+      mostrarMensaje('mensaje', 'error', 'Seleccioná un destino para la cosecha'); return;
+    }
+    var destinos = _recopilarDestinos();
+    if (destinos && destinos.error) {
+      mostrarMensaje('mensaje', 'error', destinos.error); return;
+    }
+    var suma = destinos.reduce(function(a, d) { return a + d.kilos; }, 0);
+    if (Math.abs(suma - kilos) > 0.1) {
+      mostrarMensaje('mensaje', 'error', 'Los kilos asignados (' + suma.toFixed(2) + ') no coinciden con el total (' + kilos + ' kg)'); return;
+    }
+    _enviarRegistro(lote_id, kilos, destinos);
+  }
+
+  function _enviarRegistro(lote_id, kilos, destinos) {
+    var btn = document.getElementById('btn-registrar');
+    setLoading(btn, true);
+    fetch('/api/juntada', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lote_id: parseInt(lote_id), juntador_id: juntadorId, kilos: kilos, destinos: destinos })
+    }).then(function(r) { return r.json(); }).then(function(data) {
+      setLoading(btn, false);
+      if (data.ok) {
+        mostrarMensaje('mensaje', 'success', '✓ Cosecha registrada correctamente');
+        resetFormulario();
+        cargarHistorial();
+      } else {
+        mostrarMensaje('mensaje', 'error', data.error || 'Error al guardar');
+      }
+    }).catch(function() {
+      setLoading(btn, false);
+      mostrarMensaje('mensaje', 'error', 'Error de conexión');
+    });
+  }
+
+  function resetFormulario() {
+    juntadorId = null;
+    pesoActual = null;
+    tipoDestinoPrincipal = null;
+    tipoDestinoSecundario = null;
+    document.getElementById('juntador-chip').style.display = 'none';
+    document.getElementById('lista-juntadores').value = '';
+    document.getElementById('juntador-info').textContent = 'Escaneá el QR del cosechador';
+    document.getElementById('juntador-info').style.cssText = '';
+    document.getElementById('peso-manual').value = '';
+    document.getElementById('sec-destino').style.display = 'none';
+    document.getElementById('destino-form-principal').innerHTML = '';
+    document.getElementById('destino-form-secundario').innerHTML = '';
+    document.getElementById('sec-restantes').style.display = 'none';
+    document.getElementById('destino-grid-secundario').innerHTML = '';
+    document.querySelectorAll('.destino-tipo-btn').forEach(function(b) { b.classList.remove('active'); });
+    checkReady();
+    lucide.createIcons();
+  }
+
+  function cargarHistorial() {
+    fetch('/api/juntada/hoy').then(function(r){ return r.json(); }).then(function(rows) {
+      var body = document.getElementById('hist-body');
+      var contador = document.getElementById('hist-contador');
+      var total = document.getElementById('hist-total');
+      if (!rows.length) {
+        body.innerHTML = '<div class="hist-vacio">Sin registros hoy</div>';
+        contador.textContent = '';
+        total.textContent = '—';
+        return;
+      }
+      var totalKg = rows.reduce(function(s, r){ return s + parseFloat(r.kilos || 0); }, 0);
+      contador.textContent = '(' + rows.length + ' registro' + (rows.length !== 1 ? 's' : '') + ' — ' +
+        totalKg.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:3}) + ' kg)';
+      total.textContent = totalKg.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:2}) + ' kg';
+      function destBadge(d) {
+        if (!d || d === 'sin_destino') return '<span class="dest-badge sin">Sin destino</span>';
+        if (d === 'deposito') return '<span class="dest-badge deposito">Depósito</span>';
+        if (d === 'venta_directa') return '<span class="dest-badge venta">Venta</span>';
+        if (d === 'descarte') return '<span class="dest-badge descarte">Descarte</span>';
+        return '<span class="dest-badge sin">' + d + '</span>';
+      }
+      body.innerHTML = '<table><thead><tr><th>Hora</th><th>Cosechador</th><th>Lote</th><th>Kilos</th><th>Destino</th></tr></thead><tbody>' +
+        rows.map(function(r) {
+          var hora = r.fecha_hora ? new Date(r.fecha_hora).toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'}) : '—';
+          var kg = parseFloat(r.kilos || 0).toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:2});
+          return '<tr><td>' + hora + '</td><td>' + (r.juntador || '—') + '</td><td>' + (r.lote || '—') + '</td>' +
+                 '<td class="font-mono">' + kg + '</td><td>' + destBadge(r.destino) + '</td></tr>';
+        }).join('') + '</tbody></table>';
+    }).catch(function() {
+      document.getElementById('hist-body').innerHTML = '<div class="hist-vacio">Error al cargar</div>';
+    });
+  }
+
+  cargarHistorial();
+  cargarTemporadaActiva();
+</script>
+</body>
+</html>

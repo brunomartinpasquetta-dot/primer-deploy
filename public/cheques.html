@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1A2E0A">
+  <title>Cheques — Cosecha</title>
+  <link rel="icon" href="img/logo.png">
+  <script src="js/utils.js"></script>
+  <link rel="stylesheet" href="cosecha.css">
+  <style>
+h1 { color: #2d6a4f; text-align: center; margin-bottom: 20px; }
+    h2 { color: #2d6a4f; margin-bottom: 12px; font-size: 18px; }
+    .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    label { font-weight: bold; color: #444; display: block; margin-bottom: 6px; margin-top: 12px; }
+    label:first-child { margin-top: 0; }
+    input, select { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; background: white; }
+    input:focus, select:focus { outline: none; border-color: #2d6a4f; }
+    .btn { width: 100%; padding: 14px; font-size: 16px; font-weight: bold; border: none; border-radius: 12px; cursor: pointer; margin-top: 12px; transition: opacity 0.15s; }
+    .btn:hover:not(:disabled) { opacity: 0.85; }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-green { background: #2d6a4f; color: white; }
+    .btn-back { background: #eee; color: #444; margin-top: 16px; }
+    .btn-sm { padding: 6px 14px; font-size: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; white-space: nowrap; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+    .tab { flex: 1; padding: 12px; text-align: center; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; background: #ddd; color: #444; font-size: 14px; transition: background 0.15s; }
+    .tab.active { background: #2D5016; color: white; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 420px; }
+    th { background: #2D5016; color: white; padding: 9px 10px; text-align: left; white-space: nowrap; }
+    td { padding: 9px 10px; border-bottom: 1px solid #eee; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:nth-child(even) td { background: #FAFAF8; }
+    .badge { display: inline-block; padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: bold; white-space: nowrap; }
+    .badge-pendiente { background: #fff3cd; color: #f39c12; }
+    .badge-cobrado { background: #e8f5e2; color: #2d6a4f; }
+    .badge-depositado { background: #dbeafe; color: #1565c0; }
+    .badge-rechazado { background: #fde8e8; color: #c0392b; }
+    .alert-success { background: #e8f5e2; color: #2d6a4f; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 8px; }
+    .alert-error { background: #fde8e8; color: #c0392b; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 8px; }
+    .empty { text-align: center; color: #999; padding: 20px; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .vence-pronto td { background: #fff3cd !important; }
+    .vencido td { background: #fde8e8 !important; }
+    .campo-proveedor { display: none; }
+    select.estado-select { padding: 4px 6px; font-size: 12px; width: auto; border-radius: 6px; }
+    @media (max-width: 480px) {
+      .two-col { grid-template-columns: 1fr; }
+    }
+    .page-logo-h1 { height: 44px; width: auto; }
+    @media (max-width: 767px) { .page-logo-h1 { height: 32px; } }
+  </style>
+  <script src="js/auth-check.js"></script>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      
+      <a href="index.html" class="nav-item"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard</a>
+      <div class="nav-section">Campo</div>
+      <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
+      <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
+      <div class="nav-section">Sistema</div>
+      <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
+      <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
+      <a href="menu-admin.html" class="nav-item active"><span class="nav-icon"><i data-lucide="landmark"></i></span> Administración</a>
+      <a href="mercado.html" class="nav-item"><span class="nav-icon"><i data-lucide="trending-up"></i></span> Mercado</a>
+      <a href="menu-config.html" class="nav-item"><span class="nav-icon"><i data-lucide="settings"></i></span> Configuración</a>
+    </nav>
+    <div class="sidebar-footer">Sistema Agrícola v2</div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
+        <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div><span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-date" id="topbar-date"></span>
+      </div>
+    </header>
+
+    <div class="content">
+      <a href="menu-admin.html" class="btn-volver">← Volver</a>
+      <div class="content-header">
+        <div class="content-title">Cheques</div>
+        <div class="content-sub">Cheques recibidos y emitidos</div>
+      </div>
+
+      <div class="tabs">
+    <button class="tab active" onclick="showTab('recibidos', this)">Recibidos</button>
+    <button class="tab" onclick="showTab('emitidos', this)">Emitidos</button>
+    <button class="tab" onclick="showTab('nuevo', this)">+ Nuevo</button>
+  </div>
+
+  <!-- RECIBIDOS -->
+  <div id="tab-recibidos" class="tab-content active">
+    <div class="card" style="padding: 0; overflow: hidden;">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Número</th>
+              <th>Banco</th>
+              <th>Monto</th>
+              <th>Vencimiento</th>
+              <th>Estado</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tbody-recibidos">
+            <tr><td colspan="6" class="empty">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- EMITIDOS -->
+  <div id="tab-emitidos" class="tab-content">
+    <div class="card" style="padding: 0; overflow: hidden;">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Número</th>
+              <th>Banco</th>
+              <th>Proveedor</th>
+              <th>Monto</th>
+              <th>Vencimiento</th>
+              <th>Estado</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tbody-emitidos">
+            <tr><td colspan="7" class="empty">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- NUEVO -->
+  <div id="tab-nuevo" class="tab-content">
+    <div class="card">
+      <h2>Nuevo cheque</h2>
+
+      <!-- Dirección: recibido / emitido -->
+      <label>Dirección</label>
+      <select id="nuevo-tipo" onchange="toggleProveedor()">
+        <option value="recibido">Recibido (de un cliente)</option>
+        <option value="emitido">Emitido (a un proveedor)</option>
+      </select>
+
+      <!-- Tipo de cheque: físico / E-Cheq -->
+      <label>Formato</label>
+      <div style="display:flex;gap:16px;margin-bottom:4px;">
+        <label style="display:flex;align-items:center;gap:6px;font-weight:500;color:#444;margin-top:0;">
+          <input type="radio" name="tipo_cheque" value="fisico" checked onchange="onTipoChequeChange()" style="width:auto;padding:0;border:none;"> Cheque físico
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-weight:500;color:#444;margin-top:0;">
+          <input type="radio" name="tipo_cheque" value="echeq" onchange="onTipoChequeChange()" style="width:auto;padding:0;border:none;"> E-Cheq
+        </label>
+      </div>
+
+      <!-- Campos físico -->
+      <div id="campos-fisico">
+        <div class="two-col">
+          <div>
+            <label>Número de cheque</label>
+            <input type="text" id="nuevo-numero" placeholder="Nro de cheque">
+          </div>
+          <div>
+            <label>Banco</label>
+            <input type="text" id="nuevo-banco" placeholder="Nombre del banco">
+          </div>
+        </div>
+      </div>
+
+      <!-- Campos E-Cheq -->
+      <div id="campos-echeq" style="display:none;">
+        <label>ID E-Cheq</label>
+        <input type="text" id="nuevo-id-echeq" placeholder="Ej: 000012345678">
+        <div class="two-col">
+          <div>
+            <label>CBU origen</label>
+            <input type="text" id="nuevo-cbu" placeholder="22 dígitos">
+          </div>
+          <div>
+            <label>CUIT emisor</label>
+            <input type="text" id="nuevo-cuit" placeholder="XX-XXXXXXXX-X">
+          </div>
+        </div>
+      </div>
+
+      <label>Monto ($)</label>
+      <input type="number" id="nuevo-monto" placeholder="Ej: 50000" step="0.01" min="0" data-miles>
+      <div class="two-col">
+        <div>
+          <label>Fecha emisión</label>
+          <input type="date" id="nuevo-emision">
+        </div>
+        <div>
+          <label>Fecha vencimiento</label>
+          <input type="date" id="nuevo-vencimiento">
+        </div>
+      </div>
+      <div class="campo-proveedor" id="campo-proveedor">
+        <label>Proveedor</label>
+        <select id="nuevo-proveedor">
+          <option value="">Sin proveedor</option>
+        </select>
+      </div>
+      <label>Observación</label>
+      <input type="text" id="nuevo-obs" placeholder="Opcional">
+      <button class="btn btn-green" id="btn-guardar" onclick="guardar(this)">+ Registrar Cheque</button>
+      <div id="mensaje"></div>
+    </div>
+  </div>
+
+    </div>
+  </div>
+
+  <!-- ── BOTTOM NAV ── -->
+  <nav class="bottom-nav">
+    
+    <a href="index.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="home"></i></span><span>Inicio</span></a>
+    <a href="juntada.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="wheat"></i></span><span>Cosecha</span></a>
+    <a href="despalillado.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="scissors"></i></span><span>Despalillado</span></a>
+    <a href="aplicaciones.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="droplets"></i></span><span>Aplicaciones</span></a>
+    <a href="menu-campo.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="menu"></i></span><span>Menú</span></a>
+  </nav>
+
+</div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+  lucide.createIcons();
+  document.getElementById('topbar-date').textContent =
+    new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
+</script>
+<script>
+    var hoy = new Date();
+    // Normalizar hoy a medianoche local para comparar días
+    hoy.setHours(0, 0, 0, 0);
+
+    function showTab(tab, el) {
+      document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.remove('active'); });
+      document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+      document.getElementById('tab-' + tab).classList.add('active');
+      el.classList.add('active');
+      if (tab === 'recibidos') cargarCheques('recibido', 'tbody-recibidos', 6);
+      if (tab === 'emitidos') cargarCheques('emitido', 'tbody-emitidos', 7);
+    }
+
+    // Parsea fecha ISO sin desfase de timezone (trata como fecha local)
+    function parseFechaLocal(str) {
+      if (!str) return null;
+      var partes = str.toString().split('T')[0].split('-');
+      return new Date(parseInt(partes[0]), parseInt(partes[1]) - 1, parseInt(partes[2]));
+    }
+
+    function cargarCheques(tipo, tbodyId, cols) {
+      var tbody = document.getElementById(tbodyId);
+      tbody.innerHTML = '<tr><td colspan="' + cols + '" class="empty">Cargando...</td></tr>';
+      fetch('/api/cheques?tipo=' + tipo)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="' + cols + '" class="empty">Sin cheques</td></tr>';
+            return;
+          }
+          tbody.innerHTML = data.map(function(c) {
+            var venc = parseFechaLocal(c.fecha_vencimiento);
+            var diasVenc = venc ? Math.floor((venc - hoy) / (1000 * 60 * 60 * 24)) : null;
+            var rowClass = '';
+            if (diasVenc !== null && c.estado === 'pendiente') {
+              if (diasVenc < 0) rowClass = 'vencido';
+              else if (diasVenc <= 7) rowClass = 'vence-pronto';
+            }
+            var fechaVenc = venc ? venc.toLocaleDateString('es-AR') : '-';
+            var badge = '<span class="badge badge-' + c.estado + '">' + c.estado + '</span>';
+            var acciones = '';
+            if (c.estado === 'pendiente') {
+              if (tipo === 'recibido') {
+                acciones = '<select class="estado-select" onchange="cambiarEstado(' + c.id + ', this.value, \'recibido\')">' +
+                  '<option value="">Cambiar...</option>' +
+                  '<option value="cobrado">Cobrado</option>' +
+                  '<option value="depositado">Depositado</option>' +
+                  '<option value="rechazado">Rechazado</option>' +
+                  '</select>';
+              } else {
+                acciones = '<select class="estado-select" onchange="cambiarEstado(' + c.id + ', this.value, \'emitido\')">' +
+                  '<option value="">Cambiar...</option>' +
+                  '<option value="cobrado">Cobrado</option>' +
+                  '<option value="rechazado">Rechazado</option>' +
+                  '</select>';
+              }
+            }
+            var esEcheq = c.tipo_cheque === 'echeq';
+            var numCol = esEcheq
+              ? '<span style="background:#dbeafe;color:#1e40af;font-size:11px;font-weight:700;padding:1px 6px;border-radius:10px;margin-right:4px;">E-Cheq</span>' + (c.id_echeq || '-')
+              : (c.numero || '-');
+            var bancoCol = esEcheq
+              ? '<span style="color:#888;font-size:11px;">CBU: ' + (c.cbu_origen ? c.cbu_origen.slice(-8) : '-') + '</span>'
+              : (c.banco || '-');
+            if (tipo === 'recibido') {
+              return '<tr class="' + rowClass + '">' +
+                '<td>' + numCol + '</td>' +
+                '<td>' + bancoCol + '</td>' +
+                '<td>$' + parseFloat(c.monto).toLocaleString('es-AR') + '</td>' +
+                '<td>' + fechaVenc + '</td>' +
+                '<td>' + badge + '</td>' +
+                '<td>' + acciones + '</td>' +
+                '</tr>';
+            } else {
+              return '<tr class="' + rowClass + '">' +
+                '<td>' + numCol + '</td>' +
+                '<td>' + bancoCol + '</td>' +
+                '<td>' + (c.proveedor || '-') + '</td>' +
+                '<td>$' + parseFloat(c.monto).toLocaleString('es-AR') + '</td>' +
+                '<td>' + fechaVenc + '</td>' +
+                '<td>' + badge + '</td>' +
+                '<td>' + acciones + '</td>' +
+                '</tr>';
+            }
+          }).join('');
+        })
+        .catch(function() {
+          tbody.innerHTML = '<tr><td colspan="' + cols + '" class="empty">Error al cargar</td></tr>';
+        });
+    }
+
+    function cambiarEstado(id, estado, tipo) {
+      if (!estado) return;
+      fetch('/api/cheques/' + id + '/estado', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado: estado })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.ok) {
+          // Solo recarga la tabla que cambió
+          if (tipo === 'recibido') cargarCheques('recibido', 'tbody-recibidos', 6);
+          else cargarCheques('emitido', 'tbody-emitidos', 7);
+        }
+      });
+    }
+
+    function toggleProveedor() {
+      var tipo = document.getElementById('nuevo-tipo').value;
+      document.getElementById('campo-proveedor').style.display = tipo === 'emitido' ? 'block' : 'none';
+    }
+
+    function onTipoChequeChange() {
+      var esEcheq = document.querySelector('input[name="tipo_cheque"]:checked').value === 'echeq';
+      document.getElementById('campos-fisico').style.display = esEcheq ? 'none' : '';
+      document.getElementById('campos-echeq').style.display  = esEcheq ? '' : 'none';
+    }
+
+    function getTipoCheque() {
+      return document.querySelector('input[name="tipo_cheque"]:checked').value;
+    }
+
+    function cargarProveedores() {
+      fetch('/api/proveedores')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          document.getElementById('nuevo-proveedor').innerHTML =
+            '<option value="">Sin proveedor</option>' +
+            data.map(function(p) { return '<option value="' + p.id + '">' + p.nombre + '</option>'; }).join('');
+        });
+    }
+
+    function guardar(btn) {
+      var tipo       = document.getElementById('nuevo-tipo').value;
+      var tipoCheque = getTipoCheque();
+      var montoRaw   = document.getElementById('nuevo-monto').dataset.rawValue || document.getElementById('nuevo-monto').value;
+      var monto = parseFloat(String(montoRaw).replace(/\./g,'').replace(',','.'));
+      if (!monto || monto <= 0) { alert('Ingresá un monto válido'); return; }
+      setLoading(btn, true);
+      var payload = {
+        tipo:              tipo,
+        tipo_cheque:       tipoCheque,
+        monto:             monto,
+        fecha_emision:     document.getElementById('nuevo-emision').value || null,
+        fecha_vencimiento: document.getElementById('nuevo-vencimiento').value || null,
+        proveedor_id:      document.getElementById('nuevo-proveedor').value || null,
+        observacion:       document.getElementById('nuevo-obs').value
+      };
+      if (tipoCheque === 'fisico') {
+        payload.numero = document.getElementById('nuevo-numero').value;
+        payload.banco  = document.getElementById('nuevo-banco').value;
+      } else {
+        payload.id_echeq   = document.getElementById('nuevo-id-echeq').value;
+        payload.cbu_origen = document.getElementById('nuevo-cbu').value;
+        payload.cuit_emisor = document.getElementById('nuevo-cuit').value;
+      }
+      fetch('/api/cheques', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        setLoading(btn, false);
+        if (data.ok) {
+          document.getElementById('mensaje').innerHTML = '<div class="alert-success">Cheque registrado correctamente</div>';
+          document.getElementById('nuevo-numero').value = '';
+          document.getElementById('nuevo-banco').value = '';
+          document.getElementById('nuevo-monto').value = '';
+          document.getElementById('nuevo-vencimiento').value = '';
+          document.getElementById('nuevo-obs').value = '';
+          document.getElementById('nuevo-id-echeq').value = '';
+          document.getElementById('nuevo-cbu').value = '';
+          document.getElementById('nuevo-cuit').value = '';
+          // Recargar la lista correspondiente
+          if (tipo === 'recibido') cargarCheques('recibido', 'tbody-recibidos', 6);
+          else cargarCheques('emitido', 'tbody-emitidos', 7);
+          setTimeout(function() {
+            document.getElementById('mensaje').innerHTML = '';
+            // Ir al tab del tipo registrado
+            var tabIdx = tipo === 'recibido' ? 0 : 1;
+            var tabs = document.querySelectorAll('.tab');
+            showTab(tipo === 'recibido' ? 'recibidos' : 'emitidos', tabs[tabIdx]);
+          }, 1200);
+        } else {
+          document.getElementById('mensaje').innerHTML = '<div class="alert-error">' + (data.error || 'Error al registrar') + '</div>';
+        }
+      })
+      .catch(function() {
+        setLoading(btn, false);
+        document.getElementById('mensaje').innerHTML = '<div class="alert-error">Error de conexión</div>';
+      });
+    }
+
+    // Inicializar
+    var fechaHoy = hoy.toISOString().split('T')[0];
+    document.getElementById('nuevo-emision').value = fechaHoy;
+    cargarCheques('recibido', 'tbody-recibidos', 6);
+    cargarCheques('emitido', 'tbody-emitidos', 7);
+    cargarProveedores();
+  cargarTemporadaActiva();
+</script>
+</body>
+</html>
