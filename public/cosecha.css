@@ -380,6 +380,25 @@ input, select, textarea {
   .stat-value.font-mono { font-size: 20px; }
 }
 
+/* ── FORM PANEL LAYOUT (standard 220px left panel) ─ */
+.form-panel-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+.form-panel {
+  max-width: 220px;
+  min-width: 0;
+}
+.form-panel select,
+.form-panel input { width: 100%; }
+.form-panel .btn-primary { width: 100%; }
+@media (max-width: 900px) {
+  .form-panel-layout { grid-template-columns: 1fr; }
+  .form-panel { max-width: 100%; }
+}
+
 /* ── DASHBOARD LAYOUT ───────────────────────── */
 .dash-grid {
   display: grid;
