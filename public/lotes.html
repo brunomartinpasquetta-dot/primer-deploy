@@ -251,8 +251,12 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
             var selected = (activas.length === 1 || String(t.id) === String(savedId)) ? ' selected' : '';
             return '<option value="' + t.id + '"' + selected + '>' + t.nombre + cultivoStr + '</option>';
           }).join('');
-        // Si hay una sola o hay selección guardada, auto-rellenar cultivo
-        if (activas.length === 1 || savedId) { onTemporadaChange(); }
+        // Precargar activa: savedId tiene prioridad; si no, buscar la marcada como activa
+        if (!sel.value || sel.value === '') {
+          var activa = activas.find(function(t){ return t.activa == true || t.activa == 1; });
+          if (activa) sel.value = activa.id;
+        }
+        if (sel.value) { sel.dispatchEvent(new Event('change')); }
       });
     }
 

@@ -290,7 +290,10 @@
       document.getElementById('filtro-temporada').innerHTML = '<option value="">Todas</option>' +
         data.map(t => '<option value="' + t.id + '">' + t.nombre + '</option>').join('');
       var activa = data.find(t => t.activa);
-      if (activa) document.getElementById('filtro-temporada').value = activa.id;
+      if (activa) {
+        document.getElementById('filtro-temporada').value = activa.id;
+        cargarHistorial();
+      }
     });
     // filtro-lote: todos los lotes (para historial)
     fetch('/api/lotes').then(r => r.json()).then(function(data) {

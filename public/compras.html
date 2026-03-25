@@ -230,7 +230,10 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
         document.getElementById('temporada').innerHTML = '<option value="">Sin temporada</option>' + optsTemporada;
         document.getElementById('filtro-temporada').innerHTML = '<option value="">Todas</option>' + optsTemporada;
         var activa = data.find(function(t){ return t.activa; });
-        if (activa) document.getElementById('filtro-temporada').value = activa.id;
+        if (activa) {
+          document.getElementById('filtro-temporada').value = activa.id;
+          document.getElementById('filtro-temporada').dispatchEvent(new Event('change'));
+        }
       });
       fetch('/api/caja/formas-pago').then(function(r){return r.json();}).then(function(data){
         document.getElementById('forma_pago').innerHTML = '<option value="">Sin especificar</option>' +
