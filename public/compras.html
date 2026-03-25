@@ -11,17 +11,17 @@
   <style>
 h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
     h2 { color: #2D5016; margin-bottom: 12px; font-size: 18px; }
-    .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    label { font-weight: bold; color: #444; display: block; margin-bottom: 6px; margin-top: 12px; }
-    input, select { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
-    .btn { width: 100%; padding: 14px; font-size: 16px; font-weight: bold; border: none; border-radius: 12px; cursor: pointer; margin-top: 12px; }
+    .card { background: white; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    label { font-weight: bold; color: #444; display: block; margin-bottom: 4px; margin-top: 8px; font-size: 11px; }
+    input, select { width: 100%; padding: 6px 10px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 13px; height: 36px; }
+    .btn { width: 100%; padding: 7px 16px; font-size: 13px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; margin-top: 8px; min-height: 36px; }
     .btn-teal { background: #2D5016; color: white; }
     .btn-teal:disabled { background: #aaa; cursor: not-allowed; }
     .btn-blue { background: #2D5016; color: white; }
     .btn-back { background: #eee; color: #444; margin-top: 16px; }
     .btn-sm { padding: 6px 12px; font-size: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; background: #2D5016; color: white; }
     .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
-    .tab { flex: 1; padding: 12px; text-align: center; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; background: #ddd; color: #444; font-size: 14px; }
+    .tab { flex: 1; padding: 8px; text-align: center; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; background: #ddd; color: #444; font-size: 13px; }
     .tab.active { background: #2D5016; color: white; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
@@ -32,7 +32,7 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
     .empty { text-align: center; color: #999; padding: 20px; }
     .items-container { border: 2px solid #ddd; border-radius: 8px; padding: 12px; margin-top: 12px; }
     .item-row { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 8px; margin-bottom: 8px; align-items: center; }
-    .item-row input, .item-row select { padding: 8px; font-size: 14px; }
+    .item-row input, .item-row select { padding: 4px 8px; font-size: 13px; height: 32px; }
     .total-compra { font-size: 22px; font-weight: bold; color: #2D5016; text-align: right; padding: 12px 0; }
     .msg-success { background: #e8f5e2; color: #2d6a4f; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 8px; }
     .msg-error { background: #fde8e8; color: #c0392b; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 8px; }
