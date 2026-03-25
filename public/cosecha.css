@@ -461,7 +461,7 @@ input, select, textarea {
 .action-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+  gap: 8px;
   margin-bottom: 24px;
 }
 
@@ -481,7 +481,7 @@ input, select, textarea {
   background: var(--superficie);
   border: 1px solid var(--borde);
   border-radius: var(--radius-lg);
-  padding: 16px 20px;
+  padding: 10px 12px;
   min-height: auto;
   display: flex;
   flex-direction: column;
@@ -515,19 +515,19 @@ input, select, textarea {
 }
 
 .action-card-icon {
-  font-size: 24px;
+  font-size: 18px;
   line-height: 1;
   display: block;
 }
 
 .action-card-label {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 700;
   line-height: 1.2;
 }
 
 .action-card-sub {
-  font-size: 12px;
+  font-size: 11px;
   opacity: .65;
   line-height: 1.4;
 }
@@ -546,13 +546,13 @@ input, select, textarea {
   flex-direction: column;
   align-items: center;
   gap: 7px;
-  padding: 16px 10px;
+  padding: 10px 8px;
   border-radius: var(--radius);
   background: var(--fondo);
   border: 1.5px solid var(--borde);
   text-decoration: none;
   color: var(--texto-2);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   transition: all .13s;
   text-align: center;
