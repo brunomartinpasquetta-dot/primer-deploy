@@ -86,14 +86,16 @@
     .juntada-form { min-width: 0; max-width: 380px; }
 
     /* ── Compactación panel izquierdo ── */
-    .juntada-form .card-form { padding: 12px; margin-bottom: 8px; }
+    .juntada-form .card-form { padding: 10px 12px; margin-bottom: 8px; }
     .juntada-form label { font-size: 11px !important; margin-bottom: 4px; }
     .juntada-form .form-row { margin-bottom: 8px; }
-    .juntada-form select { height: 36px !important; font-size: 13px !important; padding: 6px 10px !important; }
-    .juntada-form .destino-form-inner input[type="number"] { width: 60% !important; height: 36px !important; font-size: 13px !important; padding: 6px 10px !important; }
+    .juntada-form select { height: 34px !important; font-size: 13px !important; padding: 4px 8px !important; }
+    .juntada-form .destino-form-inner input[type="number"] { width: 60% !important; height: 34px !important; font-size: 13px !important; padding: 4px 8px !important; }
+    .juntada-form .destino-form-inner select { height: 34px !important; font-size: 13px !important; }
     .juntada-form .cosechador-modos { gap: 6px; margin-bottom: 8px; }
     .juntada-form .modo-btn { padding: 8px 6px; font-size: 12px; }
     .juntada-form .juntador-chip { padding: 8px 10px; margin-top: 8px; }
+    .juntada-form #btn-registrar { height: 40px; font-size: 14px !important; padding: 8px 16px; width: 100%; }
     .juntada-historial {
       background: var(--superficie);
       border: 1px solid var(--borde);
@@ -196,8 +198,8 @@
     /* ── Kilos input grande ── */
     .kilos-input-wrap { display:flex; flex-direction:column; align-items:stretch; padding:4px 0 2px; }
     .kilos-input-grande {
-      width:100% !important; height:72px !important; text-align:center !important;
-      font-size:42px !important; font-weight:700 !important; line-height:72px !important;
+      width:100% !important; height:64px !important; text-align:center !important;
+      font-size:40px !important; font-weight:700 !important; line-height:64px !important;
       font-family:'JetBrains Mono',monospace !important; color:#2D5016 !important;
       border:2px solid #2D5016 !important; border-radius:8px !important;
       padding:0 !important; background:#fff !important;
@@ -207,18 +209,18 @@
     .kilos-input-grande::-webkit-outer-spin-button,
     .kilos-input-grande::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
     .kilos-input-grande:focus { outline:none; border-color:#1a3a0a !important; }
-    .kilos-unidad { font-size:18px; font-weight:600; color:#2D5016; margin-top:4px; text-align:center; }
+    .kilos-unidad { font-size:16px; font-weight:600; color:#2D5016; margin-top:2px; text-align:center; }
     /* ── Destino tipo grid ── */
     .destino-tipo-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:10px 0; }
     .destino-tipo-btn {
-      border:2px solid var(--borde); border-radius:10px; background:var(--superficie);
-      cursor:pointer; padding:8px 4px; display:flex; flex-direction:column;
-      align-items:center; gap:4px; font-size:12px; font-weight:600; color:var(--texto-2);
+      border:2px solid var(--borde); border-radius:8px; background:var(--superficie);
+      cursor:pointer; height:34px; padding:0 10px; display:flex; flex-direction:row;
+      align-items:center; justify-content:center; gap:6px; font-size:13px; font-weight:600; color:var(--texto-2);
       transition:all .15s;
     }
     .destino-tipo-btn:hover { border-color:var(--verde); background:var(--verde-suave); }
     .destino-tipo-btn.active { border-color:var(--verde); background:var(--verde-suave); color:var(--verde); }
-    .destino-btn-icon { font-size:20px; }
+    .destino-btn-icon { font-size:16px; }
     /* ── KG total badge ── */
     .kg-total-badge {
       text-align:center; font-size:17px; font-weight:700; color:var(--verde);
