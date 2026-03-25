@@ -65,96 +65,101 @@ router.post('/', async (req, res) => {
   const transaction = new sql.Transaction(pool);
   try {
     await transaction.begin();
-    const request = new sql.Request(transaction);
+
+    // Obtener nombre del proveedor dentro de la transacción
+    const provRes = await new sql.Request(transaction)
+      .input('proveedor_id', sql.Int, proveedor_id)
+      .query('SELECT nombre FROM Proveedores WHERE id = @proveedor_id');
+    const proveedorNombre = provRes.recordset.length > 0 ? provRes.recordset[0].nombre : 'Proveedor';
 
     const total = items.reduce(function(acc, item) {
       return acc + (parseFloat(item.cantidad) * parseFloat(item.precio_unit));
     }, 0);
 
-    const compraResult = await request
-      .input('proveedor_id', sql.Int, proveedor_id)
-      .input('temporada_id', sql.Int, temporada_id || null)
-      .input('fecha', sql.Date, fecha || new Date())
-      .input('total', sql.Decimal(12,2), total)
-      .input('forma_pago_id', sql.Int, forma_pago_id || null)
-      .input('observacion', sql.NVarChar, observacion || '')
-      .query('INSERT INTO Compras (proveedor_id, temporada_id, fecha, total, forma_pago_id, observacion) OUTPUT INSERTED.id VALUES (@proveedor_id, @temporada_id, @fecha, @total, @forma_pago_id, @observacion)');
+    const compraResult = await new sql.Request(transaction)
+      .input('proveedor_id',  sql.Int,         proveedor_id)
+      .input('temporada_id',  sql.Int,         temporada_id || null)
+      .input('fecha',         sql.Date,        fecha || new Date())
+      .input('total',         sql.Decimal(12,2), total)
+      .input('forma_pago_id', sql.Int,         forma_pago_id || null)
+      .input('observacion',   sql.NVarChar,    observacion || '')
+      .query(`INSERT INTO Compras (proveedor_id, temporada_id, fecha, total, forma_pago_id, observacion)
+              OUTPUT INSERTED.id
+              VALUES (@proveedor_id, @temporada_id, @fecha, @total, @forma_pago_id, @observacion)`);
 
     const compra_id = compraResult.recordset[0].id;
 
     for (const item of items) {
       const subtotal = parseFloat(item.cantidad) * parseFloat(item.precio_unit);
-      const req2 = new sql.Request(transaction);
-      await req2
-        .input('compra_id', sql.Int, compra_id)
-        .input('producto_id', sql.Int, item.producto_id)
-        .input('cantidad', sql.Decimal(10,2), item.cantidad)
+      await new sql.Request(transaction)
+        .input('compra_id',   sql.Int,           compra_id)
+        .input('producto_id', sql.Int,           item.producto_id)
+        .input('cantidad',    sql.Decimal(10,2), item.cantidad)
         .input('precio_unit', sql.Decimal(10,2), item.precio_unit)
-        .input('subtotal', sql.Decimal(12,2), subtotal)
-        .query('INSERT INTO ComprasDetalle (compra_id, producto_id, cantidad, precio_unit, subtotal) VALUES (@compra_id, @producto_id, @cantidad, @precio_unit, @subtotal)');
+        .input('subtotal',    sql.Decimal(12,2), subtotal)
+        .query(`INSERT INTO ComprasDetalle (compra_id, producto_id, cantidad, precio_unit, subtotal)
+                VALUES (@compra_id, @producto_id, @cantidad, @precio_unit, @subtotal)`);
 
-      const req3 = new sql.Request(transaction);
-      await req3
-        .input('producto_id', sql.Int, item.producto_id)
-        .input('cantidad', sql.Decimal(10,2), item.cantidad)
+      await new sql.Request(transaction)
+        .input('producto_id', sql.Int,           item.producto_id)
+        .input('cantidad',    sql.Decimal(10,2), item.cantidad)
         .input('precio_unit', sql.Decimal(10,2), item.precio_unit)
-        .query('UPDATE Productos SET stock_actual = ISNULL(stock_actual, 0) + @cantidad, costo_unitario = @precio_unit WHERE id = @producto_id');
+        .query(`UPDATE Productos
+                SET stock_actual = ISNULL(stock_actual, 0) + @cantidad, costo_unitario = @precio_unit
+                WHERE id = @producto_id`);
     }
 
     if (forma_pago_id) {
-      const req4 = new sql.Request(transaction);
-      const fpCheck = await req4
+      const fpCheck = await new sql.Request(transaction)
         .input('id', sql.Int, forma_pago_id)
         .query('SELECT nombre FROM FormasPago WHERE id = @id');
 
       if (fpCheck.recordset.length > 0) {
-        const esCuentaCorriente = fpCheck.recordset[0].nombre.toLowerCase().includes('cuenta corriente');
-
-        const esCheque = fpCheck.recordset[0].nombre.toLowerCase().includes('cheque');
+        const fpNombre = fpCheck.recordset[0].nombre.toLowerCase();
+        const esCuentaCorriente = fpNombre.includes('cuenta corriente');
+        const esCheque = fpNombre.includes('cheque');
 
         if (esCuentaCorriente && proveedor_id) {
-          // Cuenta corriente: generar debito en cuenta del proveedor
-          const req5 = new sql.Request(transaction);
-          await req5
-            .input('proveedor_id', sql.Int, proveedor_id)
-            .input('monto', sql.Decimal(12,2), total)
-            .input('forma_pago_id', sql.Int, forma_pago_id)
-            .input('compra_id', sql.Int, compra_id)
-            .input('observacion', sql.NVarChar, observacion || 'Compra registrada')
+          // Cuenta corriente: generar débito en cuenta del proveedor
+          await new sql.Request(transaction)
+            .input('proveedor_id',  sql.Int,         proveedor_id)
+            .input('monto',         sql.Decimal(12,2), total)
+            .input('forma_pago_id', sql.Int,         forma_pago_id)
+            .input('compra_id',     sql.Int,         compra_id)
+            .input('observacion',   sql.NVarChar,    observacion || 'Compra registrada')
             .query(`INSERT INTO CuentaCorrienteProveedores
                     (proveedor_id, tipo, monto, forma_pago_id, compra_id, observacion)
                     VALUES (@proveedor_id, 'debito', @monto, @forma_pago_id, @compra_id, @observacion)`);
+
         } else if (esCheque) {
           // Cheque: registrar en Cheques + egreso diferido en Caja con referencia
-          const chequeReq = new sql.Request(transaction);
-          const chequeResult = await chequeReq
-            .input('proveedor_id',       sql.Int,           proveedor_id || null)
-            .input('monto',              sql.Decimal(12,2), total)
-            .input('fecha_emision',      sql.Date,          fecha ? new Date(fecha) : new Date())
-            .input('estado',             sql.NVarChar,      'pendiente')
-            .input('observacion',        sql.NVarChar,      'Compra #' + compra_id + (observacion ? ' - ' + observacion : ''))
+          const chequeResult = await new sql.Request(transaction)
+            .input('proveedor_id',  sql.Int,         proveedor_id || null)
+            .input('monto',         sql.Decimal(12,2), total)
+            .input('fecha_emision', sql.Date,         fecha ? new Date(fecha) : new Date())
+            .input('estado',        sql.NVarChar,    'pendiente')
+            .input('observacion',   sql.NVarChar,    'Compra #' + compra_id + (observacion ? ' - ' + observacion : ''))
             .query(`INSERT INTO Cheques (proveedor_id, monto, fecha_emision, estado, observacion)
                     OUTPUT INSERTED.id
                     VALUES (@proveedor_id, @monto, @fecha_emision, @estado, @observacion)`);
           const cheque_id = chequeResult.recordset[0].id;
 
-          const cajaReq = new sql.Request(transaction);
-          await cajaReq
-            .input('concepto',     sql.NVarChar,      'Compra a proveedor (cheque)' + (observacion ? ' - ' + observacion : ''))
-            .input('monto',        sql.Decimal(12,2), total)
-            .input('forma_pago_id',sql.Int,           forma_pago_id)
-            .input('cheque_id',    sql.Int,           cheque_id)
-            .input('temporada_id', sql.Int,           temporada_id || null)
+          await new sql.Request(transaction)
+            .input('concepto',      sql.NVarChar,    'Compra: ' + proveedorNombre + ' (cheque)' + (observacion ? ' - ' + observacion : ''))
+            .input('monto',         sql.Decimal(12,2), total)
+            .input('forma_pago_id', sql.Int,         forma_pago_id)
+            .input('cheque_id',     sql.Int,         cheque_id)
+            .input('temporada_id',  sql.Int,         temporada_id || null)
             .query(`INSERT INTO Caja (tipo, concepto, monto, forma_pago_id, cheque_id, temporada_id)
                     VALUES ('egreso', @concepto, @monto, @forma_pago_id, @cheque_id, @temporada_id)`);
+
         } else {
-          // Efectivo, transferencia: generar egreso en Caja
-          const req6 = new sql.Request(transaction);
-          await req6
-            .input('concepto', sql.NVarChar, 'Compra a proveedor' + (observacion ? ' - ' + observacion : ''))
-            .input('monto', sql.Decimal(12,2), total)
-            .input('forma_pago_id', sql.Int, forma_pago_id)
-            .input('temporada_id', sql.Int, temporada_id || null)
+          // Efectivo (forma_pago_id = 1) y transferencia: egreso en Caja
+          await new sql.Request(transaction)
+            .input('concepto',      sql.NVarChar,    'Compra: ' + proveedorNombre + (observacion ? ' - ' + observacion : ''))
+            .input('monto',         sql.Decimal(12,2), total)
+            .input('forma_pago_id', sql.Int,         forma_pago_id)
+            .input('temporada_id',  sql.Int,         temporada_id || null)
             .query(`INSERT INTO Caja (tipo, concepto, monto, forma_pago_id, temporada_id)
                     VALUES ('egreso', @concepto, @monto, @forma_pago_id, @temporada_id)`);
         }
