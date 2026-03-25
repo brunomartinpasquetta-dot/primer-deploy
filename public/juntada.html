@@ -234,6 +234,39 @@
       font-size:13px; font-weight:600; margin:10px 0 4px;
     }
     .destino-form-inner { background:var(--fondo); border-radius:10px; padding:12px; margin-top:4px; }
+
+    /* ── KPI cards ── */
+    .juntada-kpis {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .juntada-kpi {
+      background: white;
+      border: 1px solid var(--borde);
+      border-top: 4px solid var(--verde);
+      border-radius: 10px;
+      padding: 16px 20px;
+      text-align: center;
+    }
+    .juntada-kpi-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--texto-suave);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+    .juntada-kpi-valor {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--verde);
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: -1px;
+    }
+    @media (max-width: 600px) { .juntada-kpis { grid-template-columns: 1fr 1fr; } }
+
     @media (max-width: 900px) {
       .juntada-layout { grid-template-columns: 1fr; }
       .juntada-form { max-width: 100%; }
@@ -302,6 +335,22 @@
         <div class="content-sub">Seleccioná el lote, escaneá el cosechador y confirmá el peso</div>
       </div>
 
+      <!-- ── KPI Cards ── -->
+      <div class="juntada-kpis">
+        <div class="juntada-kpi">
+          <div class="juntada-kpi-label">Total de hoy</div>
+          <div class="juntada-kpi-valor" id="kpi-total-hoy">— kg</div>
+        </div>
+        <div class="juntada-kpi">
+          <div class="juntada-kpi-label">Lote actual hoy</div>
+          <div class="juntada-kpi-valor" id="kpi-lote-hoy">— kg</div>
+        </div>
+        <div class="juntada-kpi">
+          <div class="juntada-kpi-label">Campaña actual</div>
+          <div class="juntada-kpi-valor" id="kpi-campana">— kg</div>
+        </div>
+      </div>
+
       <div class="juntada-layout">
       <div class="juntada-form">
 
@@ -309,7 +358,7 @@
         <div class="card-form">
           <div class="form-row">
             <label>Lote</label>
-            <select id="lote" onchange="checkReady()" data-tooltip="Seleccioná el lote que se está cosechando hoy">
+            <select id="lote" onchange="checkReady(); cargarKpisJuntada();" data-tooltip="Seleccioná el lote que se está cosechando hoy">
               <option value="">Cargando lotes...</option>
             </select>
           </div>
@@ -390,6 +439,11 @@
         <button class="btn btn-primary" id="btn-registrar" onclick="registrar()" disabled style="margin-top:4px;" data-tooltip="Guardar el registro de cosecha">
           <i data-lucide="check-circle"></i> Registrar cosecha
         </button>
+        <button class="btn btn-secondary" id="btn-repetir" onclick="repetirUltimaJuntada()"
+          style="margin-top:6px; width:100%; display:none;"
+          data-tooltip="Carga el mismo lote y cosechador del último registro">
+          ↩ Repetir última juntada
+        </button>
 
       </div><!-- /juntada-form -->
 
@@ -459,6 +513,7 @@
   var modoActual = 'lista';
   var tipoDestinoPrincipal = null, tipoDestinoSecundario = null;
   var lotesData = [], depositos = [];
+  var _ultimaJuntada = null;
 
   // ── Cargar lotes ───────────────────────────────────────────────
   function cargarLotes() {
@@ -829,10 +884,70 @@
           ? totalKg.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:2}) + ' kg'
           : '—';
         renderMovimientosGrid('tbody-hist-hoy', data);
+        guardarUltimaJuntada(data);
+        cargarKpisJuntada();
       })
       .catch(function() {
         document.getElementById('tbody-hist-hoy').innerHTML =
           '<tr><td colspan="8" class="empty">Error al cargar</td></tr>';
+      });
+  }
+
+  function guardarUltimaJuntada(data) {
+    var ingresos = data.filter(function(m) { return m.tipo === 'ingreso' && m.cosechero; });
+    if (ingresos.length > 0) {
+      _ultimaJuntada = ingresos[0];
+      document.getElementById('btn-repetir').style.display = '';
+    }
+  }
+
+  function repetirUltimaJuntada() {
+    if (!_ultimaJuntada) return;
+    if (_ultimaJuntada.lote_id) {
+      var selLote = document.getElementById('lote');
+      selLote.value = _ultimaJuntada.lote_id;
+      selLote.dispatchEvent(new Event('change'));
+    }
+    if (_ultimaJuntada.juntador_id) {
+      juntadorId = _ultimaJuntada.juntador_id;
+      mostrarChip(_ultimaJuntada.cosechero);
+      var selJunt = document.getElementById('lista-juntadores');
+      if (selJunt) selJunt.value = _ultimaJuntada.juntador_id;
+    }
+    document.getElementById('peso-manual').value = '';
+    pesoActual = null;
+    document.getElementById('sec-destino').style.display = 'none';
+    checkReady();
+  }
+
+  function cargarKpisJuntada() {
+    var hoy = new Date().toISOString().split('T')[0];
+    var loteId = document.getElementById('lote').value;
+
+    fetch('/api/stock-mercaderia/historial?desde=' + hoy + '&hasta=' + hoy)
+      .then(function(r){ return r.json(); }).then(function(data) {
+        var total = data.filter(function(m){ return m.tipo === 'ingreso'; })
+                        .reduce(function(s, m){ return s + parseFloat(m.kilos || 0); }, 0);
+        document.getElementById('kpi-total-hoy').textContent =
+          total.toLocaleString('es-AR', {maximumFractionDigits:1}) + ' kg';
+      });
+
+    if (loteId) {
+      fetch('/api/stock-mercaderia/historial?desde=' + hoy + '&hasta=' + hoy + '&lote_id=' + loteId)
+        .then(function(r){ return r.json(); }).then(function(data) {
+          var total = data.filter(function(m){ return m.tipo === 'ingreso'; })
+                          .reduce(function(s, m){ return s + parseFloat(m.kilos || 0); }, 0);
+          document.getElementById('kpi-lote-hoy').textContent =
+            total.toLocaleString('es-AR', {maximumFractionDigits:1}) + ' kg';
+        });
+    } else {
+      document.getElementById('kpi-lote-hoy').textContent = '— kg';
+    }
+
+    fetch('/api/stock-mercaderia/kpis')
+      .then(function(r){ return r.json(); }).then(function(data) {
+        document.getElementById('kpi-campana').textContent =
+          parseFloat(data.kg_cosechados || 0).toLocaleString('es-AR', {maximumFractionDigits:1}) + ' kg';
       });
   }
 
