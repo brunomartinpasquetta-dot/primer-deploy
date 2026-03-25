@@ -88,7 +88,7 @@ router.post('/', async (req, res) => {
               .query(`INSERT INTO StockMercaderia (temporada_id, lote_id, tipo, kilos, destino, precio_kilo, comprador, observacion)
                       VALUES (@temporada_id, @lote_id, 'ingreso', @kilos, 'venta_directa', @precio_kilo, @comprador, @observacion);
                       INSERT INTO StockMercaderia (temporada_id, lote_id, tipo, kilos, destino, precio_kilo, comprador, observacion)
-                      VALUES (@temporada_id, @lote_id, 'egreso', @kilos, 'venta_directa', @precio_kilo, @comprador, @observacion)`);
+                      VALUES (@temporada_id, @lote_id, 'egreso_venta', @kilos, 'venta_directa', @precio_kilo, @comprador, @observacion)`);
 
             // Caja: ingreso contable si hay precio
             if (d.precio_kilo && parseFloat(d.precio_kilo) > 0) {
@@ -108,7 +108,7 @@ router.post('/', async (req, res) => {
               .input('kilos',        sql.Decimal(10,2), d.kilos)
               .input('observacion',  sql.NVarChar,      `Descarte juntada #${newId}: ${d.motivo || ''}`)
               .query(`INSERT INTO StockMercaderia (temporada_id, lote_id, tipo, kilos, destino, precio_kilo, observacion)
-                      VALUES (@temporada_id, @lote_id, 'egreso', @kilos, 'descarte', 0, @observacion)`);
+                      VALUES (@temporada_id, @lote_id, 'egreso_descarte', @kilos, 'descarte', 0, @observacion)`);
           }
         }
       }
@@ -186,7 +186,7 @@ router.post('/:id/destino', async (req, res) => {
           .input('kilos',        sql.Decimal(10,2), d.kilos)
           .input('observacion',  sql.NVarChar,      `Descarte juntada #${juntadaId}: ${d.motivo || ''}`)
           .query(`INSERT INTO StockMercaderia (temporada_id, lote_id, tipo, kilos, destino, precio_kilo, observacion)
-                  VALUES (@temporada_id, @lote_id, 'egreso', @kilos, 'descarte', 0, @observacion)`);
+                  VALUES (@temporada_id, @lote_id, 'egreso_descarte', @kilos, 'descarte', 0, @observacion)`);
 
       }
       // 'sin_asignar': solo actualiza el campo destino en Juntada, sin movimientos de stock

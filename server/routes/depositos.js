@@ -238,10 +238,11 @@ router.post('/egreso', async (req, res) => {
       .input('kilos',        sql.Decimal(10,2), kilosNum)
       .input('precio_kilo',  sql.Decimal(10,2), precioNum)
       .input('comprador',    sql.NVarChar,      comprador || '')
+      .input('tipo_sm',      sql.NVarChar,      tipo_egreso)
       .input('destino',      sql.NVarChar,      tipo_egreso === 'egreso_venta' ? 'deposito' : 'descarte')
       .input('observacion',  sql.NVarChar,      observacion || '')
       .query(`INSERT INTO StockMercaderia (temporada_id, lote_id, tipo, kilos, destino, precio_kilo, comprador, observacion)
-              VALUES (@temporada_id, @lote_id, 'egreso', @kilos, @destino, @precio_kilo, @comprador, @observacion)`);
+              VALUES (@temporada_id, @lote_id, @tipo_sm, @kilos, @destino, @precio_kilo, @comprador, @observacion)`);
 
     // 3. Caja — solo si es venta y hay precio
     if (tipo_egreso === 'egreso_venta' && precioNum && precioNum > 0) {

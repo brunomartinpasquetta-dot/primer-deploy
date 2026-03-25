@@ -10,11 +10,11 @@ router.get('/', async (req, res) => {
     const dbReq = pool.request();
     let query = `SELECT l.nombre AS lote,
                  sm.destino,
-                 SUM(CASE WHEN sm.tipo = 'ingreso' THEN sm.kilos ELSE 0 END) AS kilos_ingresados,
-                 SUM(CASE WHEN sm.tipo = 'egreso' THEN sm.kilos ELSE 0 END) AS kilos_egresados,
-                 SUM(CASE WHEN sm.tipo = 'ingreso' THEN sm.kilos ELSE 0 END) -
-                 SUM(CASE WHEN sm.tipo = 'egreso' THEN sm.kilos ELSE 0 END) AS stock_actual,
-                 SUM(CASE WHEN sm.tipo = 'egreso' THEN sm.kilos * sm.precio_kilo ELSE 0 END) AS total_vendido
+                 SUM(CASE WHEN sm.tipo = 'ingreso'       THEN sm.kilos ELSE 0 END) AS kilos_ingresados,
+                 SUM(CASE WHEN sm.tipo LIKE 'egreso%'   THEN sm.kilos ELSE 0 END) AS kilos_egresados,
+                 SUM(CASE WHEN sm.tipo = 'ingreso'       THEN sm.kilos ELSE 0 END) -
+                 SUM(CASE WHEN sm.tipo LIKE 'egreso%'   THEN sm.kilos ELSE 0 END) AS stock_actual,
+                 SUM(CASE WHEN sm.tipo LIKE 'egreso%'   THEN sm.kilos * sm.precio_kilo ELSE 0 END) AS total_vendido
                  FROM StockMercaderia sm
                  JOIN Lotes l ON sm.lote_id = l.id`;
     if (temporada_id) {
@@ -68,7 +68,7 @@ router.post('/egreso', async (req, res) => {
       .input('comprador',    sql.NVarChar,      comprador || '')
       .input('observacion',  sql.NVarChar,      observacion || '')
       .query(`INSERT INTO StockMercaderia (temporada_id, lote_id, tipo, kilos, destino, precio_kilo, comprador, observacion)
-              VALUES (@temporada_id, @lote_id, 'egreso', @kilos, @destino, @precio_kilo, @comprador, @observacion)`);
+              VALUES (@temporada_id, @lote_id, 'egreso_venta', @kilos, @destino, @precio_kilo, @comprador, @observacion)`);
 
     // 2. Caja — ingreso por venta (solo si hay precio_kilo > 0)
     if (precioNum && precioNum > 0) {
@@ -123,7 +123,7 @@ router.get('/kpis', async (req, res) => {
     // KG venta_directa (desde StockMercaderia — no pasan por depósito)
     const dbSm = pool.request();
     let qSm = `SELECT ISNULL(SUM(kilos),0) AS kg_vd FROM StockMercaderia
-               WHERE tipo='egreso' AND destino='venta_directa'`;
+               WHERE tipo='egreso_venta' AND destino='venta_directa'`;
     if (temporada_id) {
       qSm += ' AND temporada_id = @tid_sm';
       dbSm.input('tid_sm', sql.Int, parseInt(temporada_id));
@@ -150,7 +150,7 @@ router.get('/historial', async (req, res) => {
 
     // Filtros reutilizables
     let wMov = '1=1';
-    let wSm  = "sm.destino = 'venta_directa' AND sm.tipo = 'egreso'";
+    let wSm  = "sm.destino = 'venta_directa' AND sm.tipo = 'egreso_venta'";
 
     if (temporada_id) {
       dbReq.input('temporada_id', sql.Int, parseInt(temporada_id));

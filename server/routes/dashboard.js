@@ -97,7 +97,7 @@ router.get('/', async (req, res) => {
           .input('tid', sql.Int, tid)
           .query(`SELECT
                     ISNULL(SUM(CASE WHEN tipo = 'ingreso' THEN kilos ELSE 0 END), 0) AS ingresados,
-                    ISNULL(SUM(CASE WHEN tipo = 'egreso'  THEN kilos ELSE 0 END), 0) AS vendidos
+                    ISNULL(SUM(CASE WHEN tipo LIKE 'egreso%' THEN kilos ELSE 0 END), 0) AS vendidos
                   FROM StockMercaderia
                   WHERE temporada_id = @tid`),
 
