@@ -126,12 +126,27 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Registrar destino de la cosecha (venta directa / depósito / descarte / mixto)
-// Body: { lote_id, temporada_id, destinos: [{ tipo, kilos, deposito_id?, precio_kilo?, comprador?, motivo? }] }
+const DESTINOS_VALIDOS = ['deposito', 'descarte', 'sin_asignar'];
+
+// Asignar destino a una juntada ya registrada
+// Body: { lote_id, temporada_id, destinos: [{ tipo, kilos, deposito_id?, motivo? }] }
+// Destinos válidos: 'deposito', 'descarte', 'sin_asignar'
+// NOTA: 'venta_directa' no es válido aquí — se registra únicamente en POST /
 router.post('/:id/destino', async (req, res) => {
   const juntadaId = parseInt(req.params.id);
   const { lote_id, temporada_id, destinos } = req.body;
-  if (!destinos || !destinos.length) return res.status(400).json({ error: 'Destinos requeridos' });
+
+  if (!destinos || !destinos.length) {
+    return res.status(400).json({ error: 'Destinos requeridos' });
+  }
+
+  // Validar que todos los tipos sean destinos permitidos
+  const tiposInvalidos = destinos.map(d => d.tipo).filter(t => !DESTINOS_VALIDOS.includes(t));
+  if (tiposInvalidos.length > 0) {
+    return res.status(400).json({
+      error: 'Destino inválido: ' + tiposInvalidos.join(', ') + '. Válidos: ' + DESTINOS_VALIDOS.join(', ')
+    });
+  }
 
   const pool = await getPool();
   const transaction = new sql.Transaction(pool);
@@ -140,18 +155,13 @@ router.post('/:id/destino', async (req, res) => {
 
     const tipos = [...new Set(destinos.map(d => d.tipo))];
     const destinoResumen = tipos.length === 1 ? tipos[0] : 'mixto';
-    const ventaDirecta = destinos.find(d => d.tipo === 'venta_directa');
     const depItem = destinos.find(d => d.tipo === 'deposito');
 
     await new sql.Request(transaction)
-      .input('id',                    sql.Int,           juntadaId)
-      .input('destino',               sql.NVarChar,      destinoResumen)
-      .input('deposito_id',           sql.Int,           depItem ? depItem.deposito_id : null)
-      .input('precio_venta_directa',  sql.Decimal(10,2), ventaDirecta ? ventaDirecta.precio_kilo || null : null)
-      .input('comprador_directo',     sql.NVarChar,      ventaDirecta ? ventaDirecta.comprador || '' : '')
-      .query(`UPDATE Juntada SET destino=@destino, deposito_id=@deposito_id,
-              precio_venta_directa=@precio_venta_directa, comprador_directo=@comprador_directo
-              WHERE id=@id`);
+      .input('id',          sql.Int,      juntadaId)
+      .input('destino',     sql.NVarChar, destinoResumen)
+      .input('deposito_id', sql.Int,      depItem ? depItem.deposito_id : null)
+      .query(`UPDATE Juntada SET destino=@destino, deposito_id=@deposito_id WHERE id=@id`);
 
     for (const d of destinos) {
       if (!d.kilos || parseFloat(d.kilos) <= 0) continue;
@@ -169,29 +179,6 @@ router.post('/:id/destino', async (req, res) => {
                   (deposito_id, temporada_id, lote_id, tipo, kilos, fecha, observacion)
                   VALUES (@deposito_id, @temporada_id, @lote_id, @tipo, @kilos, @fecha, @observacion)`);
 
-      } else if (d.tipo === 'venta_directa') {
-        await new sql.Request(transaction)
-          .input('temporada_id', sql.Int,           temporada_id)
-          .input('lote_id',      sql.Int,           lote_id)
-          .input('kilos',        sql.Decimal(10,2), d.kilos)
-          .input('precio_kilo',  sql.Decimal(10,2), d.precio_kilo || null)
-          .input('comprador',    sql.NVarChar,      d.comprador || '')
-          .input('observacion',  sql.NVarChar,      `Venta directa juntada #${juntadaId}`)
-          .query(`INSERT INTO StockMercaderia (temporada_id, lote_id, tipo, kilos, destino, precio_kilo, comprador, observacion)
-                  VALUES (@temporada_id, @lote_id, 'ingreso', @kilos, 'venta_directa', @precio_kilo, @comprador, @observacion);
-                  INSERT INTO StockMercaderia (temporada_id, lote_id, tipo, kilos, destino, precio_kilo, comprador, observacion)
-                  VALUES (@temporada_id, @lote_id, 'egreso', @kilos, 'venta_directa', @precio_kilo, @comprador, @observacion)`);
-
-        if (d.precio_kilo && parseFloat(d.precio_kilo) > 0) {
-          const total = parseFloat(d.kilos) * parseFloat(d.precio_kilo);
-          await new sql.Request(transaction)
-            .input('vd_concepto',     sql.NVarChar,      `Venta directa juntada #${juntadaId}${d.comprador ? ' a ' + d.comprador : ''}`)
-            .input('vd_monto',        sql.Decimal(12,2), total)
-            .input('vd_temporada_id', sql.Int,           temporada_id)
-            .query(`INSERT INTO Caja (tipo, concepto, monto, temporada_id)
-                    VALUES ('ingreso', @vd_concepto, @vd_monto, @vd_temporada_id)`);
-        }
-
       } else if (d.tipo === 'descarte') {
         await new sql.Request(transaction)
           .input('temporada_id', sql.Int,           temporada_id)
@@ -200,7 +187,9 @@ router.post('/:id/destino', async (req, res) => {
           .input('observacion',  sql.NVarChar,      `Descarte juntada #${juntadaId}: ${d.motivo || ''}`)
           .query(`INSERT INTO StockMercaderia (temporada_id, lote_id, tipo, kilos, destino, precio_kilo, observacion)
                   VALUES (@temporada_id, @lote_id, 'egreso', @kilos, 'descarte', 0, @observacion)`);
+
       }
+      // 'sin_asignar': solo actualiza el campo destino en Juntada, sin movimientos de stock
     }
 
     await transaction.commit();
