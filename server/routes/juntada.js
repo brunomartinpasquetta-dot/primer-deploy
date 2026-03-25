@@ -126,21 +126,21 @@ router.post('/', async (req, res) => {
   }
 });
 
-const DESTINOS_VALIDOS = ['deposito', 'descarte', 'sin_asignar'];
+const DESTINOS_VALIDOS = ['deposito', 'descarte'];
 
 // Asignar destino a una juntada ya registrada
-// Body: { lote_id, temporada_id, destinos: [{ tipo, kilos, deposito_id?, motivo? }] }
-// Destinos válidos: 'deposito', 'descarte', 'sin_asignar'
+// Body: { destinos: [{ tipo, kilos, deposito_id?, motivo? }] }
+// Destinos válidos: 'deposito', 'descarte'
 // NOTA: 'venta_directa' no es válido aquí — se registra únicamente en POST /
 router.post('/:id/destino', async (req, res) => {
   const juntadaId = parseInt(req.params.id);
-  const { lote_id, temporada_id, destinos } = req.body;
+  const { destinos } = req.body;
 
   if (!destinos || !destinos.length) {
     return res.status(400).json({ error: 'Destinos requeridos' });
   }
 
-  // Validar que todos los tipos sean destinos permitidos
+  // Validar tipos
   const tiposInvalidos = destinos.map(d => d.tipo).filter(t => !DESTINOS_VALIDOS.includes(t));
   if (tiposInvalidos.length > 0) {
     return res.status(400).json({
@@ -149,6 +149,33 @@ router.post('/:id/destino', async (req, res) => {
   }
 
   const pool = await getPool();
+
+  // Obtener datos de la juntada para validar
+  const jRes = await pool.request()
+    .input('id', sql.Int, juntadaId)
+    .query(`SELECT j.id, j.juntador_id, j.kilos, j.lote_id, l.temporada_id
+            FROM Juntada j JOIN Lotes l ON j.lote_id = l.id
+            WHERE j.id = @id`);
+
+  if (!jRes.recordset.length) {
+    return res.status(404).json({ error: 'Juntada no encontrada' });
+  }
+  const juntada = jRes.recordset[0];
+
+  if (!juntada.juntador_id) {
+    return res.status(400).json({ error: 'Debe seleccionar un cosechero' });
+  }
+
+  const sumaDestinos = destinos.reduce((s, d) => s + (parseFloat(d.kilos) || 0), 0);
+  const diff = Math.abs(sumaDestinos - parseFloat(juntada.kilos));
+  if (diff > 0.01) {
+    const restantes = (parseFloat(juntada.kilos) - sumaDestinos).toFixed(2);
+    return res.status(400).json({
+      error: `Quedan ${restantes} kg sin destino asignado (total juntada: ${juntada.kilos} kg, asignado: ${sumaDestinos.toFixed(2)} kg)`
+    });
+  }
+
+  const { lote_id, temporada_id } = juntada;
   const transaction = new sql.Transaction(pool);
   try {
     await transaction.begin();
@@ -179,6 +206,14 @@ router.post('/:id/destino', async (req, res) => {
                   (deposito_id, temporada_id, lote_id, tipo, kilos, fecha, observacion)
                   VALUES (@deposito_id, @temporada_id, @lote_id, @tipo, @kilos, @fecha, @observacion)`);
 
+        await new sql.Request(transaction)
+          .input('temporada_id', sql.Int,           temporada_id)
+          .input('lote_id',      sql.Int,           lote_id)
+          .input('kilos',        sql.Decimal(10,2), d.kilos)
+          .input('observacion',  sql.NVarChar,      `Juntada #${juntadaId}`)
+          .query(`INSERT INTO StockMercaderia (temporada_id, lote_id, tipo, kilos, destino, observacion)
+                  VALUES (@temporada_id, @lote_id, 'ingreso', @kilos, 'deposito', @observacion)`);
+
       } else if (d.tipo === 'descarte') {
         await new sql.Request(transaction)
           .input('temporada_id', sql.Int,           temporada_id)
@@ -187,9 +222,7 @@ router.post('/:id/destino', async (req, res) => {
           .input('observacion',  sql.NVarChar,      `Descarte juntada #${juntadaId}: ${d.motivo || ''}`)
           .query(`INSERT INTO StockMercaderia (temporada_id, lote_id, tipo, kilos, destino, precio_kilo, observacion)
                   VALUES (@temporada_id, @lote_id, 'egreso_descarte', @kilos, 'descarte', 0, @observacion)`);
-
       }
-      // 'sin_asignar': solo actualiza el campo destino en Juntada, sin movimientos de stock
     }
 
     await transaction.commit();

@@ -360,9 +360,6 @@
             <button class="destino-tipo-btn" onclick="seleccionarDestino('descarte',this,true)">
               <span class="destino-btn-icon">🗑️</span><span>Descarte</span>
             </button>
-            <button class="destino-tipo-btn" onclick="seleccionarDestino('sin_asignar',this,true)">
-              <span class="destino-btn-icon">⏳</span><span>Sin asignar</span>
-            </button>
           </div>
           <div id="destino-form-principal"></div>
 
@@ -601,17 +598,13 @@
         '<option value="enfermedad">Enfermedad/plaga</option><option value="otro">Otro</option>' +
         '</select></div></div>';
     }
-    if (tipo === 'sin_asignar') {
-      return '<div class="destino-form-inner" style="text-align:center;color:var(--texto-suave);font-size:13px;padding:16px;">⏳ Se registrará sin destino asignado — podés asignarlo después</div>';
-    }
     return '';
   }
 
   function renderDestinoGrid(prefix) {
     var items = [
-      {tipo:'deposito',    icon:'📦', label:'Depósito'},
-      {tipo:'descarte',    icon:'🗑️', label:'Descarte'},
-      {tipo:'sin_asignar', icon:'⏳', label:'Sin asignar'}
+      {tipo:'deposito', icon:'📦', label:'Depósito'},
+      {tipo:'descarte', icon:'🗑️', label:'Descarte'}
     ];
     return items.map(function(it) {
       return '<button class="destino-tipo-btn" onclick="seleccionarDestino(\'' + it.tipo + '\',this,false)">' +
@@ -689,11 +682,9 @@
     var kilosOk = kilos > 0;
     var destinoOk = false;
 
-    if (tipoDestinoPrincipal === 'sin_asignar') {
-      destinoOk = true;
-    } else if (tipoDestinoPrincipal) {
+    if (tipoDestinoPrincipal) {
       var totalAsignado = getKilosAsignados('p') + getKilosAsignados('s');
-      destinoOk = Math.abs(totalAsignado - kilos) < 0.11 && totalAsignado > 0;
+      destinoOk = Math.abs(totalAsignado - kilos) < 0.01 && totalAsignado > 0;
     }
 
     document.getElementById('btn-registrar').disabled = !(loteOk && juntadorOk && kilosOk && destinoOk);
@@ -702,10 +693,8 @@
   function _recopilarDestinos() {
     var destinos = [];
 
-    if (tipoDestinoPrincipal === 'sin_asignar') return destinos;
-
     function addFromPrefix(prefix, tipo) {
-      if (!tipo || tipo === 'sin_asignar') return null;
+      if (!tipo) return null;
       var tipos = [tipo];
       for (var i = 0; i < tipos.length; i++) {
         var t = tipos[i];
@@ -747,7 +736,7 @@
       mostrarMensaje('mensaje', 'error', destinos.error); return;
     }
     var suma = destinos.reduce(function(a, d) { return a + d.kilos; }, 0);
-    if (Math.abs(suma - kilos) > 0.1) {
+    if (Math.abs(suma - kilos) > 0.01) {
       mostrarMensaje('mensaje', 'error', 'Los kilos asignados (' + suma.toFixed(2) + ') no coinciden con el total (' + kilos + ' kg)'); return;
     }
     _enviarRegistro(lote_id, kilos, destinos);
