@@ -187,51 +187,47 @@ router.get('/historial', async (req, res) => {
       UNION ALL
       SELECT
         sm.id,
-        'egreso_venta'         AS tipo,
+        'egreso_venta'              AS tipo,
         sm.kilos,
         sm.precio_kilo,
         CASE WHEN sm.precio_kilo IS NOT NULL THEN sm.kilos * sm.precio_kilo ELSE NULL END AS total,
         sm.comprador,
-        'venta_directa'        AS destino_venta,
+        'venta_directa'             AS destino_venta,
         sm.observacion,
-        CAST(sm.fecha AS DATETIME) AS fecha,
-        NULL                   AS deposito,
-        l2.nombre              AS lote,
-        t2.nombre              AS temporada,
-        uj2.cosechero          AS cosechero,
-        sm.juntada_id
+        sm.fecha,
+        NULL                        AS deposito,
+        l2.nombre                   AS lote,
+        t2.nombre                   AS temporada,
+        ju2.apellido + ', ' + ju2.nombre AS cosechero,
+        sm.juntada_id,
+        sm.juntador_id,
+        sm.usuario_id,
+        u2.nombre                   AS usuario
       FROM StockMercaderia sm
-      LEFT JOIN Lotes      l2 ON sm.lote_id      = l2.id
-      LEFT JOIN Temporadas t2 ON sm.temporada_id = t2.id
-      LEFT JOIN (
-        SELECT j.lote_id, l.temporada_id,
-               ju.apellido + ', ' + ju.nombre AS cosechero,
-               ROW_NUMBER() OVER (PARTITION BY j.lote_id, l.temporada_id ORDER BY j.fecha_hora DESC) AS rn
-        FROM Juntada j
-        JOIN Lotes l ON j.lote_id = l.id
-        JOIN Juntadores ju ON j.juntador_id = ju.id
-      ) uj2 ON sm.lote_id = uj2.lote_id AND sm.temporada_id = uj2.temporada_id AND uj2.rn = 1
+      LEFT JOIN Lotes       l2  ON sm.lote_id      = l2.id
+      LEFT JOIN Temporadas  t2  ON sm.temporada_id = t2.id
+      LEFT JOIN Juntadores  ju2 ON sm.juntador_id  = ju2.id
+      LEFT JOIN Usuarios    u2  ON sm.usuario_id   = u2.id
       WHERE ${wSm}` : '';
 
     const query = `
-      WITH UltimoJuntador AS (
-        SELECT j.lote_id, l.temporada_id,
-               ju.apellido + ', ' + ju.nombre AS cosechero,
-               ROW_NUMBER() OVER (PARTITION BY j.lote_id, l.temporada_id ORDER BY j.fecha_hora DESC) AS rn
-        FROM Juntada j
-        JOIN Lotes l ON j.lote_id = l.id
-        JOIN Juntadores ju ON j.juntador_id = ju.id
-      )
       SELECT m.id, m.tipo, m.kilos, m.precio_kilo,
              CASE WHEN m.precio_kilo IS NOT NULL THEN m.kilos * m.precio_kilo ELSE NULL END AS total,
              m.comprador, m.destino_venta, m.observacion, m.fecha,
-             d.nombre AS deposito, l.nombre AS lote, t.nombre AS temporada,
-             uj.cosechero, m.juntada_id
+             d.nombre  AS deposito,
+             l.nombre  AS lote,
+             t.nombre  AS temporada,
+             ju.apellido + ', ' + ju.nombre AS cosechero,
+             m.juntada_id,
+             m.juntador_id,
+             m.usuario_id,
+             u.nombre  AS usuario
       FROM MovimientosDeposito m
-      LEFT JOIN Depositos      d  ON m.deposito_id  = d.id
-      LEFT JOIN Lotes          l  ON m.lote_id      = l.id
-      LEFT JOIN Temporadas     t  ON m.temporada_id = t.id
-      LEFT JOIN UltimoJuntador uj ON m.lote_id = uj.lote_id AND m.temporada_id = uj.temporada_id AND uj.rn = 1
+      LEFT JOIN Depositos  d  ON m.deposito_id  = d.id
+      LEFT JOIN Lotes      l  ON m.lote_id      = l.id
+      LEFT JOIN Temporadas t  ON m.temporada_id = t.id
+      LEFT JOIN Juntadores ju ON m.juntador_id  = ju.id
+      LEFT JOIN Usuarios   u  ON m.usuario_id   = u.id
       WHERE ${wMov}${tipoFiltroMov}
       ${smUnion}
       ORDER BY fecha DESC`;

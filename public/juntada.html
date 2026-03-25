@@ -397,10 +397,11 @@
                 <th style="text-align:right;">Kg</th>
                 <th>Lote</th>
                 <th>Depósito</th>
+                <th>Usuario</th>
               </tr>
             </thead>
             <tbody id="tbody-hist-hoy">
-              <tr><td colspan="7" class="empty">Cargando...</td></tr>
+              <tr><td colspan="8" class="empty">Cargando...</td></tr>
             </tbody>
           </table>
         </div>
@@ -818,7 +819,7 @@
       })
       .catch(function() {
         document.getElementById('tbody-hist-hoy').innerHTML =
-          '<tr><td colspan="7" class="empty">Error al cargar</td></tr>';
+          '<tr><td colspan="8" class="empty">Error al cargar</td></tr>';
       });
   }
 
