@@ -79,11 +79,21 @@
     /* ── Layout dos columnas ── */
     .juntada-layout {
       display: grid;
-      grid-template-columns: 40% 60%;
+      grid-template-columns: 380px 1fr;
       gap: 24px;
       align-items: start;
     }
-    .juntada-form { min-width: 0; }
+    .juntada-form { min-width: 0; max-width: 380px; }
+
+    /* ── Compactación panel izquierdo ── */
+    .juntada-form .card-form { padding: 12px; margin-bottom: 8px; }
+    .juntada-form label { font-size: 11px !important; margin-bottom: 4px; }
+    .juntada-form .form-row { margin-bottom: 8px; }
+    .juntada-form select { height: 36px !important; font-size: 13px !important; padding: 6px 10px !important; }
+    .juntada-form .destino-form-inner input[type="number"] { width: 60% !important; height: 36px !important; font-size: 13px !important; padding: 6px 10px !important; }
+    .juntada-form .cosechador-modos { gap: 6px; margin-bottom: 8px; }
+    .juntada-form .modo-btn { padding: 8px 6px; font-size: 12px; }
+    .juntada-form .juntador-chip { padding: 8px 10px; margin-top: 8px; }
     .juntada-historial {
       background: var(--superficie);
       border: 1px solid var(--borde);
@@ -184,10 +194,10 @@
     .juntador-chip strong { flex:1; font-size:14px; }
     .juntador-chip-clear { background:none; border:none; cursor:pointer; color:var(--sem-verde); font-size:16px; padding:0 4px; }
     /* ── Kilos input grande ── */
-    .kilos-input-wrap { display:flex; flex-direction:column; align-items:stretch; padding:8px 0 4px; }
+    .kilos-input-wrap { display:flex; flex-direction:column; align-items:stretch; padding:4px 0 2px; }
     .kilos-input-grande {
-      width:100% !important; height:120px !important; text-align:center !important;
-      font-size:64px !important; font-weight:700 !important; line-height:120px !important;
+      width:100% !important; height:72px !important; text-align:center !important;
+      font-size:42px !important; font-weight:700 !important; line-height:72px !important;
       font-family:'JetBrains Mono',monospace !important; color:#2D5016 !important;
       border:2px solid #2D5016 !important; border-radius:8px !important;
       padding:0 !important; background:#fff !important;
@@ -197,13 +207,13 @@
     .kilos-input-grande::-webkit-outer-spin-button,
     .kilos-input-grande::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
     .kilos-input-grande:focus { outline:none; border-color:#1a3a0a !important; }
-    .kilos-unidad { font-size:24px; font-weight:600; color:#2D5016; margin-top:8px; text-align:center; }
+    .kilos-unidad { font-size:18px; font-weight:600; color:#2D5016; margin-top:4px; text-align:center; }
     /* ── Destino tipo grid ── */
     .destino-tipo-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:10px 0; }
     .destino-tipo-btn {
       border:2px solid var(--borde); border-radius:10px; background:var(--superficie);
-      cursor:pointer; padding:12px 6px; display:flex; flex-direction:column;
-      align-items:center; gap:5px; font-size:12px; font-weight:600; color:var(--texto-2);
+      cursor:pointer; padding:8px 4px; display:flex; flex-direction:column;
+      align-items:center; gap:4px; font-size:12px; font-weight:600; color:var(--texto-2);
       transition:all .15s;
     }
     .destino-tipo-btn:hover { border-color:var(--verde); background:var(--verde-suave); }
@@ -222,8 +232,9 @@
       font-size:13px; font-weight:600; margin:10px 0 4px;
     }
     .destino-form-inner { background:var(--fondo); border-radius:10px; padding:12px; margin-top:4px; }
-    @media (max-width: 768px) {
+    @media (max-width: 900px) {
       .juntada-layout { grid-template-columns: 1fr; }
+      .juntada-form { max-width: 100%; }
       .juntada-historial { order: 2; }
       .juntada-form { order: 1; }
     }
