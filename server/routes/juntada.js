@@ -63,21 +63,21 @@ router.post('/', async (req, res) => {
               .input('kilos',        sql.Decimal(10,2), d.kilos)
               .input('fecha',        sql.DateTime,      new Date())
               .input('observacion',  sql.NVarChar,      `Juntada #${newId}`)
+              .input('juntada_id',   sql.Int,           newId)
               .query(`INSERT INTO MovimientosDeposito
-                      (deposito_id, temporada_id, lote_id, tipo, kilos, fecha, observacion)
-                      VALUES (@deposito_id, @temporada_id, @lote_id, @tipo, @kilos, @fecha, @observacion)`);
+                      (deposito_id, temporada_id, lote_id, tipo, kilos, fecha, observacion, juntada_id)
+                      VALUES (@deposito_id, @temporada_id, @lote_id, @tipo, @kilos, @fecha, @observacion, @juntada_id)`);
 
-            // StockMercaderia — refleja el ingreso de kg al depósito
             await transaction.request()
               .input('sm_temporada_id', sql.Int,           temporada_id)
               .input('sm_lote_id',      sql.Int,           lote_id)
               .input('sm_kilos',        sql.Decimal(10,2), d.kilos)
               .input('sm_observacion',  sql.NVarChar,      `Juntada #${newId}`)
-              .query(`INSERT INTO StockMercaderia (temporada_id, lote_id, tipo, kilos, destino, observacion)
-                      VALUES (@sm_temporada_id, @sm_lote_id, 'ingreso', @sm_kilos, 'deposito', @sm_observacion)`);
+              .input('sm_juntada_id',   sql.Int,           newId)
+              .query(`INSERT INTO StockMercaderia (temporada_id, lote_id, tipo, kilos, destino, observacion, juntada_id)
+                      VALUES (@sm_temporada_id, @sm_lote_id, 'ingreso', @sm_kilos, 'deposito', @sm_observacion, @sm_juntada_id)`);
 
           } else if (d.tipo === 'venta_directa') {
-            // StockMercaderia: ingreso + egreso (venta directa no pasa por depósito)
             await transaction.request()
               .input('temporada_id', sql.Int,           temporada_id)
               .input('lote_id',      sql.Int,           lote_id)
@@ -85,12 +85,12 @@ router.post('/', async (req, res) => {
               .input('precio_kilo',  sql.Decimal(10,2), d.precio_kilo || null)
               .input('comprador',    sql.NVarChar,      d.comprador || '')
               .input('observacion',  sql.NVarChar,      `Venta directa juntada #${newId}`)
-              .query(`INSERT INTO StockMercaderia (temporada_id, lote_id, tipo, kilos, destino, precio_kilo, comprador, observacion)
-                      VALUES (@temporada_id, @lote_id, 'ingreso', @kilos, 'venta_directa', @precio_kilo, @comprador, @observacion);
-                      INSERT INTO StockMercaderia (temporada_id, lote_id, tipo, kilos, destino, precio_kilo, comprador, observacion)
-                      VALUES (@temporada_id, @lote_id, 'egreso_venta', @kilos, 'venta_directa', @precio_kilo, @comprador, @observacion)`);
+              .input('juntada_id',   sql.Int,           newId)
+              .query(`INSERT INTO StockMercaderia (temporada_id, lote_id, tipo, kilos, destino, precio_kilo, comprador, observacion, juntada_id)
+                      VALUES (@temporada_id, @lote_id, 'ingreso', @kilos, 'venta_directa', @precio_kilo, @comprador, @observacion, @juntada_id);
+                      INSERT INTO StockMercaderia (temporada_id, lote_id, tipo, kilos, destino, precio_kilo, comprador, observacion, juntada_id)
+                      VALUES (@temporada_id, @lote_id, 'egreso_venta', @kilos, 'venta_directa', @precio_kilo, @comprador, @observacion, @juntada_id)`);
 
-            // Caja: ingreso contable si hay precio
             if (d.precio_kilo && parseFloat(d.precio_kilo) > 0) {
               const total = parseFloat(d.kilos) * parseFloat(d.precio_kilo);
               await transaction.request()
@@ -107,8 +107,9 @@ router.post('/', async (req, res) => {
               .input('lote_id',      sql.Int,           lote_id)
               .input('kilos',        sql.Decimal(10,2), d.kilos)
               .input('observacion',  sql.NVarChar,      `Descarte juntada #${newId}: ${d.motivo || ''}`)
-              .query(`INSERT INTO StockMercaderia (temporada_id, lote_id, tipo, kilos, destino, precio_kilo, observacion)
-                      VALUES (@temporada_id, @lote_id, 'egreso_descarte', @kilos, 'descarte', 0, @observacion)`);
+              .input('juntada_id',   sql.Int,           newId)
+              .query(`INSERT INTO StockMercaderia (temporada_id, lote_id, tipo, kilos, destino, precio_kilo, observacion, juntada_id)
+                      VALUES (@temporada_id, @lote_id, 'egreso_descarte', @kilos, 'descarte', 0, @observacion, @juntada_id)`);
           }
         }
       }
@@ -202,17 +203,19 @@ router.post('/:id/destino', async (req, res) => {
           .input('kilos',        sql.Decimal(10,2), d.kilos)
           .input('fecha',        sql.DateTime,      new Date())
           .input('observacion',  sql.NVarChar,      `Juntada #${juntadaId}`)
+          .input('juntada_id',   sql.Int,           juntadaId)
           .query(`INSERT INTO MovimientosDeposito
-                  (deposito_id, temporada_id, lote_id, tipo, kilos, fecha, observacion)
-                  VALUES (@deposito_id, @temporada_id, @lote_id, @tipo, @kilos, @fecha, @observacion)`);
+                  (deposito_id, temporada_id, lote_id, tipo, kilos, fecha, observacion, juntada_id)
+                  VALUES (@deposito_id, @temporada_id, @lote_id, @tipo, @kilos, @fecha, @observacion, @juntada_id)`);
 
         await new sql.Request(transaction)
           .input('temporada_id', sql.Int,           temporada_id)
           .input('lote_id',      sql.Int,           lote_id)
           .input('kilos',        sql.Decimal(10,2), d.kilos)
           .input('observacion',  sql.NVarChar,      `Juntada #${juntadaId}`)
-          .query(`INSERT INTO StockMercaderia (temporada_id, lote_id, tipo, kilos, destino, observacion)
-                  VALUES (@temporada_id, @lote_id, 'ingreso', @kilos, 'deposito', @observacion)`);
+          .input('juntada_id',   sql.Int,           juntadaId)
+          .query(`INSERT INTO StockMercaderia (temporada_id, lote_id, tipo, kilos, destino, observacion, juntada_id)
+                  VALUES (@temporada_id, @lote_id, 'ingreso', @kilos, 'deposito', @observacion, @juntada_id)`);
 
       } else if (d.tipo === 'descarte') {
         await new sql.Request(transaction)
@@ -220,8 +223,9 @@ router.post('/:id/destino', async (req, res) => {
           .input('lote_id',      sql.Int,           lote_id)
           .input('kilos',        sql.Decimal(10,2), d.kilos)
           .input('observacion',  sql.NVarChar,      `Descarte juntada #${juntadaId}: ${d.motivo || ''}`)
-          .query(`INSERT INTO StockMercaderia (temporada_id, lote_id, tipo, kilos, destino, precio_kilo, observacion)
-                  VALUES (@temporada_id, @lote_id, 'egreso_descarte', @kilos, 'descarte', 0, @observacion)`);
+          .input('juntada_id',   sql.Int,           juntadaId)
+          .query(`INSERT INTO StockMercaderia (temporada_id, lote_id, tipo, kilos, destino, precio_kilo, observacion, juntada_id)
+                  VALUES (@temporada_id, @lote_id, 'egreso_descarte', @kilos, 'descarte', 0, @observacion, @juntada_id)`);
       }
     }
 

@@ -198,7 +198,8 @@ router.get('/historial', async (req, res) => {
         NULL                   AS deposito,
         l2.nombre              AS lote,
         t2.nombre              AS temporada,
-        uj2.cosechero          AS cosechero
+        uj2.cosechero          AS cosechero,
+        sm.juntada_id
       FROM StockMercaderia sm
       LEFT JOIN Lotes      l2 ON sm.lote_id      = l2.id
       LEFT JOIN Temporadas t2 ON sm.temporada_id = t2.id
@@ -225,7 +226,7 @@ router.get('/historial', async (req, res) => {
              CASE WHEN m.precio_kilo IS NOT NULL THEN m.kilos * m.precio_kilo ELSE NULL END AS total,
              m.comprador, m.destino_venta, m.observacion, m.fecha,
              d.nombre AS deposito, l.nombre AS lote, t.nombre AS temporada,
-             uj.cosechero
+             uj.cosechero, m.juntada_id
       FROM MovimientosDeposito m
       LEFT JOIN Depositos      d  ON m.deposito_id  = d.id
       LEFT JOIN Lotes          l  ON m.lote_id      = l.id

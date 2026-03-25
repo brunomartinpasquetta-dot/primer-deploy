@@ -131,6 +131,7 @@
             <table>
               <thead>
                 <tr>
+                  <th style="text-align:center;">#</th>
                   <th>Cosechero</th>
                   <th>Fecha</th>
                   <th>Tipo</th>
@@ -139,7 +140,7 @@
                   <th>Depósito</th>
                 </tr>
               </thead>
-              <tbody id="tbody-stock-grid"><tr><td colspan="6" class="empty">Cargando...</td></tr></tbody>
+              <tbody id="tbody-stock-grid"><tr><td colspan="7" class="empty">Cargando...</td></tr></tbody>
             </table>
           </div>
         </div>
@@ -324,6 +325,7 @@
             <table>
               <thead>
                 <tr>
+                  <th style="text-align:center;">#</th>
                   <th>Fecha</th>
                   <th>Tipo</th>
                   <th>Lote</th>
@@ -335,7 +337,7 @@
                 </tr>
               </thead>
               <tbody id="tbody-historial">
-                <tr><td colspan="8" class="empty">Seleccioná filtros para ver movimientos</td></tr>
+                <tr><td colspan="9" class="empty">Seleccioná filtros para ver movimientos</td></tr>
               </tbody>
               <tfoot id="tfoot-historial"></tfoot>
             </table>
@@ -464,7 +466,7 @@ function fmtFechaGrid(iso) {
 function renderStockGrid(data) {
   var tbody = document.getElementById('tbody-stock-grid');
   if (!data.length) {
-    tbody.innerHTML = '<tr><td colspan="6" class="empty">Sin movimientos</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">Sin movimientos</td></tr>';
     return;
   }
   tbody.innerHTML = data.map(function(m){
@@ -475,7 +477,9 @@ function renderStockGrid(data) {
     var tipoBadge = esIngreso
       ? '<span class="badge" style="background:var(--sem-verde-bg);color:var(--sem-verde);">Ingreso</span>'
       : '<span class="badge" style="background:var(--sem-rojo-bg);color:var(--sem-rojo);">Egreso</span>';
+    var jid = m.juntada_id ? '<span style="font-family:\'JetBrains Mono\',monospace;font-size:11px;background:var(--fondo-dark);border:1px solid var(--borde);border-radius:4px;padding:1px 5px;">#'+m.juntada_id+'</span>' : '—';
     return '<tr style="'+bg+'">'+
+      '<td style="text-align:center;">'+jid+'</td>'+
       '<td style="font-size:13px;">'+(m.cosechero||'—')+'</td>'+
       '<td style="font-size:12px;white-space:nowrap;">'+fmtFechaGrid(m.fecha)+'</td>'+
       '<td>'+tipoBadge+'</td>'+
@@ -707,7 +711,7 @@ function limpiarFiltrosHistorial() {
   document.getElementById('rango-fechas').style.display = 'none';
   document.getElementById('hist-desde').value = '';
   document.getElementById('hist-hasta').value = '';
-  document.getElementById('tbody-historial').innerHTML = '<tr><td colspan="8" class="empty">Seleccioná filtros para ver movimientos</td></tr>';
+  document.getElementById('tbody-historial').innerHTML = '<tr><td colspan="9" class="empty">Seleccioná filtros para ver movimientos</td></tr>';
   document.getElementById('tfoot-historial').innerHTML = '';
 }
 
@@ -736,14 +740,14 @@ function cargarHistorial() {
 
   var tbody = document.getElementById('tbody-historial');
   var tfoot = document.getElementById('tfoot-historial');
-  tbody.innerHTML = '<tr><td colspan="8" class="empty" style="color:var(--verde);">Cargando...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="9" class="empty" style="color:var(--verde);">Cargando...</td></tr>';
   tfoot.innerHTML = '';
 
   fetch('/api/stock-mercaderia/historial?' + params.toString())
     .then(function(r){ return r.json(); })
     .then(function(data){
       if (!data.length) {
-        tbody.innerHTML = '<tr><td colspan="8" class="empty">Sin movimientos para los filtros seleccionados</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="empty">Sin movimientos para los filtros seleccionados</td></tr>';
         return;
       }
       var totalKilosIngreso = 0, totalKilosEgreso = 0, totalPesos = 0;
@@ -754,9 +758,11 @@ function cargarHistorial() {
         var colorKilos = esIngreso ? 'color:#2d6a4f;' : 'color:#c0392b;';
         var total = m.total ? '$' + parseFloat(m.total).toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0}) : '—';
         var precioKg = m.precio_kilo ? '$' + parseFloat(m.precio_kilo).toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2}) : '—';
+        var jid = m.juntada_id ? '<span style="font-family:\'JetBrains Mono\',monospace;font-size:11px;background:var(--fondo-dark);border:1px solid var(--borde);border-radius:4px;padding:1px 5px;">#'+m.juntada_id+'</span>' : '—';
         if (esIngreso) totalKilosIngreso += parseFloat(m.kilos)||0;
         else { totalKilosEgreso += parseFloat(m.kilos)||0; totalPesos += parseFloat(m.total)||0; }
         return '<tr style="'+bg+'">'+
+          '<td style="text-align:center;">'+jid+'</td>'+
           '<td style="font-size:12px;white-space:nowrap;">'+fmtFecha(m.fecha)+'</td>'+
           '<td><span class="badge badge-'+(esIngreso?'positivo':'negativo')+'">'+
             (esIngreso?'Ingreso':'Egreso')+'</span></td>'+
@@ -771,7 +777,7 @@ function cargarHistorial() {
       }).join('');
       // Fila de totales
       tfoot.innerHTML = '<tr style="background:var(--fondo-dark);font-weight:700;border-top:2px solid var(--borde);">'+
-        '<td colspan="4" style="text-align:right;padding:10px 8px;">TOTALES</td>'+
+        '<td colspan="5" style="text-align:right;padding:10px 8px;">TOTALES</td>'+
         '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;padding:10px 8px;">'+
           '<span style="color:#2d6a4f;">+'+fmt(totalKilosIngreso)+'</span> / '+
           '<span style="color:#c0392b;">-'+fmt(totalKilosEgreso)+'</span> kg</td>'+
@@ -781,7 +787,7 @@ function cargarHistorial() {
       '</tr>';
     })
     .catch(function(){
-      tbody.innerHTML = '<tr><td colspan="8" class="empty">Error al cargar historial</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" class="empty">Error al cargar historial</td></tr>';
     });
 }
 
