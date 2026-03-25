@@ -7,6 +7,7 @@
   <title>Cosecha — Campo</title>
   <link rel="icon" href="img/logo.png">
   <script src="js/utils.js"></script>
+  <script src="js/movimientos-grid.js"></script>
   <link rel="stylesheet" href="cosecha.css">
   <script src="js/auth-check.js"></script>
   <style>
@@ -385,11 +386,26 @@
           <h3>Registros de hoy</h3>
           <small id="hist-contador"></small>
         </div>
-        <div class="juntada-historial-body" id="hist-body">
-          <div class="hist-vacio">Cargando...</div>
+        <div class="table-wrap" style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th style="text-align:center;">#</th>
+                <th>Cosechero</th>
+                <th>Fecha</th>
+                <th>Tipo</th>
+                <th style="text-align:right;">Kg</th>
+                <th>Lote</th>
+                <th>Depósito</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-hist-hoy">
+              <tr><td colspan="7" class="empty">Cargando...</td></tr>
+            </tbody>
+          </table>
         </div>
         <div class="juntada-historial-footer">
-          Total: <span id="hist-total">—</span>
+          Total hoy: <span id="hist-total">—</span>
         </div>
       </div>
 
@@ -785,37 +801,25 @@
   }
 
   function cargarHistorial() {
-    fetch('/api/juntada/hoy').then(function(r){ return r.json(); }).then(function(rows) {
-      var body = document.getElementById('hist-body');
-      var contador = document.getElementById('hist-contador');
-      var total = document.getElementById('hist-total');
-      if (!rows.length) {
-        body.innerHTML = '<div class="hist-vacio">Sin registros hoy</div>';
-        contador.textContent = '';
-        total.textContent = '—';
-        return;
-      }
-      var totalKg = rows.reduce(function(s, r){ return s + parseFloat(r.kilos || 0); }, 0);
-      contador.textContent = '(' + rows.length + ' registro' + (rows.length !== 1 ? 's' : '') + ' — ' +
-        totalKg.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:3}) + ' kg)';
-      total.textContent = totalKg.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:2}) + ' kg';
-      function destBadge(d) {
-        if (!d || d === 'sin_destino') return '<span class="dest-badge sin">Sin destino</span>';
-        if (d === 'deposito') return '<span class="dest-badge deposito">Depósito</span>';
-        if (d === 'venta_directa') return '<span class="dest-badge venta">Venta</span>';
-        if (d === 'descarte') return '<span class="dest-badge descarte">Descarte</span>';
-        return '<span class="dest-badge sin">' + d + '</span>';
-      }
-      body.innerHTML = '<table><thead><tr><th>Hora</th><th>Cosechador</th><th>Lote</th><th>Kilos</th><th>Destino</th></tr></thead><tbody>' +
-        rows.map(function(r) {
-          var hora = r.fecha_hora ? new Date(r.fecha_hora).toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'}) : '—';
-          var kg = parseFloat(r.kilos || 0).toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:2});
-          return '<tr><td>' + hora + '</td><td>' + (r.juntador || '—') + '</td><td>' + (r.lote || '—') + '</td>' +
-                 '<td class="font-mono">' + kg + '</td><td>' + destBadge(r.destino) + '</td></tr>';
-        }).join('') + '</tbody></table>';
-    }).catch(function() {
-      document.getElementById('hist-body').innerHTML = '<div class="hist-vacio">Error al cargar</div>';
-    });
+    var hoy = new Date().toISOString().split('T')[0];
+    fetch('/api/stock-mercaderia/historial?desde=' + hoy + '&hasta=' + hoy)
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        var totalKg = data.reduce(function(s, m) {
+          return s + (m.tipo === 'ingreso' ? parseFloat(m.kilos || 0) : 0);
+        }, 0);
+        document.getElementById('hist-contador').textContent = data.length
+          ? '(' + data.length + ' mov. — ' + totalKg.toLocaleString('es-AR', {maximumFractionDigits:2}) + ' kg ingresados)'
+          : '';
+        document.getElementById('hist-total').textContent = totalKg > 0
+          ? totalKg.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:2}) + ' kg'
+          : '—';
+        renderMovimientosGrid('tbody-hist-hoy', data);
+      })
+      .catch(function() {
+        document.getElementById('tbody-hist-hoy').innerHTML =
+          '<tr><td colspan="7" class="empty">Error al cargar</td></tr>';
+      });
   }
 
   cargarHistorial();

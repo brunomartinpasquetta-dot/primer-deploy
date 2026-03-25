@@ -9,6 +9,7 @@
   <script src="js/utils.js"></script>
   <script src="js/auth-check.js"></script>
   <script src="js/cotizaciones.js"></script>
+  <script src="js/movimientos-grid.js"></script>
   <link rel="stylesheet" href="cosecha.css">
   <style>
     .tab { flex:1; padding:11px; text-align:center; border:none; border-radius:7px; cursor:pointer;
@@ -452,54 +453,10 @@ function actualizarStockInfo(prefix) {
 // ── Stock actual ──────────────────────────────────────────────
 var _stockGridData = [];
 
-function fmtFechaGrid(iso) {
-  if (!iso) return '—';
-  var d = new Date(iso);
-  var dd = String(d.getDate()).padStart(2,'0');
-  var mm = String(d.getMonth()+1).padStart(2,'0');
-  var yy = d.getFullYear();
-  var hh = String(d.getHours()).padStart(2,'0');
-  var mn = String(d.getMinutes()).padStart(2,'0');
-  return dd+'/'+mm+'/'+yy+' '+hh+':'+mn;
-}
-
-function renderStockGrid(data) {
-  var tbody = document.getElementById('tbody-stock-grid');
-  if (!data.length) {
-    tbody.innerHTML = '<tr><td colspan="7" class="empty">Sin movimientos</td></tr>';
-    return;
-  }
-  tbody.innerHTML = data.map(function(m){
-    var esIngreso = m.tipo === 'ingreso';
-    var bg = esIngreso ? 'background:#f0faf0;' : 'background:#fff5f5;';
-    var colorKg = esIngreso ? 'color:#2d6a4f;font-weight:700;' : 'color:#c0392b;font-weight:700;';
-    var signo = esIngreso ? '+' : '-';
-    var tipoBadge = esIngreso
-      ? '<span class="badge" style="background:var(--sem-verde-bg);color:var(--sem-verde);">Ingreso</span>'
-      : '<span class="badge" style="background:var(--sem-rojo-bg);color:var(--sem-rojo);">Egreso</span>';
-    var jid = m.juntada_id ? '<span style="font-family:\'JetBrains Mono\',monospace;font-size:11px;background:var(--fondo-dark);border:1px solid var(--borde);border-radius:4px;padding:1px 5px;">#'+m.juntada_id+'</span>' : '—';
-    return '<tr style="'+bg+'">'+
-      '<td style="text-align:center;">'+jid+'</td>'+
-      '<td style="font-size:13px;">'+(m.cosechero||'—')+'</td>'+
-      '<td style="font-size:12px;white-space:nowrap;">'+fmtFechaGrid(m.fecha)+'</td>'+
-      '<td>'+tipoBadge+'</td>'+
-      '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;'+colorKg+'">'+signo+fmt(m.kilos)+' kg</td>'+
-      '<td style="font-size:12px;">'+(m.lote||'—')+'</td>'+
-      '<td style="font-size:12px;">'+(m.deposito||m.destino_venta||'—')+'</td>'+
-    '</tr>';
-  }).join('');
-}
 
 function filtrarStockGrid() {
-  var q = (document.getElementById('stock-buscar').value||'').toLowerCase();
-  if (!q) { renderStockGrid(_stockGridData); return; }
-  var filtrado = _stockGridData.filter(function(m){
-    return (m.cosechero||'').toLowerCase().indexOf(q) >= 0 ||
-           (m.lote||'').toLowerCase().indexOf(q) >= 0 ||
-           (m.deposito||'').toLowerCase().indexOf(q) >= 0 ||
-           (m.destino_venta||'').toLowerCase().indexOf(q) >= 0;
-  });
-  renderStockGrid(filtrado);
+  var q = document.getElementById('stock-buscar').value || '';
+  filtrarMovimientosGrid('tbody-stock-grid', _stockGridData, q);
 }
 
 function cargarStock() {
@@ -519,7 +476,7 @@ function cargarStock() {
     .then(function(data){
       _stockGridData = data;
       document.getElementById('stock-buscar').value = '';
-      renderStockGrid(data);
+      renderMovimientosGrid('tbody-stock-grid', data);
     })
     .catch(function(){
       document.getElementById('tbody-stock-grid').innerHTML = '<tr><td colspan="6" class="empty">Error al cargar</td></tr>';
