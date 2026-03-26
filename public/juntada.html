@@ -870,7 +870,7 @@
   }
 
   function cargarHistorial() {
-    var hoy = new Date().toISOString().split('T')[0];
+    var _d = new Date(); var hoy = _d.getFullYear() + '-' + String(_d.getMonth()+1).padStart(2,'0') + '-' + String(_d.getDate()).padStart(2,'0');
     fetch('/api/stock-mercaderia/historial?desde=' + hoy + '&hasta=' + hoy)
       .then(function(r){ return r.json(); })
       .then(function(data) {
@@ -894,7 +894,7 @@
   }
 
   function cargarKpisJuntada() {
-    var hoy = new Date().toISOString().split('T')[0];
+    var _d = new Date(); var hoy = _d.getFullYear() + '-' + String(_d.getMonth()+1).padStart(2,'0') + '-' + String(_d.getDate()).padStart(2,'0');
     var loteId = document.getElementById('lote').value;
 
     fetch('/api/stock-mercaderia/historial?desde=' + hoy + '&hasta=' + hoy)
