@@ -163,36 +163,47 @@
 
       <!-- ── TAB: HISTORIAL ── -->
       <div id="tab-historial" class="tab-content">
-        <div class="card-form" style="padding:14px 16px;margin-bottom:12px;">
-          <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
-            <div class="form-row" style="margin:0;flex:1;min-width:120px;">
-              <label style="font-size:11px;">Producto</label>
-              <select id="hist-producto" style="font-size:12px;padding:5px 7px;">
+        <div class="card-form" style="margin-bottom:12px;">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:8px;">
+            <div class="form-row" style="margin-bottom:0;">
+              <label>Producto</label>
+              <select id="hist-producto" onchange="cargarHistorial()">
                 <option value="">Todos</option>
               </select>
             </div>
-            <div class="form-row" style="margin:0;flex:1;min-width:100px;">
-              <label style="font-size:11px;">Tipo</label>
-              <select id="hist-tipo" style="font-size:12px;padding:5px 7px;">
+            <div class="form-row" style="margin-bottom:0;">
+              <label>Lote</label>
+              <select id="hist-lote" onchange="cargarHistorial()">
                 <option value="">Todos</option>
-                <option value="compra">Compra</option>
-                <option value="aplicacion">Aplicación</option>
-                <option value="merma">Merma</option>
-                <option value="vencimiento">Vencimiento</option>
-                <option value="perdida">Pérdida</option>
               </select>
             </div>
-            <div class="form-row" style="margin:0;flex:1;min-width:120px;">
-              <label style="font-size:11px;">Desde</label>
-              <input type="date" id="hist-desde" style="font-size:12px;padding:5px 7px;">
+            <div class="form-row" style="margin-bottom:0;">
+              <label>Tipo</label>
+              <select id="hist-tipo" onchange="cargarHistorial()">
+                <option value="">Todos</option>
+                <option value="ingreso">Ingreso (compra)</option>
+                <option value="egreso">Egreso (aplica/merma/...)</option>
+              </select>
             </div>
-            <div class="form-row" style="margin:0;flex:1;min-width:120px;">
-              <label style="font-size:11px;">Hasta</label>
-              <input type="date" id="hist-hasta" style="font-size:12px;padding:5px 7px;">
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+            <label style="margin:0;display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+              <input type="checkbox" id="filtrar-fechas" onchange="toggleFechasHistorial()">
+              <span>Filtrar por rango de fechas</span>
+            </label>
+            <button class="btn btn-secondary" onclick="limpiarFiltrosHistorial()">Limpiar</button>
+          </div>
+          <div id="rango-fechas" style="display:none;margin-top:8px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <div class="form-row" style="margin-bottom:0;">
+                <label>Desde</label>
+                <input type="date" id="hist-desde" onchange="cargarHistorial()">
+              </div>
+              <div class="form-row" style="margin-bottom:0;">
+                <label>Hasta</label>
+                <input type="date" id="hist-hasta" onchange="cargarHistorial()">
+              </div>
             </div>
-            <button class="btn btn-secondary" onclick="cargarHistorial()" style="font-size:12px;padding:6px 14px;margin-bottom:0;height:fit-content;">
-              🔍 Filtrar
-            </button>
           </div>
         </div>
         <div class="card">
@@ -203,7 +214,7 @@
                   <th style="text-align:center;">#</th>
                   <th>Fecha y hora</th>
                   <th>Producto</th>
-                  <th>Mov.</th>
+                  <th>Movimiento</th>
                   <th style="text-align:right;">Cantidad</th>
                   <th>Aplica</th>
                   <th>Lote</th>
@@ -213,6 +224,7 @@
               <tbody id="tbody-historial">
                 <tr><td colspan="8" class="activity-empty">Cargando...</td></tr>
               </tbody>
+              <tfoot id="tfoot-historial"></tfoot>
             </table>
           </div>
         </div>
@@ -243,6 +255,8 @@
     var d = new Date();
     return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
   }
+
+  var _lotesTodos = [];
 
   function showTab(tab, el) {
     document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.remove('active'); });
@@ -282,24 +296,21 @@
     });
   }
 
-  /* ── Inicializar tab egreso ── */
+  /* ── Inicializar selects ── */
   function cargarEgresoInit() {
     fetch('/api/stock-insumos').then(function(r) { return r.json(); }).then(function(data) {
-      var sel = document.getElementById('egr-producto');
-      sel.innerHTML = '<option value="">Seleccionar producto...</option>' +
-        data.map(function(p) {
-          return '<option value="' + p.id + '" data-stock="' + (parseFloat(p.stock_actual)||0) + '">' + p.nombre + '</option>';
-        }).join('');
-      // También llenar el filtro de producto del historial
-      var histProd = document.getElementById('hist-producto');
-      histProd.innerHTML = '<option value="">Todos</option>' +
-        data.map(function(p) {
-          return '<option value="' + p.id + '">' + p.nombre + '</option>';
-        }).join('');
+      var opts = data.map(function(p) {
+        return '<option value="' + p.id + '" data-stock="' + (parseFloat(p.stock_actual)||0) + '">' + p.nombre + '</option>';
+      }).join('');
+      document.getElementById('egr-producto').innerHTML = '<option value="">Seleccionar producto...</option>' + opts;
+      document.getElementById('hist-producto').innerHTML = '<option value="">Todos</option>' +
+        data.map(function(p){ return '<option value="'+p.id+'">'+p.nombre+'</option>'; }).join('');
     });
     fetch('/api/lotes').then(function(r) { return r.json(); }).then(function(data) {
-      document.getElementById('egr-lote').innerHTML = '<option value="">Sin lote específico</option>' +
-        data.map(function(l) { return '<option value="' + l.id + '">' + l.nombre + '</option>'; }).join('');
+      _lotesTodos = data;
+      var optsLotes = data.map(function(l){ return '<option value="'+l.id+'">'+l.nombre+'</option>'; }).join('');
+      document.getElementById('egr-lote').innerHTML = '<option value="">Sin lote específico</option>' + optsLotes;
+      document.getElementById('hist-lote').innerHTML = '<option value="">Todos</option>' + optsLotes;
     });
   }
 
@@ -354,64 +365,119 @@
   }
 
   /* ── Historial ── */
+  function toggleFechasHistorial() {
+    var checked = document.getElementById('filtrar-fechas').checked;
+    document.getElementById('rango-fechas').style.display = checked ? '' : 'none';
+    if (!checked) {
+      document.getElementById('hist-desde').value = '';
+      document.getElementById('hist-hasta').value = '';
+    }
+    cargarHistorial();
+  }
+
+  function limpiarFiltrosHistorial() {
+    document.getElementById('hist-producto').value = '';
+    document.getElementById('hist-lote').value = '';
+    document.getElementById('hist-tipo').value = '';
+    document.getElementById('filtrar-fechas').checked = false;
+    document.getElementById('rango-fechas').style.display = 'none';
+    document.getElementById('hist-desde').value = '';
+    document.getElementById('hist-hasta').value = '';
+    cargarHistorial();
+  }
+
+  function fmtFechaHora(iso) {
+    if (!iso) return '—';
+    var d = new Date(iso);
+    return String(d.getDate()).padStart(2,'0') + '/' +
+           String(d.getMonth()+1).padStart(2,'0') + '/' +
+           String(d.getFullYear()).slice(-2) + ' ' +
+           String(d.getHours()).padStart(2,'0') + ':' +
+           String(d.getMinutes()).padStart(2,'0');
+  }
+
   function cargarHistorial() {
-    var producto_id = document.getElementById('hist-producto').value;
-    var tipo        = document.getElementById('hist-tipo').value;
-    var desde       = document.getElementById('hist-desde').value;
-    var hasta       = document.getElementById('hist-hasta').value;
-    var params = [];
-    if (producto_id) params.push('producto_id=' + producto_id);
-    if (tipo)        params.push('tipo=' + tipo);
-    if (desde)       params.push('desde=' + desde);
-    if (hasta)       params.push('hasta=' + hasta);
-    fetch('/api/stock-insumos/historial' + (params.length ? '?' + params.join('&') : ''))
+    var params = new URLSearchParams();
+    var pid   = document.getElementById('hist-producto').value;
+    var lid   = document.getElementById('hist-lote').value;
+    var tipo  = document.getElementById('hist-tipo').value;
+    var desde = document.getElementById('hist-desde').value;
+    var hasta = document.getElementById('hist-hasta').value;
+    if (pid)   params.set('producto_id', pid);
+    if (lid)   params.set('lote_id', lid);
+    if (tipo === 'ingreso') params.set('tipo', 'compra');
+    else if (tipo === 'egreso') { /* handled server side with tipo filter not available for all egreso subtypes */ }
+    if (desde) params.set('desde', desde);
+    if (hasta) params.set('hasta', hasta);
+
+    var tbody = document.getElementById('tbody-historial');
+    var tfoot = document.getElementById('tfoot-historial');
+    tbody.innerHTML = '<tr><td colspan="8" class="activity-empty" style="color:var(--verde);">Cargando...</td></tr>';
+    tfoot.innerHTML = '';
+
+    fetch('/api/stock-insumos/historial?' + params.toString())
       .then(function(r) { return r.json(); })
       .then(function(data) {
-        var tbody = document.getElementById('tbody-historial');
+        /* Si filtro tipo=egreso, filtrar en JS todos los que no son compra */
+        if (tipo === 'egreso') {
+          data = data.filter(function(m){ return m.tipo !== 'compra'; });
+        }
         if (!data.length) {
-          tbody.innerHTML = '<tr><td colspan="8" class="activity-empty">Sin movimientos</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="8" class="activity-empty">Sin movimientos para los filtros seleccionados</td></tr>';
           return;
         }
+        var totIngreso = 0, totEgreso = 0;
         tbody.innerHTML = data.map(function(m) {
-          var fechaHora = m.fecha_hora
-            ? new Date(m.fecha_hora).toLocaleString('es-AR', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' })
-            : '—';
           var esIngreso = m.tipo === 'compra';
-          var bg       = esIngreso ? 'background:#f0faf0;' : 'background:#fff5f5;';
-          var kgColor  = esIngreso ? 'color:#2d6a4f;font-weight:700;' : 'color:#c0392b;font-weight:700;';
-          var signo    = esIngreso ? '+' : '-';
-          var movLabel = esIngreso ? 'Ingreso' : 'Egreso';
-          var movStyle = esIngreso
+          var bg        = esIngreso ? 'background:#f0faf0;' : 'background:#fff5f5;';
+          var kgColor   = esIngreso ? 'color:#2d6a4f;font-weight:700;' : 'color:#c0392b;font-weight:700;';
+          var signo     = esIngreso ? '+' : '-';
+          var movLabel  = esIngreso ? 'Ingreso' : 'Egreso';
+          var movStyle  = esIngreso
             ? 'background:var(--sem-verde-bg);color:var(--sem-verde);'
             : 'background:var(--sem-rojo-bg);color:var(--sem-rojo);';
-          var tipoLabel = m.tipo === 'compra'      ? 'Compra'
-            : m.tipo === 'aplicacion'              ? 'Aplicación'
-            : m.tipo === 'merma'                   ? 'Merma'
-            : m.tipo === 'vencimiento'             ? 'Vencimiento'
-            : m.tipo === 'perdida'                 ? 'Pérdida'
+          var tipoLabel = m.tipo === 'compra'       ? 'Compra'
+            : m.tipo === 'aplicacion'               ? 'Aplicación'
+            : m.tipo === 'merma'                    ? 'Merma'
+            : m.tipo === 'vencimiento'              ? 'Vencimiento'
+            : m.tipo === 'perdida'                  ? 'Pérdida'
             : m.tipo;
-          /* "Aplica": empleado para aplicaciones, proveedor para compras */
-          var aplica = m.empleado || (esIngreso ? m.proveedor : '') || '—';
+          var aplica = m.empleado || (esIngreso ? (m.proveedor || '—') : '—') || '—';
+          var cant   = parseFloat(m.cantidad || 0);
+          if (esIngreso) totIngreso += cant; else totEgreso += cant;
+          var idChip = '<span style="font-family:\'JetBrains Mono\',monospace;font-size:11px;background:var(--fondo-dark);border:1px solid var(--borde);border-radius:4px;padding:1px 5px;">#' + m.id + '</span>';
           return '<tr style="' + bg + '">' +
-            '<td style="text-align:center;font-size:11px;font-family:\'JetBrains Mono\',monospace;color:var(--texto-suave);">#' + m.id + '</td>' +
-            '<td style="font-size:12px;white-space:nowrap;">' + fechaHora + '</td>' +
+            '<td style="text-align:center;">' + idChip + '</td>' +
+            '<td style="font-size:12px;white-space:nowrap;">' + fmtFechaHora(m.fecha_hora) + '</td>' +
             '<td style="font-size:12px;">' + (m.producto || '—') + '</td>' +
             '<td>' +
-              '<span class="badge" style="' + movStyle + 'margin-right:3px;">' + movLabel + '</span>' +
-              '<span style="font-size:10px;color:var(--texto-suave);">' + tipoLabel + '</span>' +
+              '<span class="badge" style="' + movStyle + '">' + movLabel + '</span>' +
+              '&nbsp;<span style="font-size:11px;color:var(--texto-suave);">' + tipoLabel + '</span>' +
             '</td>' +
             '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;' + kgColor + '">' +
-              signo + parseFloat(m.cantidad || 0).toLocaleString('es-AR', {minimumFractionDigits:0,maximumFractionDigits:2}) + ' ' + (m.presentacion || '') + '</td>' +
+              signo + cant.toLocaleString('es-AR', {minimumFractionDigits:0,maximumFractionDigits:2}) + ' ' + (m.presentacion || '') + '</td>' +
             '<td style="font-size:12px;">' + aplica + '</td>' +
             '<td style="font-size:12px;">' + (m.lote || '—') + '</td>' +
             '<td style="font-size:12px;color:var(--texto-suave);">' + (m.usuario || '—') + '</td>' +
             '</tr>';
         }).join('');
+        /* tfoot con totales */
+        tfoot.innerHTML = '<tr style="font-weight:700;background:var(--fondo);">' +
+          '<td colspan="4" style="font-size:12px;padding:8px 12px;color:var(--texto-suave);">Totales (' + data.length + ' movimientos)</td>' +
+          '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;font-size:12px;padding:8px 12px;">' +
+            (totIngreso ? '<span style="color:#2d6a4f;">+' + totIngreso.toLocaleString('es-AR',{maximumFractionDigits:2}) + '</span> ' : '') +
+            (totEgreso  ? '<span style="color:#c0392b;">−' + totEgreso.toLocaleString('es-AR',{maximumFractionDigits:2}) + '</span>' : '') +
+          '</td>' +
+          '<td colspan="3"></td></tr>';
+      })
+      .catch(function() {
+        tbody.innerHTML = '<tr><td colspan="8" class="activity-empty" style="color:#c0392b;">Error al cargar historial</td></tr>';
       });
   }
 
   cargarStock();
   cargarEgresoInit();
+  cargarHistorial();
   cargarTemporadaActiva();
 </script>
 </body>
