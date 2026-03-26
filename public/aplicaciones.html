@@ -42,8 +42,13 @@
     }
     .juntador-chip strong { flex:1; font-size:12px; }
     .juntador-chip-clear { background:none; border:none; cursor:pointer; color:var(--sem-verde); font-size:14px; padding:0 2px; }
-    #aplic-historial-tabla thead th { padding:5px 8px; font-size:11px; }
-    #aplic-historial-tabla tbody td { padding:4px 8px; font-size:12px; }
+    /* Badges historial */
+    .badge-compra      { background:#e8f5e2; color:#2d6a4f; }
+    .badge-aplicacion  { background:#fde8e8; color:#c0392b; }
+    .badge-egreso      { background:#fff3cd; color:#856404; }
+    .badge-merma       { background:#fff3cd; color:#856404; }
+    .badge-vencimiento { background:#e2e3e5; color:#383d41; }
+    .badge-perdida     { background:#e2e3e5; color:#383d41; }
     @media (max-width:900px) {
       .aplic-layout { grid-template-columns:1fr; }
       .aplic-form   { max-width:100%; }
@@ -105,7 +110,9 @@
 
     <div class="content">
       <a href="menu-campo.html" class="btn-volver">← Volver</a>
-      <div id="alertas-carencia"></div>
+
+      <!-- Panel carencia (oculto por defecto) -->
+      <div id="panel-carencia" style="display:none;margin-bottom:12px;"></div>
 
       <!-- KPI cards -->
       <div class="aplic-kpis">
@@ -131,6 +138,39 @@
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
               <h3 style="margin:0;font-size:13px;font-weight:700;">Nueva aplicación</h3>
               <button class="btn btn-secondary" id="btn-repetir" style="display:none;font-size:10px;padding:3px 7px;" onclick="repetirUltimaAplicacion()">↩ Repetir</button>
+            </div>
+
+            <!-- EMPLEADO — PRIMERO -->
+            <div class="form-row">
+              <label>Empleado que aplica</label>
+              <div class="cosechador-modos">
+                <button id="btn-modo-lista" class="modo-btn active" onclick="setModoEmpleado('lista')">
+                  <i data-lucide="list" style="width:12px;height:12px;"></i> Seleccionar
+                </button>
+                <button id="btn-modo-qr" class="modo-btn" onclick="setModoEmpleado('qr')">
+                  <i data-lucide="scan-line" style="width:12px;height:12px;"></i> Escanear QR
+                </button>
+              </div>
+              <div id="modo-lista-empleado">
+                <select id="lista-empleados" onchange="seleccionarEmpleadoLista(this.value)">
+                  <option value="">— seleccionar empleado —</option>
+                </select>
+              </div>
+              <div id="modo-qr-empleado" style="display:none;">
+                <div class="empleado-info" id="empleado-info">Escaneá el QR del empleado</div>
+                <button class="btn btn-scan" onclick="toggleCamera()" style="margin-top:4px;">
+                  <i data-lucide="scan-line"></i> Escanear QR
+                </button>
+                <div id="camera-container" class="hidden" style="margin-top:8px;position:relative;z-index:10;">
+                  <video id="video" autoplay playsinline></video>
+                  <canvas id="canvas" class="hidden"></canvas>
+                </div>
+              </div>
+              <div id="empleado-chip" class="juntador-chip" style="display:none;">
+                <i data-lucide="user-check" style="width:14px;height:14px;flex-shrink:0;"></i>
+                <strong id="empleado-chip-nombre"></strong>
+                <button onclick="limpiarEmpleado()" class="juntador-chip-clear" title="Cambiar empleado">✕</button>
+              </div>
             </div>
 
             <div class="form-row">
@@ -187,37 +227,6 @@
               </select>
             </div>
             <div class="form-row">
-              <label>Empleado que aplica</label>
-              <div class="cosechador-modos">
-                <button id="btn-modo-lista" class="modo-btn active" onclick="setModoEmpleado('lista')">
-                  <i data-lucide="list" style="width:12px;height:12px;"></i> Seleccionar
-                </button>
-                <button id="btn-modo-qr" class="modo-btn" onclick="setModoEmpleado('qr')">
-                  <i data-lucide="scan-line" style="width:12px;height:12px;"></i> Escanear QR
-                </button>
-              </div>
-              <div id="modo-lista-empleado">
-                <select id="lista-empleados" onchange="seleccionarEmpleadoLista(this.value)">
-                  <option value="">— seleccionar empleado —</option>
-                </select>
-              </div>
-              <div id="modo-qr-empleado" style="display:none;">
-                <div class="empleado-info" id="empleado-info">Escaneá el QR del empleado</div>
-                <button class="btn btn-scan" onclick="toggleCamera()" style="margin-top:4px;">
-                  <i data-lucide="scan-line"></i> Escanear QR
-                </button>
-                <div id="camera-container" class="hidden" style="margin-top:8px;position:relative;z-index:10;">
-                  <video id="video" autoplay playsinline></video>
-                  <canvas id="canvas" class="hidden"></canvas>
-                </div>
-              </div>
-              <div id="empleado-chip" class="juntador-chip" style="display:none;">
-                <i data-lucide="user-check" style="width:14px;height:14px;flex-shrink:0;"></i>
-                <strong id="empleado-chip-nombre"></strong>
-                <button onclick="limpiarEmpleado()" class="juntador-chip-clear" title="Cambiar empleado">✕</button>
-              </div>
-            </div>
-            <div class="form-row">
               <label>Observación</label>
               <input type="text" id="observacion" placeholder="Opcional">
             </div>
@@ -227,32 +236,78 @@
             </button>
             <div id="mensaje"></div>
           </div>
+
+          <!-- Botón Ver carencia -->
+          <button class="btn btn-secondary" onclick="toggleCarencia()" style="width:100%;margin-top:8px;font-size:12px;">
+            <i data-lucide="clock" style="width:13px;height:13px;"></i>
+            <span id="lbl-ver-carencia">Ver carencia</span>
+          </button>
         </div>
 
-        <!-- HISTORIAL DERECHO -->
+        <!-- HISTORIAL DERECHO — idéntico a stock-insumos -->
         <div class="aplic-historial">
-          <div class="card" style="padding:12px 14px;">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
-              <span style="font-weight:700;font-size:13px;flex:0 0 auto;">Historial de hoy</span>
-              <select id="filtro-temporada" style="font-size:12px;padding:4px 6px;border:1px solid var(--borde);border-radius:6px;background:var(--fondo-input);color:var(--texto);flex:1;min-width:0;"></select>
-              <select id="filtro-lote" style="font-size:12px;padding:4px 6px;border:1px solid var(--borde);border-radius:6px;background:var(--fondo-input);color:var(--texto);flex:1;min-width:0;"></select>
-              <button class="btn btn-secondary" onclick="cargarHistorial()" style="font-size:11px;padding:4px 10px;flex:0 0 auto;">🔍</button>
+          <div class="card-form" style="margin-bottom:12px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:8px;">
+              <div class="form-row" style="margin-bottom:0;">
+                <label>Producto</label>
+                <select id="hist-producto" onchange="cargarHistorial()">
+                  <option value="">Todos</option>
+                </select>
+              </div>
+              <div class="form-row" style="margin-bottom:0;">
+                <label>Lote</label>
+                <select id="hist-lote" onchange="cargarHistorial()">
+                  <option value="">Todos</option>
+                </select>
+              </div>
+              <div class="form-row" style="margin-bottom:0;">
+                <label>Tipo</label>
+                <select id="hist-tipo" onchange="cargarHistorial()">
+                  <option value="">Todos</option>
+                  <option value="ingreso">Ingreso (compra)</option>
+                  <option value="egreso">Egreso (aplica/merma/...)</option>
+                </select>
+              </div>
             </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+              <label style="margin:0;display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                <input type="checkbox" id="filtrar-fechas" onchange="toggleFechasHistorial()">
+                <span>Filtrar por rango de fechas</span>
+              </label>
+              <button class="btn btn-secondary" onclick="limpiarFiltrosHistorial()">Limpiar</button>
+            </div>
+            <div id="rango-fechas" style="display:none;margin-top:8px;">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                <div class="form-row" style="margin-bottom:0;">
+                  <label>Desde</label>
+                  <input type="date" id="hist-desde" onchange="cargarHistorial()">
+                </div>
+                <div class="form-row" style="margin-bottom:0;">
+                  <label>Hasta</label>
+                  <input type="date" id="hist-hasta" onchange="cargarHistorial()">
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
             <div class="table-wrap">
-              <table id="aplic-historial-tabla" style="table-layout:auto;width:100%;">
+              <table style="table-layout:auto;">
                 <thead>
                   <tr>
-                    <th>Hora</th>
-                    <th>Lote</th>
+                    <th style="text-align:center;">#</th>
+                    <th>Fecha y hora</th>
                     <th>Producto</th>
+                    <th>Movimiento</th>
                     <th style="text-align:right;">Cantidad</th>
-                    <th>Libre desde</th>
-                    <th>Estado</th>
+                    <th>Aplica</th>
+                    <th>Lote</th>
+                    <th>Usuario</th>
                   </tr>
                 </thead>
                 <tbody id="tbody-historial">
-                  <tr><td colspan="6" class="activity-empty">Cargando...</td></tr>
+                  <tr><td colspan="8" class="activity-empty">Cargando...</td></tr>
                 </tbody>
+                <tfoot id="tfoot-historial"></tfoot>
               </table>
             </div>
           </div>
@@ -293,6 +348,7 @@
   var scanning = false, stream = null, productos = [];
   var _ultimaAplicacion = null;
   var modoActualEmpleado = 'lista', empleadoId = null;
+  var _carenciaVisible = false;
 
   /* ── Timezone helpers ── */
   function _fechasHoy() {
@@ -306,15 +362,15 @@
     var f = new Date(a.fecha_hora);
     return f.getFullYear() === _d.getFullYear() && f.getMonth() === _d.getMonth() && f.getDate() === _d.getDate();
   }
-  function _fmtHora(iso) {
+
+  function fmtFechaHora(iso) {
     if (!iso) return '—';
     var d = new Date(iso);
-    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
-  }
-  function _fmtFecha(iso) {
-    if (!iso) return '—';
-    var d = new Date(iso);
-    return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0');
+    return String(d.getDate()).padStart(2,'0') + '/' +
+           String(d.getMonth()+1).padStart(2,'0') + '/' +
+           String(d.getFullYear()).slice(-2) + ' ' +
+           String(d.getHours()).padStart(2,'0') + ':' +
+           String(d.getMinutes()).padStart(2,'0');
   }
 
   /* ── Cargar lotes del formulario (campaña activa) ── */
@@ -335,26 +391,18 @@
   /* ── Cargar datos iniciales ── */
   function cargarDatos() {
     fetch('/api/temporadas').then(r => r.json()).then(function(data) {
-      var opts = '<option value="">Seleccionar...</option>' +
-        data.map(t => '<option value="' + t.id + '"' + (t.activa ? ' selected' : '') + '>' + t.nombre + '</option>').join('');
-      document.getElementById('temporada').innerHTML = opts;
-      document.getElementById('filtro-temporada').innerHTML = '<option value="">Todas</option>' +
-        data.map(t => '<option value="' + t.id + '">' + t.nombre + '</option>').join('');
       var activa = data.find(t => t.activa);
-      if (activa) {
-        document.getElementById('filtro-temporada').value = activa.id;
-        cargarKpisCampana(activa.id);
-      }
-      cargarHistorial();
+      document.getElementById('temporada').innerHTML = '<option value="">Seleccionar...</option>' +
+        data.map(t => '<option value="' + t.id + '"' + (t.activa ? ' selected' : '') + '>' + t.nombre + '</option>').join('');
+      if (activa) cargarKpisCampana(activa.id);
     });
     fetch('/api/lotes').then(r => r.json()).then(function(data) {
-      document.getElementById('filtro-lote').innerHTML = '<option value="">Todos los lotes</option>' +
+      document.getElementById('hist-lote').innerHTML = '<option value="">Todos</option>' +
         data.map(l => '<option value="' + l.id + '">' + l.nombre + '</option>').join('');
     });
     cargarLotesForm();
     fetch('/api/juntadores').then(r => r.json()).then(function(data) {
-      var sel = document.getElementById('lista-empleados');
-      sel.innerHTML = '<option value="">— seleccionar empleado —</option>' +
+      document.getElementById('lista-empleados').innerHTML = '<option value="">— seleccionar empleado —</option>' +
         data.map(function(j) {
           var nombre = j.apellido + ', ' + j.nombre;
           return '<option value="' + j.id + '" data-nombre="' + nombre + '">' + nombre + '</option>';
@@ -364,6 +412,8 @@
       productos = data;
       document.getElementById('producto').innerHTML = '<option value="">Seleccionar producto...</option>' +
         data.map(p => '<option value="' + p.id + '">' + p.nombre + ' (' + (p.tipo || '') + ')</option>').join('');
+      document.getElementById('hist-producto').innerHTML = '<option value="">Todos</option>' +
+        data.map(p => '<option value="' + p.id + '">' + p.nombre + '</option>').join('');
     });
   }
 
@@ -385,16 +435,38 @@
     } else { document.getElementById('stock-info').textContent = ''; }
   }
 
-  /* ── Alertas de carencia ── */
-  function cargarAlertas() {
+  /* ── Panel de carencia (toggle) ── */
+  function toggleCarencia() {
+    _carenciaVisible = !_carenciaVisible;
+    var panel = document.getElementById('panel-carencia');
+    var lbl   = document.getElementById('lbl-ver-carencia');
+    if (_carenciaVisible) {
+      lbl.textContent = 'Ocultar carencia';
+      panel.style.display = '';
+      cargarCarencia();
+    } else {
+      lbl.textContent = 'Ver carencia';
+      panel.style.display = 'none';
+    }
+  }
+  function cargarCarencia() {
     fetch('/api/aplicaciones/carencia').then(r => r.json()).then(function(data) {
-      var div = document.getElementById('alertas-carencia');
-      if (!data.length) { div.innerHTML = ''; return; }
-      div.innerHTML = '<div class="alerta-carencia"><h3>Lotes en período de carencia</h3>' +
-        data.map(a => {
+      var panel = document.getElementById('panel-carencia');
+      if (!data.length) {
+        panel.innerHTML = '<div class="card-form" style="padding:10px 14px;color:var(--verde);font-size:13px;">Sin lotes en carencia actualmente.</div>';
+        return;
+      }
+      var hoy = new Date().toISOString().split('T')[0];
+      panel.innerHTML = '<div class="card" style="padding:10px 14px;">' +
+        '<div style="font-weight:700;font-size:13px;margin-bottom:8px;">Lotes en período de carencia</div>' +
+        '<div class="table-wrap"><table style="table-layout:auto;"><thead><tr>' +
+        '<th>Lote</th><th>Producto</th><th>Libre desde</th></tr></thead><tbody>' +
+        data.map(function(a) {
           var libre = a.fecha_libre ? a.fecha_libre.toString().split('T')[0] : '-';
-          return '<div class="alerta-item"><strong>' + a.lote + '</strong> — ' + a.producto + ' — Libre desde: ' + libre + '</div>';
-        }).join('') + '</div>';
+          return '<tr><td><strong>' + (a.lote || '—') + '</strong></td><td>' + (a.producto || '—') + '</td>' +
+            '<td style="color:#c0392b;font-weight:600;">' + libre + '</td></tr>';
+        }).join('') +
+        '</tbody></table></div></div>';
     });
   }
 
@@ -496,12 +568,8 @@
         mostrarMensaje('mensaje', 'success', 'Aplicación registrada');
         ['cantidad', 'dosis', 'observacion'].forEach(id => document.getElementById(id).value = '');
         cargarHistorial();
-        cargarAlertas();
-        // Actualizar stock info del producto
-        fetch('/api/productos').then(r => r.json()).then(function(d) {
-          productos = d;
-          mostrarStock();
-        });
+        cargarKpisHoy();
+        fetch('/api/productos').then(r => r.json()).then(function(d) { productos = d; mostrarStock(); });
       } else if (data.error) { mostrarMensaje('mensaje', 'error', data.error); }
     }).catch(function() { setLoading(btn, false); mostrarMensaje('mensaje', 'error', 'Error de conexión'); });
   }
@@ -517,23 +585,28 @@
   }
   function repetirUltimaAplicacion() {
     if (!_ultimaAplicacion) return;
-    if (_ultimaAplicacion.lote_id)    document.getElementById('lote').value              = _ultimaAplicacion.lote_id;
-    if (_ultimaAplicacion.producto_id) document.getElementById('producto').value          = _ultimaAplicacion.producto_id;
+    if (_ultimaAplicacion.lote_id)            document.getElementById('lote').value              = _ultimaAplicacion.lote_id;
+    if (_ultimaAplicacion.producto_id)         document.getElementById('producto').value          = _ultimaAplicacion.producto_id;
     mostrarStock();
-    if (_ultimaAplicacion.carencia_dias)    document.getElementById('carencia').value      = _ultimaAplicacion.carencia_dias;
-    if (_ultimaAplicacion.dosis_por_hectarea) document.getElementById('dosis').value       = _ultimaAplicacion.dosis_por_hectarea;
-    if (_ultimaAplicacion.metodo)           document.getElementById('metodo').value        = _ultimaAplicacion.metodo;
-    if (_ultimaAplicacion.condicion_climatica) document.getElementById('clima').value      = _ultimaAplicacion.condicion_climatica;
-    if (_ultimaAplicacion.unidad_aplicacion) document.getElementById('unidad-aplicacion').value = _ultimaAplicacion.unidad_aplicacion;
+    if (_ultimaAplicacion.carencia_dias)       document.getElementById('carencia').value          = _ultimaAplicacion.carencia_dias;
+    if (_ultimaAplicacion.dosis_por_hectarea)  document.getElementById('dosis').value             = _ultimaAplicacion.dosis_por_hectarea;
+    if (_ultimaAplicacion.metodo)              document.getElementById('metodo').value            = _ultimaAplicacion.metodo;
+    if (_ultimaAplicacion.condicion_climatica) document.getElementById('clima').value             = _ultimaAplicacion.condicion_climatica;
+    if (_ultimaAplicacion.unidad_aplicacion)   document.getElementById('unidad-aplicacion').value = _ultimaAplicacion.unidad_aplicacion;
     document.getElementById('cantidad').focus();
   }
 
   /* ── KPIs ── */
-  function cargarKpisHoy(data) {
-    document.getElementById('kpi-aplic-hoy').textContent = data.length || '0';
-    var loteIds = {};
-    data.forEach(function(a) { if (a.lote_id) loteIds[a.lote_id] = 1; });
-    document.getElementById('kpi-lotes-hoy').textContent = Object.keys(loteIds).length || '0';
+  function cargarKpisHoy() {
+    var f = _fechasHoy();
+    fetch('/api/aplicaciones?desde=' + f.hoy + '&hasta=' + f.manana).then(r => r.json()).then(function(data) {
+      var hoyData = data.filter(function(a) { return _esHoy(a, f.d); });
+      document.getElementById('kpi-aplic-hoy').textContent = hoyData.length || '0';
+      var loteIds = {};
+      hoyData.forEach(function(a) { if (a.lote_id) loteIds[a.lote_id] = 1; });
+      document.getElementById('kpi-lotes-hoy').textContent = Object.keys(loteIds).length || '0';
+      guardarUltimaAplicacion(hoyData);
+    });
   }
   function cargarKpisCampana(tid) {
     if (!tid) { document.getElementById('kpi-campana').textContent = '—'; return; }
@@ -542,52 +615,107 @@
     });
   }
 
-  /* ── Renderizar historial ── */
-  function renderHistorial(data) {
-    var tbody = document.getElementById('tbody-historial');
-    if (!data.length) {
-      tbody.innerHTML = '<tr><td colspan="6" class="activity-empty">Sin aplicaciones hoy</td></tr>';
-      return;
+  /* ── Historial — igual a stock-insumos ── */
+  function toggleFechasHistorial() {
+    var checked = document.getElementById('filtrar-fechas').checked;
+    document.getElementById('rango-fechas').style.display = checked ? '' : 'none';
+    if (!checked) {
+      document.getElementById('hist-desde').value = '';
+      document.getElementById('hist-hasta').value = '';
     }
-    var hoy = new Date().toISOString().split('T')[0];
-    tbody.innerHTML = data.map(function(a) {
-      var fechaLibre = a.fecha_libre ? a.fecha_libre.toString().split('T')[0] : '—';
-      var enCarencia = a.fecha_libre && a.fecha_libre.toString().split('T')[0] > hoy;
-      var badgeStyle = enCarencia
-        ? 'background:#FEE2E2;color:#991B1B;border-radius:12px;padding:2px 8px;font-size:10px;font-weight:700;'
-        : 'background:#D1FAE5;color:#065F46;border-radius:12px;padding:2px 8px;font-size:10px;font-weight:700;';
-      var cantidad = a.dosis_por_hectarea
-        ? parseFloat(a.dosis_por_hectarea).toFixed(2) + ' ' + (a.unidad_aplicacion || '')
-        : parseFloat(a.cantidad_usada || 0).toFixed(2) + ' ' + (a.unidad_aplicacion || '');
-      return '<tr>' +
-        '<td style="color:var(--texto-suave);">'                        + _fmtHora(a.fecha_hora) + '</td>' +
-        '<td style="font-weight:600;">'                                 + (a.lote || '—') + '</td>' +
-        '<td>'                                                          + (a.producto || '—') + '</td>' +
-        '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;">' + cantidad + '</td>' +
-        '<td>'                                                          + (a.carencia_dias ? fechaLibre : '—') + '</td>' +
-        '<td><span style="' + badgeStyle + '">' + (enCarencia ? 'Carencia' : 'Libre') + '</span></td>' +
-        '</tr>';
-    }).join('');
+    cargarHistorial();
   }
 
-  /* ── Cargar historial (hoy por defecto) ── */
+  function limpiarFiltrosHistorial() {
+    document.getElementById('hist-producto').value = '';
+    document.getElementById('hist-lote').value = '';
+    document.getElementById('hist-tipo').value = '';
+    document.getElementById('filtrar-fechas').checked = false;
+    document.getElementById('rango-fechas').style.display = 'none';
+    document.getElementById('hist-desde').value = '';
+    document.getElementById('hist-hasta').value = '';
+    cargarHistorial();
+  }
+
   function cargarHistorial() {
-    var tid = document.getElementById('filtro-temporada').value;
-    var lid = document.getElementById('filtro-lote').value;
-    var f   = _fechasHoy();
-    var params = ['desde=' + f.hoy, 'hasta=' + f.manana];
-    if (tid) params.push('temporada_id=' + tid);
-    if (lid) params.push('lote_id=' + lid);
-    fetch('/api/aplicaciones?' + params.join('&')).then(r => r.json()).then(function(data) {
-      var hoyData = data.filter(function(a) { return _esHoy(a, f.d); });
-      renderHistorial(hoyData);
-      guardarUltimaAplicacion(hoyData);
-      cargarKpisHoy(hoyData);
-    });
+    var params = new URLSearchParams();
+    var pid   = document.getElementById('hist-producto').value;
+    var lid   = document.getElementById('hist-lote').value;
+    var tipo  = document.getElementById('hist-tipo').value;
+    var desde = document.getElementById('hist-desde').value;
+    var hasta = document.getElementById('hist-hasta').value;
+    if (pid)   params.set('producto_id', pid);
+    if (lid)   params.set('lote_id', lid);
+    if (tipo === 'ingreso') params.set('tipo', 'compra');
+    if (desde) params.set('desde', desde);
+    if (hasta) params.set('hasta', hasta);
+
+    var tbody = document.getElementById('tbody-historial');
+    var tfoot = document.getElementById('tfoot-historial');
+    tbody.innerHTML = '<tr><td colspan="8" class="activity-empty" style="color:var(--verde);">Cargando...</td></tr>';
+    tfoot.innerHTML = '';
+
+    fetch('/api/stock-insumos/historial?' + params.toString())
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (tipo === 'egreso') {
+          data = data.filter(function(m){ return m.tipo !== 'compra'; });
+        }
+        if (!data.length) {
+          tbody.innerHTML = '<tr><td colspan="8" class="activity-empty">Sin movimientos para los filtros seleccionados</td></tr>';
+          return;
+        }
+        var totIngreso = 0, totEgreso = 0;
+        tbody.innerHTML = data.map(function(m) {
+          var esIngreso = m.tipo === 'compra';
+          var bg        = esIngreso ? 'background:#f0faf0;' : 'background:#fff5f5;';
+          var kgColor   = esIngreso ? 'color:#2d6a4f;font-weight:700;' : 'color:#c0392b;font-weight:700;';
+          var signo     = esIngreso ? '+' : '-';
+          var movLabel  = esIngreso ? 'Ingreso' : 'Egreso';
+          var movStyle  = esIngreso
+            ? 'background:var(--sem-verde-bg);color:var(--sem-verde);'
+            : 'background:var(--sem-rojo-bg);color:var(--sem-rojo);';
+          var tipoLabel = m.tipo === 'compra'      ? 'Compra'
+            : m.tipo === 'aplicacion'              ? 'Aplicación'
+            : m.tipo === 'merma'                   ? 'Merma'
+            : m.tipo === 'vencimiento'             ? 'Vencimiento'
+            : m.tipo === 'perdida'                 ? 'Pérdida'
+            : m.tipo;
+          var aplica = m.empleado || (esIngreso ? (m.proveedor || '—') : '—') || '—';
+          var cant   = parseFloat(m.cantidad || 0);
+          if (esIngreso) totIngreso += cant; else totEgreso += cant;
+          var idChip = '<span style="font-family:\'JetBrains Mono\',monospace;font-size:11px;background:var(--fondo-dark);border:1px solid var(--borde);border-radius:4px;padding:1px 5px;">#' + m.id + '</span>';
+          return '<tr style="' + bg + '">' +
+            '<td style="text-align:center;">' + idChip + '</td>' +
+            '<td style="font-size:12px;white-space:nowrap;">' + fmtFechaHora(m.fecha_hora) + '</td>' +
+            '<td style="font-size:12px;">' + (m.producto || '—') + '</td>' +
+            '<td>' +
+              '<span class="badge" style="' + movStyle + '">' + movLabel + '</span>' +
+              '&nbsp;<span style="font-size:11px;color:var(--texto-suave);">' + tipoLabel + '</span>' +
+            '</td>' +
+            '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;' + kgColor + '">' +
+              signo + cant.toLocaleString('es-AR', {minimumFractionDigits:0,maximumFractionDigits:2}) + ' ' + (m.presentacion || '') + '</td>' +
+            '<td style="font-size:12px;">' + aplica + '</td>' +
+            '<td style="font-size:12px;">' + (m.lote || '—') + '</td>' +
+            '<td style="font-size:12px;color:var(--texto-suave);">' + (m.usuario || '—') + '</td>' +
+            '</tr>';
+        }).join('');
+        tfoot.innerHTML = '<tr style="font-weight:700;background:var(--fondo);">' +
+          '<td colspan="4" style="font-size:12px;padding:8px 12px;color:var(--texto-suave);">Totales (' + data.length + ' movimientos)</td>' +
+          '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;font-size:12px;padding:8px 12px;">' +
+            (totIngreso ? '<span style="color:#2d6a4f;">+' + totIngreso.toLocaleString('es-AR',{maximumFractionDigits:2}) + '</span> ' : '') +
+            (totEgreso  ? '<span style="color:#c0392b;">−' + totEgreso.toLocaleString('es-AR',{maximumFractionDigits:2}) + '</span>' : '') +
+          '</td>' +
+          '<td colspan="3"></td></tr>';
+      })
+      .catch(function() {
+        tbody.innerHTML = '<tr><td colspan="8" class="activity-empty" style="color:#c0392b;">Error al cargar historial</td></tr>';
+      });
   }
 
   cargarDatos();
-  cargarAlertas();
+  cargarKpisHoy();
+  cargarHistorial();
   cargarTemporadaActiva();
 </script>
 </body>
