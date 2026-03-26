@@ -77,7 +77,7 @@ router.post('/', async (req, res) => {
     const costo_total = parseFloat(cantidad_usada) * (parseFloat(stockResult.recordset[0].costo_unitario) || 0);
 
     const req1 = new sql.Request(transaction);
-    await req1
+    const insResult = await req1
       .input('lote_id', sql.Int, lote_id)
       .input('producto_id', sql.Int, producto_id)
       .input('temporada_id', sql.Int, temporada_id || null)
@@ -93,7 +93,9 @@ router.post('/', async (req, res) => {
       .query(`INSERT INTO Aplicaciones (lote_id, producto_id, temporada_id, empleado_id, cantidad_usada,
               unidad_aplicacion, metodo, condicion_climatica, dosis_por_hectarea, carencia_dias, costo_total, observacion)
               VALUES (@lote_id, @producto_id, @temporada_id, @empleado_id, @cantidad_usada,
-              @unidad_aplicacion, @metodo, @condicion_climatica, @dosis_por_hectarea, @carencia_dias, @costo_total, @observacion)`);
+              @unidad_aplicacion, @metodo, @condicion_climatica, @dosis_por_hectarea, @carencia_dias, @costo_total, @observacion);
+              SELECT SCOPE_IDENTITY() AS aplicacion_id;`);
+    const aplicacion_id = insResult.recordset[0].aplicacion_id;
 
     const req2 = new sql.Request(transaction);
     await req2
@@ -109,9 +111,10 @@ router.post('/', async (req, res) => {
       .input('lote_id',     sql.Int,           lote_id)
       .input('costo_total', sql.Decimal(10,2), costo_total)
       .input('empleado_id', sql.Int,           empleado_id || null)
-      .input('usuario_id',  sql.Int,           uid)
-      .query(`INSERT INTO StockInsumos (producto_id, tipo, cantidad, lote_id, costo_total, empleado_id, usuario_id, observacion, fecha_hora)
-              VALUES (@producto_id, 'aplicacion', @cantidad, @lote_id, @costo_total, @empleado_id, @usuario_id, 'Aplicacion registrada', GETDATE())`);
+      .input('usuario_id',     sql.Int,           uid)
+      .input('aplicacion_id', sql.Int,           aplicacion_id)
+      .query(`INSERT INTO StockInsumos (producto_id, tipo, cantidad, lote_id, costo_total, empleado_id, usuario_id, aplicacion_id, observacion, fecha_hora)
+              VALUES (@producto_id, 'aplicacion', @cantidad, @lote_id, @costo_total, @empleado_id, @usuario_id, @aplicacion_id, 'Aplicacion registrada', GETDATE())`);
 
     await transaction.commit();
     res.json({ ok: true });

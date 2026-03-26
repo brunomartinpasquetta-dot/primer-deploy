@@ -146,16 +146,23 @@ router.get('/historial', async (req, res) => {
     const result = await dbReq.query(`
       SELECT s.id, s.tipo, s.cantidad, s.costo_total,
              ISNULL(s.fecha_hora, CAST(s.fecha AS DATETIME)) AS fecha_hora,
-             s.proveedor, s.observacion,
+             s.proveedor, s.observacion, s.aplicacion_id,
              p.nombre AS producto, p.presentacion,
              l.nombre AS lote,
              j.apellido + ', ' + j.nombre AS empleado,
-             u.nombre AS usuario
+             u.nombre AS usuario,
+             a.metodo, a.condicion_climatica, a.dosis_por_hectarea,
+             a.carencia_dias, a.unidad_aplicacion AS aplic_unidad,
+             a.observacion AS aplic_observacion,
+             t.nombre AS temporada,
+             DATEADD(day, ISNULL(a.carencia_dias, 0), ISNULL(s.fecha_hora, CAST(s.fecha AS DATETIME))) AS fecha_libre
       FROM StockInsumos s
       JOIN Productos p ON s.producto_id = p.id
-      LEFT JOIN Lotes      l ON s.lote_id     = l.id
-      LEFT JOIN Juntadores j ON s.empleado_id = j.id
-      LEFT JOIN Usuarios   u ON s.usuario_id  = u.id
+      LEFT JOIN Lotes        l ON s.lote_id       = l.id
+      LEFT JOIN Juntadores   j ON s.empleado_id   = j.id
+      LEFT JOIN Usuarios     u ON s.usuario_id    = u.id
+      LEFT JOIN Aplicaciones a ON s.aplicacion_id = a.id
+      LEFT JOIN Temporadas   t ON a.temporada_id  = t.id
       WHERE ${where}
       ORDER BY ISNULL(s.fecha_hora, CAST(s.fecha AS DATETIME)) DESC`);
     res.json(result.recordset);

@@ -49,6 +49,23 @@
     .badge-merma       { background:#fff3cd; color:#856404; }
     .badge-vencimiento { background:#e2e3e5; color:#383d41; }
     .badge-perdida     { background:#e2e3e5; color:#383d41; }
+    /* Modal detalles */
+    .modal-overlay {
+      display:none; position:fixed; inset:0; background:rgba(0,0,0,.5);
+      z-index:1000; align-items:center; justify-content:center;
+    }
+    .modal-overlay.open { display:flex; }
+    .modal-box {
+      background:var(--fondo-card); border-radius:12px; padding:20px 24px;
+      max-width:520px; width:calc(100% - 32px); max-height:80vh;
+      overflow-y:auto; box-shadow:0 8px 32px rgba(0,0,0,.3);
+    }
+    .modal-box h3 { margin:0 0 14px; font-size:15px; }
+    .det-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px 16px; }
+    .det-item { border-bottom:1px solid var(--borde); padding-bottom:6px; }
+    .det-item .det-label { font-size:10px; text-transform:uppercase; letter-spacing:.5px; color:var(--texto-suave); }
+    .det-item .det-val   { font-size:13px; font-weight:600; margin-top:2px; }
+    .det-item.full { grid-column:1/-1; }
     @media (max-width:900px) {
       .aplic-layout { grid-template-columns:1fr; }
       .aplic-form   { max-width:100%; }
@@ -302,10 +319,11 @@
                     <th>Aplica</th>
                     <th>Lote</th>
                     <th>Usuario</th>
+                    <th>Ver detalles</th>
                   </tr>
                 </thead>
                 <tbody id="tbody-historial">
-                  <tr><td colspan="8" class="activity-empty">Cargando...</td></tr>
+                  <tr><td colspan="9" class="activity-empty">Cargando...</td></tr>
                 </tbody>
                 <tfoot id="tfoot-historial"></tfoot>
               </table>
@@ -314,6 +332,18 @@
         </div>
 
       </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL DETALLES ── -->
+  <div class="modal-overlay" id="modal-detalles" onclick="cerrarModal(event)">
+    <div class="modal-box">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <h3 style="margin:0;">Detalles del movimiento</h3>
+        <button onclick="document.getElementById('modal-detalles').classList.remove('open')"
+                style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--texto-suave);">✕</button>
+      </div>
+      <div id="modal-contenido"></div>
     </div>
   </div>
 
@@ -349,6 +379,7 @@
   var _ultimaAplicacion = null;
   var modoActualEmpleado = 'lista', empleadoId = null;
   var _carenciaVisible = false;
+  var _movimientoMap = {};
 
   /* ── Timezone helpers ── */
   function _fechasHoy() {
@@ -652,7 +683,7 @@
 
     var tbody = document.getElementById('tbody-historial');
     var tfoot = document.getElementById('tfoot-historial');
-    tbody.innerHTML = '<tr><td colspan="8" class="activity-empty" style="color:var(--verde);">Cargando...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" class="activity-empty" style="color:var(--verde);">Cargando...</td></tr>';
     tfoot.innerHTML = '';
 
     fetch('/api/stock-insumos/historial?' + params.toString())
@@ -662,11 +693,13 @@
           data = data.filter(function(m){ return m.tipo !== 'compra'; });
         }
         if (!data.length) {
-          tbody.innerHTML = '<tr><td colspan="8" class="activity-empty">Sin movimientos para los filtros seleccionados</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="9" class="activity-empty">Sin movimientos para los filtros seleccionados</td></tr>';
           return;
         }
+        _movimientoMap = {};
         var totIngreso = 0, totEgreso = 0;
         tbody.innerHTML = data.map(function(m) {
+          _movimientoMap[m.id] = m;
           var esIngreso = m.tipo === 'compra';
           var bg        = esIngreso ? 'background:#f0faf0;' : 'background:#fff5f5;';
           var kgColor   = esIngreso ? 'color:#2d6a4f;font-weight:700;' : 'color:#c0392b;font-weight:700;';
@@ -698,6 +731,9 @@
             '<td style="font-size:12px;">' + aplica + '</td>' +
             '<td style="font-size:12px;">' + (m.lote || '—') + '</td>' +
             '<td style="font-size:12px;color:var(--texto-suave);">' + (m.usuario || '—') + '</td>' +
+            '<td style="text-align:center;">' +
+              '<button onclick="verDetalles(' + m.id + ')" style="background:none;border:1px solid var(--borde);border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;color:var(--verde);font-weight:600;">Ver</button>' +
+            '</td>' +
             '</tr>';
         }).join('');
         tfoot.innerHTML = '<tr style="font-weight:700;background:var(--fondo);">' +
@@ -706,11 +742,74 @@
             (totIngreso ? '<span style="color:#2d6a4f;">+' + totIngreso.toLocaleString('es-AR',{maximumFractionDigits:2}) + '</span> ' : '') +
             (totEgreso  ? '<span style="color:#c0392b;">−' + totEgreso.toLocaleString('es-AR',{maximumFractionDigits:2}) + '</span>' : '') +
           '</td>' +
-          '<td colspan="3"></td></tr>';
+          '<td colspan="4"></td></tr>';
       })
       .catch(function() {
-        tbody.innerHTML = '<tr><td colspan="8" class="activity-empty" style="color:#c0392b;">Error al cargar historial</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="activity-empty" style="color:#c0392b;">Error al cargar historial</td></tr>';
       });
+  }
+
+  /* ── Modal detalles ── */
+  function verDetalles(id) {
+    var m = _movimientoMap[id];
+    if (!m) return;
+    var esIngreso = m.tipo === 'compra';
+    var esAplic   = m.tipo === 'aplicacion';
+    var cant      = parseFloat(m.cantidad || 0);
+    var costo     = parseFloat(m.costo_total || 0);
+
+    function fila(label, val, full) {
+      return '<div class="det-item' + (full ? ' full' : '') + '">' +
+        '<div class="det-label">' + label + '</div>' +
+        '<div class="det-val">' + (val || '—') + '</div>' +
+        '</div>';
+    }
+
+    var metodosLabel = { mochila:'Mochila', tractor:'Tractor', manual:'Manual', otro:'Otro' };
+    var climaLabel   = { optima:'Óptima', viento_leve:'Viento leve', nublado:'Nublado', calor:'Calor intenso' };
+    var tipoLabel    = esIngreso ? 'Ingreso — Compra'
+      : m.tipo === 'aplicacion' ? 'Egreso — Aplicación'
+      : m.tipo === 'merma'      ? 'Egreso — Merma'
+      : m.tipo === 'vencimiento'? 'Egreso — Vencimiento'
+      : m.tipo === 'perdida'    ? 'Egreso — Pérdida'
+      : m.tipo;
+
+    var html = '<div class="det-grid">';
+    html += fila('# Movimiento', '#' + m.id);
+    html += fila('Tipo', tipoLabel);
+    html += fila('Fecha y hora', fmtFechaHora(m.fecha_hora));
+    html += fila('Temporada', m.temporada);
+    html += fila('Producto', (m.producto || '—') + (m.presentacion ? ' · ' + m.presentacion : ''), true);
+    html += fila('Cantidad', cant.toLocaleString('es-AR', {maximumFractionDigits:2}) + ' ' + (esAplic ? (m.aplic_unidad || m.presentacion || '') : (m.presentacion || '')));
+    html += fila('Costo total', costo ? '$' + costo.toLocaleString('es-AR') : '—');
+    html += fila('Lote', m.lote);
+    html += fila('Empleado que aplica', m.empleado);
+    html += fila('Usuario que registra', m.usuario);
+    if (esIngreso) {
+      html += fila('Proveedor', m.proveedor);
+    }
+    if (esAplic) {
+      html += fila('Método', metodosLabel[m.metodo] || m.metodo);
+      html += fila('Condición climática', climaLabel[m.condicion_climatica] || m.condicion_climatica);
+      html += fila('Dosis / hectárea', m.dosis_por_hectarea ? parseFloat(m.dosis_por_hectarea).toFixed(2) + ' ' + (m.aplic_unidad || '') : '—');
+      html += fila('Días de carencia', m.carencia_dias ? m.carencia_dias + ' días' : '—');
+      if (m.carencia_dias && m.fecha_libre) {
+        var libre = m.fecha_libre.toString().split('T')[0];
+        html += fila('Libre desde', libre);
+      }
+    }
+    var obs = m.aplic_observacion || m.observacion;
+    if (obs && obs !== 'Aplicacion registrada') html += fila('Observación', obs, true);
+    html += '</div>';
+
+    document.getElementById('modal-contenido').innerHTML = html;
+    document.getElementById('modal-detalles').classList.add('open');
+  }
+
+  function cerrarModal(e) {
+    if (e.target === document.getElementById('modal-detalles')) {
+      document.getElementById('modal-detalles').classList.remove('open');
+    }
   }
 
   cargarDatos();
