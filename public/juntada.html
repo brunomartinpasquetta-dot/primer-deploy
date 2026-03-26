@@ -886,11 +886,27 @@
     lucide.createIcons();
   }
 
+  // Devuelve {hoy, manana} en formato YYYY-MM-DD (fechas locales)
+  function _fechasHoy() {
+    var _d = new Date();
+    var hoy = _d.getFullYear() + '-' + String(_d.getMonth()+1).padStart(2,'0') + '-' + String(_d.getDate()).padStart(2,'0');
+    var _m = new Date(_d.getFullYear(), _d.getMonth(), _d.getDate() + 1);
+    var manana = _m.getFullYear() + '-' + String(_m.getMonth()+1).padStart(2,'0') + '-' + String(_m.getDate()).padStart(2,'0');
+    return { hoy: hoy, manana: manana, d: _d };
+  }
+
+  // Filtra registros cuya fecha local sea hoy
+  function _esHoy(m, _d) {
+    var f = new Date(m.fecha);
+    return f.getFullYear() === _d.getFullYear() && f.getMonth() === _d.getMonth() && f.getDate() === _d.getDate();
+  }
+
   function cargarHistorial() {
-    var _d = new Date(); var hoy = _d.getFullYear() + '-' + String(_d.getMonth()+1).padStart(2,'0') + '-' + String(_d.getDate()).padStart(2,'0');
-    fetch('/api/stock-mercaderia/historial?desde=' + hoy + '&hasta=' + hoy)
+    var f = _fechasHoy();
+    fetch('/api/stock-mercaderia/historial?desde=' + f.hoy + '&hasta=' + f.manana)
       .then(function(r){ return r.json(); })
-      .then(function(data) {
+      .then(function(todos) {
+        var data = todos.filter(function(m){ return _esHoy(m, f.d); });
         var totalKg = data.reduce(function(s, m) {
           return s + (m.tipo === 'ingreso' ? parseFloat(m.kilos || 0) : 0);
         }, 0);
@@ -911,11 +927,12 @@
   }
 
   function cargarKpisJuntada() {
-    var _d = new Date(); var hoy = _d.getFullYear() + '-' + String(_d.getMonth()+1).padStart(2,'0') + '-' + String(_d.getDate()).padStart(2,'0');
+    var f = _fechasHoy();
     var loteId = document.getElementById('lote').value;
 
-    fetch('/api/stock-mercaderia/historial?desde=' + hoy + '&hasta=' + hoy)
-      .then(function(r){ return r.json(); }).then(function(data) {
+    fetch('/api/stock-mercaderia/historial?desde=' + f.hoy + '&hasta=' + f.manana)
+      .then(function(r){ return r.json(); }).then(function(todos) {
+        var data = todos.filter(function(m){ return _esHoy(m, f.d); });
         var total = data.filter(function(m){ return m.tipo === 'ingreso'; })
                         .reduce(function(s, m){ return s + parseFloat(m.kilos || 0); }, 0);
         document.getElementById('kpi-total-hoy').textContent =
@@ -923,8 +940,9 @@
       });
 
     if (loteId) {
-      fetch('/api/stock-mercaderia/historial?desde=' + hoy + '&hasta=' + hoy + '&lote_id=' + loteId)
-        .then(function(r){ return r.json(); }).then(function(data) {
+      fetch('/api/stock-mercaderia/historial?desde=' + f.hoy + '&hasta=' + f.manana + '&lote_id=' + loteId)
+        .then(function(r){ return r.json(); }).then(function(todos) {
+          var data = todos.filter(function(m){ return _esHoy(m, f.d); });
           var total = data.filter(function(m){ return m.tipo === 'ingreso'; })
                           .reduce(function(s, m){ return s + parseFloat(m.kilos || 0); }, 0);
           document.getElementById('kpi-lote-hoy').textContent =
