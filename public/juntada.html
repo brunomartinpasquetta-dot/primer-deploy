@@ -236,38 +236,19 @@
     .destino-form-inner { background:var(--fondo); border-radius:10px; padding:12px; margin-top:4px; }
 
     /* ── KPI cards ── */
-    .juntada-kpis-section {
-      margin-bottom: 20px;
-    }
-    .juntada-kpis-title {
-      font-size: 12px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: var(--texto-suave);
-      text-align: center;
-      margin-bottom: 10px;
-    }
     .juntada-kpis {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 12px;
-    }
-    .juntada-kpi-wrap {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
+      margin-bottom: 20px;
     }
     .juntada-kpi {
       background: white;
-      border: 2px solid var(--verde);
-      border-radius: 8px;
-      width: 100%;
-      min-height: 80px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      border: 1px solid var(--borde);
+      border-top: 4px solid var(--verde);
+      border-radius: 10px;
+      padding: 16px 20px;
+      text-align: center;
     }
     .juntada-kpi-label {
       font-size: 11px;
@@ -275,7 +256,7 @@
       color: var(--texto-suave);
       text-transform: uppercase;
       letter-spacing: 0.08em;
-      text-align: center;
+      margin-bottom: 8px;
     }
     .juntada-kpi-valor {
       font-size: 32px;
@@ -355,27 +336,18 @@
       </div>
 
       <!-- ── KPI Cards ── -->
-      <div class="juntada-kpis-section">
-        <div class="juntada-kpis-title">Totales de cosecha</div>
-        <div class="juntada-kpis">
-          <div class="juntada-kpi-wrap">
-            <div class="juntada-kpi">
-              <div class="juntada-kpi-valor" id="kpi-total-hoy">— kg</div>
-            </div>
-            <div class="juntada-kpi-label">Total de hoy</div>
-          </div>
-          <div class="juntada-kpi-wrap">
-            <div class="juntada-kpi">
-              <div class="juntada-kpi-valor" id="kpi-lote-hoy">— kg</div>
-            </div>
-            <div class="juntada-kpi-label">Lote actual hoy</div>
-          </div>
-          <div class="juntada-kpi-wrap">
-            <div class="juntada-kpi">
-              <div class="juntada-kpi-valor" id="kpi-campana">— kg</div>
-            </div>
-            <div class="juntada-kpi-label">Campaña actual</div>
-          </div>
+      <div class="juntada-kpis">
+        <div class="juntada-kpi">
+          <div class="juntada-kpi-label">Total de hoy</div>
+          <div class="juntada-kpi-valor" id="kpi-total-hoy">— kg</div>
+        </div>
+        <div class="juntada-kpi">
+          <div class="juntada-kpi-label">Lote actual hoy</div>
+          <div class="juntada-kpi-valor" id="kpi-lote-hoy">— kg</div>
+        </div>
+        <div class="juntada-kpi">
+          <div class="juntada-kpi-label">Campaña actual</div>
+          <div class="juntada-kpi-valor" id="kpi-campana">— kg</div>
         </div>
       </div>
 
