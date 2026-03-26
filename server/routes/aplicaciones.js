@@ -101,14 +101,17 @@ router.post('/', async (req, res) => {
       .input('cantidad', sql.Decimal(8,2), cantidad_usada)
       .query('UPDATE Productos SET stock_actual = stock_actual - @cantidad WHERE id = @producto_id');
 
+    const uid = req.user ? req.user.id : null;
     const req3 = new sql.Request(transaction);
     await req3
-      .input('producto_id', sql.Int, producto_id)
-      .input('cantidad', sql.Decimal(10,2), cantidad_usada)
-      .input('lote_id', sql.Int, lote_id)
+      .input('producto_id', sql.Int,          producto_id)
+      .input('cantidad',    sql.Decimal(10,2), cantidad_usada)
+      .input('lote_id',     sql.Int,           lote_id)
       .input('costo_total', sql.Decimal(10,2), costo_total)
-      .query(`INSERT INTO StockInsumos (producto_id, tipo, cantidad, lote_id, costo_total, observacion)
-              VALUES (@producto_id, 'aplicacion', @cantidad, @lote_id, @costo_total, 'Aplicacion registrada')`);
+      .input('empleado_id', sql.Int,           empleado_id || null)
+      .input('usuario_id',  sql.Int,           uid)
+      .query(`INSERT INTO StockInsumos (producto_id, tipo, cantidad, lote_id, costo_total, empleado_id, usuario_id, observacion, fecha_hora)
+              VALUES (@producto_id, 'aplicacion', @cantidad, @lote_id, @costo_total, @empleado_id, @usuario_id, 'Aplicacion registrada', GETDATE())`);
 
     await transaction.commit();
     res.json({ ok: true });

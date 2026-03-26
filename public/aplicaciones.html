@@ -26,6 +26,22 @@
     .aplic-form .btn { font-size:12px; padding:6px 10px; }
     .aplic-form .btn-scan { font-size:11px; padding:4px 8px; }
     .aplic-form .empleado-info { font-size:12px; padding:5px 7px; }
+    /* Modos empleado — mismo patrón que juntada */
+    .cosechador-modos { display:flex; gap:4px; margin-bottom:6px; }
+    .modo-btn {
+      flex:1; padding:5px 4px; border:2px solid var(--borde); border-radius:8px;
+      background:var(--fondo); color:var(--texto-2); font-size:11px; font-weight:600;
+      cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;
+      transition:all .15s; min-height:28px;
+    }
+    .modo-btn.active { border-color:var(--verde); background:var(--verde-suave); color:var(--verde); }
+    .juntador-chip {
+      display:flex; align-items:center; gap:6px; margin-top:6px;
+      background:var(--sem-verde-bg); border:1px solid var(--sem-verde-borde);
+      border-radius:8px; padding:7px 10px; color:var(--sem-verde);
+    }
+    .juntador-chip strong { flex:1; font-size:12px; }
+    .juntador-chip-clear { background:none; border:none; cursor:pointer; color:var(--sem-verde); font-size:14px; padding:0 2px; }
     #aplic-historial-tabla thead th { padding:5px 8px; font-size:11px; }
     #aplic-historial-tabla tbody td { padding:4px 8px; font-size:12px; }
     @media (max-width:900px) {
@@ -172,14 +188,33 @@
             </div>
             <div class="form-row">
               <label>Empleado que aplica</label>
-              <div class="empleado-info" id="empleado-info">Escaneá el QR</div>
-              <input type="hidden" id="empleado-id">
-              <button class="btn btn-scan" onclick="toggleCamera()" style="margin-top:4px;">
-                <i data-lucide="scan-line"></i> Escanear QR
-              </button>
-              <div id="camera-container" class="hidden" style="margin-top:8px;position:relative;z-index:10;">
-                <video id="video" autoplay playsinline></video>
-                <canvas id="canvas" class="hidden"></canvas>
+              <div class="cosechador-modos">
+                <button id="btn-modo-lista" class="modo-btn active" onclick="setModoEmpleado('lista')">
+                  <i data-lucide="list" style="width:12px;height:12px;"></i> Seleccionar
+                </button>
+                <button id="btn-modo-qr" class="modo-btn" onclick="setModoEmpleado('qr')">
+                  <i data-lucide="scan-line" style="width:12px;height:12px;"></i> Escanear QR
+                </button>
+              </div>
+              <div id="modo-lista-empleado">
+                <select id="lista-empleados" onchange="seleccionarEmpleadoLista(this.value)">
+                  <option value="">— seleccionar empleado —</option>
+                </select>
+              </div>
+              <div id="modo-qr-empleado" style="display:none;">
+                <div class="empleado-info" id="empleado-info">Escaneá el QR del empleado</div>
+                <button class="btn btn-scan" onclick="toggleCamera()" style="margin-top:4px;">
+                  <i data-lucide="scan-line"></i> Escanear QR
+                </button>
+                <div id="camera-container" class="hidden" style="margin-top:8px;position:relative;z-index:10;">
+                  <video id="video" autoplay playsinline></video>
+                  <canvas id="canvas" class="hidden"></canvas>
+                </div>
+              </div>
+              <div id="empleado-chip" class="juntador-chip" style="display:none;">
+                <i data-lucide="user-check" style="width:14px;height:14px;flex-shrink:0;"></i>
+                <strong id="empleado-chip-nombre"></strong>
+                <button onclick="limpiarEmpleado()" class="juntador-chip-clear" title="Cambiar empleado">✕</button>
               </div>
             </div>
             <div class="form-row">
@@ -257,6 +292,7 @@
 
   var scanning = false, stream = null, productos = [];
   var _ultimaAplicacion = null;
+  var modoActualEmpleado = 'lista', empleadoId = null;
 
   /* ── Timezone helpers ── */
   function _fechasHoy() {
@@ -316,6 +352,14 @@
         data.map(l => '<option value="' + l.id + '">' + l.nombre + '</option>').join('');
     });
     cargarLotesForm();
+    fetch('/api/juntadores').then(r => r.json()).then(function(data) {
+      var sel = document.getElementById('lista-empleados');
+      sel.innerHTML = '<option value="">— seleccionar empleado —</option>' +
+        data.map(function(j) {
+          var nombre = j.apellido + ', ' + j.nombre;
+          return '<option value="' + j.id + '" data-nombre="' + nombre + '">' + nombre + '</option>';
+        }).join('');
+    });
     fetch('/api/productos').then(r => r.json()).then(function(data) {
       productos = data;
       document.getElementById('producto').innerHTML = '<option value="">Seleccionar producto...</option>' +
@@ -354,6 +398,39 @@
     });
   }
 
+  /* ── Modos empleado ── */
+  function setModoEmpleado(modo) {
+    modoActualEmpleado = modo;
+    document.getElementById('btn-modo-lista').classList.toggle('active', modo === 'lista');
+    document.getElementById('btn-modo-qr').classList.toggle('active', modo === 'qr');
+    document.getElementById('modo-lista-empleado').style.display = modo === 'lista' ? '' : 'none';
+    document.getElementById('modo-qr-empleado').style.display = modo === 'qr' ? '' : 'none';
+    limpiarEmpleado();
+  }
+  function seleccionarEmpleadoLista(id) {
+    if (!id) return;
+    var sel = document.getElementById('lista-empleados');
+    var opt = sel.options[sel.selectedIndex];
+    empleadoId = parseInt(id);
+    mostrarChipEmpleado(opt.dataset.nombre || opt.text);
+  }
+  function mostrarChipEmpleado(nombre) {
+    document.getElementById('empleado-chip-nombre').textContent = nombre;
+    document.getElementById('empleado-chip').style.display = 'flex';
+    lucide.createIcons();
+  }
+  function limpiarEmpleado() {
+    empleadoId = null;
+    document.getElementById('empleado-chip').style.display = 'none';
+    if (modoActualEmpleado === 'lista') {
+      document.getElementById('lista-empleados').value = '';
+    } else {
+      var el = document.getElementById('empleado-info');
+      el.textContent = 'Escaneá el QR del empleado';
+      el.style.cssText = '';
+    }
+  }
+
   /* ── Cámara QR ── */
   function toggleCamera() { if (scanning) stopCamera(); else startCamera(); }
   function startCamera() {
@@ -381,14 +458,13 @@
   }
   function buscarEmpleado(codigo) {
     fetch('/api/juntadores/qr/' + codigo).then(r => r.json()).then(function(j) {
-      var el = document.getElementById('empleado-info');
       if (j.error) {
+        var el = document.getElementById('empleado-info');
         el.textContent = 'QR no encontrado';
         el.style.cssText = 'background:#FEE2E2;color:#991B1B;border-color:#FECACA;';
       } else {
-        document.getElementById('empleado-id').value = j.id;
-        el.textContent = j.apellido + ', ' + j.nombre;
-        el.style.cssText = '';
+        empleadoId = j.id;
+        mostrarChipEmpleado(j.apellido + ', ' + j.nombre);
       }
     });
   }
@@ -405,7 +481,7 @@
       body: JSON.stringify({
         lote_id, producto_id,
         temporada_id:        document.getElementById('temporada').value || null,
-        empleado_id:         document.getElementById('empleado-id').value || null,
+        empleado_id:         empleadoId || null,
         cantidad_usada:      cantidad,
         unidad_aplicacion:   document.getElementById('unidad-aplicacion').value,
         metodo:              document.getElementById('metodo').value,
@@ -419,9 +495,6 @@
       if (data.ok) {
         mostrarMensaje('mensaje', 'success', 'Aplicación registrada');
         ['cantidad', 'dosis', 'observacion'].forEach(id => document.getElementById(id).value = '');
-        document.getElementById('empleado-id').value = '';
-        document.getElementById('empleado-info').textContent = 'Escaneá el QR';
-        document.getElementById('empleado-info').style.cssText = '';
         cargarHistorial();
         cargarAlertas();
         // Actualizar stock info del producto

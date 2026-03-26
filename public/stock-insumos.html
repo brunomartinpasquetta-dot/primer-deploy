@@ -200,16 +200,18 @@
             <table style="table-layout:auto;">
               <thead>
                 <tr>
-                  <th>Fecha</th>
+                  <th style="text-align:center;">#</th>
+                  <th>Fecha y hora</th>
                   <th>Producto</th>
-                  <th>Tipo</th>
+                  <th>Mov.</th>
                   <th style="text-align:right;">Cantidad</th>
+                  <th>Aplica</th>
                   <th>Lote</th>
-                  <th>Observación</th>
+                  <th>Usuario</th>
                 </tr>
               </thead>
               <tbody id="tbody-historial">
-                <tr><td colspan="6" class="activity-empty">Cargando...</td></tr>
+                <tr><td colspan="8" class="activity-empty">Cargando...</td></tr>
               </tbody>
             </table>
           </div>
@@ -367,30 +369,42 @@
       .then(function(data) {
         var tbody = document.getElementById('tbody-historial');
         if (!data.length) {
-          tbody.innerHTML = '<tr><td colspan="6" class="activity-empty">Sin movimientos</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="8" class="activity-empty">Sin movimientos</td></tr>';
           return;
         }
         tbody.innerHTML = data.map(function(m) {
-          var fecha = m.fecha ? new Date(m.fecha).toLocaleString('es-AR', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' }) : '—';
-          var esCompra = m.tipo === 'compra';
-          var bg    = esCompra ? 'background:#f0faf0;' : '';
-          var kgColor = esCompra ? 'color:#2d6a4f;font-weight:700;' : 'color:#c0392b;font-weight:700;';
-          var signo = esCompra ? '+' : '-';
-          var tipoLabel = m.tipo === 'compra' ? 'Compra'
-            : m.tipo === 'aplicacion' ? 'Aplicación'
-            : m.tipo === 'merma'      ? 'Merma'
-            : m.tipo === 'vencimiento' ? 'Vencimiento'
-            : m.tipo === 'perdida'    ? 'Pérdida'
+          var fechaHora = m.fecha_hora
+            ? new Date(m.fecha_hora).toLocaleString('es-AR', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' })
+            : '—';
+          var esIngreso = m.tipo === 'compra';
+          var bg       = esIngreso ? 'background:#f0faf0;' : 'background:#fff5f5;';
+          var kgColor  = esIngreso ? 'color:#2d6a4f;font-weight:700;' : 'color:#c0392b;font-weight:700;';
+          var signo    = esIngreso ? '+' : '-';
+          var movLabel = esIngreso ? 'Ingreso' : 'Egreso';
+          var movStyle = esIngreso
+            ? 'background:var(--sem-verde-bg);color:var(--sem-verde);'
+            : 'background:var(--sem-rojo-bg);color:var(--sem-rojo);';
+          var tipoLabel = m.tipo === 'compra'      ? 'Compra'
+            : m.tipo === 'aplicacion'              ? 'Aplicación'
+            : m.tipo === 'merma'                   ? 'Merma'
+            : m.tipo === 'vencimiento'             ? 'Vencimiento'
+            : m.tipo === 'perdida'                 ? 'Pérdida'
             : m.tipo;
-          var badgeCls = 'badge badge-' + (m.tipo || 'egreso');
+          /* "Aplica": empleado para aplicaciones, proveedor para compras */
+          var aplica = m.empleado || (esIngreso ? m.proveedor : '') || '—';
           return '<tr style="' + bg + '">' +
-            '<td style="font-size:12px;white-space:nowrap;color:var(--texto-suave);">' + fecha + '</td>' +
+            '<td style="text-align:center;font-size:11px;font-family:\'JetBrains Mono\',monospace;color:var(--texto-suave);">#' + m.id + '</td>' +
+            '<td style="font-size:12px;white-space:nowrap;">' + fechaHora + '</td>' +
             '<td style="font-size:12px;">' + (m.producto || '—') + '</td>' +
-            '<td><span class="' + badgeCls + '">' + tipoLabel + '</span></td>' +
+            '<td>' +
+              '<span class="badge" style="' + movStyle + 'margin-right:3px;">' + movLabel + '</span>' +
+              '<span style="font-size:10px;color:var(--texto-suave);">' + tipoLabel + '</span>' +
+            '</td>' +
             '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;' + kgColor + '">' +
               signo + parseFloat(m.cantidad || 0).toLocaleString('es-AR', {minimumFractionDigits:0,maximumFractionDigits:2}) + ' ' + (m.presentacion || '') + '</td>' +
+            '<td style="font-size:12px;">' + aplica + '</td>' +
             '<td style="font-size:12px;">' + (m.lote || '—') + '</td>' +
-            '<td style="font-size:12px;color:var(--texto-suave);">' + (m.observacion || '—') + '</td>' +
+            '<td style="font-size:12px;color:var(--texto-suave);">' + (m.usuario || '—') + '</td>' +
             '</tr>';
         }).join('');
       });
