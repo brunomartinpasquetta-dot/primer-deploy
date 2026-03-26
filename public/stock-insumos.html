@@ -9,44 +9,25 @@
   <script src="js/utils.js"></script>
   <link rel="stylesheet" href="cosecha.css">
   <style>
-h1 { color: #1565c0; text-align: center; margin-bottom: 20px; }
-    h2 { color: #1565c0; margin-bottom: 12px; font-size: 18px; }
-    .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    label { font-weight: bold; color: #444; display: block; margin-bottom: 6px; margin-top: 12px; }
-    input, select { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
-    .btn { width: 100%; padding: 14px; font-size: 16px; font-weight: bold; border: none; border-radius: 12px; cursor: pointer; margin-top: 12px; }
-    .btn-blue { background: #1565c0; color: white; }
-    .btn-blue:disabled { background: #aaa; cursor: not-allowed; }
-    .btn-red { background: #c0392b; color: white; }
-    .btn-back { background: #eee; color: #444; margin-top: 16px; }
-    .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
-    .tab { flex: 1; padding: 12px; text-align: center; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; background: #ddd; color: #444; font-size: 14px; }
-    .tab.active { background: #2D5016; color: white; }
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th { background: #2D5016; color: white; padding: 10px; text-align: left; }
-    td { padding: 10px; border-bottom: 1px solid #eee; vertical-align: middle; }
-    tr:nth-child(even) td { background: #FAFAF8; }
-    .stock-bajo { color: #c0392b; font-weight: bold; }
-    .stock-ok { color: #2d6a4f; font-weight: bold; }
-    .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; }
-    .badge-compra { background: #e8f5e2; color: #2d6a4f; }
-    .badge-aplicacion { background: #fde8e8; color: #c0392b; }
-    .empty { text-align: center; color: #999; padding: 20px; }
-    .resumen { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
-    .resumen-card { background: white; border-radius: 12px; padding: 16px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    .resumen-num { font-size: 28px; font-weight: bold; }
-    .resumen-num.verde { color: #2d6a4f; }
-    .resumen-num.rojo { color: #c0392b; }
-    .resumen-num.azul { color: #1565c0; }
-    .resumen-label { font-size: 11px; color: #666; margin-top: 4px; }
-    .msg-success { background: #e8f5e2; color: #2d6a4f; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 8px; }
-    .msg-error { background: #fde8e8; color: #c0392b; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 8px; }
-    .acceso-rapido { background: #dbeafe; border: 2px solid #1565c0; border-radius: 12px; padding: 16px; text-align: center; margin-bottom: 16px; }
-    .acceso-rapido p { color: #1565c0; font-size: 14px; margin-bottom: 8px; }
-    .page-logo-h1 { height: 44px; width: auto; }
-    @media (max-width: 767px) { .page-logo-h1 { height: 32px; } }
+    /* KPIs al estilo juntada */
+    .ins-kpis { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px; }
+    .ins-kpi  { background:var(--fondo-card); border-radius:8px; padding:6px 8px;
+                border-top:3px solid var(--verde); box-shadow:var(--sombra-card); }
+    .ins-kpi .valor { font-size:16px; font-weight:700; font-family:'JetBrains Mono',monospace; }
+    .ins-kpi .label { font-size:9px; text-transform:uppercase; letter-spacing:.5px;
+                      color:var(--texto-suave); margin-top:2px; }
+    .ins-kpi .valor.verde { color:var(--verde); }
+    .ins-kpi .valor.rojo  { color:#c0392b; }
+    .ins-kpi .valor.azul  { color:#1565c0; }
+    /* Badges de movimiento */
+    .badge-compra    { background:#e8f5e2; color:#2d6a4f; }
+    .badge-aplicacion { background:#fde8e8; color:#c0392b; }
+    .badge-egreso    { background:#fff3cd; color:#856404; }
+    .badge-merma     { background:#fff3cd; color:#856404; }
+    .badge-vencimiento { background:#e2e3e5; color:#383d41; }
+    .badge-perdida   { background:#e2e3e5; color:#383d41; }
+    .stock-bajo { color:#c0392b; font-weight:700; }
+    .stock-ok   { color:#2d6a4f; font-weight:700; }
   </style>
   <script src="js/auth-check.js"></script>
 </head>
@@ -59,7 +40,6 @@ h1 { color: #1565c0; text-align: center; margin-bottom: 20px; }
       <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div>
     </div>
     <nav class="sidebar-nav">
-      
       <a href="index.html" class="nav-item"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard</a>
       <div class="nav-section">Campo</div>
       <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
@@ -93,74 +73,154 @@ h1 { color: #1565c0; text-align: center; margin-bottom: 20px; }
         <div class="content-sub">Inventario de insumos agrícolas</div>
       </div>
 
+      <!-- KPIs -->
+      <div class="ins-kpis">
+        <div class="ins-kpi">
+          <div class="valor azul" id="kpi-productos">0</div>
+          <div class="label">Productos</div>
+        </div>
+        <div class="ins-kpi">
+          <div class="valor rojo" id="kpi-bajo">0</div>
+          <div class="label">Stock bajo</div>
+        </div>
+        <div class="ins-kpi">
+          <div class="valor verde" id="kpi-valor">$0</div>
+          <div class="label">Valor total</div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
       <div class="tabs">
-    <button class="tab active" onclick="showTab('stock', this)">Stock actual</button>
-    <button class="tab" onclick="showTab('egreso', this)">Registrar egreso</button>
-    <button class="tab" onclick="showTab('aplicacion', this)">Registrar aplicacion</button>
-    <button class="tab" onclick="location.href='compras.html'">Registrar compra</button>
-  </div>
+        <button class="tab active" onclick="showTab('stock', this)">Stock actual</button>
+        <button class="tab" onclick="showTab('egreso', this)">Registrar egreso</button>
+        <button class="tab" onclick="showTab('historial', this)">Historial</button>
+        <button class="tab" onclick="location.href='compras.html'">Registrar compra</button>
+      </div>
 
-  <!-- STOCK ACTUAL -->
-  <div id="tab-stock" class="tab-content active">
-    <div class="resumen">
-      <div class="resumen-card"><div class="resumen-num azul" id="total-productos">0</div><div class="resumen-label">Productos</div></div>
-      <div class="resumen-card"><div class="resumen-num rojo" id="total-bajo">0</div><div class="resumen-label">Stock bajo</div></div>
-      <div class="resumen-card"><div class="resumen-num verde" id="total-valor">$0</div><div class="resumen-label">Valor total</div></div>
-    </div>
-    <div class="card">
-      <table>
-        <thead>
-          <tr><th>Producto</th><th>Tipo</th><th>Stock</th><th>Comprado</th><th>Usado</th><th>Valor</th></tr>
-        </thead>
-        <tbody id="tbody-stock"></tbody>
-      </table>
-    </div>
-  </div>
+      <!-- ── TAB: STOCK ACTUAL ── -->
+      <div id="tab-stock" class="tab-content active">
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th>Tipo</th>
+                  <th>Stock</th>
+                  <th>Comprado</th>
+                  <th>Usado</th>
+                  <th style="text-align:right;">Valor</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-stock">
+                <tr><td colspan="6" class="activity-empty">Cargando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
 
-  <!-- REGISTRAR EGRESO -->
-  <div id="tab-egreso" class="tab-content">
-    <div class="card">
-      <label>Producto</label>
-      <select id="egr-producto" onchange="cargarStockProducto()">
-        <option value="">Seleccionar producto...</option>
-      </select>
-      <div id="egr-stock-info" style="font-size:13px;color:#666;margin-top:4px;"></div>
-      <label>Cantidad</label>
-      <input type="number" id="egr-cantidad" placeholder="Ej: 5" step="0.01" min="0.01" oninput="checkEgresoReady()">
-      <label>Motivo</label>
-      <select id="egr-motivo" onchange="checkEgresoReady()">
-        <option value="">Seleccionar motivo...</option>
-        <option value="merma">Uso en campo / merma</option>
-        <option value="vencimiento">Vencimiento</option>
-        <option value="perdida">Pérdida</option>
-      </select>
-      <label>Lote destino <span style="font-weight:normal;color:#999;">(opcional)</span></label>
-      <select id="egr-lote">
-        <option value="">Sin lote específico</option>
-      </select>
-      <label>Observación <span style="font-weight:normal;color:#999;">(opcional)</span></label>
-      <input type="text" id="egr-obs" placeholder="Detalle adicional">
-      <label>Fecha</label>
-      <input type="date" id="egr-fecha">
-      <button class="btn btn-red" id="btn-egreso" onclick="registrarEgreso(this)" disabled>Registrar egreso</button>
-      <div id="msg-egreso"></div>
-    </div>
-  </div>
+      <!-- ── TAB: REGISTRAR EGRESO ── -->
+      <div id="tab-egreso" class="tab-content">
+        <div class="card-form" style="max-width:480px;">
+          <h3 style="margin-bottom:14px;">Registrar egreso manual</h3>
+          <div class="form-row">
+            <label>Producto</label>
+            <select id="egr-producto" onchange="cargarStockProducto()">
+              <option value="">Seleccionar producto...</option>
+            </select>
+            <div id="egr-stock-info" style="font-size:12px;color:var(--texto-suave);margin-top:4px;"></div>
+          </div>
+          <div class="form-row">
+            <label>Cantidad</label>
+            <input type="number" id="egr-cantidad" placeholder="Ej: 5" step="0.01" min="0.01" oninput="checkEgresoReady()">
+          </div>
+          <div class="form-row">
+            <label>Motivo</label>
+            <select id="egr-motivo" onchange="checkEgresoReady()">
+              <option value="">Seleccionar motivo...</option>
+              <option value="merma">Uso en campo / merma</option>
+              <option value="vencimiento">Vencimiento</option>
+              <option value="perdida">Pérdida</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label>Lote destino <span style="font-weight:normal;color:var(--texto-suave);">(opcional)</span></label>
+            <select id="egr-lote">
+              <option value="">Sin lote específico</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label>Observación <span style="font-weight:normal;color:var(--texto-suave);">(opcional)</span></label>
+            <input type="text" id="egr-obs" placeholder="Detalle adicional">
+          </div>
+          <button class="btn btn-danger" id="btn-egreso" onclick="registrarEgreso(this)" disabled style="margin-top:14px;">
+            Registrar egreso
+          </button>
+          <div id="msg-egreso"></div>
+        </div>
+      </div>
 
-  <!-- REGISTRAR APLICACION -->
-  <div id="tab-aplicacion" class="tab-content">
-    <div class="acceso-rapido">
-      <p>Para registrar una aplicacion de producto a un lote usa el modulo de Aplicaciones</p>
-      <button class="btn btn-blue" onclick="location.href='aplicaciones.html'" style="margin-top:0;">Ir a Aplicaciones</button>
-    </div>
-  </div>
+      <!-- ── TAB: HISTORIAL ── -->
+      <div id="tab-historial" class="tab-content">
+        <div class="card-form" style="padding:14px 16px;margin-bottom:12px;">
+          <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+            <div class="form-row" style="margin:0;flex:1;min-width:120px;">
+              <label style="font-size:11px;">Producto</label>
+              <select id="hist-producto" style="font-size:12px;padding:5px 7px;">
+                <option value="">Todos</option>
+              </select>
+            </div>
+            <div class="form-row" style="margin:0;flex:1;min-width:100px;">
+              <label style="font-size:11px;">Tipo</label>
+              <select id="hist-tipo" style="font-size:12px;padding:5px 7px;">
+                <option value="">Todos</option>
+                <option value="compra">Compra</option>
+                <option value="aplicacion">Aplicación</option>
+                <option value="merma">Merma</option>
+                <option value="vencimiento">Vencimiento</option>
+                <option value="perdida">Pérdida</option>
+              </select>
+            </div>
+            <div class="form-row" style="margin:0;flex:1;min-width:120px;">
+              <label style="font-size:11px;">Desde</label>
+              <input type="date" id="hist-desde" style="font-size:12px;padding:5px 7px;">
+            </div>
+            <div class="form-row" style="margin:0;flex:1;min-width:120px;">
+              <label style="font-size:11px;">Hasta</label>
+              <input type="date" id="hist-hasta" style="font-size:12px;padding:5px 7px;">
+            </div>
+            <button class="btn btn-secondary" onclick="cargarHistorial()" style="font-size:12px;padding:6px 14px;margin-bottom:0;height:fit-content;">
+              🔍 Filtrar
+            </button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table style="table-layout:auto;">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Producto</th>
+                  <th>Tipo</th>
+                  <th style="text-align:right;">Cantidad</th>
+                  <th>Lote</th>
+                  <th>Observación</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-historial">
+                <tr><td colspan="6" class="activity-empty">Cargando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
 
     </div>
   </div>
 
   <!-- ── BOTTOM NAV ── -->
   <nav class="bottom-nav">
-    
     <a href="index.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="home"></i></span><span>Inicio</span></a>
     <a href="juntada.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="wheat"></i></span><span>Cosecha</span></a>
     <a href="despalillado.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="scissors"></i></span><span>Despalillado</span></a>
@@ -175,119 +235,170 @@ h1 { color: #1565c0; text-align: center; margin-bottom: 20px; }
   lucide.createIcons();
   document.getElementById('topbar-date').textContent =
     new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
-</script>
-<script>
-    function showTab(tab, el) {
-      document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.remove('active'); });
-      document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
-      document.getElementById('tab-' + tab).classList.add('active');
-      el.classList.add('active');
-    }
 
-    function cargarStock() {
-      fetch('/api/stock-insumos')
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-          var tbody = document.getElementById('tbody-stock');
-          if (!data.length) {
-            tbody.innerHTML = '<tr><td colspan="6" class="empty">Sin productos registrados</td></tr>';
-            return;
-          }
-          var totalValor = 0;
-          var bajosCount = 0;
-          tbody.innerHTML = data.map(function(p) {
-            var stock = parseFloat(p.stock_actual) || 0;
-            var valor = stock * (parseFloat(p.costo_unitario) || 0);
-            totalValor += valor;
-            var bajo = stock <= 2;
-            if (bajo) bajosCount++;
-            return '<tr>' +
-              '<td><strong>' + p.nombre + '</strong></td>' +
-              '<td>' + (p.tipo || '-') + '</td>' +
-              '<td class="' + (bajo ? 'stock-bajo' : 'stock-ok') + '">' + stock.toFixed(2) + ' ' + (p.presentacion || '') + (bajo ? ' ⚠️' : '') + '</td>' +
-              '<td>' + parseFloat(p.total_comprado).toFixed(2) + '</td>' +
-              '<td>' + parseFloat(p.total_usado).toFixed(2) + '</td>' +
-              '<td>$' + valor.toLocaleString('es-AR') + '</td>' +
-              '</tr>';
-          }).join('');
-          document.getElementById('total-productos').textContent = data.length;
-          document.getElementById('total-bajo').textContent = bajosCount;
-          document.getElementById('total-valor').textContent = '$' + totalValor.toLocaleString('es-AR');
-        });
-    }
+  /* ── Timezone helper ── */
+  function _localDate() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
 
-    cargarStock();
-    cargarEgresoInit();
-    cargarTemporadaActiva();
+  function showTab(tab, el) {
+    document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+    document.getElementById('tab-' + tab).classList.add('active');
+    el.classList.add('active');
+    if (tab === 'historial') cargarHistorial();
+  }
 
-    function cargarEgresoInit() {
-      fetch('/api/stock-insumos').then(function(r){ return r.json(); }).then(function(data) {
-        var sel = document.getElementById('egr-producto');
-        sel.innerHTML = '<option value="">Seleccionar producto...</option>' +
-          data.map(function(p){ return '<option value="'+p.id+'" data-stock="'+(parseFloat(p.stock_actual)||0)+'">'+p.nombre+'</option>'; }).join('');
-      });
-      fetch('/api/lotes').then(function(r){ return r.json(); }).then(function(data) {
-        var sel = document.getElementById('egr-lote');
-        sel.innerHTML = '<option value="">Sin lote específico</option>' +
-          data.map(function(l){ return '<option value="'+l.id+'">'+l.nombre+'</option>'; }).join('');
-      });
-      document.getElementById('egr-fecha').value = new Date().toISOString().split('T')[0];
-    }
+  /* ── Stock actual ── */
+  function cargarStock() {
+    fetch('/api/stock-insumos').then(function(r) { return r.json(); }).then(function(data) {
+      var tbody = document.getElementById('tbody-stock');
+      if (!data.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="activity-empty">Sin productos registrados</td></tr>';
+        return;
+      }
+      var totalValor = 0, bajosCount = 0;
+      tbody.innerHTML = data.map(function(p) {
+        var stock = parseFloat(p.stock_actual) || 0;
+        var valor = stock * (parseFloat(p.costo_unitario) || 0);
+        totalValor += valor;
+        var bajo = stock <= 2;
+        if (bajo) bajosCount++;
+        return '<tr>' +
+          '<td><strong>' + p.nombre + '</strong></td>' +
+          '<td style="font-size:12px;color:var(--texto-suave);">' + (p.tipo || '—') + '</td>' +
+          '<td class="' + (bajo ? 'stock-bajo' : 'stock-ok') + '">' + stock.toFixed(2) + ' ' + (p.presentacion || '') + (bajo ? ' ⚠️' : '') + '</td>' +
+          '<td style="font-size:12px;">' + parseFloat(p.total_comprado).toFixed(2) + '</td>' +
+          '<td style="font-size:12px;">' + parseFloat(p.total_usado).toFixed(2) + '</td>' +
+          '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;">$' + valor.toLocaleString('es-AR') + '</td>' +
+          '</tr>';
+      }).join('');
+      document.getElementById('kpi-productos').textContent = data.length;
+      document.getElementById('kpi-bajo').textContent = bajosCount;
+      document.getElementById('kpi-valor').textContent = '$' + totalValor.toLocaleString('es-AR');
+    });
+  }
 
-    function cargarStockProducto() {
+  /* ── Inicializar tab egreso ── */
+  function cargarEgresoInit() {
+    fetch('/api/stock-insumos').then(function(r) { return r.json(); }).then(function(data) {
       var sel = document.getElementById('egr-producto');
-      var opt = sel.options[sel.selectedIndex];
-      var info = document.getElementById('egr-stock-info');
-      if (!sel.value) { info.textContent = ''; checkEgresoReady(); return; }
-      var stock = parseFloat(opt.getAttribute('data-stock')) || 0;
-      info.textContent = 'Stock disponible: ' + stock.toFixed(2);
-      info.style.color = stock > 0 ? '#2d6a4f' : '#c0392b';
-      checkEgresoReady();
-    }
+      sel.innerHTML = '<option value="">Seleccionar producto...</option>' +
+        data.map(function(p) {
+          return '<option value="' + p.id + '" data-stock="' + (parseFloat(p.stock_actual)||0) + '">' + p.nombre + '</option>';
+        }).join('');
+      // También llenar el filtro de producto del historial
+      var histProd = document.getElementById('hist-producto');
+      histProd.innerHTML = '<option value="">Todos</option>' +
+        data.map(function(p) {
+          return '<option value="' + p.id + '">' + p.nombre + '</option>';
+        }).join('');
+    });
+    fetch('/api/lotes').then(function(r) { return r.json(); }).then(function(data) {
+      document.getElementById('egr-lote').innerHTML = '<option value="">Sin lote específico</option>' +
+        data.map(function(l) { return '<option value="' + l.id + '">' + l.nombre + '</option>'; }).join('');
+    });
+  }
 
-    function checkEgresoReady() {
-      var ok = document.getElementById('egr-producto').value &&
-               parseFloat(document.getElementById('egr-cantidad').value) > 0 &&
-               document.getElementById('egr-motivo').value;
-      document.getElementById('btn-egreso').disabled = !ok;
-    }
+  function cargarStockProducto() {
+    var sel = document.getElementById('egr-producto');
+    var opt = sel.options[sel.selectedIndex];
+    var info = document.getElementById('egr-stock-info');
+    if (!sel.value) { info.textContent = ''; checkEgresoReady(); return; }
+    var stock = parseFloat(opt.getAttribute('data-stock')) || 0;
+    info.textContent = 'Stock disponible: ' + stock.toFixed(2);
+    info.style.color = stock > 0 ? 'var(--verde)' : '#c0392b';
+    checkEgresoReady();
+  }
 
-    function registrarEgreso(btn) {
-      var producto_id = document.getElementById('egr-producto').value;
-      var cantidad    = parseFloat(document.getElementById('egr-cantidad').value);
-      var motivo      = document.getElementById('egr-motivo').value;
-      var lote_id     = document.getElementById('egr-lote').value || null;
-      var observacion = document.getElementById('egr-obs').value;
-      var msgEl = document.getElementById('msg-egreso');
-      btn.disabled = true;
-      fetch('/api/stock-insumos/egreso', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ producto_id: parseInt(producto_id), cantidad: cantidad, motivo: motivo, lote_id: lote_id ? parseInt(lote_id) : null, observacion: observacion })
-      }).then(function(r){ return r.json(); }).then(function(data) {
-        if (data.ok) {
-          msgEl.className = 'msg-success';
-          msgEl.textContent = 'Egreso registrado correctamente';
-          document.getElementById('egr-producto').value = '';
-          document.getElementById('egr-cantidad').value = '';
-          document.getElementById('egr-motivo').value = '';
-          document.getElementById('egr-lote').value = '';
-          document.getElementById('egr-obs').value = '';
-          document.getElementById('egr-stock-info').textContent = '';
-          btn.disabled = true;
-          cargarStock();
-          cargarEgresoInit();
-        } else {
-          msgEl.className = 'msg-error';
-          msgEl.textContent = data.error || 'Error al registrar egreso';
-          btn.disabled = false;
-        }
-      }).catch(function(e) {
-        msgEl.className = 'msg-error';
-        msgEl.textContent = 'Error de conexión';
+  function checkEgresoReady() {
+    var ok = document.getElementById('egr-producto').value &&
+             parseFloat(document.getElementById('egr-cantidad').value) > 0 &&
+             document.getElementById('egr-motivo').value;
+    document.getElementById('btn-egreso').disabled = !ok;
+  }
+
+  function registrarEgreso(btn) {
+    var producto_id = document.getElementById('egr-producto').value;
+    var cantidad    = parseFloat(document.getElementById('egr-cantidad').value);
+    var motivo      = document.getElementById('egr-motivo').value;
+    var lote_id     = document.getElementById('egr-lote').value || null;
+    var observacion = document.getElementById('egr-obs').value;
+    var msgEl       = document.getElementById('msg-egreso');
+    btn.disabled = true;
+    fetch('/api/stock-insumos/egreso', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ producto_id: parseInt(producto_id), cantidad, motivo, lote_id: lote_id ? parseInt(lote_id) : null, observacion })
+    }).then(function(r) { return r.json(); }).then(function(data) {
+      if (data.ok) {
+        mostrarMensaje('msg-egreso', 'success', 'Egreso registrado correctamente');
+        ['egr-producto','egr-cantidad','egr-motivo','egr-lote','egr-obs'].forEach(function(id) {
+          document.getElementById(id).value = '';
+        });
+        document.getElementById('egr-stock-info').textContent = '';
+        btn.disabled = true;
+        cargarStock();
+        cargarEgresoInit();
+      } else {
+        mostrarMensaje('msg-egreso', 'error', data.error || 'Error al registrar egreso');
         btn.disabled = false;
+      }
+    }).catch(function() {
+      mostrarMensaje('msg-egreso', 'error', 'Error de conexión');
+      btn.disabled = false;
+    });
+  }
+
+  /* ── Historial ── */
+  function cargarHistorial() {
+    var producto_id = document.getElementById('hist-producto').value;
+    var tipo        = document.getElementById('hist-tipo').value;
+    var desde       = document.getElementById('hist-desde').value;
+    var hasta       = document.getElementById('hist-hasta').value;
+    var params = [];
+    if (producto_id) params.push('producto_id=' + producto_id);
+    if (tipo)        params.push('tipo=' + tipo);
+    if (desde)       params.push('desde=' + desde);
+    if (hasta)       params.push('hasta=' + hasta);
+    fetch('/api/stock-insumos/historial' + (params.length ? '?' + params.join('&') : ''))
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var tbody = document.getElementById('tbody-historial');
+        if (!data.length) {
+          tbody.innerHTML = '<tr><td colspan="6" class="activity-empty">Sin movimientos</td></tr>';
+          return;
+        }
+        tbody.innerHTML = data.map(function(m) {
+          var fecha = m.fecha ? new Date(m.fecha).toLocaleString('es-AR', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' }) : '—';
+          var esCompra = m.tipo === 'compra';
+          var bg    = esCompra ? 'background:#f0faf0;' : '';
+          var kgColor = esCompra ? 'color:#2d6a4f;font-weight:700;' : 'color:#c0392b;font-weight:700;';
+          var signo = esCompra ? '+' : '-';
+          var tipoLabel = m.tipo === 'compra' ? 'Compra'
+            : m.tipo === 'aplicacion' ? 'Aplicación'
+            : m.tipo === 'merma'      ? 'Merma'
+            : m.tipo === 'vencimiento' ? 'Vencimiento'
+            : m.tipo === 'perdida'    ? 'Pérdida'
+            : m.tipo;
+          var badgeCls = 'badge badge-' + (m.tipo || 'egreso');
+          return '<tr style="' + bg + '">' +
+            '<td style="font-size:12px;white-space:nowrap;color:var(--texto-suave);">' + fecha + '</td>' +
+            '<td style="font-size:12px;">' + (m.producto || '—') + '</td>' +
+            '<td><span class="' + badgeCls + '">' + tipoLabel + '</span></td>' +
+            '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;' + kgColor + '">' +
+              signo + parseFloat(m.cantidad || 0).toLocaleString('es-AR', {minimumFractionDigits:0,maximumFractionDigits:2}) + ' ' + (m.presentacion || '') + '</td>' +
+            '<td style="font-size:12px;">' + (m.lote || '—') + '</td>' +
+            '<td style="font-size:12px;color:var(--texto-suave);">' + (m.observacion || '—') + '</td>' +
+            '</tr>';
+        }).join('');
       });
-    }
+  }
+
+  cargarStock();
+  cargarEgresoInit();
+  cargarTemporadaActiva();
 </script>
 </body>
 </html>

@@ -4,9 +4,9 @@ const { getPool, sql } = require('../db');
 
 router.get('/', async (req, res) => {
   try {
-    const { temporada_id, lote_id } = req.query;
+    const { temporada_id, lote_id, desde, hasta } = req.query;
     const pool = await getPool();
-    let query = `SELECT a.id, a.fecha_hora, a.cantidad_usada, a.metodo,
+    let query = `SELECT a.id, a.lote_id, a.producto_id, a.fecha_hora, a.cantidad_usada, a.metodo,
                  a.carencia_dias, a.dosis_por_hectarea, a.observacion,
                  a.condicion_climatica, a.costo_total, a.unidad_aplicacion,
                  l.nombre AS lote,
@@ -28,6 +28,8 @@ router.get('/', async (req, res) => {
     const dbReq = pool.request();
     if (temporada_id) { query += ` AND a.temporada_id = @temporada_id`; dbReq.input('temporada_id', sql.Int, parseInt(temporada_id)); }
     if (lote_id)      { query += ` AND a.lote_id = @lote_id`;           dbReq.input('lote_id', sql.Int, parseInt(lote_id)); }
+    if (desde)        { query += ` AND CAST(a.fecha_hora AS DATE) >= @desde`; dbReq.input('desde', sql.Date, desde); }
+    if (hasta)        { query += ` AND CAST(a.fecha_hora AS DATE) <= @hasta`; dbReq.input('hasta', sql.Date, hasta); }
     query += ` ORDER BY a.fecha_hora DESC`;
     const result = await dbReq.query(query);
     res.json(result.recordset);

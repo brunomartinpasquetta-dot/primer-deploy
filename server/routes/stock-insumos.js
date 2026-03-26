@@ -124,6 +124,33 @@ router.post('/egreso', async (req, res) => {
   }
 });
 
+// Historial general de movimientos (todos los productos)
+router.get('/historial', async (req, res) => {
+  try {
+    const { producto_id, lote_id, tipo, desde, hasta } = req.query;
+    const pool = await getPool();
+    const dbReq = pool.request();
+    let where = '1=1';
+    if (producto_id) { where += ' AND s.producto_id = @producto_id'; dbReq.input('producto_id', sql.Int, parseInt(producto_id)); }
+    if (lote_id)     { where += ' AND s.lote_id = @lote_id';         dbReq.input('lote_id', sql.Int, parseInt(lote_id)); }
+    if (tipo)        { where += ' AND s.tipo = @tipo';               dbReq.input('tipo', sql.NVarChar, tipo); }
+    if (desde)       { where += ' AND CAST(s.fecha AS DATE) >= @desde'; dbReq.input('desde', sql.Date, desde); }
+    if (hasta)       { where += ' AND CAST(s.fecha AS DATE) <= @hasta'; dbReq.input('hasta', sql.Date, hasta); }
+    const result = await dbReq.query(`
+      SELECT s.id, s.tipo, s.cantidad, s.costo_total, s.fecha, s.proveedor, s.observacion,
+             p.nombre AS producto, p.presentacion,
+             l.nombre AS lote
+      FROM StockInsumos s
+      JOIN Productos p ON s.producto_id = p.id
+      LEFT JOIN Lotes l ON s.lote_id = l.id
+      WHERE ${where}
+      ORDER BY s.fecha DESC`);
+    res.json(result.recordset);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Historial de movimientos de un producto
 router.get('/historial/:producto_id', async (req, res) => {
   try {
