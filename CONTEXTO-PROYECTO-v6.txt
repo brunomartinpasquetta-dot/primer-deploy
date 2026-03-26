@@ -1,0 +1,155 @@
+PROYECTO: CosechaApp - ERP Gestión de Cultivos
+===============================================
+Desarrollado por: Bruno Pasquetta
+Estado: En desarrollo activo
+Última actualización: 25/03/2026
+
+CONTEXTO DEL NEGOCIO
+---------------------
+Sistema ERP genérico para gestión de cosecha agrícola.
+Nombre: CosechaApp — Gestión de Cultivos
+Nicho: Productores pequeños y medianos argentinos sin sistema de gestión
+Aplica a: frutilla, soja, trigo, arándanos, vid, zapallitos, cualquier cultivo
+Usuarios: productores, encargados de campo, operarios
+Dispositivos: celular en campo + PC en oficina/galpón
+
+IDENTIDAD VISUAL
+-----------------
+Nombre: COSECHA (CO blanco, SE #F5A623 dorado, CHA blanco)
+Logo: public/img/logo-icon.png
+Paleta: verde oscuro #2D5016 primario, dorado #F5A623 acento, crema #F7F3EE fondo
+Tipografía: DM Sans + JetBrains Mono (datos)
+CSS compartido: public/cosecha.css
+Diseño: sidebar izquierdo + topbar + contenido principal, responsive
+
+COLORES SEMÁNTICOS (únicos colores alternativos permitidos):
+- Verde #2d6a4f → ingreso, positivo, stock OK, activo
+- Rojo #c0392b → egreso, negativo, error, stock bajo
+- Amarillo #f39c12 → advertencia, carencia, pendiente
+- Azul #1565c0 → información neutral
+- Gris #666 → inactivo, secundario
+
+STACK TECNOLÓGICO
+------------------
+- Servidor: Node.js v24 + Express (puerto 3000)
+- Base de datos: SQL Server (Docker, puerto 1433)
+- WebSocket: balanza RS232 (librería ws)
+- Frontend: HTML + JS vanilla + cosecha.css
+- Entorno desarrollo: Mac con VS Code + Claude Code
+- Entorno producción: PC Windows en el galpón
+
+CREDENCIALES — SOLO VIA .env (nunca hardcodeadas)
+---------------------------------------------------
+- DB_SERVER=localhost
+- DB_PORT=1433
+- DB_NAME=CosechaFrutilla
+- DB_USER=sa
+- DB_PASSWORD=Frutilla2026!
+- JWT_SECRET=<en .env local>
+- .env está en .gitignore — .env.example en el repo
+
+COMO INICIAR EL SISTEMA
+------------------------
+1. Abrir Docker Desktop
+2. cd ~/cosecha-app && node server/index.js
+3. Abrir http://localhost:3000
+Puerto ocupado: kill -9 $(lsof -t -i:3000)
+Claude Code: cd ~/cosecha-app && claude --dangerously-skip-permissions
+
+BASE DE DATOS — 27 TABLAS
+--------------------------
+Aplicaciones, Caja, CategoriasGasto, Cheques, Clientes,
+Compras, ComprasDetalle, Configuracion,
+CuentaCorrienteClientes, CuentaCorrienteProveedores,
+Depositos, Despalillado, FormasPago, Gastos,
+Juntada, Juntadores, Lotes, MovimientosDeposito,
+Pagos, Personal, PrecioHistorico, Productos,
+Proveedores, StockInsumos, StockMercaderia,
+Temporadas, Usuarios
+
+ÍNDICES: 36 índices secundarios en FK de alta frecuencia
+CHECK CONSTRAINT: CK_StockMercaderia_tipo activo
+
+TIPOS VÁLIDOS POR TABLA:
+- StockMercaderia.tipo: 'ingreso' | 'egreso_venta'
+- MovimientosDeposito.tipo: 'ingreso' | 'egreso_venta' | 'egreso_descarte'
+- Juntada.destino: 'deposito' | 'descarte' (sin_asignar solo en registros históricos)
+
+ARQUITECTURA DE MÓDULOS
+------------------------
+CAMPO: Cosecha (juntada.html), Despalillado, Aplicaciones
+STOCK: Stock Insumos, Stock Mercadería, Depósitos
+COMERCIAL: Compras, Proveedores, Clientes, Cta. Proveedores, Cta. Clientes
+ADMINISTRACIÓN: Caja, Cheques, Pagos, Gastos, Reportes, Balance, Personal
+CONFIGURACIÓN: Temporadas/Campañas, Lotes, Trabajadores, Productos, Usuarios
+MERCADO: Dólar, Pizarra Rosario, Frutilla, Simulador
+
+REGLAS DE CAMPAÑA
+------------------
+- Solo UNA campaña activa a la vez
+- Al activar una campaña se desactiva la actual automáticamente
+- TODOS los módulos precargan la temporada activa automáticamente en sus selectores
+- Patrón: fetch('/api/temporadas/activa') → setear select → disparar evento change
+
+LÓGICA DE NEGOCIO — REGLAS INAMOVIBLES
+----------------------------------------
+1. VENTA → INGRESO en Caja + EGRESO en MovimientosDeposito + EGRESO en StockMercaderia
+2. DESCARTE → EGRESO en MovimientosDeposito (tipo='egreso_descarte') — NO mueve Caja
+3. COMPRA efectivo → EGRESO automático en Caja dentro de la misma transacción
+4. COMPRA CC → débito en CuentaCorrienteProveedores
+5. INGRESO depósito → INSERT MovimientosDeposito + UPDATE StockMercaderia
+6. JUNTADA → destino obligatorio: 'deposito' o 'descarte'
+   - Suma de kilos asignados debe == kilos cosechados (tolerancia ±0.01)
+   - Cosechero obligatorio antes de registrar
+   - Permite destino mixto: parte depósito + parte descarte en una sola transacción
+
+BALANCE: cosechado = en depósito + vendido + descartado
+
+PATRONES UI ESTABLECIDOS
+-------------------------
+- Layout dos columnas: formulario (220px) + tabla/historial (1fr)
+- Gap entre columnas: 16px
+- En mobile (<900px): una sola columna
+- Historial/movimientos siempre visible en panel derecho — NO como pestaña
+- Formularios colapsables: lista visible primero, form colapsado por defecto
+- KPI cards arriba del contenido principal
+- Filtros de temporada siempre precargan la activa
+
+MÓDULOS DE COTIZACIONES
+------------------------
+- Dólar: dolarapi.com (blue, oficial, MEP, CCL) — caché 30min
+- Granos Rosario: MAGYP FOB — caché 60min
+- Frutilla: scraping preciosdelcentral.com — caché 60min
+
+AUDITORÍA EJECUTADA 25/03/2026
+--------------------------------
+Resultado: 8 CRÍTICOS resueltos | 7 MEDIOS resueltos | 1 MENOR pendiente
+Pipeline: 6 fases completadas + Final Validation
+Commit final hardening: ver git log
+
+BACKLOG DE MEJORAS (no ejecutar sin instrucción explícita)
+-----------------------------------------------------------
+M01. Módulo Ventas en menú Comercial
+M02. Panel lateral fijo con historial en formularios (no pestaña)
+M03. Atajos de Stock → abren módulo Compras desde cualquier lugar
+M04. Stock Insumos — historial movimientos visible panel lateral
+M05. Aplicaciones → egreso automático en Stock Insumos al registrar uso
+M06. Aplicaciones — rediseñar con layout idéntico a juntada.html
+M07. Stock Mercadería — KPI "KG SIN ASIGNAR"
+M08. Cotización dólar en dashboard, no en topbar
+M09. Tabla maestra de Cultivos
+M10. Mejoras en Lotes — ubicación/GPS
+M11. Módulo Ventas dedicado
+M12. Cierre de período financiero
+M13. Conectar balanza RS232
+M14. Script instalación PC Windows
+M15. Modo offline PWA
+M16. Deploy Railway/Azure para demos
+
+MODIFICACIONES POST AUDITORÍA (ejecutadas)
+-------------------------------------------
+PA-01. Cosecha: destino obligatorio sin kilos huérfanos ✅
+PA-02. Stock Mercadería: historial con cosechero y fecha ✅
+PA-03. Stock Mercadería: rediseño pestaña Stock Actual ✅
+PA-04. Stock Mercadería: formato definitivo historial ✅
+PA-05. Cosecha: eliminado destino sin_asignar ✅
