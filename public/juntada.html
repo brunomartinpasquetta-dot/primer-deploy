@@ -893,33 +893,6 @@
       });
   }
 
-  function guardarUltimaJuntada(data) {
-    var ingresos = data.filter(function(m) { return m.tipo === 'ingreso' && m.cosechero; });
-    if (ingresos.length > 0) {
-      _ultimaJuntada = ingresos[0];
-      document.getElementById('btn-repetir').style.display = '';
-    }
-  }
-
-  function repetirUltimaJuntada() {
-    if (!_ultimaJuntada) return;
-    if (_ultimaJuntada.lote_id) {
-      var selLote = document.getElementById('lote');
-      selLote.value = _ultimaJuntada.lote_id;
-      selLote.dispatchEvent(new Event('change'));
-    }
-    if (_ultimaJuntada.juntador_id) {
-      juntadorId = _ultimaJuntada.juntador_id;
-      mostrarChip(_ultimaJuntada.cosechero);
-      var selJunt = document.getElementById('lista-juntadores');
-      if (selJunt) selJunt.value = _ultimaJuntada.juntador_id;
-    }
-    document.getElementById('peso-manual').value = '';
-    pesoActual = null;
-    document.getElementById('sec-destino').style.display = 'none';
-    checkReady();
-  }
-
   function cargarKpisJuntada() {
     var hoy = new Date().toISOString().split('T')[0];
     var loteId = document.getElementById('lote').value;
@@ -949,6 +922,33 @@
         document.getElementById('kpi-campana').textContent =
           parseFloat(data.kg_cosechados || 0).toLocaleString('es-AR', {maximumFractionDigits:1}) + ' kg';
       });
+  }
+
+  function guardarUltimaJuntada(data) {
+    var ingresos = data.filter(function(m){ return m.tipo === 'ingreso' && m.cosechero; });
+    if (ingresos.length > 0) {
+      _ultimaJuntada = ingresos[0];
+      document.getElementById('btn-repetir').style.display = '';
+    }
+  }
+
+  function repetirUltimaJuntada() {
+    if (!_ultimaJuntada) return;
+    if (_ultimaJuntada.lote_id) {
+      var selLote = document.getElementById('lote');
+      selLote.value = _ultimaJuntada.lote_id;
+      selLote.dispatchEvent(new Event('change'));
+    }
+    if (_ultimaJuntada.juntador_id) {
+      juntadorId = _ultimaJuntada.juntador_id;
+      mostrarChip(_ultimaJuntada.cosechero);
+      var selJunt = document.getElementById('lista-juntadores');
+      if (selJunt) selJunt.value = _ultimaJuntada.juntador_id;
+    }
+    document.getElementById('peso-manual').value = '';
+    pesoActual = null;
+    document.getElementById('sec-destino').style.display = 'none';
+    checkReady();
   }
 
   cargarHistorial();
