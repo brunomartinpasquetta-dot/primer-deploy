@@ -83,7 +83,7 @@
       gap: 16px;
       align-items: start;
     }
-    .juntada-form { min-width: 0; max-width: 220px; }
+    .juntada-form { min-width: 0; max-width: 220px; position: relative; z-index: 2; }
 
     /* ── Compactación panel izquierdo ── */
     .juntada-form .card-form { padding: 10px 12px; margin-bottom: 8px; }
@@ -92,8 +92,8 @@
     .juntada-form select { height: 34px !important; font-size: 13px !important; padding: 4px 8px !important; }
     .juntada-form .destino-form-inner input[type="number"] { width: 60% !important; height: 34px !important; font-size: 13px !important; padding: 4px 8px !important; }
     .juntada-form .destino-form-inner select { height: 34px !important; font-size: 13px !important; }
-    .juntada-form .cosechador-modos { gap: 6px; margin-bottom: 8px; }
-    .juntada-form .modo-btn { padding: 8px 6px; font-size: 12px; }
+    .juntada-form .cosechador-modos { gap: 4px; margin-bottom: 6px; }
+    .juntada-form .modo-btn { padding: 5px 4px; font-size: 11px; min-height: 28px; }
     .juntada-form .juntador-chip { padding: 8px 10px; margin-top: 8px; }
     .juntada-form #btn-registrar { height: 40px; font-size: 14px !important; padding: 8px 16px; width: 100%; }
     .juntada-historial {
@@ -101,6 +101,23 @@
       border: 1px solid var(--borde);
       border-radius: 12px;
       overflow: hidden;
+      position: relative;
+      z-index: 1;
+    }
+    /* Grilla movimientos compacta con columnas auto-ajustables */
+    .juntada-historial table {
+      table-layout: auto;
+      width: 100%;
+    }
+    .juntada-historial th {
+      padding: 6px 8px;
+      font-size: 10px;
+      white-space: nowrap;
+    }
+    .juntada-historial td {
+      padding: 5px 8px;
+      font-size: 12px;
+      white-space: nowrap;
     }
     .juntada-historial-header {
       padding: 14px 16px 12px;
@@ -239,31 +256,31 @@
     .juntada-kpis {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-bottom: 20px;
+      gap: 8px;
+      margin-bottom: 12px;
     }
     .juntada-kpi {
       background: white;
       border: 1px solid var(--borde);
-      border-top: 4px solid var(--verde);
-      border-radius: 10px;
-      padding: 16px 20px;
+      border-top: 3px solid var(--verde);
+      border-radius: 8px;
+      padding: 6px 8px;
       text-align: center;
     }
     .juntada-kpi-label {
-      font-size: 11px;
+      font-size: 9px;
       font-weight: 700;
       color: var(--texto-suave);
       text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 8px;
+      letter-spacing: 0.06em;
+      margin-bottom: 2px;
     }
     .juntada-kpi-valor {
-      font-size: 32px;
+      font-size: 16px;
       font-weight: 700;
       color: var(--verde);
       font-family: 'JetBrains Mono', monospace;
-      letter-spacing: -1px;
+      letter-spacing: -0.5px;
     }
     @media (max-width: 600px) { .juntada-kpis { grid-template-columns: 1fr 1fr; } }
 
