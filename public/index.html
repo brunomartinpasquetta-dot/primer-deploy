@@ -11,11 +11,40 @@
   <script src="js/cotizaciones.js"></script>
   <link rel="stylesheet" href="cosecha.css">
   <style>
-    /* ── Temporada banner ── */
-    .temporada-banner {
-      background: linear-gradient(135deg, var(--verde-dark) 0%, var(--verde-mid) 100%);
-      border-radius: var(--radius-lg);
-      padding: 16px 20px;
+    /* ── Cotización dólar ── */
+    #barra-dolar {
+      background: #fff;
+      border: 1px solid var(--borde);
+      border-radius: 12px;
+      padding: 10px 20px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      box-shadow: 0 1px 4px rgba(0,0,0,.05);
+    }
+    .dolar-label {
+      font-size: 10px; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; color: var(--texto-suave); margin-right: 6px;
+    }
+    .dolar-item {
+      display: flex; align-items: center; gap: 5px;
+      padding: 4px 10px; border-radius: 8px; background: var(--fondo-dark);
+    }
+    .dolar-tag { font-size: 11px; color: var(--texto-suave); font-weight: 600; }
+    .dolar-item strong { font-size: 13px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+    #bd-blue    { color: #1e40af; }
+    #bd-oficial { color: #047857; }
+    #bd-mep     { color: #6d28d9; }
+    #bd-ccl     { color: #b45309; }
+    #bd-actualizado { margin-left: auto; font-size: 11px; color: var(--texto-suave); }
+
+    /* ── Temporada cápsula ── */
+    .temporada-capsule {
+      background: #2D5016;
+      border-radius: 50px;
+      padding: 11px 22px;
       margin-bottom: 20px;
       display: flex;
       align-items: center;
@@ -23,101 +52,124 @@
       gap: 12px;
       flex-wrap: wrap;
     }
-    .temporada-banner.no-temporada {
-      background: var(--warn-bg);
-      border: 1px solid var(--warn-border);
-    }
-    .temporada-nombre {
-      color: white;
-      font-size: 16px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+    .temporada-capsule-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .temporada-dot {
-      width: 8px; height: 8px;
-      background: #4ADE80;
-      border-radius: 50%;
-      box-shadow: 0 0 0 3px rgba(74,222,128,.25);
-      flex-shrink: 0;
+      width: 8px; height: 8px; background: #4ADE80;
+      border-radius: 50%; box-shadow: 0 0 0 3px rgba(74,222,128,.25); flex-shrink: 0;
     }
-    .temporada-meta {
-      color: rgba(255,255,255,0.65);
-      font-size: 12px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
+    .temporada-capsule-nombre { color: #fff; font-size: 15px; font-weight: 700; }
+    .temporada-capsule-badge {
+      background: rgba(255,255,255,.15); color: rgba(255,255,255,.9);
+      border-radius: 20px; padding: 3px 10px; font-size: 11px; font-weight: 600;
     }
-    .temporada-badge {
-      background: rgba(255,255,255,0.15);
-      color: rgba(255,255,255,0.9);
-      border-radius: 20px;
-      padding: 3px 10px;
-      font-size: 12px;
-      font-weight: 600;
+    .temporada-capsule-link {
+      color: rgba(255,255,255,.7); font-size: 12px; font-weight: 600;
+      text-decoration: none; white-space: nowrap; transition: color .15s;
     }
-    .no-temporada-msg {
-      color: var(--warn-text);
-      font-size: 14px;
-      font-weight: 600;
+    .temporada-capsule-link:hover { color: #fff; }
+    .no-temporada-banner {
+      background: var(--warn-bg); border: 1px solid var(--warn-border);
+      border-radius: 12px; padding: 14px 20px; margin-bottom: 20px;
+      display: flex; align-items: center; justify-content: space-between;
     }
+    .no-temporada-msg { color: var(--warn-text); font-size: 14px; font-weight: 600; }
+
     /* ── Section labels ── */
     .section-label {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 1.2px;
-      text-transform: uppercase;
-      color: var(--texto-suave);
-      margin: 20px 0 10px;
+      font-size: 11px; font-weight: 700; letter-spacing: 1.2px;
+      text-transform: uppercase; color: var(--texto-suave); margin: 20px 0 10px;
     }
-    /* ── KPI cards ── */
+
+    /* ── KPI Cards ── */
     .stat-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
     @media (max-width: 900px) { .stat-grid-4 { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 480px) { .stat-grid-4 { grid-template-columns: repeat(2, 1fr); gap: 8px; } }
     .kpi {
-      background: var(--superficie);
-      border-radius: var(--radius-lg);
-      padding: 16px;
-      box-shadow: var(--shadow-sm);
-      border: 1px solid var(--borde);
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.07);
+      border: 1px solid rgba(0,0,0,.06);
       display: flex;
       flex-direction: column;
       gap: 4px;
     }
+    /* Neutralizar modificadores de borde izquierdo */
+    .kpi--verde, .kpi--tierra, .kpi--azul, .kpi--alerta, .kpi--ok, .kpi--warn { border-left: none; }
+    .kpi-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 4px; }
     .kpi-label { font-size: 11px; color: var(--texto-suave); font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; }
-    .kpi-value { font-size: 24px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--texto); line-height: 1.1; }
+    .kpi-icon {
+      width: 34px; height: 34px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .kpi-icon svg { width: 16px; height: 16px; }
+    .kpi-icon--verde   { background: #eef7ee; color: #2d6a4f; }
+    .kpi-icon--tierra  { background: #fef3e2; color: #92400e; }
+    .kpi-icon--azul    { background: #e8f0fe; color: #1565c0; }
+    .kpi-icon--alerta  { background: #fde8e8; color: #c0392b; }
+    .kpi-icon--ok      { background: #e8f5e2; color: #16a34a; }
+    .kpi-icon--warn    { background: #fff3cd; color: #856404; }
+    .kpi-value { font-size: 28px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--texto); line-height: 1.1; }
     .kpi-sub   { font-size: 12px; color: var(--texto-suave); }
-    .kpi--verde  { border-left: 3px solid var(--verde-mid); }
-    .kpi--tierra { border-left: 3px solid var(--tierra); }
-    .kpi--azul   { border-left: 3px solid #3B82F6; }
-    .kpi--alerta { border-left: 3px solid #DC2626; }
-    .kpi--ok     { border-left: 3px solid #16A34A; }
-    .kpi--warn   { border-left: 3px solid var(--trigo); }
     .kpi-value.red   { color: #DC2626; }
     .kpi-value.green { color: #16A34A; }
-    /* ── Dash two cols ── */
+
+    /* ── Dos columnas inferiores ── */
     .dash-cols { display: grid; grid-template-columns: 3fr 2fr; gap: 16px; }
     @media (max-width: 900px) { .dash-cols { grid-template-columns: 1fr; } }
-    /* ── Alertas ── */
-    .alerta-item {
-      display: flex; align-items: flex-start; gap: 10px;
-      padding: 10px 0; border-bottom: 1px solid var(--borde); font-size: 13px;
+
+    /* ── Header tabla registros ── */
+    #tabla-registros-dia thead th {
+      background: #2D5016; color: #fff;
+      font-weight: 700; text-transform: uppercase;
+      font-size: 11px; letter-spacing: .5px; padding: 11px 12px;
     }
-    .alerta-item:last-child { border-bottom: none; }
-    .alerta-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
-    .dot-red    { background: #DC2626; }
-    .dot-orange { background: #F59E0B; }
-    .dot-blue   { background: #3B82F6; }
-    .alerta-title { font-weight: 600; color: var(--texto); }
-    .alerta-desc  { color: var(--texto-suave); font-size: 12px; margin-top: 1px; }
+    #tabla-registros-dia tbody td { padding: 10px 12px; }
+
+    /* ── Alertas con barra lateral ── */
+    .alerta-v2 {
+      display: flex; align-items: stretch; gap: 12px;
+      padding: 10px 0; border-bottom: 1px solid var(--borde);
+    }
+    .alerta-v2:last-child { border-bottom: none; }
+    .alerta-bar {
+      width: 4px; border-radius: 4px; flex-shrink: 0; min-height: 38px;
+    }
+    .alerta-bar--red    { background: #D32F2F; }
+    .alerta-bar--orange { background: #F59E0B; }
+    .alerta-bar--blue   { background: #3B82F6; }
+    .alerta-title { font-weight: 600; color: var(--texto); font-size: 13px; }
+    .alerta-desc  { color: var(--texto-suave); font-size: 12px; margin-top: 2px; }
     .no-alertas {
       color: var(--texto-suave); font-size: 13px; text-align: center;
       padding: 16px 0; display: flex; align-items: center; justify-content: center; gap: 6px;
     }
     .empty-row td { color: var(--texto-suave); text-align: center; font-size: 13px; padding: 20px; }
-    /* Banner "Activa" pill (distinct from topbar .temporada-badge) */
-    .badge-activa { background: rgba(255,255,255,0.20); color: white; border-radius: 20px; padding: 2px 10px; font-size: 11px; font-weight: 600; }
+
+    /* ── Action cards override ── */
+    .action-card {
+      background: #fff !important;
+      border: 1.5px solid var(--borde) !important;
+      border-radius: 12px !important;
+      color: var(--texto) !important;
+    }
+    .action-card:hover {
+      border-color: #2D5016 !important;
+      color: #2D5016 !important;
+      transform: translateY(-2px);
+    }
+    .action-card--primary {
+      background: #2D5016 !important;
+      border-color: #2D5016 !important;
+      color: #fff !important;
+    }
+    .action-card--primary:hover {
+      background: #3a6b1e !important;
+      border-color: #3a6b1e !important;
+      color: #fff !important;
+    }
+    /* Badge activa pill */
+    .badge-activa { background: rgba(255,255,255,.20); color: white; border-radius: 20px; padding: 2px 10px; font-size: 11px; font-weight: 600; }
   </style>
 </head>
 <body>
@@ -173,16 +225,13 @@
       </div>
 
       <!-- Barra cotización dólar -->
-      <div id="barra-dolar" style="background:#fff;border:1px solid var(--borde);border-radius:var(--radius);padding:8px 16px;margin-bottom:16px;display:flex;gap:20px;flex-wrap:wrap;align-items:center;font-family:'JetBrains Mono',monospace;font-size:14px;">
-        <span style="color:var(--texto-suave);font-size:11px;font-family:'DM Sans',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-right:4px;">Dólar</span>
-        <span>Blue <strong id="bd-blue" style="color:#1e40af;">$---</strong></span>
-        <span style="color:var(--borde);">|</span>
-        <span>Oficial <strong id="bd-oficial" style="color:#047857;">$---</strong></span>
-        <span style="color:var(--borde);">|</span>
-        <span>MEP <strong id="bd-mep" style="color:#6d28d9;">$---</strong></span>
-        <span style="color:var(--borde);">|</span>
-        <span>CCL <strong id="bd-ccl" style="color:#b45309;">$---</strong></span>
-        <span id="bd-actualizado" style="margin-left:auto;font-size:11px;font-family:'DM Sans',sans-serif;color:var(--texto-suave);"></span>
+      <div id="barra-dolar">
+        <span class="dolar-label">USD</span>
+        <div class="dolar-item"><span class="dolar-tag">Blue</span><strong id="bd-blue">$---</strong></div>
+        <div class="dolar-item"><span class="dolar-tag">Oficial</span><strong id="bd-oficial">$---</strong></div>
+        <div class="dolar-item"><span class="dolar-tag">MEP</span><strong id="bd-mep">$---</strong></div>
+        <div class="dolar-item"><span class="dolar-tag">CCL</span><strong id="bd-ccl">$---</strong></div>
+        <span id="bd-actualizado"></span>
       </div>
 
       <!-- Banner temporada -->
@@ -220,7 +269,7 @@
             <div id="flujo-bars" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
           </div>
           <div class="table-wrap">
-            <table>
+            <table id="tabla-registros-dia">
               <thead>
                 <tr>
                   <th>Hora</th>
@@ -323,54 +372,56 @@ function cultivoPill(cultivo) {
   return '<span style="background:' + c.bg + ';color:' + c.text + ';border-radius:12px;padding:2px 10px;font-size:12px;font-weight:700;">' + l + '</span>';
 }
 
-function renderDashboard(d) {
-  var activas = d.temporadas_activas || [];
-  var banner  = document.getElementById('temporada-banner');
+/* ── Helper KPI card con ícono ── */
+function kpiCard(label, icon, iconClass, value, sub) {
+  return '<div class="kpi">' +
+    '<div class="kpi-top">' +
+      '<div class="kpi-label">' + label + '</div>' +
+      '<div class="kpi-icon kpi-icon--' + iconClass + '"><i data-lucide="' + icon + '"></i></div>' +
+    '</div>' +
+    '<div class="kpi-value">' + value + '</div>' +
+    '<div class="kpi-sub">' + sub + '</div>' +
+  '</div>';
+}
 
-  // ── Banner temporada ──
+function renderDashboard(d) {
+  var banner = document.getElementById('temporada-banner');
+
+  // ── Banner cápsula temporada ──
   if (d.temporada) {
     var dias = diasTranscurridos(d.temporada.fecha_inicio);
     var cultivoLabel = d.temporada.cultivo ? cultivoPill(d.temporada.cultivo) : '';
     banner.innerHTML =
-      '<div class="temporada-banner">' +
-        '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">' +
+      '<div class="temporada-capsule">' +
+        '<div class="temporada-capsule-left">' +
           '<div class="temporada-dot"></div>' +
-          '<div class="temporada-nombre">\uD83C\uDF31 ' + d.temporada.nombre + '</div>' +
+          '<span class="temporada-capsule-nombre">' + d.temporada.nombre + '</span>' +
           cultivoLabel +
-          (dias !== null ? '<span class="temporada-badge">Día ' + dias + '</span>' : '') +
+          (dias !== null ? '<span class="temporada-capsule-badge">Día ' + dias + '</span>' : '') +
         '</div>' +
-        '<a href="temporadas.html" style="color:rgba(255,255,255,0.75);font-size:12px;font-weight:600;text-decoration:none;white-space:nowrap;">Cambiar campaña →</a>' +
+        '<a href="temporadas.html" class="temporada-capsule-link">Cambiar campaña →</a>' +
       '</div>';
   } else {
     banner.innerHTML =
-      '<div class="temporada-banner no-temporada">' +
-        '<span class="no-temporada-msg">&#9888; No hay campaña activa</span>' +
-        '<a href="temporadas.html" style="font-size:13px;font-weight:600;color:var(--warn-text);">Configurar &rarr;</a>' +
+      '<div class="no-temporada-banner">' +
+        '<span class="no-temporada-msg">⚠️ No hay campaña activa</span>' +
+        '<a href="temporadas.html" style="font-size:13px;font-weight:600;color:var(--warn-text);">Configurar →</a>' +
       '</div>';
   }
 
   // ── KPIs hoy ──
   var kh = d.hoy;
-  var carecClass = kh.alertas_carencia > 0 ? 'kpi--alerta' : 'kpi--ok';
-  var carecColor = kh.alertas_carencia > 0 ? 'red' : 'green';
+  var carecIconClass = kh.alertas_carencia > 0 ? 'alerta' : 'ok';
+  var carecColor     = kh.alertas_carencia > 0 ? 'red' : 'green';
   document.getElementById('kpis-hoy').innerHTML =
-    '<div class="kpi kpi--verde">' +
-      '<div class="kpi-label" data-tooltip="Total de kilos cosechados hoy en todos los lotes">Cosecha hoy</div>' +
-      '<div class="kpi-value">' + fmt(kh.kilos_cosechados) + '</div>' +
-      '<div class="kpi-sub">' + kh.registros + ' registro' + (kh.registros !== 1 ? 's' : '') + '</div>' +
-    '</div>' +
-    '<div class="kpi kpi--tierra">' +
-      '<div class="kpi-label" data-tooltip="Kilos procesados en despalillado hoy">Despalillado hoy</div>' +
-      '<div class="kpi-value">' + fmt(kh.kilos_despalillados) + '</div>' +
-      '<div class="kpi-sub">kg procesados</div>' +
-    '</div>' +
-    '<div class="kpi kpi--azul">' +
-      '<div class="kpi-label" data-tooltip="Trabajadores con al menos un registro hoy">Cosechadores</div>' +
-      '<div class="kpi-value">' + kh.cosechadores + '</div>' +
-      '<div class="kpi-sub">activos hoy</div>' +
-    '</div>' +
-    '<div class="kpi ' + carecClass + '">' +
-      '<div class="kpi-label" data-tooltip="Lotes que tienen aplicación reciente y no pueden cosecharse">Carencia</div>' +
+    kpiCard('Cosecha hoy',      'wheat',          'verde',         fmt(kh.kilos_cosechados),   kh.registros + ' registro' + (kh.registros !== 1 ? 's' : '')) +
+    kpiCard('Despalillado hoy', 'scissors',       'tierra',        fmt(kh.kilos_despalillados),'kg procesados') +
+    kpiCard('Cosechadores',     'users',          'azul',          kh.cosechadores,            'activos hoy') +
+    '<div class="kpi">' +
+      '<div class="kpi-top">' +
+        '<div class="kpi-label">Carencia</div>' +
+        '<div class="kpi-icon kpi-icon--' + carecIconClass + '"><i data-lucide="alert-triangle"></i></div>' +
+      '</div>' +
       '<div class="kpi-value ' + carecColor + '">' + kh.alertas_carencia + '</div>' +
       '<div class="kpi-sub">lotes bloqueados</div>' +
     '</div>';
@@ -378,27 +429,18 @@ function renderDashboard(d) {
   // ── KPIs temporada ──
   var ts = d.temporada_stats;
   var saldoColor = parseFloat(ts.saldo_caja) >= 0 ? 'green' : 'red';
-  var labelTemp = document.getElementById('label-temporada-stats');
+  var labelTemp  = document.getElementById('label-temporada-stats');
   if (d.temporada) labelTemp.textContent = 'Campaña · ' + d.temporada.nombre;
   document.getElementById('kpis-temporada').innerHTML =
-    '<div class="kpi kpi--verde">' +
-      '<div class="kpi-label" data-tooltip="Total de kilos cosechados en la temporada activa">Kilos cosechados</div>' +
-      '<div class="kpi-value">' + fmt(ts.kilos_cosechados) + '</div>' +
-      '<div class="kpi-sub">total temporada</div>' +
-    '</div>' +
-    '<div class="kpi kpi--tierra">' +
-      '<div class="kpi-label" data-tooltip="Total vendido en la temporada activa">Kilos vendidos</div>' +
-      '<div class="kpi-value">' + fmt(ts.kilos_vendidos) + '</div>' +
-      '<div class="kpi-sub">total temporada</div>' +
-    '</div>' +
-    '<div class="kpi kpi--azul">' +
-      '<div class="kpi-label" data-tooltip="Kilos en depósito o cámara disponibles para venta">En c\u00E1mara</div>' +
-      '<div class="kpi-value">' + fmt(ts.kilos_camara) + '</div>' +
-      '<div class="kpi-sub">kg disponibles</div>' +
-    '</div>' +
-    '<div class="kpi kpi--warn">' +
-      '<div class="kpi-label" data-tooltip="Ingresos menos egresos acumulados en la temporada">Saldo caja</div>' +
-      '<div class="kpi-value ' + saldoColor + '" style="font-size:18px;">' + fmtPeso(ts.saldo_caja) + '</div>' +
+    kpiCard('Kilos cosechados', 'wheat',         'verde',  fmt(ts.kilos_cosechados), 'total temporada') +
+    kpiCard('Kilos vendidos',   'shopping-cart', 'tierra', fmt(ts.kilos_vendidos),   'total temporada') +
+    kpiCard('En cámara',        'warehouse',     'azul',   fmt(ts.kilos_camara),     'kg disponibles') +
+    '<div class="kpi">' +
+      '<div class="kpi-top">' +
+        '<div class="kpi-label">Saldo caja</div>' +
+        '<div class="kpi-icon kpi-icon--warn"><i data-lucide="banknote"></i></div>' +
+      '</div>' +
+      '<div class="kpi-value ' + saldoColor + '" style="font-size:22px;">' + fmtPeso(ts.saldo_caja) + '</div>' +
       '<div class="kpi-sub" style="font-family:\'JetBrains Mono\',monospace;">' + formatDolares(ts.saldo_caja) + '</div>' +
     '</div>';
 
@@ -458,19 +500,25 @@ function renderDashboard(d) {
   }
   var html = '';
   a.carencia.forEach(function(c) {
-    html += '<div class="alerta-item"><div class="alerta-dot dot-red"></div>' +
+    html += '<div class="alerta-v2">' +
+      '<div class="alerta-bar alerta-bar--red"></div>' +
       '<div><div class="alerta-title">Carencia &middot; ' + c.lote + '</div>' +
-      '<div class="alerta-desc">' + c.producto + ' &mdash; libre: ' + fmtFecha(c.fecha_libre) + '</div></div></div>';
+      '<div class="alerta-desc">' + c.producto + ' — libre: ' + fmtFecha(c.fecha_libre) + '</div></div>' +
+      '</div>';
   });
   a.stock_bajo.forEach(function(s) {
-    html += '<div class="alerta-item"><div class="alerta-dot dot-orange"></div>' +
+    html += '<div class="alerta-v2">' +
+      '<div class="alerta-bar alerta-bar--orange"></div>' +
       '<div><div class="alerta-title">Stock bajo &middot; ' + s.nombre + '</div>' +
-      '<div class="alerta-desc">' + (s.presentacion || s.tipo) + ' &mdash; ' + parseFloat(s.stock_actual || 0) + ' unidades</div></div></div>';
+      '<div class="alerta-desc">' + (s.presentacion || s.tipo) + ' — ' + parseFloat(s.stock_actual || 0) + ' unidades</div></div>' +
+      '</div>';
   });
   a.cheques_vencer.forEach(function(c) {
-    html += '<div class="alerta-item"><div class="alerta-dot dot-blue"></div>' +
+    html += '<div class="alerta-v2">' +
+      '<div class="alerta-bar alerta-bar--blue"></div>' +
       '<div><div class="alerta-title">Cheque vence ' + fmtFecha(c.fecha_vencimiento) + '</div>' +
-      '<div class="alerta-desc">' + (c.banco || '-') + ' &middot; ' + fmtPeso(c.monto) + (c.proveedor ? ' &middot; ' + c.proveedor : '') + '</div></div></div>';
+      '<div class="alerta-desc">' + (c.banco || '-') + ' · ' + fmtPeso(c.monto) + (c.proveedor ? ' · ' + c.proveedor : '') + '</div></div>' +
+      '</div>';
   });
   panel.innerHTML = html;
 }
