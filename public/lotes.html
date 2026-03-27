@@ -9,27 +9,13 @@
   <script src="js/utils.js"></script>
   <link rel="stylesheet" href="cosecha.css">
   <style>
-h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
-    h2 { color: #2D5016; margin-bottom: 12px; font-size: 18px; }
-    .card { background: white; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    label { font-weight: bold; color: #444; display: block; margin-bottom: 4px; margin-top: 8px; font-size: 11px; }
-    input, select { width: 100%; padding: 6px 10px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 13px; height: 36px; }
-    .btn { width: 100%; padding: 7px 16px; font-size: 13px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; margin-top: 8px; min-height: 36px; }
-    .btn-orange { background: #2D5016; color: white; }
-    .btn-orange:disabled { background: #aaa; cursor: not-allowed; }
-    .btn-back { background: #eee; color: #444; margin-top: 16px; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 12px; }
-    th { background: #2D5016; color: white; padding: 10px; text-align: left; }
-    td { padding: 10px; border-bottom: 1px solid #eee; vertical-align: middle; }
-    tr:nth-child(even) td { background: #FAFAF8; }
-    .badge-activo { background: #e8f5e2; color: #2d6a4f; display: inline-block; padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: bold; }
-    .badge-inactivo { background: #eee; color: #666; display: inline-block; padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: bold; }
-    .empty { text-align: center; color: #999; padding: 20px; }
-    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .msg-success { background: #e8f5e2; color: #2d6a4f; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 8px; }
-    .msg-error { background: #fde8e8; color: #c0392b; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 8px; }
-    .page-logo-h1 { height: 44px; width: auto; }
-    @media (max-width: 767px) { .page-logo-h1 { height: 32px; } }
+    .two-col { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .empty { text-align:center; color:var(--texto-suave); padding:20px; }
+    .form-colapsable { display:none; }
+    .form-colapsable.visible { display:block; }
+    .lotes-tab-bar { display:flex; gap:0; margin-bottom:14px; border-bottom:2px solid var(--borde); }
+    .lotes-tab-btn { padding:8px 18px; border:none; background:none; font-weight:700; color:var(--texto-suave); border-bottom:2px solid transparent; margin-bottom:-2px; cursor:pointer; font-size:14px; transition:color .13s, border-color .13s; }
+    .lotes-tab-btn.active { color:var(--verde); border-bottom-color:var(--verde); }
   </style>
   <script src="js/auth-check.js"></script>
 </head>
@@ -122,9 +108,9 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
       </div>
   <div class="card">
     <h2>Lotes registrados</h2>
-    <div style="display:flex;gap:0;margin-bottom:14px;border-bottom:2px solid #eee;">
-      <button id="tab-activa" onclick="mostrarTab('activa')" style="padding:8px 18px;border:none;background:none;font-weight:700;color:#2D5016;border-bottom:2px solid #2D5016;margin-bottom:-2px;cursor:pointer;font-size:14px;">Campaña activa</button>
-      <button id="tab-todos" onclick="mostrarTab('todos')" style="padding:8px 18px;border:none;background:none;font-weight:600;color:#888;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;font-size:14px;">Todos los lotes</button>
+    <div class="lotes-tab-bar">
+      <button id="tab-activa" onclick="mostrarTab('activa')" class="lotes-tab-btn active">Campaña activa</button>
+      <button id="tab-todos" onclick="mostrarTab('todos')" class="lotes-tab-btn">Todos los lotes</button>
     </div>
     <div id="panel-activa">
       <table>
@@ -273,10 +259,8 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
       tabActual = tab;
       document.getElementById('panel-activa').style.display = tab === 'activa' ? '' : 'none';
       document.getElementById('panel-todos').style.display  = tab === 'todos'  ? '' : 'none';
-      document.getElementById('tab-activa').style.color       = tab === 'activa' ? '#2D5016' : '#888';
-      document.getElementById('tab-activa').style.borderBottom = tab === 'activa' ? '2px solid #2D5016' : '2px solid transparent';
-      document.getElementById('tab-todos').style.color        = tab === 'todos'  ? '#2D5016' : '#888';
-      document.getElementById('tab-todos').style.borderBottom  = tab === 'todos'  ? '2px solid #2D5016' : '2px solid transparent';
+      document.getElementById('tab-activa').classList.toggle('active', tab === 'activa');
+      document.getElementById('tab-todos').classList.toggle('active', tab === 'todos');
     }
 
     function cargar(){

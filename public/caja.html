@@ -9,52 +9,21 @@
   <script src="js/utils.js"></script>
   <link rel="stylesheet" href="cosecha.css">
   <style>
-h1 { color: #2d6a4f; text-align: center; margin-bottom: 20px; }
-    h2 { color: #2d6a4f; margin-bottom: 12px; font-size: 18px; }
-    .card { background: white; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    label { font-weight: bold; color: #444; display: block; margin-bottom: 4px; margin-top: 8px; font-size: 11px; }
-    label:first-child { margin-top: 0; }
-    input, select { width: 100%; padding: 6px 10px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 13px; height: 36px; background: white; }
-    input:focus, select:focus { outline: none; border-color: #2d6a4f; }
-    .btn { width: 100%; padding: 7px 16px; font-size: 13px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; margin-top: 8px; min-height: 36px; transition: opacity 0.15s; }
-    .btn:hover:not(:disabled) { opacity: 0.85; }
-    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
-    .btn-green { background: #2d6a4f; color: white; }
-    .btn-back { background: #eee; color: #444; margin-top: 16px; }
-    .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
-    .tab { flex: 1; padding: 8px; text-align: center; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; background: #ddd; color: #444; font-size: 13px; transition: background 0.15s; }
-    .tab.active { background: #2D5016; color: white; }
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-    .table-wrap { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 480px; }
-    th { background: #2D5016; color: white; padding: 10px; text-align: left; white-space: nowrap; }
-    td { padding: 10px; border-bottom: 1px solid #eee; vertical-align: middle; }
-    tr:last-child td { border-bottom: none; }
-    tr:nth-child(even) td { background: #FAFAF8; }
-    .ingreso { color: #2d6a4f; font-weight: bold; }
-    .egreso { color: #c0392b; font-weight: bold; }
-    .alert-success { background: #e8f5e2; color: #2d6a4f; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 8px; }
-    .alert-error { background: #fde8e8; color: #c0392b; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 8px; }
-    .empty { text-align: center; color: #999; padding: 20px; }
-    .resumen { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
-    .resumen-card { background: white; border-radius: 10px; padding: 12px 10px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
-    .resumen-num { font-size: 20px; font-weight: bold; word-break: break-all; }
-    .resumen-num.verde { color: #2d6a4f; }
-    .resumen-num.rojo { color: #c0392b; }
-    .resumen-num.azul { color: #1565c0; }
-    .resumen-label { font-size: 10px; color: #666; margin-top: 3px; }
-    .filtros { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-    .filtros label { font-size: 11px; margin-top: 6px; }
-    .filtros input, .filtros select { height: 36px; padding: 6px 10px; font-size: 13px; }
-    .card.filtros-card { padding: 12px; }
-    @media (max-width: 500px) {
-      .resumen { grid-template-columns: repeat(3, 1fr); gap: 8px; }
-      .resumen-num { font-size: 16px; }
-      .filtros { grid-template-columns: 1fr; }
-    }
-    .page-logo-h1 { height: 44px; width: auto; }
-    @media (max-width: 767px) { .page-logo-h1 { height: 32px; } }
+    .caja-kpis { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:20px; }
+    .caja-kpi { background:var(--superficie); border:1px solid var(--borde); border-radius:12px; box-shadow:var(--shadow-sm); padding:16px 18px; display:flex; flex-direction:column; gap:4px; }
+    .caja-kpi-label { font-size:11px; font-weight:700; color:var(--texto-suave); text-transform:uppercase; letter-spacing:.6px; }
+    .caja-kpi-value { font-size:22px; font-weight:700; letter-spacing:-.3px; line-height:1.2; }
+    .caja-kpi-value.verde { color:var(--sem-verde); }
+    .caja-kpi-value.rojo  { color:var(--sem-rojo); }
+    .caja-kpi-value.azul  { color:var(--sem-azul); }
+    .caja-kpi-sub { font-size:11px; color:var(--texto-suave); font-family:'JetBrains Mono',monospace; }
+    .ingreso { color:var(--sem-verde); font-weight:700; }
+    .egreso  { color:var(--sem-rojo);  font-weight:700; }
+    .empty { text-align:center; color:var(--texto-suave); padding:20px; }
+    .filtros { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .monto-dual { display:flex; flex-direction:column; align-items:flex-end; gap:1px; }
+    .monto-usd { font-size:11px; color:var(--texto-suave); font-family:'JetBrains Mono',monospace; }
+    @media(max-width:600px) { .caja-kpis { grid-template-columns:repeat(3,1fr); gap:8px; } .caja-kpi-value { font-size:16px; } }
   </style>
   <script src="js/auth-check.js"></script>
   <script src="js/cotizaciones.js"></script>
@@ -102,20 +71,20 @@ h1 { color: #2d6a4f; text-align: center; margin-bottom: 20px; }
         <div class="content-sub">Movimientos de caja</div>
       </div>
 
-      <div class="resumen">
-    <div class="resumen-card">
-      <div class="resumen-num verde" id="total-ingresos">$0</div>
-      <div class="resumen-label">Ingresos</div>
-    </div>
-    <div class="resumen-card">
-      <div class="resumen-num rojo" id="total-egresos">$0</div>
-      <div class="resumen-label">Egresos</div>
-    </div>
-    <div class="resumen-card">
-      <div class="resumen-num azul" id="saldo">$0</div>
-      <div class="resumen-label">Saldo</div>
-    </div>
-  </div>
+      <div class="caja-kpis">
+        <div class="caja-kpi">
+          <div class="caja-kpi-label">Ingresos</div>
+          <div class="caja-kpi-value verde" id="total-ingresos">$0</div>
+        </div>
+        <div class="caja-kpi">
+          <div class="caja-kpi-label">Egresos</div>
+          <div class="caja-kpi-value rojo" id="total-egresos">$0</div>
+        </div>
+        <div class="caja-kpi">
+          <div class="caja-kpi-label">Saldo</div>
+          <div class="caja-kpi-value azul" id="saldo">$0</div>
+        </div>
+      </div>
 
   <div class="tabs">
     <button class="tab active" onclick="showTab('movimientos', this)">Movimientos</button>
@@ -260,17 +229,16 @@ h1 { color: #2d6a4f; text-align: center; margin-bottom: 20px; }
         else egresos += parseFloat(m.monto) || 0;
       });
       var saldo = ingresos - egresos;
-      document.getElementById('total-ingresos').innerHTML =
-        '$' + ingresos.toLocaleString('es-AR') +
-        '<div style="font-size:11px;color:#888;font-family:\'JetBrains Mono\',monospace;font-weight:400;margin-top:2px;">' + formatDolares(ingresos) + '</div>';
-      document.getElementById('total-egresos').innerHTML =
-        '$' + egresos.toLocaleString('es-AR') +
-        '<div style="font-size:11px;color:#888;font-family:\'JetBrains Mono\',monospace;font-weight:400;margin-top:2px;">' + formatDolares(egresos) + '</div>';
+      var ingEl = document.getElementById('total-ingresos');
+      ingEl.textContent = '$' + ingresos.toLocaleString('es-AR');
+      ingEl.parentElement.querySelector('.caja-kpi-sub') && (ingEl.parentElement.querySelector('.caja-kpi-sub').textContent = formatDolares(ingresos));
+      var egrEl = document.getElementById('total-egresos');
+      egrEl.textContent = '$' + egresos.toLocaleString('es-AR');
+      egrEl.parentElement.querySelector('.caja-kpi-sub') && (egrEl.parentElement.querySelector('.caja-kpi-sub').textContent = formatDolares(egresos));
       var saldoEl = document.getElementById('saldo');
-      saldoEl.innerHTML =
-        '$' + Math.abs(saldo).toLocaleString('es-AR') + (saldo < 0 ? ' (-)' : '') +
-        '<div style="font-size:11px;color:#888;font-family:\'JetBrains Mono\',monospace;font-weight:400;margin-top:2px;">' + formatDolares(Math.abs(saldo)) + '</div>';
-      saldoEl.className = 'resumen-num ' + (saldo >= 0 ? 'azul' : 'rojo');
+      saldoEl.textContent = '$' + Math.abs(saldo).toLocaleString('es-AR') + (saldo < 0 ? ' (-)' : '');
+      saldoEl.className = 'caja-kpi-value ' + (saldo >= 0 ? 'azul' : 'rojo');
+      saldoEl.parentElement.querySelector('.caja-kpi-sub') && (saldoEl.parentElement.querySelector('.caja-kpi-sub').textContent = formatDolares(Math.abs(saldo)));
     }
 
     function cargarDatos() {

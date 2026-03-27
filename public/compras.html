@@ -9,46 +9,25 @@
   <script src="js/utils.js"></script>
   <link rel="stylesheet" href="cosecha.css">
   <style>
-h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
-    h2 { color: #2D5016; margin-bottom: 12px; font-size: 18px; }
-    .card { background: white; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    label { font-weight: bold; color: #444; display: block; margin-bottom: 4px; margin-top: 8px; font-size: 11px; }
-    input, select { width: 100%; padding: 6px 10px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 13px; height: 36px; }
-    .btn { width: 100%; padding: 7px 16px; font-size: 13px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; margin-top: 8px; min-height: 36px; }
-    .btn-teal { background: #2D5016; color: white; }
-    .btn-teal:disabled { background: #aaa; cursor: not-allowed; }
-    .btn-blue { background: #2D5016; color: white; }
-    .btn-back { background: #eee; color: #444; margin-top: 16px; }
-    .btn-sm { padding: 6px 12px; font-size: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; background: #2D5016; color: white; }
-    .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
-    .tab { flex: 1; padding: 8px; text-align: center; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; background: #ddd; color: #444; font-size: 13px; }
-    .tab.active { background: #2D5016; color: white; }
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th { background: #2D5016; color: white; padding: 10px; text-align: left; }
-    td { padding: 10px; border-bottom: 1px solid #eee; vertical-align: middle; }
-    tr:nth-child(even) td { background: #FAFAF8; }
-    .empty { text-align: center; color: #999; padding: 20px; }
-    .items-container { border: 2px solid #ddd; border-radius: 8px; padding: 12px; margin-top: 12px; }
-    .item-row { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 8px; margin-bottom: 8px; align-items: center; }
-    .item-row input, .item-row select { padding: 4px 8px; font-size: 13px; height: 32px; }
-    .total-compra { font-size: 22px; font-weight: bold; color: #2D5016; text-align: right; padding: 12px 0; }
-    .msg-success { background: #e8f5e2; color: #2d6a4f; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 8px; }
-    .msg-error { background: #fde8e8; color: #c0392b; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 8px; }
-    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
-    .modal-overlay.open { display: flex; }
-    .modal-box { background: white; border-radius: 16px; padding: 24px; width: 90%; max-width: 480px; max-height: 80vh; overflow-y: auto; }
-    .modal-box h3 { color: #2D5016; margin-bottom: 4px; font-size: 18px; }
-    .modal-info { font-size: 13px; color: #666; margin-bottom: 16px; }
-    .modal-info span { display: inline-block; margin-right: 12px; margin-top: 4px; }
-    .detalle-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 12px; }
-    .detalle-table th { background: #2D5016; color: white; padding: 8px; text-align: left; }
-    .detalle-table td { padding: 8px; border-bottom: 1px solid #eee; }
-    .detalle-total { font-weight: bold; text-align: right; font-size: 16px; padding: 12px 0 0; color: #2D5016; }
-    .btn-cerrar { background: #eee; color: #444; border: none; border-radius: 8px; padding: 10px 20px; font-size: 14px; font-weight: bold; cursor: pointer; margin-top: 16px; width: 100%; }
-    .page-logo-h1 { height: 44px; width: auto; }
-    @media (max-width: 767px) { .page-logo-h1 { height: 32px; } }
+    .empty { text-align:center; color:var(--texto-suave); padding:20px; }
+    .two-col { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .items-container { border:1.5px solid var(--borde); border-radius:10px; padding:12px; margin-top:8px; background:var(--fondo); }
+    .item-row { display:grid; grid-template-columns:2fr 1fr 1fr auto; gap:8px; margin-bottom:8px; align-items:center; }
+    .item-row input, .item-row select { height:32px; padding:4px 8px; font-size:13px; }
+    .total-compra { font-size:20px; font-weight:700; color:var(--verde); text-align:right; padding:12px 0; }
+    .btn-sm { padding:5px 10px; font-size:12px; border:none; border-radius:6px; cursor:pointer; font-weight:700; background:var(--verde); color:#fff; display:inline-flex; align-items:center; gap:4px; }
+    .btn-sm-danger { background:var(--sem-rojo-bg); color:var(--sem-rojo); border:1px solid var(--sem-rojo-borde); }
+    .form-colapsable { display:none; }
+    .form-colapsable.visible { display:block; }
+    /* Modal detalle compra */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100; align-items:center; justify-content:center; }
+    .modal-overlay.open { display:flex; }
+    .modal-box { background:white; border-radius:14px; padding:24px; width:90%; max-width:480px; max-height:82vh; overflow-y:auto; box-shadow:0 8px 32px rgba(0,0,0,0.15); }
+    .modal-box h3 { color:var(--verde); margin-bottom:4px; font-size:17px; font-weight:700; }
+    .modal-info { font-size:13px; color:var(--texto-suave); margin-bottom:16px; display:flex; flex-wrap:wrap; gap:8px; }
+    .modal-info span { background:var(--fondo); border:1px solid var(--borde); border-radius:20px; padding:3px 10px; }
+    .detalle-total { font-weight:700; text-align:right; font-size:15px; padding:12px 0 0; color:var(--verde); }
+    .btn-cerrar { background:var(--fondo-dark); color:var(--texto-2); border:1.5px solid var(--borde); border-radius:8px; padding:10px 20px; font-size:13px; font-weight:700; cursor:pointer; margin-top:16px; width:100%; }
   </style>
   <script src="js/auth-check.js"></script>
 </head>
@@ -265,8 +244,9 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
         '</select>' +
         '<input type="number" placeholder="Cant." step="0.01" min="0" style="-moz-appearance:textfield;appearance:textfield;" data-miles onchange="calcularTotal()">' +
         '<input type="number" placeholder="Precio" step="0.01" min="0" style="-moz-appearance:textfield;appearance:textfield;" data-miles onchange="calcularTotal()">' +
-        '<button class="btn-sm" style="background:#c0392b;" onclick="eliminarItem('+itemCount+')">X</button>';
+        '<button class="btn-sm btn-sm-danger" onclick="eliminarItem('+itemCount+')"><i data-lucide="x" style="width:13px;height:13px;"></i></button>';
       document.getElementById('items-lista').appendChild(div);
+      lucide.createIcons();
     }
 
     function eliminarItem(id) {
@@ -372,12 +352,13 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
           var fecha = c.fecha ? c.fecha.toString().split('T')[0] : '-';
           return '<tr>' +
             '<td>' + fechaHora + '</td>' +
-            '<td><strong>' + c.proveedor + '</strong>' + (c.temporada ? '<br><small style="color:#999">' + c.temporada + '</small>' : '') + '</td>' +
+            '<td><strong>' + c.proveedor + '</strong>' + (c.temporada ? '<br><small style="color:var(--texto-suave)">' + c.temporada + '</small>' : '') + '</td>' +
             '<td>' + (c.forma_pago || '-') + '</td>' +
             '<td><strong>$' + parseFloat(c.total).toLocaleString('es-AR') + '</strong></td>' +
-            '<td><button class="btn-sm" onclick="verDetalle('+c.id+',\''+c.proveedor+'\',\''+fechaHora+'\',\''+(c.forma_pago||'-')+'\',\''+(c.observacion||'')+'\')">Ver detalle</button></td>' +
+            '<td><button class="btn-sm" onclick="verDetalle('+c.id+',\''+c.proveedor+'\',\''+fechaHora+'\',\''+(c.forma_pago||'-')+'\',\''+(c.observacion||'')+'\')"><i data-lucide="eye" style="width:13px;height:13px;"></i> Detalle</button></td>' +
             '</tr>';
         }).join('');
+        lucide.createIcons();
       });
     }
 

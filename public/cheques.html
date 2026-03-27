@@ -9,48 +9,13 @@
   <script src="js/utils.js"></script>
   <link rel="stylesheet" href="cosecha.css">
   <style>
-h1 { color: #2d6a4f; text-align: center; margin-bottom: 20px; }
-    h2 { color: #2d6a4f; margin-bottom: 12px; font-size: 18px; }
-    .card { background: white; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    label { font-weight: bold; color: #444; display: block; margin-bottom: 4px; margin-top: 8px; font-size: 11px; }
-    label:first-child { margin-top: 0; }
-    input, select { width: 100%; padding: 6px 10px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 13px; height: 36px; background: white; }
-    input:focus, select:focus { outline: none; border-color: #2d6a4f; }
-    .btn { width: 100%; padding: 7px 16px; font-size: 13px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; margin-top: 8px; min-height: 36px; transition: opacity 0.15s; }
-    .btn:hover:not(:disabled) { opacity: 0.85; }
-    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
-    .btn-green { background: #2d6a4f; color: white; }
-    .btn-back { background: #eee; color: #444; margin-top: 16px; }
-    .btn-sm { padding: 6px 14px; font-size: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; white-space: nowrap; }
-    .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
-    .tab { flex: 1; padding: 8px; text-align: center; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; background: #ddd; color: #444; font-size: 13px; transition: background 0.15s; }
-    .tab.active { background: #2D5016; color: white; }
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-    .table-wrap { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 420px; }
-    th { background: #2D5016; color: white; padding: 9px 10px; text-align: left; white-space: nowrap; }
-    td { padding: 9px 10px; border-bottom: 1px solid #eee; vertical-align: middle; }
-    tr:last-child td { border-bottom: none; }
-    tr:nth-child(even) td { background: #FAFAF8; }
-    .badge { display: inline-block; padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: bold; white-space: nowrap; }
-    .badge-pendiente { background: #fff3cd; color: #f39c12; }
-    .badge-cobrado { background: #e8f5e2; color: #2d6a4f; }
-    .badge-depositado { background: #dbeafe; color: #1565c0; }
-    .badge-rechazado { background: #fde8e8; color: #c0392b; }
-    .alert-success { background: #e8f5e2; color: #2d6a4f; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 8px; }
-    .alert-error { background: #fde8e8; color: #c0392b; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 8px; }
-    .empty { text-align: center; color: #999; padding: 20px; }
-    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .vence-pronto td { background: #fff3cd !important; }
-    .vencido td { background: #fde8e8 !important; }
-    .campo-proveedor { display: none; }
-    select.estado-select { padding: 4px 6px; font-size: 12px; width: auto; border-radius: 6px; }
-    @media (max-width: 480px) {
-      .two-col { grid-template-columns: 1fr; }
-    }
-    .page-logo-h1 { height: 44px; width: auto; }
-    @media (max-width: 767px) { .page-logo-h1 { height: 32px; } }
+    .empty { text-align:center; color:var(--texto-suave); padding:20px; }
+    .two-col { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .vence-pronto td { background:var(--sem-amarillo-bg) !important; }
+    .vencido td { background:var(--sem-rojo-bg) !important; }
+    .campo-proveedor { display:none; }
+    select.estado-select { padding:4px 8px; font-size:12px; width:auto; border-radius:6px; height:auto; }
+    @media(max-width:480px) { .two-col { grid-template-columns:1fr; } }
   </style>
   <script src="js/auth-check.js"></script>
 </head>

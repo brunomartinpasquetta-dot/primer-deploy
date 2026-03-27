@@ -9,29 +9,14 @@
   <script src="js/utils.js"></script>
   <link rel="stylesheet" href="cosecha.css">
   <style>
-h1 { color: #2d6a4f; text-align: center; margin-bottom: 20px; }
-    h2 { color: #2d6a4f; margin-bottom: 12px; font-size: 18px; }
-    .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    label { font-weight: bold; color: #444; display: block; margin-bottom: 6px; margin-top: 12px; }
-    input, select { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
-    .btn { width: 100%; padding: 14px; font-size: 16px; font-weight: bold; border: none; border-radius: 12px; cursor: pointer; margin-top: 12px; }
-    .btn-green { background: #2d6a4f; color: white; }
-    .btn-back { background: #eee; color: #444; margin-top: 16px; }
-    .btn-sm { padding: 6px 14px; font-size: 13px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; background: #2D5016; color: white; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th { background: #2D5016; color: white; padding: 10px; text-align: left; }
-    td { padding: 10px; border-bottom: 1px solid #eee; vertical-align: middle; }
-    tr:nth-child(even) td { background: #FAFAF8; }
-    .saldo-deudor { color: #c0392b; font-weight: bold; }
-    .saldo-cero { color: #2d6a4f; font-weight: bold; }
-    .success { background: #e8f5e2; color: #2d6a4f; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 8px; }
-    .empty { text-align: center; color: #999; padding: 20px; }
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
-    .modal.open { display: flex; }
-    .modal-content { background: white; border-radius: 12px; padding: 24px; width: 90%; max-width: 400px; }
-    .modal-content h3 { color: #2d6a4f; margin-bottom: 16px; }
-    .page-logo-h1 { height: 44px; width: auto; }
-    @media (max-width: 767px) { .page-logo-h1 { height: 32px; } }
+    .empty { text-align:center; color:var(--texto-suave); padding:20px; }
+    .saldo-deudor { color:var(--sem-rojo); font-weight:700; }
+    .saldo-cero { color:var(--sem-verde); font-weight:700; }
+    .btn-sm { padding:5px 12px; font-size:12px; border:none; border-radius:6px; cursor:pointer; font-weight:700; background:var(--verde); color:#fff; }
+    .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100; align-items:center; justify-content:center; }
+    .modal.open { display:flex; }
+    .modal-content { background:white; border-radius:14px; padding:24px; width:90%; max-width:400px; box-shadow:0 8px 32px rgba(0,0,0,0.15); }
+    .modal-content h3 { color:var(--verde); margin-bottom:16px; font-size:16px; font-weight:700; }
   </style>
   <script src="js/auth-check.js"></script>
 </head>
