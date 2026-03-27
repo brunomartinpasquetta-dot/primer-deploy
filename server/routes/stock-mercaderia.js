@@ -181,6 +181,11 @@ router.get('/historial', async (req, res) => {
       incluirSm = false; // ventas directas son egresos
     } else if (tipo === 'egreso') {
       tipoFiltroMov = " AND m.tipo LIKE 'egreso%'";
+    } else if (tipo === 'egreso_venta') {
+      tipoFiltroMov = " AND m.tipo = 'egreso_venta'";
+    } else if (tipo === 'egreso_descarte') {
+      tipoFiltroMov = " AND m.tipo = 'egreso_descarte'";
+      incluirSm = false;
     }
 
     const smUnion = incluirSm ? `

@@ -291,9 +291,15 @@
           <a href="compras.html" class="ins-btn ins-btn-primary">
             <i data-lucide="plus"></i> Registrar Compra
           </a>
+          <button class="ins-btn ins-btn-primary" onclick="openIngresoManualModal()">
+            <i data-lucide="package-plus"></i> Agregar Insumo
+          </button>
           <button class="ins-btn ins-btn-egreso" onclick="openEgresoModal()">
             <i data-lucide="minus"></i> Registrar Egreso
           </button>
+          <a href="aplicaciones.html" class="ins-btn ins-btn-gray">
+            <i data-lucide="droplets"></i> Registrar Aplicación
+          </a>
           <button class="ins-btn ins-btn-gray" id="btn-toggle-hist" onclick="toggleHistorial()">
             <i data-lucide="clock"></i> Historial de Movimientos
           </button>
@@ -469,6 +475,40 @@
   </div>
 </div>
 
+<!-- ── MODAL: AGREGAR INSUMO (ingreso manual) ── -->
+<div id="modal-ingreso-manual" class="modal-overlay" style="display:none;" onclick="closeIngresoManualOnBackdrop(event)">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>Agregar Insumo</h3>
+      <button class="modal-close" onclick="closeIngresoManualModal()"><i data-lucide="x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <label>Producto *</label>
+        <select id="im-producto">
+          <option value="">Seleccionar producto...</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Cantidad *</label>
+        <input type="number" id="im-cantidad" placeholder="Ej: 10" step="0.01" min="0.01" data-miles>
+      </div>
+      <div class="form-row">
+        <label>Costo total <span style="font-weight:normal;color:var(--texto-suave);">(opcional)</span></label>
+        <input type="number" id="im-costo" placeholder="Ej: 5000" step="0.01" min="0" data-miles>
+      </div>
+      <div class="form-row">
+        <label>Observación <span style="font-weight:normal;color:var(--texto-suave);">(opcional)</span></label>
+        <input type="text" id="im-obs" placeholder="Motivo del ingreso manual">
+      </div>
+      <button class="btn btn-primary" id="btn-ingreso-manual" onclick="registrarIngresoManual(this)" style="margin-top:14px;width:100%;">
+        Agregar Insumo
+      </button>
+      <div id="msg-ingreso-manual"></div>
+    </div>
+  </div>
+</div>
+
 <script src="https://unpkg.com/lucide@latest"></script>
 <script>
   lucide.createIcons();
@@ -483,6 +523,54 @@
   var _lotesTodos = [];
   var _stockData  = [];
   var _historialVisible = false;
+
+  /* ── Modal ingreso manual ── */
+  function openIngresoManualModal() {
+    // Poblar select de productos
+    var sel = document.getElementById('im-producto');
+    sel.innerHTML = '<option value="">Seleccionar producto...</option>' +
+      _stockData.map(function(p) { return '<option value="'+p.id+'">'+p.nombre+' (stock: '+parseFloat(p.stock_actual||0).toFixed(2)+')</option>'; }).join('');
+    document.getElementById('im-cantidad').value = '';
+    document.getElementById('im-costo').value = '';
+    document.getElementById('im-obs').value = '';
+    document.getElementById('msg-ingreso-manual').innerHTML = '';
+    document.getElementById('modal-ingreso-manual').style.display = 'flex';
+    lucide.createIcons();
+  }
+  function closeIngresoManualModal() {
+    document.getElementById('modal-ingreso-manual').style.display = 'none';
+  }
+  function closeIngresoManualOnBackdrop(e) {
+    if (e.target === document.getElementById('modal-ingreso-manual')) closeIngresoManualModal();
+  }
+  function registrarIngresoManual(btn) {
+    var producto_id = document.getElementById('im-producto').value;
+    var cantidad = document.getElementById('im-cantidad').value;
+    if (!producto_id) { document.getElementById('msg-ingreso-manual').innerHTML = '<p style="color:var(--sem-rojo);font-size:13px;margin-top:8px;">Seleccioná un producto</p>'; return; }
+    if (!cantidad || parseFloat(cantidad) <= 0) { document.getElementById('msg-ingreso-manual').innerHTML = '<p style="color:var(--sem-rojo);font-size:13px;margin-top:8px;">Ingresá una cantidad válida</p>'; return; }
+    setLoading(btn, true);
+    fetch('/api/stock-insumos/ingreso-manual', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        producto_id: producto_id,
+        cantidad: cantidad,
+        costo_total: document.getElementById('im-costo').value || null,
+        observacion: document.getElementById('im-obs').value
+      })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      setLoading(btn, false);
+      if (data.ok) {
+        closeIngresoManualModal();
+        cargarStock();
+      } else {
+        document.getElementById('msg-ingreso-manual').innerHTML = '<p style="color:var(--sem-rojo);font-size:13px;margin-top:8px;">' + (data.error || 'Error') + '</p>';
+      }
+    })
+    .catch(function() { setLoading(btn, false); });
+  }
 
   /* ── Modal egreso ── */
   function openEgresoModal() {

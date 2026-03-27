@@ -51,6 +51,35 @@ router.post('/compra', async (req, res) => {
   }
 });
 
+// Registrar ingreso manual (sin compra, sin proveedor)
+router.post('/ingreso-manual', async (req, res) => {
+  const { producto_id, cantidad, costo_total, observacion } = req.body;
+  if (!producto_id || !cantidad) return res.status(400).json({ error: 'Producto y cantidad son obligatorios' });
+  const uid = req.user ? req.user.id : null;
+  const pool = await getPool();
+  const transaction = new sql.Transaction(pool);
+  try {
+    await transaction.begin();
+    await new sql.Request(transaction)
+      .input('producto_id', sql.Int,          producto_id)
+      .input('cantidad',    sql.Decimal(10,2), cantidad)
+      .input('costo_total', sql.Decimal(10,2), costo_total || null)
+      .input('observacion', sql.NVarChar,      observacion || '')
+      .input('usuario_id',  sql.Int,           uid)
+      .query(`INSERT INTO StockInsumos (producto_id, tipo, cantidad, costo_total, observacion, usuario_id, fecha_hora)
+              VALUES (@producto_id, 'ingreso_manual', @cantidad, @costo_total, @observacion, @usuario_id, GETDATE())`);
+    await new sql.Request(transaction)
+      .input('producto_id', sql.Int,          producto_id)
+      .input('cantidad',    sql.Decimal(10,2), cantidad)
+      .query('UPDATE Productos SET stock_actual = ISNULL(stock_actual, 0) + @cantidad WHERE id = @producto_id');
+    await transaction.commit();
+    res.json({ ok: true });
+  } catch (err) {
+    await transaction.rollback();
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Registrar aplicacion (egreso de stock)
 router.post('/aplicacion', async (req, res) => {
   const { producto_id, cantidad, lote_id, empleado_id, observacion } = req.body;

@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1A2E0A">
+  <title>Ventas — Cosecha</title>
+  <link rel="icon" href="img/logo.png">
+  <script src="js/utils.js"></script>
+  <link rel="stylesheet" href="cosecha.css">
+  <style>
+    .empty { text-align:center; color:var(--texto-suave); padding:20px; }
+    .two-col { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .three-col { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+    .form-colapsable { display:none; }
+    .form-colapsable.visible { display:block; }
+    .total-venta { font-size:20px; font-weight:700; color:var(--verde); text-align:right; padding:12px 0; }
+    .stock-deposito-info { font-size:12px; color:var(--texto-suave); margin-top:4px; }
+    /* KPI */
+    .vta-kpis { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:16px; }
+    .vta-kpi { background:#fff; border-radius:10px; padding:16px 18px; box-shadow:0 2px 10px rgba(0,0,0,.08); }
+    .vta-kpi-icon { width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; margin-bottom:8px; }
+    .vta-kpi-icon.verde { background:#eef7ee; color:#2D5016; }
+    .vta-kpi-icon.azul  { background:#e8f0fe; color:#1565c0; }
+    .vta-kpi-icon.naranja { background:#fff3cd; color:#f39c12; }
+    .vta-kpi-icon svg { width:18px; height:18px; }
+    .vta-kpi-valor { font-size:22px; font-weight:700; font-family:'JetBrains Mono',monospace; line-height:1; }
+    .vta-kpi-valor.verde { color:#2d6a4f; }
+    .vta-kpi-valor.azul  { color:#1565c0; }
+    .vta-kpi-valor.naranja { color:#f39c12; }
+    .vta-kpi-label { font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:var(--texto-suave); margin-top:4px; }
+    /* Modal detalle */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100; align-items:center; justify-content:center; }
+    .modal-overlay.open { display:flex; }
+    .modal-box { background:white; border-radius:14px; padding:24px; width:90%; max-width:480px; max-height:82vh; overflow-y:auto; box-shadow:0 8px 32px rgba(0,0,0,0.15); }
+    .modal-box h3 { color:var(--verde); margin-bottom:4px; font-size:17px; font-weight:700; }
+    .modal-info { font-size:13px; color:var(--texto-suave); margin-bottom:16px; display:flex; flex-wrap:wrap; gap:8px; }
+    .modal-info span { background:var(--fondo); border:1px solid var(--borde); border-radius:20px; padding:3px 10px; }
+    .btn-cerrar { background:var(--fondo-dark); color:var(--texto-2); border:1.5px solid var(--borde); border-radius:8px; padding:10px 20px; font-size:13px; font-weight:700; cursor:pointer; margin-top:16px; width:100%; }
+    @media (max-width:600px) { .vta-kpis { grid-template-columns:1fr 1fr; } .three-col { grid-template-columns:1fr 1fr; } }
+    @media (max-width:400px) { .vta-kpis { grid-template-columns:1fr; } }
+  </style>
+  <script src="js/auth-check.js"></script>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-item"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard</a>
+      <div class="nav-section">Campo</div>
+      <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
+      <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
+      <div class="nav-section">Sistema</div>
+      <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
+      <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
+      <a href="menu-admin.html" class="nav-item active"><span class="nav-icon"><i data-lucide="landmark"></i></span> Administración</a>
+      <a href="mercado.html" class="nav-item"><span class="nav-icon"><i data-lucide="trending-up"></i></span> Mercado</a>
+      <a href="menu-config.html" class="nav-item"><span class="nav-icon"><i data-lucide="settings"></i></span> Configuración</a>
+    </nav>
+    <div class="sidebar-footer">Sistema Agrícola v2</div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
+        <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div><span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-date" id="topbar-date"></span>
+      </div>
+    </header>
+
+    <div class="content">
+      <a href="menu-admin.html" class="btn-volver">← Volver</a>
+      <div class="content-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div class="content-title">Ventas</div>
+          <div class="content-sub">Registro de ventas de mercadería</div>
+        </div>
+        <button class="btn btn-primary" style="width:auto;margin:0;" onclick="toggleForm()">+ Nueva venta</button>
+      </div>
+
+      <!-- ── KPI Cards ── -->
+      <div class="vta-kpis">
+        <div class="vta-kpi">
+          <div class="vta-kpi-icon verde"><i data-lucide="package-check"></i></div>
+          <div class="vta-kpi-valor verde" id="kpi-kg">0</div>
+          <div class="vta-kpi-label">Kg Vendidos</div>
+        </div>
+        <div class="vta-kpi">
+          <div class="vta-kpi-icon azul"><i data-lucide="banknote"></i></div>
+          <div class="vta-kpi-valor azul" id="kpi-ingresos">$0</div>
+          <div class="vta-kpi-label">Total Ingresos</div>
+        </div>
+        <div class="vta-kpi">
+          <div class="vta-kpi-icon naranja"><i data-lucide="trending-up"></i></div>
+          <div class="vta-kpi-valor naranja" id="kpi-precio-prom">$0</div>
+          <div class="vta-kpi-label">Precio Promedio / Kg</div>
+        </div>
+      </div>
+
+      <!-- ── FORMULARIO COLAPSABLE ── -->
+      <div class="form-colapsable" id="form-nuevo">
+        <div class="card-form" style="margin-bottom:12px;">
+          <div class="two-col">
+            <div class="form-row" style="margin-bottom:0;"><label>Temporada *</label><select id="temporada" onchange="actualizarKPIs()"></select></div>
+            <div class="form-row" style="margin-bottom:0;"><label>Fecha</label><input type="date" id="fecha"></div>
+          </div>
+          <div class="form-row">
+            <label>Depósito de origen *</label>
+            <select id="deposito" onchange="mostrarStockDeposito()">
+              <option value="">Seleccionar depósito...</option>
+            </select>
+            <div class="stock-deposito-info" id="deposito-stock-info"></div>
+          </div>
+          <div class="two-col">
+            <div class="form-row" style="margin-bottom:0;"><label>Lote <span style="font-weight:normal;color:var(--texto-suave);">(opcional)</span></label><select id="lote"><option value="">Sin lote específico</option></select></div>
+            <div class="form-row" style="margin-bottom:0;"><label>Forma de pago</label><select id="forma_pago"></select></div>
+          </div>
+          <div class="three-col" style="margin-top:12px;">
+            <div class="form-row" style="margin-bottom:0;">
+              <label>Kilos *</label>
+              <input type="number" id="kilos" placeholder="Ej: 1000" step="0.01" min="0.01" data-miles oninput="calcularTotal()">
+            </div>
+            <div class="form-row" style="margin-bottom:0;">
+              <label>Precio x Kg</label>
+              <input type="number" id="precio_kilo" placeholder="Ej: 450" step="0.01" min="0" data-miles oninput="calcularTotal()">
+            </div>
+            <div class="form-row" style="margin-bottom:0;">
+              <label>Total estimado</label>
+              <div class="total-venta" style="padding:6px 0;">$<span id="total-display">0</span></div>
+            </div>
+          </div>
+          <div class="two-col" style="margin-top:12px;">
+            <div class="form-row" style="margin-bottom:0;"><label>Comprador</label><input type="text" id="comprador" placeholder="Nombre del comprador"></div>
+            <div class="form-row" style="margin-bottom:0;"><label>Destino</label><input type="text" id="destino_venta" placeholder="Ej: Mercado Central"></div>
+          </div>
+          <div class="form-row"><label>Observación</label><input type="text" id="observacion" placeholder="Opcional"></div>
+          <button class="btn btn-primary" id="btn-guardar" onclick="guardarVenta()" style="width:auto;">Registrar venta</button>
+          <div id="mensaje"></div>
+        </div>
+      </div>
+
+      <!-- ── Filtros historial ── -->
+      <div class="card" style="margin-bottom:12px; padding:16px;">
+        <div class="two-col">
+          <div>
+            <label>Temporada</label>
+            <select id="filtro-temporada" onchange="cargarHistorial()">
+              <option value="">Todas</option>
+            </select>
+          </div>
+          <div>
+            <label>
+              <input type="checkbox" id="filtrar-fechas" onchange="toggleFechas()" style="margin-right:6px;">
+              Filtrar por fechas
+            </label>
+            <div id="rango-fechas" style="display:none;margin-top:6px;">
+              <div class="two-col">
+                <div><label>Desde</label><input type="date" id="filtro-desde" onchange="cargarHistorial()"></div>
+                <div><label>Hasta</label><input type="date" id="filtro-hasta" onchange="cargarHistorial()"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Tabla historial ── -->
+      <div class="card">
+        <table>
+          <thead>
+            <tr><th>Fecha</th><th>Depósito</th><th>Comprador</th><th>Destino</th><th>Kg</th><th>Precio/Kg</th><th>Total</th></tr>
+          </thead>
+          <tbody id="tbody-historial">
+            <tr><td colspan="7" class="empty">Cargando...</td></tr>
+          </tbody>
+          <tfoot id="tfoot-historial"></tfoot>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── BOTTOM NAV ── -->
+  <nav class="bottom-nav">
+    <a href="index.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="home"></i></span><span>Inicio</span></a>
+    <a href="juntada.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="wheat"></i></span><span>Cosecha</span></a>
+    <a href="despalillado.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="scissors"></i></span><span>Despalillado</span></a>
+    <a href="aplicaciones.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="droplets"></i></span><span>Aplicaciones</span></a>
+    <a href="menu-campo.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="menu"></i></span><span>Menú</span></a>
+  </nav>
+
+</div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+  lucide.createIcons();
+  document.getElementById('topbar-date').textContent =
+    new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
+
+  var hoy = new Date().toISOString().split('T')[0];
+  var _depositos = [];
+  var _temporadaActivaId = null;
+
+  function toggleForm() {
+    document.getElementById('form-nuevo').classList.toggle('visible');
+  }
+
+  function toggleFechas() {
+    var checked = document.getElementById('filtrar-fechas').checked;
+    document.getElementById('rango-fechas').style.display = checked ? '' : 'none';
+    if (!checked) {
+      document.getElementById('filtro-desde').value = '';
+      document.getElementById('filtro-hasta').value = '';
+    }
+    cargarHistorial();
+  }
+
+  function calcularTotal() {
+    var kilos = parseFloat(document.getElementById('kilos').value) || 0;
+    var precio = parseFloat(document.getElementById('precio_kilo').value) || 0;
+    document.getElementById('total-display').textContent = (kilos * precio).toLocaleString('es-AR', { minimumFractionDigits: 2 });
+  }
+
+  function mostrarStockDeposito() {
+    var id = document.getElementById('deposito').value;
+    var dep = _depositos.find(function(d) { return d.id == id; });
+    var info = document.getElementById('deposito-stock-info');
+    if (dep) {
+      info.textContent = 'Stock disponible: ' + parseFloat(dep.stock_actual || 0).toLocaleString('es-AR') + ' kg';
+    } else {
+      info.textContent = '';
+    }
+  }
+
+  function cargarDatos() {
+    // Temporadas
+    fetch('/api/temporadas').then(function(r) { return r.json(); }).then(function(data) {
+      var opts = data.map(function(t) { return '<option value="'+t.id+'">'+t.nombre+'</option>'; }).join('');
+      document.getElementById('temporada').innerHTML = '<option value="">Sin temporada</option>' + opts;
+      document.getElementById('filtro-temporada').innerHTML = '<option value="">Todas</option>' + opts;
+      var activa = data.find(function(t) { return t.activa; });
+      if (activa) {
+        _temporadaActivaId = activa.id;
+        document.getElementById('temporada').value = activa.id;
+        document.getElementById('filtro-temporada').value = activa.id;
+      }
+      cargarHistorial();
+      actualizarKPIs();
+    });
+
+    // Depósitos con stock
+    fetch('/api/depositos').then(function(r) { return r.json(); }).then(function(data) {
+      _depositos = data;
+      document.getElementById('deposito').innerHTML = '<option value="">Seleccionar depósito...</option>' +
+        data.map(function(d) {
+          return '<option value="'+d.id+'">'+d.nombre+' ('+parseFloat(d.stock_actual||0).toLocaleString('es-AR')+' kg)</option>';
+        }).join('');
+    });
+
+    // Lotes
+    fetch('/api/lotes').then(function(r) { return r.json(); }).then(function(data) {
+      document.getElementById('lote').innerHTML = '<option value="">Sin lote específico</option>' +
+        data.map(function(l) { return '<option value="'+l.id+'">'+l.nombre+'</option>'; }).join('');
+    });
+
+    // Formas de pago
+    fetch('/api/caja/formas-pago').then(function(r) { return r.json(); }).then(function(data) {
+      document.getElementById('forma_pago').innerHTML = '<option value="">Sin especificar</option>' +
+        data.map(function(f) { return '<option value="'+f.id+'">'+f.nombre+'</option>'; }).join('');
+    });
+
+    document.getElementById('fecha').value = hoy;
+  }
+
+  function actualizarKPIs() {
+    var tid = document.getElementById('temporada') ? document.getElementById('temporada').value : '';
+    var url = '/api/depositos/resumen' + (tid ? '?temporada_id=' + tid : '');
+    fetch(url).then(function(r) { return r.json(); }).then(function(d) {
+      var kg = parseFloat(d.kilos_vendidos) || 0;
+      var ing = parseFloat(d.ingresos_venta) || 0;
+      var prom = kg > 0 ? ing / kg : 0;
+      document.getElementById('kpi-kg').textContent = kg.toLocaleString('es-AR', { minimumFractionDigits: 2 });
+      document.getElementById('kpi-ingresos').textContent = '$' + ing.toLocaleString('es-AR', { minimumFractionDigits: 2 });
+      document.getElementById('kpi-precio-prom').textContent = '$' + prom.toLocaleString('es-AR', { minimumFractionDigits: 2 });
+    });
+  }
+
+  function limpiarFormulario() {
+    document.getElementById('deposito').value = '';
+    document.getElementById('deposito-stock-info').textContent = '';
+    document.getElementById('lote').value = '';
+    document.getElementById('kilos').value = '';
+    document.getElementById('precio_kilo').value = '';
+    document.getElementById('comprador').value = '';
+    document.getElementById('destino_venta').value = '';
+    document.getElementById('observacion').value = '';
+    document.getElementById('total-display').textContent = '0';
+    document.getElementById('mensaje').innerHTML = '';
+    document.getElementById('fecha').value = hoy;
+    if (_temporadaActivaId) document.getElementById('temporada').value = _temporadaActivaId;
+  }
+
+  function guardarVenta() {
+    var deposito_id = document.getElementById('deposito').value;
+    var temporada_id = document.getElementById('temporada').value;
+    var kilos = document.getElementById('kilos').value;
+    if (!deposito_id) { mostrarMensaje('mensaje', 'error', 'Seleccioná un depósito'); return; }
+    if (!temporada_id) { mostrarMensaje('mensaje', 'error', 'Seleccioná una temporada'); return; }
+    if (!kilos || parseFloat(kilos) <= 0) { mostrarMensaje('mensaje', 'error', 'Ingresá los kilos'); return; }
+
+    var btn = document.getElementById('btn-guardar');
+    setLoading(btn, true);
+
+    fetch('/api/depositos/egreso', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        deposito_id:   deposito_id,
+        temporada_id:  temporada_id,
+        lote_id:       document.getElementById('lote').value || null,
+        tipo_egreso:   'egreso_venta',
+        kilos:         kilos,
+        precio_kilo:   document.getElementById('precio_kilo').value || null,
+        comprador:     document.getElementById('comprador').value,
+        destino_venta: document.getElementById('destino_venta').value,
+        fecha:         document.getElementById('fecha').value || null,
+        observacion:   document.getElementById('observacion').value
+      })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      setLoading(btn, false);
+      if (data.ok) {
+        limpiarFormulario();
+        document.getElementById('form-nuevo').classList.remove('visible');
+        cargarHistorial();
+        actualizarKPIs();
+        // Actualizar stock depósitos
+        fetch('/api/depositos').then(function(r) { return r.json(); }).then(function(deps) {
+          _depositos = deps;
+          document.getElementById('deposito').innerHTML = '<option value="">Seleccionar depósito...</option>' +
+            deps.map(function(d) {
+              return '<option value="'+d.id+'">'+d.nombre+' ('+parseFloat(d.stock_actual||0).toLocaleString('es-AR')+' kg)</option>';
+            }).join('');
+        });
+      } else {
+        mostrarMensaje('mensaje', 'error', data.error || 'Error al registrar venta');
+      }
+    })
+    .catch(function() {
+      setLoading(btn, false);
+      mostrarMensaje('mensaje', 'error', 'Error de conexión');
+    });
+  }
+
+  function formatFechaHora(str) {
+    if (!str) return '-';
+    var d = new Date(str);
+    return d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function cargarHistorial() {
+    var params = ['tipo=egreso_venta'];
+    var tid = document.getElementById('filtro-temporada').value;
+    var desde = document.getElementById('filtro-desde').value;
+    var hasta = document.getElementById('filtro-hasta').value;
+    if (tid)   params.push('temporada_id=' + tid);
+    if (desde) params.push('desde=' + desde);
+    if (hasta) params.push('hasta=' + hasta);
+    fetch('/api/stock-mercaderia/historial?' + params.join('&'))
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var tbody = document.getElementById('tbody-historial');
+        var tfoot = document.getElementById('tfoot-historial');
+        if (!data.length) {
+          tbody.innerHTML = '<tr><td colspan="7" class="empty">Sin ventas registradas</td></tr>';
+          tfoot.innerHTML = '';
+          return;
+        }
+        var totalKg = 0, totalPesos = 0;
+        tbody.innerHTML = data.map(function(v) {
+          var kg = parseFloat(v.kilos) || 0;
+          var precio = parseFloat(v.precio_kilo) || 0;
+          var total = parseFloat(v.total) || 0;
+          totalKg += kg;
+          totalPesos += total;
+          return '<tr>' +
+            '<td>' + formatFechaHora(v.fecha) + (v.temporada ? '<br><small style="color:var(--texto-suave)">' + v.temporada + '</small>' : '') + '</td>' +
+            '<td>' + (v.deposito || '<em style="color:var(--texto-suave)">Directa</em>') + '</td>' +
+            '<td>' + (v.comprador || '-') + '</td>' +
+            '<td>' + (v.destino_venta || '-') + '</td>' +
+            '<td style="font-family:\'JetBrains Mono\',monospace;">' + kg.toLocaleString('es-AR', { minimumFractionDigits: 2 }) + ' kg</td>' +
+            '<td style="font-family:\'JetBrains Mono\',monospace;">' + (precio > 0 ? '$' + precio.toLocaleString('es-AR', { minimumFractionDigits: 2 }) : '-') + '</td>' +
+            '<td style="font-family:\'JetBrains Mono\',monospace;font-weight:700;">' + (total > 0 ? '$' + total.toLocaleString('es-AR', { minimumFractionDigits: 2 }) : '-') + '</td>' +
+            '</tr>';
+        }).join('');
+        tfoot.innerHTML = '<tr style="background:var(--fondo-dark);font-weight:700;">' +
+          '<td colspan="4" style="padding:10px 12px;">TOTALES</td>' +
+          '<td style="padding:10px 12px;font-family:\'JetBrains Mono\',monospace;">' + totalKg.toLocaleString('es-AR', { minimumFractionDigits: 2 }) + ' kg</td>' +
+          '<td></td>' +
+          '<td style="padding:10px 12px;font-family:\'JetBrains Mono\',monospace;">$' + totalPesos.toLocaleString('es-AR', { minimumFractionDigits: 2 }) + '</td>' +
+          '</tr>';
+      });
+  }
+
+  cargarDatos();
+  cargarTemporadaActiva();
+</script>
+</body>
+</html>
