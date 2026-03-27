@@ -33,9 +33,17 @@ router.get('/resumen', async (req, res) => {
 // ── Lista todos los depósitos con stock actual ──────────────────
 router.get('/', async (req, res) => {
   try {
+    const { tipo_stock } = req.query;
     const pool = await getPool();
-    const result = await pool.request().query(`
-      SELECT d.id, d.nombre, d.tipo, d.capacidad_kg, d.costo_kg_dia,
+    const dbReq = pool.request();
+    let where = 'd.activo = 1';
+    if (tipo_stock === 'insumos') {
+      where += ` AND d.tipo_stock IN ('insumos','mixto')`;
+    } else if (tipo_stock === 'mercaderia') {
+      where += ` AND d.tipo_stock IN ('mercaderia','mixto')`;
+    }
+    const result = await dbReq.query(`
+      SELECT d.id, d.nombre, d.tipo, d.tipo_stock, d.capacidad_kg, d.costo_kg_dia,
              d.ubicacion, d.observacion, d.activo,
              ISNULL(SUM(CASE WHEN m.tipo = 'ingreso'         THEN m.kilos ELSE 0 END), 0) -
              ISNULL(SUM(CASE WHEN m.tipo LIKE 'egreso%'      THEN m.kilos ELSE 0 END), 0) AS stock_actual,
@@ -44,8 +52,8 @@ router.get('/', async (req, res) => {
              ISNULL(SUM(CASE WHEN m.tipo = 'egreso_descarte' THEN m.kilos ELSE 0 END), 0) AS total_descartado
       FROM Depositos d
       LEFT JOIN MovimientosDeposito m ON d.id = m.deposito_id
-      WHERE d.activo = 1
-      GROUP BY d.id, d.nombre, d.tipo, d.capacidad_kg, d.costo_kg_dia,
+      WHERE ${where}
+      GROUP BY d.id, d.nombre, d.tipo, d.tipo_stock, d.capacidad_kg, d.costo_kg_dia,
                d.ubicacion, d.observacion, d.activo
       ORDER BY d.nombre`);
     res.json(result.recordset);
@@ -57,19 +65,22 @@ router.get('/', async (req, res) => {
 // ── Crear depósito ──────────────────────────────────────────────
 router.post('/', async (req, res) => {
   try {
-    const { nombre, tipo, capacidad_kg, costo_kg_dia, ubicacion, observacion } = req.body;
+    const { nombre, tipo, tipo_stock, capacidad_kg, costo_kg_dia, ubicacion, observacion } = req.body;
     if (!nombre || !tipo) return res.status(400).json({ error: 'Nombre y tipo son obligatorios' });
+    const tiposStockValidos = ['mercaderia', 'insumos', 'mixto'];
+    const tipoStockVal = tiposStockValidos.includes(tipo_stock) ? tipo_stock : 'mercaderia';
     const pool = await getPool();
     const result = await pool.request()
       .input('nombre',       sql.NVarChar,       nombre)
       .input('tipo',         sql.NVarChar,       tipo)
+      .input('tipo_stock',   sql.NVarChar,       tipoStockVal)
       .input('capacidad_kg', sql.Decimal(12, 2), capacidad_kg || null)
       .input('costo_kg_dia', sql.Decimal(10, 4), costo_kg_dia || null)
       .input('ubicacion',    sql.NVarChar,       ubicacion    || '')
       .input('observacion',  sql.NVarChar,       observacion  || '')
-      .query(`INSERT INTO Depositos (nombre, tipo, capacidad_kg, costo_kg_dia, ubicacion, observacion)
+      .query(`INSERT INTO Depositos (nombre, tipo, tipo_stock, capacidad_kg, costo_kg_dia, ubicacion, observacion)
               OUTPUT INSERTED.id
-              VALUES (@nombre, @tipo, @capacidad_kg, @costo_kg_dia, @ubicacion, @observacion)`);
+              VALUES (@nombre, @tipo, @tipo_stock, @capacidad_kg, @costo_kg_dia, @ubicacion, @observacion)`);
     res.json({ ok: true, id: result.recordset[0].id });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -79,20 +90,23 @@ router.post('/', async (req, res) => {
 // ── Editar depósito ─────────────────────────────────────────────
 router.put('/:id', async (req, res) => {
   try {
-    const { nombre, tipo, capacidad_kg, costo_kg_dia, ubicacion, observacion, activo } = req.body;
+    const { nombre, tipo, tipo_stock, capacidad_kg, costo_kg_dia, ubicacion, observacion, activo } = req.body;
+    const tiposStockValidos = ['mercaderia', 'insumos', 'mixto'];
+    const tipoStockVal = tiposStockValidos.includes(tipo_stock) ? tipo_stock : 'mercaderia';
     const pool = await getPool();
     await pool.request()
       .input('id',           sql.Int,            req.params.id)
       .input('nombre',       sql.NVarChar,       nombre)
       .input('tipo',         sql.NVarChar,       tipo)
+      .input('tipo_stock',   sql.NVarChar,       tipoStockVal)
       .input('capacidad_kg', sql.Decimal(12, 2), capacidad_kg || null)
       .input('costo_kg_dia', sql.Decimal(10, 4), costo_kg_dia || null)
       .input('ubicacion',    sql.NVarChar,       ubicacion    || '')
       .input('observacion',  sql.NVarChar,       observacion  || '')
       .input('activo',       sql.Bit,            activo !== undefined ? (activo ? 1 : 0) : 1)
-      .query(`UPDATE Depositos SET nombre=@nombre, tipo=@tipo, capacidad_kg=@capacidad_kg,
-              costo_kg_dia=@costo_kg_dia, ubicacion=@ubicacion, observacion=@observacion,
-              activo=@activo WHERE id=@id`);
+      .query(`UPDATE Depositos SET nombre=@nombre, tipo=@tipo, tipo_stock=@tipo_stock,
+              capacidad_kg=@capacidad_kg, costo_kg_dia=@costo_kg_dia, ubicacion=@ubicacion,
+              observacion=@observacion, activo=@activo WHERE id=@id`);
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -260,6 +274,63 @@ router.post('/egreso', async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     await transaction.rollback();
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Ocupación de almacenes ──────────────────────────────────────
+router.get('/ocupacion', async (req, res) => {
+  try {
+    const { tipo_stock } = req.query;
+    const pool = await getPool();
+    const dbReq = pool.request();
+    let where = 'd.activo = 1';
+    if (tipo_stock === 'insumos') {
+      where += ` AND d.tipo_stock IN ('insumos','mixto')`;
+    } else if (tipo_stock === 'mercaderia') {
+      where += ` AND d.tipo_stock IN ('mercaderia','mixto')`;
+    }
+
+    if (tipo_stock === 'insumos') {
+      // Ocupación desde StockInsumos (por deposito_id)
+      const result = await dbReq.query(`
+        SELECT d.id, d.nombre, d.tipo, d.tipo_stock, d.capacidad_kg,
+               ISNULL(SUM(CASE WHEN si.tipo IN ('compra','ingreso_manual') THEN si.cantidad ELSE 0 END), 0) -
+               ISNULL(SUM(CASE WHEN si.tipo NOT IN ('compra','ingreso_manual') THEN si.cantidad ELSE 0 END), 0) AS ocupado_kg
+        FROM Depositos d
+        LEFT JOIN StockInsumos si ON si.deposito_id = d.id
+        WHERE ${where}
+        GROUP BY d.id, d.nombre, d.tipo, d.tipo_stock, d.capacidad_kg
+        ORDER BY d.nombre`);
+      res.json(result.recordset.map(function(r) {
+        const ocup = Math.max(0, parseFloat(r.ocupado_kg) || 0);
+        const cap  = parseFloat(r.capacidad_kg) || 0;
+        return Object.assign({}, r, {
+          ocupado_kg: ocup,
+          porcentaje: cap > 0 ? Math.min(100, (ocup / cap) * 100) : null
+        });
+      }));
+    } else {
+      // Ocupación desde MovimientosDeposito (mercadería y mixto)
+      const result = await dbReq.query(`
+        SELECT d.id, d.nombre, d.tipo, d.tipo_stock, d.capacidad_kg,
+               ISNULL(SUM(CASE WHEN m.tipo = 'ingreso'    THEN m.kilos ELSE 0 END), 0) -
+               ISNULL(SUM(CASE WHEN m.tipo LIKE 'egreso%' THEN m.kilos ELSE 0 END), 0) AS ocupado_kg
+        FROM Depositos d
+        LEFT JOIN MovimientosDeposito m ON m.deposito_id = d.id
+        WHERE ${where}
+        GROUP BY d.id, d.nombre, d.tipo, d.tipo_stock, d.capacidad_kg
+        ORDER BY d.nombre`);
+      res.json(result.recordset.map(function(r) {
+        const ocup = Math.max(0, parseFloat(r.ocupado_kg) || 0);
+        const cap  = parseFloat(r.capacidad_kg) || 0;
+        return Object.assign({}, r, {
+          ocupado_kg: ocup,
+          porcentaje: cap > 0 ? Math.min(100, (ocup / cap) * 100) : null
+        });
+      }));
+    }
+  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });

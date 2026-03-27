@@ -54,6 +54,10 @@
     .mov-title { font-size: 13px; font-weight: 600; }
     .mov-desc  { font-size: 12px; color: var(--texto-suave); margin-top: 2px; }
     .empty-dep { text-align: center; padding: 32px 16px; color: var(--texto-suave); font-size: 14px; }
+    .badge-tipo-stock { display:inline-block; font-size:10px; font-weight:600; padding:2px 8px; border-radius:20px; margin-top:4px; }
+    .badge-tipo-stock.mercaderia { background:var(--sem-azul-bg); color:var(--sem-azul); }
+    .badge-tipo-stock.insumos    { background:var(--sem-amarillo-bg); color:#7d5a00; }
+    .badge-tipo-stock.mixto      { background:var(--sem-verde-bg); color:var(--sem-verde); }
     /* KPI resumen */
     .kpi-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-bottom: 18px; }
     .kpi-box { background: var(--superficie); border: 1.5px solid var(--borde); border-radius: var(--radius-md); padding: 14px 16px; }
@@ -294,6 +298,14 @@
           <option value="otro">Otro</option>
         </select>
       </div>
+      <div class="form-row">
+        <label>Tipo de stock *</label>
+        <select id="dep-tipo-stock" data-tooltip="Qué tipo de mercadería se almacena en este depósito">
+          <option value="mercaderia">Mercadería</option>
+          <option value="insumos">Insumos</option>
+          <option value="mixto">Mixto</option>
+        </select>
+      </div>
       <div class="two-col">
         <div class="form-row">
           <label>Capacidad (kg)</label>
@@ -350,15 +362,19 @@ function renderGrid(data) {
     grid.innerHTML = '<div class="empty-dep">No hay depósitos configurados.<br>Creá el primero con el botón de arriba.</div>';
     return;
   }
+  var TIPO_STOCK_LABEL = { mercaderia: 'Mercadería', insumos: 'Insumos', mixto: 'Mixto' };
   grid.innerHTML = data.map(function(d) {
     var stock = parseFloat(d.stock_actual || 0);
     var cap   = parseFloat(d.capacidad_kg || 0);
     var pct   = cap > 0 ? Math.min(100, (stock / cap) * 100) : 0;
     var fillClass = pct >= 90 ? 'full' : pct >= 70 ? 'warn' : '';
+    var tsLabel = TIPO_STOCK_LABEL[d.tipo_stock] || d.tipo_stock || 'Mercadería';
+    var tsClass = d.tipo_stock || 'mercaderia';
     return '<div class="dep-card" id="card-' + d.id + '" onclick="verHistorial(' + d.id + ')" data-tooltip="Click para ver historial de movimientos">' +
       '<div style="display:flex;align-items:flex-start;justify-content:space-between;">' +
         '<div><div class="dep-name">' + d.nombre + '</div>' +
-        '<div class="dep-tipo">' + (TIPO_LABEL[d.tipo] || d.tipo) + (d.ubicacion ? ' · ' + d.ubicacion : '') + '</div></div>' +
+        '<div class="dep-tipo">' + (TIPO_LABEL[d.tipo] || d.tipo) + (d.ubicacion ? ' · ' + d.ubicacion : '') + '</div>' +
+        '<span class="badge-tipo-stock ' + tsClass + '">' + tsLabel + '</span></div>' +
         '<span class="badge badge-activo" style="font-size:10px;">Activo</span>' +
       '</div>' +
       '<div class="dep-stock">' + fmt(stock) + ' kg</div>' +
@@ -426,6 +442,7 @@ function abrirModalNuevo() {
   document.getElementById('edit-id').value = '';
   document.getElementById('dep-nombre').value = '';
   document.getElementById('dep-tipo').value = 'camara_fria';
+  document.getElementById('dep-tipo-stock').value = 'mercaderia';
   document.getElementById('dep-capacidad').value = '';
   document.getElementById('dep-costo').value = '';
   document.getElementById('dep-ubicacion').value = '';
@@ -440,6 +457,7 @@ function abrirModalEditar(id) {
   document.getElementById('edit-id').value = d.id;
   document.getElementById('dep-nombre').value = d.nombre;
   document.getElementById('dep-tipo').value = d.tipo;
+  document.getElementById('dep-tipo-stock').value = d.tipo_stock || 'mercaderia';
   document.getElementById('dep-capacidad').value = d.capacidad_kg || '';
   document.getElementById('dep-costo').value = d.costo_kg_dia || '';
   document.getElementById('dep-ubicacion').value = d.ubicacion || '';
@@ -462,7 +480,8 @@ function guardarDeposito(btn) {
   var msgEl    = document.getElementById('msg-modal');
   if (!nombre) { msgEl.innerHTML = '<div class="msg-error">El nombre es obligatorio</div>'; return; }
 
-  var payload = { nombre: nombre, tipo: tipo,
+  var tipoStock = document.getElementById('dep-tipo-stock').value || 'mercaderia';
+  var payload = { nombre: nombre, tipo: tipo, tipo_stock: tipoStock,
     capacidad_kg: cap ? parseFloat(cap) : null,
     costo_kg_dia: costo ? parseFloat(costo) : null,
     ubicacion: ubic, observacion: obs };
