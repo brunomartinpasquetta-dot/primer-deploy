@@ -10,13 +10,28 @@
   <link rel="stylesheet" href="cosecha.css">
   <script src="js/auth-check.js"></script>
   <style>
-    .aplic-kpis { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px; }
-    .aplic-kpi  { background:var(--fondo-card); border-radius:8px; padding:6px 8px;
-                  border-top:3px solid var(--verde); box-shadow:var(--sombra-card); }
-    .aplic-kpi .valor { font-size:16px; font-weight:700; color:var(--verde);
-                        font-family:'JetBrains Mono',monospace; }
-    .aplic-kpi .label { font-size:9px; text-transform:uppercase; letter-spacing:.5px;
-                        color:var(--texto-suave); margin-top:2px; }
+    /* ── KPI Cards ── */
+    .aplic-kpis { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:14px; }
+    .aplic-kpi  {
+      background:#fff; border-radius:10px; padding:16px 18px;
+      box-shadow:0 2px 10px rgba(0,0,0,.08); display:flex; flex-direction:column; gap:2px;
+    }
+    .aplic-kpi-icon {
+      width:36px; height:36px; border-radius:8px;
+      display:flex; align-items:center; justify-content:center; margin-bottom:8px;
+    }
+    .aplic-kpi-icon svg { width:18px; height:18px; }
+    .aplic-kpi-icon.hoy     { background:#e8f5e2; color:#2d6a4f; }
+    .aplic-kpi-icon.lotes   { background:#eef7ee; color:#2D5016; }
+    .aplic-kpi-icon.campana { background:#e8f0fe; color:#1565c0; }
+    .aplic-kpi .valor {
+      font-size:26px; font-weight:700; font-family:'JetBrains Mono',monospace;
+      line-height:1; color:var(--texto);
+    }
+    .aplic-kpi .valor.verde { color:#2d6a4f; }
+    .aplic-kpi .valor.azul  { color:#1565c0; }
+    .aplic-kpi .label { font-size:11px; text-transform:uppercase; letter-spacing:.5px;
+                        color:var(--texto-suave); margin-top:4px; }
     .aplic-layout    { display:grid; grid-template-columns:220px 1fr; gap:16px; align-items:start; }
     .aplic-form      { max-width:220px; position:relative; z-index:2; }
     .aplic-historial { position:relative; z-index:1; }
@@ -42,6 +57,51 @@
     }
     .juntador-chip strong { flex:1; font-size:12px; }
     .juntador-chip-clear { background:none; border:none; cursor:pointer; color:var(--sem-verde); font-size:14px; padding:0 2px; }
+    /* ── Toolbar historial ── */
+    .aplic-toolbar {
+      display:flex; align-items:center; justify-content:space-between;
+      gap:8px; margin-bottom:10px; flex-wrap:wrap;
+    }
+    .aplic-toolbar-left  { display:flex; align-items:center; gap:8px; flex-wrap:wrap; flex:1; }
+    .aplic-toolbar-right { display:flex; align-items:center; gap:6px; }
+    .aplic-search {
+      padding:8px 12px; border:1px solid var(--borde); border-radius:7px;
+      font-size:13px; min-width:180px; background:#fff; color:var(--texto); outline:none; flex:1;
+    }
+    .aplic-search:focus { border-color:#2D5016; }
+    .aplic-btn-filtros {
+      display:inline-flex; align-items:center; gap:5px;
+      padding:8px 14px; border:1px solid var(--borde); border-radius:7px;
+      font-size:13px; font-weight:600; background:#fff; color:var(--texto-suave);
+      cursor:pointer; white-space:nowrap; transition:background .15s;
+    }
+    .aplic-btn-filtros.activo { background:#2D5016; color:#fff; border-color:#2D5016; }
+    .aplic-btn-filtros svg { width:14px; height:14px; }
+    .aplic-btn-export {
+      display:inline-flex; align-items:center; justify-content:center;
+      width:36px; height:36px; border-radius:7px; border:1px solid var(--borde);
+      background:#fff; cursor:pointer; transition:background .15s; color:var(--texto-suave);
+    }
+    .aplic-btn-export:hover { background:var(--fondo-dark); color:var(--texto); }
+    .aplic-btn-export svg { width:16px; height:16px; }
+    /* Filtros avanzados colapsables */
+    .aplic-filtros-panel {
+      background:var(--fondo-dark); border:1px solid var(--borde);
+      border-radius:8px; padding:12px; margin-bottom:10px;
+    }
+    /* ── Tabla header verde ── */
+    #tabla-historial-aplic thead th {
+      background:#2D5016; color:#fff;
+      font-weight:700; text-transform:uppercase;
+      font-size:11px; letter-spacing:.5px; padding:11px 12px;
+    }
+    #tabla-historial-aplic thead th:first-child { width:36px; text-align:center; }
+    #tabla-historial-aplic tbody td { padding:10px 12px; }
+    #tabla-historial-aplic tbody td:first-child { text-align:center; }
+    #tabla-historial-aplic tbody tr:hover { background:var(--fondo-dark); }
+    input[type="checkbox"].row-check {
+      width:15px; height:15px; cursor:pointer; accent-color:#2D5016;
+    }
     /* Badges historial */
     .badge-compra      { background:#e8f5e2; color:#2d6a4f; }
     .badge-aplicacion  { background:#fde8e8; color:#c0392b; }
@@ -134,16 +194,19 @@
       <!-- KPI cards -->
       <div class="aplic-kpis">
         <div class="aplic-kpi">
-          <div class="valor" id="kpi-aplic-hoy">—</div>
-          <div class="label">Aplicaciones hoy</div>
+          <div class="aplic-kpi-icon hoy"><i data-lucide="droplets"></i></div>
+          <div class="valor verde" id="kpi-aplic-hoy">—</div>
+          <div class="label">Aplicaciones Hoy</div>
         </div>
         <div class="aplic-kpi">
-          <div class="valor" id="kpi-lotes-hoy">—</div>
-          <div class="label">Lotes hoy</div>
+          <div class="aplic-kpi-icon lotes"><i data-lucide="map-pin"></i></div>
+          <div class="valor verde" id="kpi-lotes-hoy">—</div>
+          <div class="label">Lotes Hoy</div>
         </div>
         <div class="aplic-kpi">
-          <div class="valor" id="kpi-campana">—</div>
-          <div class="label">Campaña total</div>
+          <div class="aplic-kpi-icon campana"><i data-lucide="calendar-days"></i></div>
+          <div class="valor azul" id="kpi-campana">—</div>
+          <div class="label">Campaña Total</div>
         </div>
       </div>
 
@@ -261,9 +324,30 @@
           </button>
         </div>
 
-        <!-- HISTORIAL DERECHO — idéntico a stock-insumos -->
+        <!-- HISTORIAL DERECHO -->
         <div class="aplic-historial">
-          <div class="card-form" style="margin-bottom:12px;">
+
+          <!-- Toolbar -->
+          <div class="aplic-toolbar">
+            <div class="aplic-toolbar-left">
+              <input type="text" class="aplic-search" id="aplic-buscar"
+                     placeholder="Buscar registro..." oninput="buscarHistorial()">
+              <button class="aplic-btn-filtros" id="btn-filtros-avz" onclick="toggleFiltrosAvanzados()">
+                <i data-lucide="sliders-horizontal"></i> Filtros Avanzados
+              </button>
+            </div>
+            <div class="aplic-toolbar-right">
+              <button class="aplic-btn-export" onclick="exportarAplicCSV()" title="Exportar Excel (CSV)">
+                <i data-lucide="file-spreadsheet"></i>
+              </button>
+              <button class="aplic-btn-export" onclick="window.print()" title="Imprimir / PDF">
+                <i data-lucide="file-text"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Filtros avanzados (colapsables) -->
+          <div class="aplic-filtros-panel" id="panel-filtros-avz" style="display:none;">
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:8px;">
               <div class="form-row" style="margin-bottom:0;">
                 <label>Producto</label>
@@ -306,20 +390,22 @@
               </div>
             </div>
           </div>
+
+          <!-- Tabla -->
           <div class="card">
             <div class="table-wrap">
-              <table style="table-layout:auto;">
+              <table id="tabla-historial-aplic" style="table-layout:auto;">
                 <thead>
                   <tr>
+                    <th><input type="checkbox" class="row-check" id="chk-all-aplic" onchange="toggleTodosAplic(this)"></th>
                     <th style="text-align:center;">#</th>
-                    <th>Fecha y hora</th>
+                    <th>Fecha y Hora</th>
                     <th>Producto</th>
                     <th>Movimiento</th>
                     <th style="text-align:right;">Cantidad</th>
                     <th>Aplica</th>
                     <th>Lote</th>
                     <th>Usuario</th>
-                    <th>Ver detalles</th>
                   </tr>
                 </thead>
                 <tbody id="tbody-historial">
@@ -380,6 +466,60 @@
   var modoActualEmpleado = 'lista', empleadoId = null;
   var _carenciaVisible = false;
   var _movimientoMap = {};
+  var _historialData = [];
+  var _filtrosAvzVisible = false;
+
+  /* ── Toggle filtros avanzados ── */
+  function toggleFiltrosAvanzados() {
+    _filtrosAvzVisible = !_filtrosAvzVisible;
+    document.getElementById('panel-filtros-avz').style.display = _filtrosAvzVisible ? '' : 'none';
+    document.getElementById('btn-filtros-avz').classList.toggle('activo', _filtrosAvzVisible);
+    if (_filtrosAvzVisible) lucide.createIcons();
+  }
+
+  /* ── Select-all checkboxes ── */
+  function toggleTodosAplic(chk) {
+    document.querySelectorAll('#tbody-historial .row-check').forEach(function(c){ c.checked = chk.checked; });
+  }
+
+  /* ── Búsqueda en tiempo real ── */
+  function buscarHistorial() {
+    var q = (document.getElementById('aplic-buscar').value || '').toLowerCase().trim();
+    if (!q) { renderHistorialTabla(_historialData); return; }
+    var filtrado = _historialData.filter(function(m) {
+      return (m.producto  || '').toLowerCase().indexOf(q) >= 0 ||
+             (m.empleado  || '').toLowerCase().indexOf(q) >= 0 ||
+             (m.lote      || '').toLowerCase().indexOf(q) >= 0 ||
+             (m.usuario   || '').toLowerCase().indexOf(q) >= 0 ||
+             (m.tipo      || '').toLowerCase().indexOf(q) >= 0 ||
+             String(m.id || '').indexOf(q) >= 0;
+    });
+    renderHistorialTabla(filtrado);
+  }
+
+  /* ── Export CSV ── */
+  function exportarAplicCSV() {
+    if (!_historialData.length) { alert('Sin datos para exportar.'); return; }
+    var filas = [['#','Fecha y Hora','Producto','Movimiento','Cantidad','Aplica','Lote','Usuario']];
+    _historialData.forEach(function(m) {
+      filas.push([
+        m.id || '',
+        m.fecha_hora ? new Date(m.fecha_hora).toLocaleString('es-AR') : '',
+        '"' + (m.producto || '') + '"',
+        m.tipo || '',
+        (parseFloat(m.cantidad||0).toFixed(2) + ' ' + (m.presentacion||'')).trim(),
+        '"' + (m.empleado || m.proveedor || '') + '"',
+        '"' + (m.lote || '') + '"',
+        '"' + (m.usuario || '') + '"'
+      ]);
+    });
+    var csv = filas.map(function(r){ return r.join(','); }).join('\n');
+    var blob = new Blob(['\uFEFF' + csv], { type:'text/csv;charset=utf-8;' });
+    var url  = URL.createObjectURL(blob);
+    var a    = document.createElement('a');
+    a.href = url; a.download = 'aplicaciones.csv'; a.click();
+    URL.revokeObjectURL(url);
+  }
 
   /* ── Timezone helpers ── */
   function _fechasHoy() {
@@ -668,6 +808,61 @@
     cargarHistorial();
   }
 
+  /* ── Render tabla historial ── */
+  function renderHistorialTabla(data) {
+    var tbody = document.getElementById('tbody-historial');
+    var tfoot = document.getElementById('tfoot-historial');
+    document.getElementById('chk-all-aplic').checked = false;
+    if (!data.length) {
+      tbody.innerHTML = '<tr><td colspan="9" class="activity-empty">Sin movimientos para los filtros seleccionados</td></tr>';
+      tfoot.innerHTML = '';
+      return;
+    }
+    var totIngreso = 0, totEgreso = 0;
+    tbody.innerHTML = data.map(function(m) {
+      var esIngreso = m.tipo === 'compra';
+      var bg        = esIngreso ? 'background:#f0faf0;' : 'background:#fff5f5;';
+      var kgColor   = esIngreso ? 'color:#2d6a4f;font-weight:700;' : 'color:#c0392b;font-weight:700;';
+      var signo     = esIngreso ? '+' : '-';
+      var movLabel  = esIngreso ? 'Ingreso' : 'Egreso';
+      var movStyle  = esIngreso
+        ? 'background:var(--sem-verde-bg);color:var(--sem-verde);'
+        : 'background:var(--sem-rojo-bg);color:var(--sem-rojo);';
+      var tipoLabel = m.tipo === 'compra'      ? 'Compra'
+        : m.tipo === 'aplicacion'              ? 'Aplicación'
+        : m.tipo === 'merma'                   ? 'Merma'
+        : m.tipo === 'vencimiento'             ? 'Vencimiento'
+        : m.tipo === 'perdida'                 ? 'Pérdida'
+        : m.tipo;
+      var aplica = m.empleado || (esIngreso ? (m.proveedor || '—') : '—') || '—';
+      var cant   = parseFloat(m.cantidad || 0);
+      if (esIngreso) totIngreso += cant; else totEgreso += cant;
+      var idChip = '<span style="font-family:\'JetBrains Mono\',monospace;font-size:11px;background:var(--fondo-dark);border:1px solid var(--borde);border-radius:4px;padding:1px 5px;">#' + m.id + '</span>';
+      return '<tr style="' + bg + '">' +
+        '<td style="text-align:center;"><input type="checkbox" class="row-check"></td>' +
+        '<td style="text-align:center;">' + idChip + '</td>' +
+        '<td style="font-size:12px;white-space:nowrap;">' + fmtFechaHora(m.fecha_hora) + '</td>' +
+        '<td style="font-size:12px;">' + (m.producto || '—') + '</td>' +
+        '<td>' +
+          '<span class="badge" style="' + movStyle + '">' + movLabel + '</span>' +
+          '&nbsp;<span style="font-size:11px;color:var(--texto-suave);">' + tipoLabel + '</span>' +
+        '</td>' +
+        '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;' + kgColor + '">' +
+          signo + cant.toLocaleString('es-AR', {minimumFractionDigits:0,maximumFractionDigits:2}) + ' ' + (m.presentacion || '') + '</td>' +
+        '<td style="font-size:12px;">' + aplica + '</td>' +
+        '<td style="font-size:12px;">' + (m.lote || '—') + '</td>' +
+        '<td style="font-size:12px;color:var(--texto-suave);">' + (m.usuario || '—') + '</td>' +
+        '</tr>';
+    }).join('');
+    tfoot.innerHTML = '<tr style="font-weight:700;background:var(--fondo);">' +
+      '<td colspan="5" style="font-size:12px;padding:8px 12px;color:var(--texto-suave);">Totales (' + data.length + ' movimientos)</td>' +
+      '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;font-size:12px;padding:8px 12px;">' +
+        (totIngreso ? '<span style="color:#2d6a4f;">+' + totIngreso.toLocaleString('es-AR',{maximumFractionDigits:2}) + '</span> ' : '') +
+        (totEgreso  ? '<span style="color:#c0392b;">−' + totEgreso.toLocaleString('es-AR',{maximumFractionDigits:2}) + '</span>' : '') +
+      '</td>' +
+      '<td colspan="3"></td></tr>';
+  }
+
   function cargarHistorial() {
     var params = new URLSearchParams();
     var pid   = document.getElementById('hist-producto').value;
@@ -685,6 +880,7 @@
     var tfoot = document.getElementById('tfoot-historial');
     tbody.innerHTML = '<tr><td colspan="9" class="activity-empty" style="color:var(--verde);">Cargando...</td></tr>';
     tfoot.innerHTML = '';
+    document.getElementById('aplic-buscar').value = '';
 
     fetch('/api/stock-insumos/historial?' + params.toString())
       .then(function(r) { return r.json(); })
@@ -692,57 +888,10 @@
         if (tipo === 'egreso') {
           data = data.filter(function(m){ return m.tipo !== 'compra'; });
         }
-        if (!data.length) {
-          tbody.innerHTML = '<tr><td colspan="9" class="activity-empty">Sin movimientos para los filtros seleccionados</td></tr>';
-          return;
-        }
+        _historialData = data;
         _movimientoMap = {};
-        var totIngreso = 0, totEgreso = 0;
-        tbody.innerHTML = data.map(function(m) {
-          _movimientoMap[m.id] = m;
-          var esIngreso = m.tipo === 'compra';
-          var bg        = esIngreso ? 'background:#f0faf0;' : 'background:#fff5f5;';
-          var kgColor   = esIngreso ? 'color:#2d6a4f;font-weight:700;' : 'color:#c0392b;font-weight:700;';
-          var signo     = esIngreso ? '+' : '-';
-          var movLabel  = esIngreso ? 'Ingreso' : 'Egreso';
-          var movStyle  = esIngreso
-            ? 'background:var(--sem-verde-bg);color:var(--sem-verde);'
-            : 'background:var(--sem-rojo-bg);color:var(--sem-rojo);';
-          var tipoLabel = m.tipo === 'compra'      ? 'Compra'
-            : m.tipo === 'aplicacion'              ? 'Aplicación'
-            : m.tipo === 'merma'                   ? 'Merma'
-            : m.tipo === 'vencimiento'             ? 'Vencimiento'
-            : m.tipo === 'perdida'                 ? 'Pérdida'
-            : m.tipo;
-          var aplica = m.empleado || (esIngreso ? (m.proveedor || '—') : '—') || '—';
-          var cant   = parseFloat(m.cantidad || 0);
-          if (esIngreso) totIngreso += cant; else totEgreso += cant;
-          var idChip = '<span style="font-family:\'JetBrains Mono\',monospace;font-size:11px;background:var(--fondo-dark);border:1px solid var(--borde);border-radius:4px;padding:1px 5px;">#' + m.id + '</span>';
-          return '<tr style="' + bg + '">' +
-            '<td style="text-align:center;">' + idChip + '</td>' +
-            '<td style="font-size:12px;white-space:nowrap;">' + fmtFechaHora(m.fecha_hora) + '</td>' +
-            '<td style="font-size:12px;">' + (m.producto || '—') + '</td>' +
-            '<td>' +
-              '<span class="badge" style="' + movStyle + '">' + movLabel + '</span>' +
-              '&nbsp;<span style="font-size:11px;color:var(--texto-suave);">' + tipoLabel + '</span>' +
-            '</td>' +
-            '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;' + kgColor + '">' +
-              signo + cant.toLocaleString('es-AR', {minimumFractionDigits:0,maximumFractionDigits:2}) + ' ' + (m.presentacion || '') + '</td>' +
-            '<td style="font-size:12px;">' + aplica + '</td>' +
-            '<td style="font-size:12px;">' + (m.lote || '—') + '</td>' +
-            '<td style="font-size:12px;color:var(--texto-suave);">' + (m.usuario || '—') + '</td>' +
-            '<td style="text-align:center;">' +
-              '<button onclick="verDetalles(' + m.id + ')" style="background:none;border:1px solid var(--borde);border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;color:var(--verde);font-weight:600;">Ver</button>' +
-            '</td>' +
-            '</tr>';
-        }).join('');
-        tfoot.innerHTML = '<tr style="font-weight:700;background:var(--fondo);">' +
-          '<td colspan="4" style="font-size:12px;padding:8px 12px;color:var(--texto-suave);">Totales (' + data.length + ' movimientos)</td>' +
-          '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;font-size:12px;padding:8px 12px;">' +
-            (totIngreso ? '<span style="color:#2d6a4f;">+' + totIngreso.toLocaleString('es-AR',{maximumFractionDigits:2}) + '</span> ' : '') +
-            (totEgreso  ? '<span style="color:#c0392b;">−' + totEgreso.toLocaleString('es-AR',{maximumFractionDigits:2}) + '</span>' : '') +
-          '</td>' +
-          '<td colspan="4"></td></tr>';
+        data.forEach(function(m){ _movimientoMap[m.id] = m; });
+        renderHistorialTabla(data);
       })
       .catch(function() {
         tbody.innerHTML = '<tr><td colspan="9" class="activity-empty" style="color:#c0392b;">Error al cargar historial</td></tr>';
