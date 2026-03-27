@@ -18,8 +18,8 @@
     }
     .ins-kpi {
       background: #fff;
-      border-radius: 10px;
-      padding: 16px 18px;
+      border-radius: 8px;
+      padding: 12px 16px;
       box-shadow: 0 2px 10px rgba(0,0,0,.08);
       display: flex;
       flex-direction: column;
@@ -40,7 +40,7 @@
     .ins-kpi-icon.dinero { background: #e8f0fe; color: #1565c0; }
     .ins-kpi-icon svg { width: 18px; height: 18px; }
     .ins-kpi-valor {
-      font-size: 26px;
+      font-size: 22px;
       font-weight: 700;
       font-family: 'JetBrains Mono', monospace;
       line-height: 1;
@@ -50,7 +50,7 @@
     .ins-kpi-valor.verde { color: #2d6a4f; }
     .ins-kpi-valor.azul  { color: #1565c0; }
     .ins-kpi-label {
-      font-size: 11px;
+      font-size: 10px;
       text-transform: uppercase;
       letter-spacing: .5px;
       color: var(--texto-suave);
@@ -212,6 +212,18 @@
     .modal-close svg { width: 18px; height: 18px; }
     .modal-body { padding: 20px; }
 
+    /* ── Estado almacenes ── */
+    .ins-almacenes { margin-bottom: 14px; }
+    .ins-almacenes-title { font-size: 12px; font-weight: 600; color: var(--texto-suave); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+    .ins-alm-row { display: flex; align-items: center; gap: 10px; padding: 8px 14px; background: #fff; border: 1px solid var(--borde); border-radius: 8px; margin-bottom: 6px; }
+    .ins-alm-nombre { min-width: 130px; font-size: 13px; font-weight: 600; }
+    .ins-alm-bar-wrap { flex: 1; }
+    .ins-alm-bar { height: 5px; background: var(--fondo-dark); border-radius: 4px; overflow: hidden; }
+    .ins-alm-bar-fill { height: 100%; border-radius: 4px; background: #2d6a4f; transition: width .4s; }
+    .ins-alm-bar-fill.warn { background: #f59e0b; }
+    .ins-alm-bar-fill.full { background: #c0392b; }
+    .ins-alm-stat { font-size: 12px; font-family: 'JetBrains Mono', monospace; color: var(--texto-2); white-space: nowrap; }
+
     @media (max-width: 900px) {
       .ins-kpis { grid-template-columns: 1fr 1fr; }
       .ins-action-bar { flex-direction: column; align-items: flex-start; }
@@ -283,6 +295,12 @@
           <div class="ins-kpi-valor verde" id="kpi-valor">$0</div>
           <div class="ins-kpi-label">Valor de Inventario</div>
         </div>
+      </div>
+
+      <!-- ── Estado de almacenes ── -->
+      <div class="ins-almacenes" id="ins-almacenes" style="display:none;">
+        <div class="ins-almacenes-title">Estado de almacenes</div>
+        <div id="ins-almacenes-list"></div>
       </div>
 
       <!-- ── Barra de acciones ── -->
@@ -403,11 +421,12 @@
                   <th style="text-align:right;">Cantidad</th>
                   <th>Aplica</th>
                   <th>Lote</th>
+                  <th>Depósito</th>
                   <th>Usuario</th>
                 </tr>
               </thead>
               <tbody id="tbody-historial">
-                <tr><td colspan="8" class="activity-empty">Cargando...</td></tr>
+                <tr><td colspan="9" class="activity-empty">Cargando...</td></tr>
               </tbody>
               <tfoot id="tfoot-historial"></tfoot>
             </table>
@@ -484,6 +503,12 @@
     </div>
     <div class="modal-body">
       <div class="form-row">
+        <label>Depósito destino *</label>
+        <select id="im-deposito">
+          <option value="">Seleccionar depósito...</option>
+        </select>
+      </div>
+      <div class="form-row">
         <label>Producto *</label>
         <select id="im-producto">
           <option value="">Seleccionar producto...</option>
@@ -526,9 +551,13 @@
 
   /* ── Modal ingreso manual ── */
   function openIngresoManualModal() {
+    // Poblar select de depósitos
+    var selDep = document.getElementById('im-deposito');
+    selDep.innerHTML = '<option value="">Seleccionar depósito...</option>' +
+      _depositosInsumos.map(function(d) { return '<option value="'+d.id+'">'+d.nombre+'</option>'; }).join('');
     // Poblar select de productos
-    var sel = document.getElementById('im-producto');
-    sel.innerHTML = '<option value="">Seleccionar producto...</option>' +
+    var selProd = document.getElementById('im-producto');
+    selProd.innerHTML = '<option value="">Seleccionar producto...</option>' +
       _stockData.map(function(p) { return '<option value="'+p.id+'">'+p.nombre+' (stock: '+parseFloat(p.stock_actual||0).toFixed(2)+')</option>'; }).join('');
     document.getElementById('im-cantidad').value = '';
     document.getElementById('im-costo').value = '';
@@ -544,8 +573,10 @@
     if (e.target === document.getElementById('modal-ingreso-manual')) closeIngresoManualModal();
   }
   function registrarIngresoManual(btn) {
+    var deposito_id = document.getElementById('im-deposito').value;
     var producto_id = document.getElementById('im-producto').value;
     var cantidad = document.getElementById('im-cantidad').value;
+    if (!deposito_id) { document.getElementById('msg-ingreso-manual').innerHTML = '<p style="color:var(--sem-rojo);font-size:13px;margin-top:8px;">Seleccioná un depósito</p>'; return; }
     if (!producto_id) { document.getElementById('msg-ingreso-manual').innerHTML = '<p style="color:var(--sem-rojo);font-size:13px;margin-top:8px;">Seleccioná un producto</p>'; return; }
     if (!cantidad || parseFloat(cantidad) <= 0) { document.getElementById('msg-ingreso-manual').innerHTML = '<p style="color:var(--sem-rojo);font-size:13px;margin-top:8px;">Ingresá una cantidad válida</p>'; return; }
     setLoading(btn, true);
@@ -553,6 +584,7 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        deposito_id: deposito_id,
         producto_id: producto_id,
         cantidad: cantidad,
         costo_total: document.getElementById('im-costo').value || null,
@@ -709,6 +741,8 @@
   /* ── Export PDF (imprimir) ── */
   function exportarPDF() { window.print(); }
 
+  var _depositosInsumos = [];
+
   /* ── Init selects (egreso + historial) ── */
   function cargarEgresoInit() {
     fetch('/api/stock-insumos').then(function(r) { return r.json(); }).then(function(data) {
@@ -724,6 +758,37 @@
       var optsLotes = data.map(function(l){ return '<option value="'+l.id+'">'+l.nombre+'</option>'; }).join('');
       document.getElementById('egr-lote').innerHTML = '<option value="">Sin lote específico</option>' + optsLotes;
       document.getElementById('hist-lote').innerHTML = '<option value="">Todos</option>' + optsLotes;
+    });
+    fetch('/api/depositos?tipo_stock=insumos').then(function(r) { return r.json(); }).then(function(data) {
+      _depositosInsumos = data;
+      cargarEstadoAlmacenes();
+    });
+  }
+
+  /* ── Estado de almacenes (insumos) ── */
+  function cargarEstadoAlmacenes() {
+    fetch('/api/depositos/ocupacion?tipo_stock=insumos').then(function(r) { return r.json(); }).then(function(data) {
+      var sec  = document.getElementById('ins-almacenes');
+      var list = document.getElementById('ins-almacenes-list');
+      if (!data.length) { sec.style.display = 'none'; return; }
+      sec.style.display = '';
+      list.innerHTML = data.map(function(d) {
+        var ocup = parseFloat(d.ocupado_kg) || 0;
+        var cap  = parseFloat(d.capacidad_kg) || 0;
+        var pct  = d.porcentaje !== null ? parseFloat(d.porcentaje) : null;
+        var fillClass = pct !== null ? (pct >= 90 ? 'full' : pct >= 70 ? 'warn' : '') : '';
+        var statTxt = ocup.toLocaleString('es-AR', { maximumFractionDigits: 1 });
+        if (pct !== null) statTxt += ' / ' + cap.toLocaleString('es-AR', { maximumFractionDigits: 0 }) + ' (' + pct.toFixed(0) + '%)';
+        return '<div class="ins-alm-row">' +
+          '<div class="ins-alm-nombre">' + d.nombre + '</div>' +
+          (pct !== null ?
+            '<div class="ins-alm-bar-wrap"><div class="ins-alm-bar"><div class="ins-alm-bar-fill ' + fillClass + '" style="width:' + pct.toFixed(1) + '%"></div></div></div>' :
+            '<div class="ins-alm-bar-wrap"></div>') +
+          '<div class="ins-alm-stat">' + statTxt + '</div>' +
+          '</div>';
+      }).join('');
+    }).catch(function() {
+      document.getElementById('ins-almacenes').style.display = 'none';
     });
   }
 
@@ -825,7 +890,7 @@
 
     var tbody = document.getElementById('tbody-historial');
     var tfoot = document.getElementById('tfoot-historial');
-    tbody.innerHTML = '<tr><td colspan="8" class="activity-empty" style="color:var(--verde);">Cargando...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" class="activity-empty" style="color:var(--verde);">Cargando...</td></tr>';
     tfoot.innerHTML = '';
 
     fetch('/api/stock-insumos/historial?' + params.toString())
@@ -835,7 +900,7 @@
           data = data.filter(function(m){ return m.tipo !== 'compra'; });
         }
         if (!data.length) {
-          tbody.innerHTML = '<tr><td colspan="8" class="activity-empty">Sin movimientos para los filtros seleccionados</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="9" class="activity-empty">Sin movimientos para los filtros seleccionados</td></tr>';
           return;
         }
         var totIngreso = 0, totEgreso = 0;
@@ -870,6 +935,7 @@
               signo + cant.toLocaleString('es-AR', {minimumFractionDigits:0,maximumFractionDigits:2}) + ' ' + (m.presentacion || '') + '</td>' +
             '<td style="font-size:12px;">' + aplica + '</td>' +
             '<td style="font-size:12px;">' + (m.lote || '—') + '</td>' +
+            '<td style="font-size:12px;">' + (m.deposito_nombre || '—') + '</td>' +
             '<td style="font-size:12px;color:var(--texto-suave);">' + (m.usuario || '—') + '</td>' +
             '</tr>';
         }).join('');
@@ -879,10 +945,10 @@
             (totIngreso ? '<span style="color:#2d6a4f;">+' + totIngreso.toLocaleString('es-AR',{maximumFractionDigits:2}) + '</span> ' : '') +
             (totEgreso  ? '<span style="color:#c0392b;">−' + totEgreso.toLocaleString('es-AR',{maximumFractionDigits:2}) + '</span>' : '') +
           '</td>' +
-          '<td colspan="3"></td></tr>';
+          '<td colspan="4"></td></tr>';
       })
       .catch(function() {
-        tbody.innerHTML = '<tr><td colspan="8" class="activity-empty" style="color:#c0392b;">Error al cargar historial</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="activity-empty" style="color:#c0392b;">Error al cargar historial</td></tr>';
       });
   }
 

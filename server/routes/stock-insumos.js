@@ -24,7 +24,7 @@ router.get('/', async (req, res) => {
 
 // Registrar compra (ingreso de stock)
 router.post('/compra', async (req, res) => {
-  const { producto_id, cantidad, costo_total, proveedor, observacion } = req.body;
+  const { producto_id, cantidad, costo_total, proveedor, observacion, deposito_id } = req.body;
   const uid = req.user ? req.user.id : null;
   const pool = await getPool();
   const transaction = new sql.Transaction(pool);
@@ -37,8 +37,9 @@ router.post('/compra', async (req, res) => {
       .input('proveedor',   sql.NVarChar,      proveedor || '')
       .input('observacion', sql.NVarChar,      observacion || '')
       .input('usuario_id',  sql.Int,           uid)
-      .query(`INSERT INTO StockInsumos (producto_id, tipo, cantidad, costo_total, proveedor, observacion, usuario_id, fecha_hora)
-              VALUES (@producto_id, 'compra', @cantidad, @costo_total, @proveedor, @observacion, @usuario_id, GETDATE())`);
+      .input('deposito_id', sql.Int,           deposito_id || null)
+      .query(`INSERT INTO StockInsumos (producto_id, tipo, cantidad, costo_total, proveedor, observacion, usuario_id, deposito_id, fecha_hora)
+              VALUES (@producto_id, 'compra', @cantidad, @costo_total, @proveedor, @observacion, @usuario_id, @deposito_id, GETDATE())`);
     await new sql.Request(transaction)
       .input('producto_id', sql.Int,          producto_id)
       .input('cantidad',    sql.Decimal(10,2), cantidad)
@@ -53,7 +54,7 @@ router.post('/compra', async (req, res) => {
 
 // Registrar ingreso manual (sin compra, sin proveedor)
 router.post('/ingreso-manual', async (req, res) => {
-  const { producto_id, cantidad, costo_total, observacion } = req.body;
+  const { producto_id, cantidad, costo_total, observacion, deposito_id } = req.body;
   if (!producto_id || !cantidad) return res.status(400).json({ error: 'Producto y cantidad son obligatorios' });
   const uid = req.user ? req.user.id : null;
   const pool = await getPool();
@@ -66,8 +67,9 @@ router.post('/ingreso-manual', async (req, res) => {
       .input('costo_total', sql.Decimal(10,2), costo_total || null)
       .input('observacion', sql.NVarChar,      observacion || '')
       .input('usuario_id',  sql.Int,           uid)
-      .query(`INSERT INTO StockInsumos (producto_id, tipo, cantidad, costo_total, observacion, usuario_id, fecha_hora)
-              VALUES (@producto_id, 'ingreso_manual', @cantidad, @costo_total, @observacion, @usuario_id, GETDATE())`);
+      .input('deposito_id', sql.Int,           deposito_id || null)
+      .query(`INSERT INTO StockInsumos (producto_id, tipo, cantidad, costo_total, observacion, usuario_id, deposito_id, fecha_hora)
+              VALUES (@producto_id, 'ingreso_manual', @cantidad, @costo_total, @observacion, @usuario_id, @deposito_id, GETDATE())`);
     await new sql.Request(transaction)
       .input('producto_id', sql.Int,          producto_id)
       .input('cantidad',    sql.Decimal(10,2), cantidad)
@@ -180,6 +182,7 @@ router.get('/historial', async (req, res) => {
              l.nombre AS lote,
              j.apellido + ', ' + j.nombre AS empleado,
              u.nombre AS usuario,
+             d.nombre AS deposito_nombre,
              a.metodo, a.condicion_climatica, a.dosis_por_hectarea,
              a.carencia_dias, a.unidad_aplicacion AS aplic_unidad,
              a.observacion AS aplic_observacion,
@@ -190,6 +193,7 @@ router.get('/historial', async (req, res) => {
       LEFT JOIN Lotes        l ON s.lote_id       = l.id
       LEFT JOIN Juntadores   j ON s.empleado_id   = j.id
       LEFT JOIN Usuarios     u ON s.usuario_id    = u.id
+      LEFT JOIN Depositos    d ON s.deposito_id   = d.id
       LEFT JOIN Aplicaciones a ON s.aplicacion_id = a.id
       LEFT JOIN Temporadas   t ON a.temporada_id  = t.id
       WHERE ${where}
