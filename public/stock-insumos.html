@@ -9,25 +9,218 @@
   <script src="js/utils.js"></script>
   <link rel="stylesheet" href="cosecha.css">
   <style>
-    /* KPIs al estilo juntada */
-    .ins-kpis { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px; }
-    .ins-kpi  { background:var(--fondo-card); border-radius:8px; padding:6px 8px;
-                border-top:3px solid var(--verde); box-shadow:var(--sombra-card); }
-    .ins-kpi .valor { font-size:16px; font-weight:700; font-family:'JetBrains Mono',monospace; }
-    .ins-kpi .label { font-size:9px; text-transform:uppercase; letter-spacing:.5px;
-                      color:var(--texto-suave); margin-top:2px; }
-    .ins-kpi .valor.verde { color:var(--verde); }
-    .ins-kpi .valor.rojo  { color:#c0392b; }
-    .ins-kpi .valor.azul  { color:#1565c0; }
-    /* Badges de movimiento */
-    .badge-compra    { background:#e8f5e2; color:#2d6a4f; }
-    .badge-aplicacion { background:#fde8e8; color:#c0392b; }
-    .badge-egreso    { background:#fff3cd; color:#856404; }
-    .badge-merma     { background:#fff3cd; color:#856404; }
-    .badge-vencimiento { background:#e2e3e5; color:#383d41; }
-    .badge-perdida   { background:#e2e3e5; color:#383d41; }
-    .stock-bajo { color:#c0392b; font-weight:700; }
-    .stock-ok   { color:#2d6a4f; font-weight:700; }
+    /* ── KPI Cards ── */
+    .ins-kpis {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .ins-kpi {
+      background: #fff;
+      border-radius: 10px;
+      padding: 16px 18px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.08);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .ins-kpi-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 8px;
+      background: #eef7ee;
+      color: #2D5016;
+    }
+    .ins-kpi-icon.alerta { background: #fff3cd; color: #f39c12; }
+    .ins-kpi-icon.dinero { background: #e8f0fe; color: #1565c0; }
+    .ins-kpi-icon svg { width: 18px; height: 18px; }
+    .ins-kpi-valor {
+      font-size: 26px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      line-height: 1;
+      color: var(--texto);
+    }
+    .ins-kpi-valor.rojo  { color: #c0392b; }
+    .ins-kpi-valor.verde { color: #2d6a4f; }
+    .ins-kpi-valor.azul  { color: #1565c0; }
+    .ins-kpi-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--texto-suave);
+      margin-top: 4px;
+    }
+
+    /* ── Action Bar ── */
+    .ins-action-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .ins-action-left  { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .ins-action-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+    .ins-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 16px;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      line-height: 1;
+      transition: opacity .15s;
+      white-space: nowrap;
+    }
+    .ins-btn:hover { opacity: .82; }
+    .ins-btn svg { width: 14px; height: 14px; }
+    .ins-btn-primary   { background: #2D5016; color: #fff; }
+    .ins-btn-egreso    { background: #F5A623; color: #fff; }
+    .ins-btn-gray      { background: #6c757d; color: #fff; }
+    .ins-btn-gray.activo { background: #343a40; }
+
+    .ins-search {
+      padding: 8px 12px;
+      border: 1px solid var(--borde);
+      border-radius: 7px;
+      font-size: 13px;
+      min-width: 180px;
+      background: #fff;
+      color: var(--texto);
+      outline: none;
+    }
+    .ins-search:focus { border-color: #2D5016; }
+
+    .ins-filter-sel {
+      padding: 8px 10px;
+      border: 1px solid var(--borde);
+      border-radius: 7px;
+      font-size: 13px;
+      background: #fff;
+      color: var(--texto);
+      cursor: pointer;
+      outline: none;
+    }
+    .ins-filter-sel:focus { border-color: #2D5016; }
+
+    .ins-export-group { display: flex; gap: 4px; }
+    .ins-btn-export {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 7px;
+      border: 1px solid var(--borde);
+      background: #fff;
+      cursor: pointer;
+      transition: background .15s;
+      color: var(--texto-suave);
+    }
+    .ins-btn-export:hover { background: var(--fondo-dark); color: var(--texto); }
+    .ins-btn-export svg { width: 16px; height: 16px; }
+
+    /* ── Stock table ── */
+    #tabla-stock thead th {
+      background: #2D5016;
+      color: #fff;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: .5px;
+      padding: 11px 12px;
+    }
+    #tabla-stock thead th:first-child { width: 36px; text-align: center; }
+    #tabla-stock tbody td { padding: 10px 12px; }
+    #tabla-stock tbody td:first-child { text-align: center; }
+    #tabla-stock tbody tr:hover { background: var(--fondo-dark); }
+    #tabla-stock td:nth-child(4),
+    #tabla-stock td:nth-child(5),
+    #tabla-stock td:nth-child(6),
+    #tabla-stock td:nth-child(7) { font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+    #tabla-stock td:nth-child(7) { text-align: right; }
+
+    input[type="checkbox"].row-check {
+      width: 15px; height: 15px;
+      cursor: pointer;
+      accent-color: #2D5016;
+    }
+    .stock-bajo { color: #c0392b; font-weight: 700; }
+    .stock-ok   { color: #2d6a4f; font-weight: 700; }
+
+    /* ── Historial section ── */
+    #section-historial { margin-top: 16px; }
+    .hist-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .hist-header span { font-weight: 600; font-size: 14px; }
+
+    /* ── Modal egreso ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.45);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-card {
+      background: #fff;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 460px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.2);
+      overflow: hidden;
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--borde);
+      background: #f8f9fa;
+    }
+    .modal-header h3 { margin: 0; font-size: 15px; }
+    .modal-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--texto-suave);
+      display: flex;
+      padding: 4px;
+      border-radius: 4px;
+      line-height: 1;
+    }
+    .modal-close:hover { background: var(--fondo-dark); color: var(--texto); }
+    .modal-close svg { width: 18px; height: 18px; }
+    .modal-body { padding: 20px; }
+
+    @media (max-width: 900px) {
+      .ins-kpis { grid-template-columns: 1fr 1fr; }
+      .ins-action-bar { flex-direction: column; align-items: flex-start; }
+      .ins-action-right { width: 100%; }
+      .ins-search { min-width: 0; flex: 1; }
+    }
+    @media (max-width: 480px) {
+      .ins-kpis { grid-template-columns: 1fr; }
+    }
   </style>
   <script src="js/auth-check.js"></script>
 </head>
@@ -73,96 +266,82 @@
         <div class="content-sub">Inventario de insumos agrícolas</div>
       </div>
 
-      <!-- KPIs -->
+      <!-- ── KPI Cards ── -->
       <div class="ins-kpis">
         <div class="ins-kpi">
-          <div class="valor azul" id="kpi-productos">0</div>
-          <div class="label">Productos</div>
+          <div class="ins-kpi-icon"><i data-lucide="package"></i></div>
+          <div class="ins-kpi-valor azul" id="kpi-productos">0</div>
+          <div class="ins-kpi-label">Insumos Totales</div>
         </div>
         <div class="ins-kpi">
-          <div class="valor rojo" id="kpi-bajo">0</div>
-          <div class="label">Stock bajo</div>
+          <div class="ins-kpi-icon alerta"><i data-lucide="bell"></i></div>
+          <div class="ins-kpi-valor rojo" id="kpi-bajo">0</div>
+          <div class="ins-kpi-label">Alertas de Stock Bajo</div>
         </div>
         <div class="ins-kpi">
-          <div class="valor verde" id="kpi-valor">$0</div>
-          <div class="label">Valor total</div>
+          <div class="ins-kpi-icon dinero"><i data-lucide="banknote"></i></div>
+          <div class="ins-kpi-valor verde" id="kpi-valor">$0</div>
+          <div class="ins-kpi-label">Valor de Inventario</div>
         </div>
       </div>
 
-      <!-- Tabs -->
-      <div class="tabs">
-        <button class="tab active" onclick="showTab('stock', this)">Stock actual</button>
-        <button class="tab" onclick="showTab('egreso', this)">Registrar egreso</button>
-        <button class="tab" onclick="showTab('historial', this)">Historial</button>
-        <button class="tab" onclick="location.href='compras.html'">Registrar compra</button>
-      </div>
-
-      <!-- ── TAB: STOCK ACTUAL ── -->
-      <div id="tab-stock" class="tab-content active">
-        <div class="card">
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Producto</th>
-                  <th>Tipo</th>
-                  <th>Stock</th>
-                  <th>Comprado</th>
-                  <th>Usado</th>
-                  <th style="text-align:right;">Valor</th>
-                </tr>
-              </thead>
-              <tbody id="tbody-stock">
-                <tr><td colspan="6" class="activity-empty">Cargando...</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── TAB: REGISTRAR EGRESO ── -->
-      <div id="tab-egreso" class="tab-content">
-        <div class="card-form" style="max-width:480px;">
-          <h3 style="margin-bottom:14px;">Registrar egreso manual</h3>
-          <div class="form-row">
-            <label>Producto</label>
-            <select id="egr-producto" onchange="cargarStockProducto()">
-              <option value="">Seleccionar producto...</option>
-            </select>
-            <div id="egr-stock-info" style="font-size:12px;color:var(--texto-suave);margin-top:4px;"></div>
-          </div>
-          <div class="form-row">
-            <label>Cantidad</label>
-            <input type="number" id="egr-cantidad" placeholder="Ej: 5" step="0.01" min="0.01" oninput="checkEgresoReady()">
-          </div>
-          <div class="form-row">
-            <label>Motivo</label>
-            <select id="egr-motivo" onchange="checkEgresoReady()">
-              <option value="">Seleccionar motivo...</option>
-              <option value="merma">Uso en campo / merma</option>
-              <option value="vencimiento">Vencimiento</option>
-              <option value="perdida">Pérdida</option>
-            </select>
-          </div>
-          <div class="form-row">
-            <label>Lote destino <span style="font-weight:normal;color:var(--texto-suave);">(opcional)</span></label>
-            <select id="egr-lote">
-              <option value="">Sin lote específico</option>
-            </select>
-          </div>
-          <div class="form-row">
-            <label>Observación <span style="font-weight:normal;color:var(--texto-suave);">(opcional)</span></label>
-            <input type="text" id="egr-obs" placeholder="Detalle adicional">
-          </div>
-          <button class="btn btn-danger" id="btn-egreso" onclick="registrarEgreso(this)" disabled style="margin-top:14px;">
-            Registrar egreso
+      <!-- ── Barra de acciones ── -->
+      <div class="ins-action-bar">
+        <div class="ins-action-left">
+          <a href="compras.html" class="ins-btn ins-btn-primary">
+            <i data-lucide="plus"></i> Registrar Compra
+          </a>
+          <button class="ins-btn ins-btn-egreso" onclick="openEgresoModal()">
+            <i data-lucide="minus"></i> Registrar Egreso
           </button>
-          <div id="msg-egreso"></div>
+          <button class="ins-btn ins-btn-gray" id="btn-toggle-hist" onclick="toggleHistorial()">
+            <i data-lucide="clock"></i> Historial de Movimientos
+          </button>
+        </div>
+        <div class="ins-action-right">
+          <input type="text" class="ins-search" id="search-stock"
+                 placeholder="Buscar Insumo..." oninput="filtrarStock()">
+          <select class="ins-filter-sel" id="filter-stock" onchange="filtrarStock()">
+            <option value="">Filtros: Tipo, Alerta</option>
+          </select>
+          <div class="ins-export-group">
+            <button class="ins-btn-export" onclick="exportarCSV()" title="Exportar Excel (CSV)">
+              <i data-lucide="file-spreadsheet"></i>
+            </button>
+            <button class="ins-btn-export" onclick="exportarPDF()" title="Imprimir / PDF">
+              <i data-lucide="file-text"></i>
+            </button>
+          </div>
         </div>
       </div>
 
-      <!-- ── TAB: HISTORIAL ── -->
-      <div id="tab-historial" class="tab-content">
+      <!-- ── Tabla Stock Actual ── -->
+      <div class="card">
+        <div class="table-wrap">
+          <table id="tabla-stock">
+            <thead>
+              <tr>
+                <th><input type="checkbox" class="row-check" id="chk-all" onchange="toggleTodos(this)"></th>
+                <th>Producto</th>
+                <th>Tipo</th>
+                <th>Stock Actual</th>
+                <th>Comprado</th>
+                <th>Usado</th>
+                <th>Valor Estimado</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-stock">
+              <tr><td colspan="7" class="activity-empty">Cargando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── Sección Historial (colapsable) ── -->
+      <div id="section-historial" style="display:none;">
+        <div class="hist-header">
+          <span><i data-lucide="clock" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Historial de Movimientos</span>
+        </div>
         <div class="card-form" style="margin-bottom:12px;">
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:8px;">
             <div class="form-row" style="margin-bottom:0;">
@@ -244,59 +423,205 @@
 
 </div>
 
+<!-- ── MODAL: REGISTRAR EGRESO ── -->
+<div id="modal-egreso" class="modal-overlay" style="display:none;" onclick="closeOnBackdrop(event)">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>Registrar Egreso Manual</h3>
+      <button class="modal-close" onclick="closeEgresoModal()"><i data-lucide="x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <label>Producto</label>
+        <select id="egr-producto" onchange="cargarStockProducto()">
+          <option value="">Seleccionar producto...</option>
+        </select>
+        <div id="egr-stock-info" style="font-size:12px;color:var(--texto-suave);margin-top:4px;"></div>
+      </div>
+      <div class="form-row">
+        <label>Cantidad</label>
+        <input type="number" id="egr-cantidad" placeholder="Ej: 5" step="0.01" min="0.01" oninput="checkEgresoReady()">
+      </div>
+      <div class="form-row">
+        <label>Motivo</label>
+        <select id="egr-motivo" onchange="checkEgresoReady()">
+          <option value="">Seleccionar motivo...</option>
+          <option value="merma">Uso en campo / merma</option>
+          <option value="vencimiento">Vencimiento</option>
+          <option value="perdida">Pérdida</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Lote destino <span style="font-weight:normal;color:var(--texto-suave);">(opcional)</span></label>
+        <select id="egr-lote">
+          <option value="">Sin lote específico</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Observación <span style="font-weight:normal;color:var(--texto-suave);">(opcional)</span></label>
+        <input type="text" id="egr-obs" placeholder="Detalle adicional">
+      </div>
+      <button class="btn btn-danger" id="btn-egreso" onclick="registrarEgreso(this)" disabled style="margin-top:14px;width:100%;">
+        Registrar egreso
+      </button>
+      <div id="msg-egreso"></div>
+    </div>
+  </div>
+</div>
+
 <script src="https://unpkg.com/lucide@latest"></script>
 <script>
   lucide.createIcons();
   document.getElementById('topbar-date').textContent =
     new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
 
-  /* ── Timezone helper ── */
   function _localDate() {
     var d = new Date();
     return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
   }
 
   var _lotesTodos = [];
+  var _stockData  = [];
+  var _historialVisible = false;
 
-  function showTab(tab, el) {
-    document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.remove('active'); });
-    document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
-    document.getElementById('tab-' + tab).classList.add('active');
-    el.classList.add('active');
-    if (tab === 'historial') cargarHistorial();
+  /* ── Modal egreso ── */
+  function openEgresoModal() {
+    document.getElementById('modal-egreso').style.display = 'flex';
+    lucide.createIcons();
+  }
+  function closeEgresoModal() {
+    document.getElementById('modal-egreso').style.display = 'none';
+  }
+  function closeOnBackdrop(e) {
+    if (e.target === document.getElementById('modal-egreso')) closeEgresoModal();
   }
 
-  /* ── Stock actual ── */
-  function cargarStock() {
-    fetch('/api/stock-insumos').then(function(r) { return r.json(); }).then(function(data) {
-      var tbody = document.getElementById('tbody-stock');
-      if (!data.length) {
-        tbody.innerHTML = '<tr><td colspan="6" class="activity-empty">Sin productos registrados</td></tr>';
-        return;
-      }
-      var totalValor = 0, bajosCount = 0;
-      tbody.innerHTML = data.map(function(p) {
-        var stock = parseFloat(p.stock_actual) || 0;
-        var valor = stock * (parseFloat(p.costo_unitario) || 0);
-        totalValor += valor;
-        var bajo = stock <= 2;
-        if (bajo) bajosCount++;
-        return '<tr>' +
-          '<td><strong>' + p.nombre + '</strong></td>' +
-          '<td style="font-size:12px;color:var(--texto-suave);">' + (p.tipo || '—') + '</td>' +
-          '<td class="' + (bajo ? 'stock-bajo' : 'stock-ok') + '">' + stock.toFixed(2) + ' ' + (p.presentacion || '') + (bajo ? ' ⚠️' : '') + '</td>' +
-          '<td style="font-size:12px;">' + parseFloat(p.total_comprado).toFixed(2) + '</td>' +
-          '<td style="font-size:12px;">' + parseFloat(p.total_usado).toFixed(2) + '</td>' +
-          '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;">$' + valor.toLocaleString('es-AR') + '</td>' +
-          '</tr>';
-      }).join('');
-      document.getElementById('kpi-productos').textContent = data.length;
-      document.getElementById('kpi-bajo').textContent = bajosCount;
-      document.getElementById('kpi-valor').textContent = '$' + totalValor.toLocaleString('es-AR');
+  /* ── Toggle historial ── */
+  function toggleHistorial() {
+    _historialVisible = !_historialVisible;
+    var sec = document.getElementById('section-historial');
+    var btn = document.getElementById('btn-toggle-hist');
+    sec.style.display = _historialVisible ? '' : 'none';
+    if (_historialVisible) {
+      btn.classList.add('activo');
+      lucide.createIcons();
+    } else {
+      btn.classList.remove('activo');
+    }
+  }
+
+  /* ── Select-all checkboxes ── */
+  function toggleTodos(chk) {
+    document.querySelectorAll('#tbody-stock .row-check').forEach(function(c) {
+      c.checked = chk.checked;
     });
   }
 
-  /* ── Inicializar selects ── */
+  /* ── Filtrar tabla en cliente ── */
+  function filtrarStock() {
+    var search = (document.getElementById('search-stock').value || '').toLowerCase().trim();
+    var filtro  = document.getElementById('filter-stock').value;
+    var filtered = _stockData.filter(function(p) {
+      var matchSearch = !search ||
+        (p.nombre || '').toLowerCase().indexOf(search) !== -1 ||
+        (p.tipo   || '').toLowerCase().indexOf(search) !== -1;
+      var matchFiltro;
+      if (filtro === '__alerta__') {
+        matchFiltro = parseFloat(p.stock_actual) <= 2;
+      } else if (filtro) {
+        matchFiltro = (p.tipo || '') === filtro;
+      } else {
+        matchFiltro = true;
+      }
+      return matchSearch && matchFiltro;
+    });
+    renderStockTabla(filtered);
+    document.getElementById('chk-all').checked = false;
+  }
+
+  /* ── Renderizar tabla stock ── */
+  function renderStockTabla(data) {
+    var tbody = document.getElementById('tbody-stock');
+    if (!data.length) {
+      tbody.innerHTML = '<tr><td colspan="7" class="activity-empty">Sin productos para los filtros seleccionados</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(function(p) {
+      var stock = parseFloat(p.stock_actual) || 0;
+      var valor = stock * (parseFloat(p.costo_unitario) || 0);
+      var bajo  = stock <= 2;
+      return '<tr>' +
+        '<td><input type="checkbox" class="row-check"></td>' +
+        '<td><strong>' + p.nombre + '</strong></td>' +
+        '<td style="font-size:12px;color:var(--texto-suave);">' + (p.tipo || '—') + '</td>' +
+        '<td class="' + (bajo ? 'stock-bajo' : 'stock-ok') + '">' +
+          stock.toFixed(2) + ' ' + (p.presentacion || '') + (bajo ? ' ⚠️' : '') +
+        '</td>' +
+        '<td>' + parseFloat(p.total_comprado).toFixed(2) + '</td>' +
+        '<td>' + parseFloat(p.total_usado).toFixed(2) + '</td>' +
+        '<td style="text-align:right;">$' + valor.toLocaleString('es-AR') + '</td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  /* ── Cargar stock desde API ── */
+  function cargarStock() {
+    fetch('/api/stock-insumos').then(function(r) { return r.json(); }).then(function(data) {
+      _stockData = data;
+
+      /* Actualizar KPIs */
+      var totalValor = 0, bajosCount = 0;
+      data.forEach(function(p) {
+        var stock = parseFloat(p.stock_actual) || 0;
+        var valor = stock * (parseFloat(p.costo_unitario) || 0);
+        totalValor += valor;
+        if (stock <= 2) bajosCount++;
+      });
+      document.getElementById('kpi-productos').textContent = data.length;
+      document.getElementById('kpi-bajo').textContent = bajosCount;
+      document.getElementById('kpi-valor').textContent = '$' + totalValor.toLocaleString('es-AR');
+
+      /* Poblar filtro tipos */
+      var tipos = [];
+      data.forEach(function(p) { if (p.tipo && tipos.indexOf(p.tipo) === -1) tipos.push(p.tipo); });
+      var sel = document.getElementById('filter-stock');
+      sel.innerHTML = '<option value="">Filtros: Tipo, Alerta</option>' +
+        tipos.map(function(t) { return '<option value="' + t + '">Tipo: ' + t + '</option>'; }).join('') +
+        '<option value="__alerta__">Solo stock bajo</option>';
+
+      /* Renderizar tabla */
+      renderStockTabla(data);
+    });
+  }
+
+  /* ── Export CSV ── */
+  function exportarCSV() {
+    if (!_stockData.length) { alert('Sin datos para exportar.'); return; }
+    var filas = [['Producto','Tipo','Stock Actual','Comprado','Usado','Valor Estimado']];
+    _stockData.forEach(function(p) {
+      var stock = parseFloat(p.stock_actual) || 0;
+      var valor = stock * (parseFloat(p.costo_unitario) || 0);
+      filas.push([
+        '"' + (p.nombre || '') + '"',
+        '"' + (p.tipo || '') + '"',
+        (stock.toFixed(2) + ' ' + (p.presentacion || '')).trim(),
+        parseFloat(p.total_comprado).toFixed(2),
+        parseFloat(p.total_usado).toFixed(2),
+        valor.toLocaleString('es-AR')
+      ]);
+    });
+    var csv = filas.map(function(r) { return r.join(','); }).join('\n');
+    var blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    var url  = URL.createObjectURL(blob);
+    var a    = document.createElement('a');
+    a.href = url; a.download = 'stock-insumos.csv'; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  /* ── Export PDF (imprimir) ── */
+  function exportarPDF() { window.print(); }
+
+  /* ── Init selects (egreso + historial) ── */
   function cargarEgresoInit() {
     fetch('/api/stock-insumos').then(function(r) { return r.json(); }).then(function(data) {
       var opts = data.map(function(p) {
@@ -315,8 +640,8 @@
   }
 
   function cargarStockProducto() {
-    var sel = document.getElementById('egr-producto');
-    var opt = sel.options[sel.selectedIndex];
+    var sel  = document.getElementById('egr-producto');
+    var opt  = sel.options[sel.selectedIndex];
     var info = document.getElementById('egr-stock-info');
     if (!sel.value) { info.textContent = ''; checkEgresoReady(); return; }
     var stock = parseFloat(opt.getAttribute('data-stock')) || 0;
@@ -343,7 +668,7 @@
     fetch('/api/stock-insumos/egreso', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ producto_id: parseInt(producto_id), cantidad, motivo, lote_id: lote_id ? parseInt(lote_id) : null, observacion })
+      body: JSON.stringify({ producto_id: parseInt(producto_id), cantidad: cantidad, motivo: motivo, lote_id: lote_id ? parseInt(lote_id) : null, observacion: observacion })
     }).then(function(r) { return r.json(); }).then(function(data) {
       if (data.ok) {
         mostrarMensaje('msg-egreso', 'success', 'Egreso registrado correctamente');
@@ -354,6 +679,7 @@
         btn.disabled = true;
         cargarStock();
         cargarEgresoInit();
+        setTimeout(closeEgresoModal, 1200);
       } else {
         mostrarMensaje('msg-egreso', 'error', data.error || 'Error al registrar egreso');
         btn.disabled = false;
@@ -406,7 +732,6 @@
     if (pid)   params.set('producto_id', pid);
     if (lid)   params.set('lote_id', lid);
     if (tipo === 'ingreso') params.set('tipo', 'compra');
-    else if (tipo === 'egreso') { /* handled server side with tipo filter not available for all egreso subtypes */ }
     if (desde) params.set('desde', desde);
     if (hasta) params.set('hasta', hasta);
 
@@ -418,7 +743,6 @@
     fetch('/api/stock-insumos/historial?' + params.toString())
       .then(function(r) { return r.json(); })
       .then(function(data) {
-        /* Si filtro tipo=egreso, filtrar en JS todos los que no son compra */
         if (tipo === 'egreso') {
           data = data.filter(function(m){ return m.tipo !== 'compra'; });
         }
@@ -436,11 +760,11 @@
           var movStyle  = esIngreso
             ? 'background:var(--sem-verde-bg);color:var(--sem-verde);'
             : 'background:var(--sem-rojo-bg);color:var(--sem-rojo);';
-          var tipoLabel = m.tipo === 'compra'       ? 'Compra'
-            : m.tipo === 'aplicacion'               ? 'Aplicación'
-            : m.tipo === 'merma'                    ? 'Merma'
-            : m.tipo === 'vencimiento'              ? 'Vencimiento'
-            : m.tipo === 'perdida'                  ? 'Pérdida'
+          var tipoLabel = m.tipo === 'compra'      ? 'Compra'
+            : m.tipo === 'aplicacion'              ? 'Aplicación'
+            : m.tipo === 'merma'                   ? 'Merma'
+            : m.tipo === 'vencimiento'             ? 'Vencimiento'
+            : m.tipo === 'perdida'                 ? 'Pérdida'
             : m.tipo;
           var aplica = m.empleado || (esIngreso ? (m.proveedor || '—') : '—') || '—';
           var cant   = parseFloat(m.cantidad || 0);
@@ -461,7 +785,6 @@
             '<td style="font-size:12px;color:var(--texto-suave);">' + (m.usuario || '—') + '</td>' +
             '</tr>';
         }).join('');
-        /* tfoot con totales */
         tfoot.innerHTML = '<tr style="font-weight:700;background:var(--fondo);">' +
           '<td colspan="4" style="font-size:12px;padding:8px 12px;color:var(--texto-suave);">Totales (' + data.length + ' movimientos)</td>' +
           '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;font-size:12px;padding:8px 12px;">' +
