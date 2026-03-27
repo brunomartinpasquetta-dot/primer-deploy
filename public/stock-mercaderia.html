@@ -17,11 +17,6 @@
     .tab.active { background:var(--superficie); color:var(--verde); box-shadow:0 1px 4px rgba(0,0,0,.09); }
     .tab-content { display:none; }
     .tab-content.active { display:block; }
-    .resumen { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:16px; }
-    @media(max-width:600px){ .resumen{grid-template-columns:1fr 1fr;} }
-    .resumen-card { background:var(--superficie); border:1px solid var(--borde); border-radius:var(--radius-lg); padding:14px; text-align:center; }
-    .resumen-num { font-size:26px; font-weight:700; font-family:'JetBrains Mono',monospace; }
-    .resumen-label { font-size:11px; color:var(--texto-suave); margin-top:4px; text-transform:uppercase; letter-spacing:.5px; }
     .empty { text-align:center; color:var(--texto-suave); padding:24px 16px; font-size:13px; }
     .badge-fresco    { background:var(--sem-verde-bg); color:var(--sem-verde); }
     .badge-industria { background:var(--sem-azul-bg);  color:var(--sem-azul); }
@@ -30,6 +25,108 @@
     .badge-deposito  { background:var(--sem-amarillo-bg); color:#7d5a00; }
     .dep-select-wrap { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
     @media(max-width:600px){ .dep-select-wrap{grid-template-columns:1fr;} }
+
+    /* ── KPI Cards ── */
+    .merc-kpis {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .merc-kpi {
+      background: #fff;
+      border-radius: 10px;
+      padding: 16px 18px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.08);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .merc-kpi-icon {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 8px;
+    }
+    .merc-kpi-icon svg { width: 18px; height: 18px; }
+    .merc-kpi-icon.cosechados { background: #e8f0fe; color: #1565c0; }
+    .merc-kpi-icon.deposito   { background: #eef7ee; color: #2d6a4f; }
+    .merc-kpi-icon.vendidos   { background: #e8f5e2; color: #2d6a4f; }
+    .merc-kpi-icon.descartados{ background: #fde8e8; color: #c0392b; }
+    .merc-kpi-valor {
+      font-size: 24px; font-weight: 700;
+      font-family: 'JetBrains Mono', monospace; line-height: 1;
+    }
+    .merc-kpi-valor.azul  { color: #1565c0; }
+    .merc-kpi-valor.verde { color: #2d6a4f; }
+    .merc-kpi-valor.rojo  { color: #c0392b; }
+    .merc-kpi-label {
+      font-size: 11px; text-transform: uppercase;
+      letter-spacing: .5px; color: var(--texto-suave); margin-top: 4px;
+    }
+
+    /* ── Action bar ── */
+    .merc-action-bar {
+      display: flex; align-items: center;
+      justify-content: space-between; gap: 10px;
+      margin-bottom: 14px; flex-wrap: wrap;
+    }
+    .merc-action-left  { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .merc-action-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .merc-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 16px; border-radius: 7px;
+      font-size: 13px; font-weight: 600; border: none;
+      cursor: pointer; text-decoration: none; line-height: 1;
+      transition: opacity .15s; white-space: nowrap;
+    }
+    .merc-btn:hover { opacity: .82; }
+    .merc-btn svg { width: 14px; height: 14px; }
+    .merc-btn-cosecha  { background: #2D5016; color: #fff; }
+    .merc-btn-venta    { background: #E8870A; color: #fff; }
+    .merc-btn-descarte { background: #C0580A; color: #fff; }
+    .merc-search {
+      padding: 8px 12px; border: 1px solid var(--borde);
+      border-radius: 7px; font-size: 13px; min-width: 200px;
+      background: #fff; color: var(--texto); outline: none;
+    }
+    .merc-search:focus { border-color: #2D5016; }
+    .merc-filter-sel {
+      padding: 8px 10px; border: 1px solid var(--borde);
+      border-radius: 7px; font-size: 13px;
+      background: #fff; color: var(--texto); cursor: pointer; outline: none;
+    }
+    .merc-export-group { display: flex; gap: 4px; }
+    .merc-btn-export {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 36px; height: 36px; border-radius: 7px;
+      border: 1px solid var(--borde); background: #fff;
+      cursor: pointer; transition: background .15s; color: var(--texto-suave);
+    }
+    .merc-btn-export:hover { background: var(--fondo-dark); color: var(--texto); }
+    .merc-btn-export svg { width: 16px; height: 16px; }
+
+    /* ── Stock grid table header ── */
+    #tabla-stock-grid thead th {
+      background: #2D5016; color: #fff;
+      font-weight: 700; text-transform: uppercase;
+      font-size: 11px; letter-spacing: .5px; padding: 11px 12px;
+    }
+    #tabla-stock-grid thead th:first-child { width: 36px; text-align: center; }
+    #tabla-stock-grid tbody td { padding: 10px 12px; }
+    #tabla-stock-grid tbody td:first-child { text-align: center; }
+    #tabla-stock-grid tbody tr:hover { background: var(--fondo-dark); }
+    input[type="checkbox"].row-check {
+      width: 15px; height: 15px; cursor: pointer; accent-color: #2D5016;
+    }
+
+    @media(max-width:900px) {
+      .merc-kpis { grid-template-columns: 1fr 1fr; }
+      .merc-action-bar { flex-direction: column; align-items: flex-start; }
+      .merc-action-right { width: 100%; }
+      .merc-search { min-width: 0; flex: 1; }
+    }
+    @media(max-width:480px) { .merc-kpis { grid-template-columns: 1fr 1fr; } }
   </style>
 </head>
 <body>
@@ -92,6 +189,8 @@
 
       <!-- ── TAB: STOCK ACTUAL ───────────────────────────────── -->
       <div id="tab-stock" class="tab-content active">
+
+        <!-- Temporada -->
         <div class="card-form" style="margin-bottom:12px;">
           <div class="form-row" style="margin-bottom:0;">
             <label>Temporada</label>
@@ -101,37 +200,69 @@
           </div>
         </div>
 
-        <div class="resumen">
-          <div class="resumen-card">
-            <div class="resumen-num text-info" id="kpi-cosechados">—</div>
-            <div class="resumen-label">Kg cosechados</div>
+        <!-- KPI Cards -->
+        <div class="merc-kpis">
+          <div class="merc-kpi">
+            <div class="merc-kpi-icon cosechados"><i data-lucide="wheat"></i></div>
+            <div class="merc-kpi-valor azul" id="kpi-cosechados">—</div>
+            <div class="merc-kpi-label">KG Cosechados</div>
           </div>
-          <div class="resumen-card">
-            <div class="resumen-num text-positivo" id="kpi-deposito">—</div>
-            <div class="resumen-label">Kg en depósito</div>
+          <div class="merc-kpi">
+            <div class="merc-kpi-icon deposito"><i data-lucide="warehouse"></i></div>
+            <div class="merc-kpi-valor verde" id="kpi-deposito">—</div>
+            <div class="merc-kpi-label">KG en Depósito</div>
           </div>
-          <div class="resumen-card">
-            <div class="resumen-num text-positivo" id="kpi-vendidos">—</div>
-            <div class="resumen-label">Kg vendidos</div>
+          <div class="merc-kpi">
+            <div class="merc-kpi-icon vendidos"><i data-lucide="shopping-cart"></i></div>
+            <div class="merc-kpi-valor verde" id="kpi-vendidos">—</div>
+            <div class="merc-kpi-label">KG Vendidos</div>
           </div>
-          <div class="resumen-card">
-            <div class="resumen-num text-negativo" id="kpi-descartados">—</div>
-            <div class="resumen-label">Kg descartados</div>
+          <div class="merc-kpi">
+            <div class="merc-kpi-icon descartados"><i data-lucide="trash-2"></i></div>
+            <div class="merc-kpi-valor rojo" id="kpi-descartados">—</div>
+            <div class="merc-kpi-label">KG Descartados</div>
           </div>
         </div>
 
-        <!-- DataGridView de movimientos -->
-        <div class="card">
-          <div class="card-header" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-            <span class="card-title" style="flex:1;">Movimientos</span>
-            <input type="search" id="stock-buscar" placeholder="Buscar cosechero, lote, depósito..."
-              style="width:240px;padding:7px 12px;border:1.5px solid var(--borde);border-radius:8px;background:var(--fondo);color:var(--texto);font-size:13px;"
-              oninput="filtrarStockGrid()">
+        <!-- Barra de acciones -->
+        <div class="merc-action-bar">
+          <div class="merc-action-left">
+            <button class="merc-btn merc-btn-cosecha" onclick="irATab('ingreso')">
+              <i data-lucide="plus"></i> Registrar Cosecha
+            </button>
+            <button class="merc-btn merc-btn-venta" onclick="irATab('egreso')">
+              <i data-lucide="minus"></i> Registrar Venta
+            </button>
+            <button class="merc-btn merc-btn-descarte" onclick="irATab('descarte')">
+              <i data-lucide="trash-2"></i> Registrar Descarte
+            </button>
           </div>
+          <div class="merc-action-right">
+            <input type="text" class="merc-search" id="stock-buscar"
+                   placeholder="Buscar Cosechero, lote..." oninput="filtrarStockGrid()">
+            <select class="merc-filter-sel" id="filter-merc-tipo" onchange="filtrarStockGrid()">
+              <option value="">Filtros: Cosechero, Depósito, Lote</option>
+              <option value="ingreso">Solo Ingresos</option>
+              <option value="egreso">Solo Egresos</option>
+            </select>
+            <div class="merc-export-group">
+              <button class="merc-btn-export" onclick="exportarMercCSV()" title="Exportar Excel (CSV)">
+                <i data-lucide="file-spreadsheet"></i>
+              </button>
+              <button class="merc-btn-export" onclick="window.print()" title="Imprimir / PDF">
+                <i data-lucide="file-text"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabla movimientos -->
+        <div class="card">
           <div class="table-wrap">
-            <table>
+            <table id="tabla-stock-grid">
               <thead>
                 <tr>
+                  <th><input type="checkbox" class="row-check" id="chk-all-merc" onchange="toggleTodosMerc(this)"></th>
                   <th style="text-align:center;">#</th>
                   <th>Cosechero</th>
                   <th>Fecha</th>
@@ -142,7 +273,7 @@
                   <th>Usuario</th>
                 </tr>
               </thead>
-              <tbody id="tbody-stock-grid"><tr><td colspan="8" class="empty">Cargando...</td></tr></tbody>
+              <tbody id="tbody-stock-grid"><tr><td colspan="9" class="empty">Cargando...</td></tr></tbody>
             </table>
           </div>
         </div>
@@ -456,10 +587,105 @@ function actualizarStockInfo(prefix) {
 // ── Stock actual ──────────────────────────────────────────────
 var _stockGridData = [];
 
+/* Navegar a tab desde los botones de acción */
+function irATab(name) {
+  document.querySelectorAll('.tab').forEach(function(btn) {
+    var oc = btn.getAttribute('onclick') || '';
+    if (oc.indexOf("'" + name + "'") !== -1) { showTab(name, btn); }
+  });
+}
+
+/* Select-all checkboxes */
+function toggleTodosMerc(chk) {
+  document.querySelectorAll('#tbody-stock-grid .row-check').forEach(function(c){ c.checked = chk.checked; });
+}
+
+/* Render con checkbox */
+function _fmtMercFecha(iso) {
+  if (!iso) return '—';
+  var d = new Date(iso);
+  return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' +
+         d.getFullYear() + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+function _fmtMerc(n) { return parseFloat(n||0).toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:1}); }
+function _chipM(id) {
+  if (!id && id !== 0) return '';
+  return ' <span style="font-family:\'JetBrains Mono\',monospace;font-size:10px;background:var(--fondo-dark);border:1px solid var(--borde);border-radius:4px;padding:1px 4px;opacity:.75;">#'+id+'</span>';
+}
+function _jidM(jid) {
+  if (!jid) return '—';
+  return '<span style="font-family:\'JetBrains Mono\',monospace;font-size:11px;background:var(--fondo-dark);border:1px solid var(--borde);border-radius:4px;padding:1px 5px;">#'+jid+'</span>';
+}
+
+function renderStockGrid(data) {
+  var tbody = document.getElementById('tbody-stock-grid');
+  document.getElementById('chk-all-merc').checked = false;
+  if (!data || !data.length) {
+    tbody.innerHTML = '<tr><td colspan="9" class="empty">Sin movimientos</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(function(m) {
+    var esIngreso = m.tipo === 'ingreso';
+    var bg = esIngreso ? 'background:#f0faf0;' : 'background:#fff5f5;';
+    var colorKg = esIngreso ? 'color:#2d6a4f;font-weight:700;' : 'color:#c0392b;font-weight:700;';
+    var signo = esIngreso ? '+' : '-';
+    var tipoBadge = esIngreso
+      ? '<span class="badge" style="background:var(--sem-verde-bg);color:var(--sem-verde);">Ingreso</span>'
+      : '<span class="badge" style="background:var(--sem-rojo-bg);color:var(--sem-rojo);">Egreso</span>';
+    return '<tr style="' + bg + '">' +
+      '<td style="text-align:center;"><input type="checkbox" class="row-check"></td>' +
+      '<td style="text-align:center;">' + _jidM(m.juntada_id) + '</td>' +
+      '<td style="font-size:13px;">' + (m.cosechero||'—') + _chipM(m.juntador_id) + '</td>' +
+      '<td style="font-size:12px;white-space:nowrap;">' + _fmtMercFecha(m.fecha) + '</td>' +
+      '<td>' + tipoBadge + '</td>' +
+      '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;' + colorKg + '">' +
+        signo + _fmtMerc(m.kilos) + ' kg</td>' +
+      '<td style="font-size:12px;">' + (m.lote||'—') + '</td>' +
+      '<td style="font-size:12px;">' + (m.deposito||m.destino_venta||'—') + '</td>' +
+      '<td style="font-size:12px;">' + (m.usuario||'—') + _chipM(m.usuario_id) + '</td>' +
+      '</tr>';
+  }).join('');
+}
 
 function filtrarStockGrid() {
-  var q = document.getElementById('stock-buscar').value || '';
-  filtrarMovimientosGrid('tbody-stock-grid', _stockGridData, q);
+  var q     = (document.getElementById('stock-buscar').value || '').toLowerCase();
+  var tipo  = document.getElementById('filter-merc-tipo').value;
+  var datos = _stockGridData.filter(function(m) {
+    var matchQ = !q ||
+      (m.cosechero     || '').toLowerCase().indexOf(q) >= 0 ||
+      (m.lote          || '').toLowerCase().indexOf(q) >= 0 ||
+      (m.deposito      || '').toLowerCase().indexOf(q) >= 0 ||
+      (m.destino_venta || '').toLowerCase().indexOf(q) >= 0 ||
+      (m.usuario       || '').toLowerCase().indexOf(q) >= 0 ||
+      (m.juntada_id  ? String(m.juntada_id)  : '').indexOf(q) >= 0;
+    var matchTipo = !tipo || m.tipo === tipo;
+    return matchQ && matchTipo;
+  });
+  renderStockGrid(datos);
+}
+
+/* Export CSV */
+function exportarMercCSV() {
+  if (!_stockGridData.length) { alert('Sin datos para exportar.'); return; }
+  var filas = [['#','Cosechero','Fecha','Tipo','Kg','Lote','Depósito','Usuario']];
+  _stockGridData.forEach(function(m) {
+    filas.push([
+      m.juntada_id || '',
+      '"' + (m.cosechero || '') + '"',
+      m.fecha ? new Date(m.fecha).toLocaleDateString('es-AR') : '',
+      m.tipo || '',
+      (parseFloat(m.kilos||0).toFixed(1)),
+      '"' + (m.lote || '') + '"',
+      '"' + (m.deposito || m.destino_venta || '') + '"',
+      '"' + (m.usuario || '') + '"'
+    ]);
+  });
+  var csv = filas.map(function(r){ return r.join(','); }).join('\n');
+  var blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href = url; a.download = 'stock-mercaderia.csv'; a.click();
+  URL.revokeObjectURL(url);
 }
 
 function cargarStock() {
@@ -479,10 +705,11 @@ function cargarStock() {
     .then(function(data){
       _stockGridData = data;
       document.getElementById('stock-buscar').value = '';
-      renderMovimientosGrid('tbody-stock-grid', data);
+      document.getElementById('filter-merc-tipo').value = '';
+      renderStockGrid(data);
     })
     .catch(function(){
-      document.getElementById('tbody-stock-grid').innerHTML = '<tr><td colspan="6" class="empty">Error al cargar</td></tr>';
+      document.getElementById('tbody-stock-grid').innerHTML = '<tr><td colspan="9" class="empty">Error al cargar</td></tr>';
     });
 }
 
