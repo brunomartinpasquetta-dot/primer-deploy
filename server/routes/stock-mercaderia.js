@@ -108,20 +108,18 @@ router.get('/actual', async (req, res) => {
       .input('temporada_id', sql.Int, parseInt(temporada_id))
       .query(`
         SELECT
-          CASE WHEN l.variedad IS NOT NULL AND l.variedad != ''
-               THEN l.variedad ELSE l.nombre END AS variedad,
+          ISNULL(l.variedad, l.nombre) AS variedad,
           d.nombre AS deposito,
           d.tipo   AS deposito_tipo,
-          SUM(CASE WHEN m.tipo = 'ingreso' THEN m.kilos ELSE -m.kilos END) AS kg_disponibles,
-          t.nombre AS temporada
+          COUNT(DISTINCT m.lote_id) AS lotes_involucrados,
+          SUM(CASE WHEN m.tipo = 'ingreso' THEN m.kilos ELSE -m.kilos END) AS kg_disponibles
         FROM MovimientosDeposito m
         JOIN Lotes      l ON m.lote_id      = l.id
         JOIN Depositos  d ON m.deposito_id  = d.id
-        JOIN Temporadas t ON m.temporada_id = t.id
         WHERE m.temporada_id = @temporada_id
-        GROUP BY l.variedad, l.nombre, d.nombre, d.tipo, t.nombre
+        GROUP BY ISNULL(l.variedad, l.nombre), d.nombre, d.tipo
         HAVING SUM(CASE WHEN m.tipo = 'ingreso' THEN m.kilos ELSE -m.kilos END) > 0
-        ORDER BY l.variedad, l.nombre, d.nombre
+        ORDER BY ISNULL(l.variedad, l.nombre), d.nombre
       `);
 
     res.json(result.recordset);

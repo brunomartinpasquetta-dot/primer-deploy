@@ -2,20 +2,39 @@ const express = require('express');
 const router = express.Router();
 const { getPool, sql } = require('../db');
 
-// Obtener stock actual de todos los productos
+// Obtener stock actual consolidado por producto + proveedor + depósito
 router.get('/', async (req, res) => {
   try {
     const pool = await getPool();
     const result = await pool.request()
-      .query(`SELECT p.id, p.nombre, p.tipo, p.presentacion, p.stock_actual,
-              p.costo_unitario,
-              ISNULL(SUM(CASE WHEN s.tipo = 'compra' THEN s.cantidad ELSE 0 END), 0) AS total_comprado,
-              ISNULL(SUM(CASE WHEN s.tipo = 'aplicacion' THEN s.cantidad ELSE 0 END), 0) AS total_usado
-              FROM Productos p
-              LEFT JOIN StockInsumos s ON p.id = s.producto_id
-              WHERE p.activo = 1
-              GROUP BY p.id, p.nombre, p.tipo, p.presentacion, p.stock_actual, p.costo_unitario
-              ORDER BY p.nombre`);
+      .query(`
+        SELECT
+          p.id   AS producto_id,
+          p.nombre AS producto,
+          p.unidad_medida AS unidad,
+          p.tipo AS categoria,
+          ISNULL(si.proveedor, 'Sin proveedor') AS proveedor,
+          ISNULL(d.nombre, '—') AS deposito,
+          d.tipo AS deposito_tipo,
+          SUM(CASE
+            WHEN si.tipo IN ('compra', 'ingreso_manual') THEN si.cantidad
+            WHEN si.tipo IN ('aplicacion', 'egreso', 'vencimiento', 'perdida', 'merma') THEN -si.cantidad
+            ELSE 0
+          END) AS cantidad_disponible
+        FROM Productos p
+        JOIN StockInsumos si ON si.producto_id = p.id
+        LEFT JOIN Depositos d ON si.deposito_id = d.id
+        WHERE p.activo = 1
+        GROUP BY p.id, p.nombre, p.unidad_medida, p.tipo,
+                 ISNULL(si.proveedor, 'Sin proveedor'),
+                 ISNULL(d.nombre, '—'), d.tipo
+        HAVING SUM(CASE
+          WHEN si.tipo IN ('compra', 'ingreso_manual') THEN si.cantidad
+          WHEN si.tipo IN ('aplicacion', 'egreso', 'vencimiento', 'perdida', 'merma') THEN -si.cantidad
+          ELSE 0
+        END) > 0
+        ORDER BY p.nombre, ISNULL(si.proveedor, 'Sin proveedor')
+      `);
     res.json(result.recordset);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -199,6 +218,21 @@ router.get('/historial', async (req, res) => {
       WHERE ${where}
       ORDER BY ISNULL(s.fecha_hora, CAST(s.fecha AS DATETIME)) DESC`);
     res.json(result.recordset);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PATCH /historial/:id — editar observación de un movimiento
+router.patch('/historial/:id', async (req, res) => {
+  const { observacion } = req.body;
+  try {
+    const pool = await getPool();
+    await pool.request()
+      .input('id',          sql.Int,      req.params.id)
+      .input('observacion', sql.NVarChar, observacion || '')
+      .query('UPDATE StockInsumos SET observacion = @observacion WHERE id = @id');
+    res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

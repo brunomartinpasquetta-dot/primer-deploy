@@ -335,11 +335,12 @@
                   <th>VARIEDAD / LOTE</th>
                   <th>DEPÓSITO</th>
                   <th>TIPO DEPÓSITO</th>
+                  <th title="Cantidad de lotes que aportaron a este stock">LOTES</th>
                   <th style="text-align:right;">KG DISPONIBLES</th>
                 </tr>
               </thead>
               <tbody id="tbody-stock-actual">
-                <tr><td colspan="4" class="empty">Cargando...</td></tr>
+                <tr><td colspan="5" class="empty">Cargando...</td></tr>
               </tbody>
             </table>
           </div>
@@ -949,29 +950,31 @@ function cargarStockActual() {
   var tid = document.getElementById('filtro-temporada').value;
   var url = '/api/stock-mercaderia/actual' + (tid ? '?temporada_id=' + tid : '');
   document.getElementById('tbody-stock-actual').innerHTML =
-    '<tr><td colspan="4" class="empty">Cargando...</td></tr>';
+    '<tr><td colspan="5" class="empty">Cargando...</td></tr>';
   fetch(url).then(function(r){ return r.json(); }).then(function(data){
     _stockActualData = data || [];
     var tbody = document.getElementById('tbody-stock-actual');
     if (!data || !data.length) {
-      tbody.innerHTML = '<tr><td colspan="4" class="empty">Sin stock en depósitos</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" class="empty">Sin stock en depósitos</td></tr>';
       return;
     }
     tbody.innerHTML = data.map(function(row){
-      var tipoLabel = row.deposito_tipo === 'frio' ? 'Frío' :
-                      row.deposito_tipo === 'camara' ? 'Cámara' :
-                      row.deposito_tipo ? row.deposito_tipo : '—';
+      var tipoLabel = row.deposito_tipo ? row.deposito_tipo.replace(/_/g,' ') : '—';
+      var lotes = row.lotes_involucrados || 1;
       return '<tr>' +
-        '<td>' + (row.variedad || '—') + '</td>' +
+        '<td style="font-weight:600;">' + (row.variedad || '—') + '</td>' +
         '<td>' + (row.deposito || '—') + '</td>' +
-        '<td><span class="badge">' + tipoLabel + '</span></td>' +
+        '<td><span class="badge badge-deposito">' + tipoLabel + '</span></td>' +
+        '<td><span style="font-family:\'JetBrains Mono\',monospace;font-size:11px;' +
+          'background:var(--sem-azul-bg);color:var(--sem-azul);border-radius:4px;padding:2px 6px;">' +
+          lotes + '</span></td>' +
         '<td style="text-align:right;font-weight:700;color:var(--sem-verde);">' +
           fmt(row.kg_disponibles) + ' kg</td>' +
         '</tr>';
     }).join('');
   }).catch(function(){
     document.getElementById('tbody-stock-actual').innerHTML =
-      '<tr><td colspan="4" class="empty">Error al cargar stock actual</td></tr>';
+      '<tr><td colspan="5" class="empty">Error al cargar stock actual</td></tr>';
   });
 }
 
@@ -979,10 +982,11 @@ function exportarStockActual() {
   if (!_stockActualData.length) { alert('No hay datos para exportar'); return; }
   var filas = _stockActualData.map(function(r){
     return [r.variedad||'', r.deposito||'', r.deposito_tipo||'',
+            r.lotes_involucrados||1,
             parseFloat(r.kg_disponibles||0).toFixed(1)];
   });
-  filas.unshift(['Variedad/Lote','Depósito','Tipo Depósito','KG Disponibles']);
-  _descargarCSV(filas, 'stock-actual-' + _fechaHoy() + '.csv');
+  filas.unshift(['Variedad/Lote','Depósito','Tipo Depósito','Lotes','KG Disponibles']);
+  _descargarCSV(filas, 'stock-mercaderia-actual-' + _fechaHoy() + '.csv');
 }
 
 function imprimirStockActual() {
@@ -991,9 +995,10 @@ function imprimirStockActual() {
   var filtros = [['Temporada', tNombre]];
   var thStyle = 'background:#2D5016;color:#fff;padding:8px 12px;text-align:left;font-size:12px;';
   var filas = (_stockActualData || []).map(function(r){
-    return '<tr><td style="padding:7px 12px;">' + (r.variedad||'—') + '</td>' +
+    return '<tr><td style="padding:7px 12px;font-weight:600;">' + (r.variedad||'—') + '</td>' +
            '<td style="padding:7px 12px;">' + (r.deposito||'—') + '</td>' +
-           '<td style="padding:7px 12px;">' + (r.deposito_tipo||'—') + '</td>' +
+           '<td style="padding:7px 12px;">' + (r.deposito_tipo||'—').replace(/_/g,' ') + '</td>' +
+           '<td style="padding:7px 12px;text-align:center;">' + (r.lotes_involucrados||1) + '</td>' +
            '<td style="padding:7px 12px;text-align:right;font-weight:700;">' +
              fmt(r.kg_disponibles) + ' kg</td></tr>';
   }).join('');
@@ -1002,6 +1007,7 @@ function imprimirStockActual() {
       '<th style="' + thStyle + '">VARIEDAD / LOTE</th>' +
       '<th style="' + thStyle + '">DEPÓSITO</th>' +
       '<th style="' + thStyle + '">TIPO DEPÓSITO</th>' +
+      '<th style="' + thStyle + 'text-align:center;">LOTES</th>' +
       '<th style="' + thStyle + 'text-align:right;">KG DISPONIBLES</th>' +
     '</tr></thead><tbody>' + filas + '</tbody></table>';
   _abrirVentanaImpresion('Stock Actual — Mercadería', filtros, tabla);
