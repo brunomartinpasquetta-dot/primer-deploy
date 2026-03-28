@@ -1,3 +1,8 @@
 node_modules/
 .env
 *.log
+SQLQuery_*.sql
+CONTEXTO-SESION-*.txt
+CONTEXTO_*.txt
+CONTEXTO_*.md
+.claude/
