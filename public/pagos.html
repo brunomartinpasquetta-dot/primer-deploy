@@ -74,7 +74,8 @@
   <!-- RESUMEN -->
   <div id="tab-resumen" class="tab-content active">
     <div class="filtros-barra">
-      <input type="search" class="fb-buscar" id="pagos-buscar" placeholder="Buscar juntador..." oninput="buscarResumen()">
+      <input type="search" class="fb-buscar" id="pagos-buscar" placeholder="Filtrar por..." list="pagos-opciones" oninput="buscarResumen()">
+      <datalist id="pagos-opciones"></datalist>
       <div class="fb-sep"></div>
       <select id="filtro-temporada" onchange="cargarResumen()"></select>
       <input type="date" id="filtro-desde" onchange="cargarResumen()">
@@ -217,10 +218,15 @@
       cargarResumen();
     }
 
+    var _pagosCols = [
+      {label:'Juntador',campo:'juntador'},
+      {label:'Tipo',campo:'tipo'}
+    ];
+
     function buscarResumen() {
-      var q = (document.getElementById('pagos-buscar').value || '').toLowerCase().trim();
+      var q = (document.getElementById('pagos-buscar').value || '').trim();
       var filtrado = q ? _resumenData.filter(function(j) {
-        return (j.juntador || '').toLowerCase().indexOf(q) >= 0;
+        return matchFiltro(j, q, _pagosCols);
       }) : _resumenData;
       renderResumen(filtrado);
     }
@@ -293,6 +299,7 @@
         .then(function(r) { return r.json(); })
         .then(function(data) {
           _resumenData = data;
+          poblarDatalist('pagos-opciones', data, _pagosCols);
           buscarResumen();
         });
     }

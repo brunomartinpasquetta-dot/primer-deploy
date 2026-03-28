@@ -329,7 +329,8 @@
 
           <!-- Barra de filtros unificada -->
           <div class="filtros-barra">
-            <input type="search" class="fb-buscar" id="aplic-buscar" placeholder="Buscar producto, cosechero, lote..." oninput="buscarHistorial()">
+            <input type="search" class="fb-buscar" id="aplic-buscar" placeholder="Filtrar por..." list="aplic-opciones" oninput="buscarHistorial()">
+            <datalist id="aplic-opciones"></datalist>
             <div class="fb-sep"></div>
             <select id="hist-producto" onchange="cargarHistorial()" title="Producto">
               <option value="">Producto: Todos</option>
@@ -434,16 +435,18 @@
   }
 
   /* ── Búsqueda en tiempo real ── */
+  var _aplicCols = [
+    {label:'Producto',campo:'producto'},
+    {label:'Lote',campo:'lote'},
+    {label:'Tipo',campo:'tipo'},
+    {label:'Empleado',campo:'empleado'}
+  ];
+
   function buscarHistorial() {
-    var q = (document.getElementById('aplic-buscar').value || '').toLowerCase().trim();
+    var q = (document.getElementById('aplic-buscar').value || '').trim();
     if (!q) { renderHistorialTabla(_historialData); return; }
     var filtrado = _historialData.filter(function(m) {
-      return (m.producto  || '').toLowerCase().indexOf(q) >= 0 ||
-             (m.empleado  || '').toLowerCase().indexOf(q) >= 0 ||
-             (m.lote      || '').toLowerCase().indexOf(q) >= 0 ||
-             (m.usuario   || '').toLowerCase().indexOf(q) >= 0 ||
-             (m.tipo      || '').toLowerCase().indexOf(q) >= 0 ||
-             String(m.id || '').indexOf(q) >= 0;
+      return matchFiltro(m, q, _aplicCols);
     });
     renderHistorialTabla(filtrado);
   }
@@ -830,6 +833,7 @@
         _historialData = data;
         _movimientoMap = {};
         data.forEach(function(m){ _movimientoMap[m.id] = m; });
+        poblarDatalist('aplic-opciones', data, _aplicCols);
         renderHistorialTabla(data);
       })
       .catch(function() {

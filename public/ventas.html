@@ -150,7 +150,8 @@
 
       <!-- ── Filtros historial ── -->
       <div class="filtros-barra">
-        <input type="search" class="fb-buscar" id="filtro-buscar" placeholder="Buscar comprador, lote, depósito..." oninput="buscarHistorial()">
+        <input type="search" class="fb-buscar" id="filtro-buscar" placeholder="Filtrar por..." list="ventas-opciones" oninput="buscarHistorial()">
+        <datalist id="ventas-opciones"></datalist>
         <div class="fb-sep"></div>
         <select id="filtro-temporada" onchange="cargarHistorial()" title="Temporada">
           <option value="">Temporada: Todas</option>
@@ -206,17 +207,18 @@
   }
 
   var _historialVentas = [];
+  var _ventasCols = [
+    {label:'Lote',campo:'lote'},
+    {label:'Comprador',campo:'comprador'},
+    {label:'Destino',campo:'destino_venta'},
+    {label:'Usuario',campo:'usuario'}
+  ];
 
   function buscarHistorial() {
-    var q   = (document.getElementById('filtro-buscar').value || '').toLowerCase();
+    var q   = (document.getElementById('filtro-buscar').value || '').trim();
     var dep = document.getElementById('filtro-deposito').value;
     var data = _historialVentas.filter(function(v) {
-      var matchQ = !q ||
-        (v.comprador     || '').toLowerCase().indexOf(q) >= 0 ||
-        (v.lote          || '').toLowerCase().indexOf(q) >= 0 ||
-        (v.deposito      || '').toLowerCase().indexOf(q) >= 0 ||
-        (v.destino_venta || '').toLowerCase().indexOf(q) >= 0 ||
-        (v.usuario       || '').toLowerCase().indexOf(q) >= 0;
+      var matchQ = matchFiltro(v, q, _ventasCols);
       var matchDep = !dep || (v.deposito || '') === dep;
       return matchQ && matchDep;
     });
@@ -437,6 +439,7 @@
       .then(function(r) { return r.json(); })
       .then(function(data) {
         _historialVentas = data;
+        poblarDatalist('ventas-opciones', data, _ventasCols);
         // Poblar filtro depósito
         var deps = [];
         data.forEach(function(v) { if (v.deposito && deps.indexOf(v.deposito) < 0) deps.push(v.deposito); });

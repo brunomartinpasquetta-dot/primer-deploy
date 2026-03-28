@@ -349,7 +349,8 @@
 
       <!-- Barra de filtros unificada — movimientos -->
       <div class="filtros-barra">
-        <input type="search" class="fb-buscar" id="stock-buscar" placeholder="Buscar cosechero, lote, depósito..." oninput="filtrarStockGrid()">
+        <input type="search" class="fb-buscar" id="stock-buscar" placeholder="Filtrar por..." list="sm-stock-opciones" oninput="filtrarStockGrid()">
+        <datalist id="sm-stock-opciones"></datalist>
         <div class="fb-sep"></div>
         <select id="filtro-temporada" onchange="cargarStock()" title="Temporada">
           <option value="">Temporada: Todas</option>
@@ -800,19 +801,19 @@ function renderStockGrid(data) {
   }).join('');
 }
 
+var _smStockCols = [
+  {label:'Lote',campo:'lote'},
+  {label:'Depósito',campo:'deposito'},
+  {label:'Temporada',campo:'temporada'}
+];
+
 function filtrarStockGrid() {
-  var q    = (document.getElementById('stock-buscar').value || '').toLowerCase();
+  var q    = (document.getElementById('stock-buscar').value || '').trim();
   var tipo = document.getElementById('filter-merc-tipo').value;
   var lote = document.getElementById('filter-lote').value;
   var dep  = document.getElementById('filter-dep').value;
   var datos = _stockGridData.filter(function(m) {
-    var matchQ = !q ||
-      (m.cosechero     || '').toLowerCase().indexOf(q) >= 0 ||
-      (m.lote          || '').toLowerCase().indexOf(q) >= 0 ||
-      (m.deposito      || '').toLowerCase().indexOf(q) >= 0 ||
-      (m.destino_venta || '').toLowerCase().indexOf(q) >= 0 ||
-      (m.usuario       || '').toLowerCase().indexOf(q) >= 0 ||
-      (m.juntada_id  ? String(m.juntada_id) : '').indexOf(q) >= 0;
+    var matchQ = matchFiltro(m, q, _smStockCols);
     var matchTipo = !tipo || m.tipo === tipo;
     var matchLote = !lote || (m.lote || '') === lote;
     var matchDep  = !dep  || (m.deposito || m.destino_venta || '') === dep;
@@ -1018,6 +1019,7 @@ function cargarStock() {
     .then(function(r){ return r.json(); })
     .then(function(data){
       _stockGridData = data;
+      poblarDatalist('sm-stock-opciones', data, _smStockCols);
       document.getElementById('stock-buscar').value = '';
       document.getElementById('filter-merc-tipo').value = '';
       // Poblar filtros dinámicos

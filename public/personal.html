@@ -161,7 +161,8 @@
       <div class="card">
         <h2>Empleados registrados</h2>
         <div class="filtros-barra">
-          <input type="search" class="fb-buscar" id="filtro-buscar" placeholder="Buscar por nombre, apellido o documento..." oninput="filtrarTabla()">
+          <input type="search" class="fb-buscar" id="filtro-buscar" placeholder="Filtrar por..." list="personal-opciones" oninput="filtrarTabla()">
+          <datalist id="personal-opciones"></datalist>
           <div class="fb-sep"></div>
           <select id="filtro-estado" onchange="cargar()">
             <option value="">Todos los estados</option>
@@ -245,6 +246,7 @@
       .then(function(r) { return r.json(); })
       .then(function(data) {
         _datos = data;
+        poblarDatalist('personal-opciones', data, _personalCols);
         renderTabla(data);
       })
       .catch(function() {
@@ -277,14 +279,18 @@
     }).join('');
   }
 
+  var _personalCols = [
+    {label:'Nombre',campo:'nombre'},
+    {label:'Apellido',campo:'apellido'},
+    {label:'Contrato',campo:'tipo_contrato'}
+  ];
+
   // ── Filtrado en tiempo real ──────────────────────────────────────
   function filtrarTabla() {
-    var q = document.getElementById('filtro-buscar').value.toLowerCase().trim();
+    var q = document.getElementById('filtro-buscar').value.trim();
     var contrato = document.getElementById('filtro-contrato').value;
     var filtrados = _datos.filter(function(e) {
-      var matchQ = !q || (e.nombre && e.nombre.toLowerCase().includes(q)) ||
-                         (e.apellido && e.apellido.toLowerCase().includes(q)) ||
-                         (e.documento && e.documento.toLowerCase().includes(q));
+      var matchQ = matchFiltro(e, q, _personalCols);
       var matchC = !contrato || (e.tipo_contrato || '').toLowerCase() === contrato;
       return matchQ && matchC;
     });

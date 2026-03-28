@@ -193,6 +193,51 @@ function _parseEl(id) {
   return _parseVal(raw);
 }
 
+/**
+ * Puebla un <datalist> con valores únicos de las columnas especificadas.
+ * columnas: [{ label: 'Cosechero', campo: 'cosechero' }, ...]
+ */
+function poblarDatalist(datalistId, data, columnas) {
+  var dl = document.getElementById(datalistId);
+  if (!dl || !data || !data.length) return;
+  var opciones = [];
+  columnas.forEach(function(col) {
+    var vistos = {};
+    data.forEach(function(row) {
+      var v = row[col.campo];
+      if (v !== undefined && v !== null && v !== '' && !vistos[v]) {
+        vistos[v] = true;
+        opciones.push(col.label + ': ' + v);
+      }
+    });
+  });
+  opciones.sort();
+  dl.innerHTML = opciones.map(function(o) {
+    return '<option value="' + o.replace(/&/g,'&amp;').replace(/"/g,'&quot;') + '">';
+  }).join('');
+}
+
+/**
+ * Evalúa si una fila cumple el filtro de texto.
+ * Si el texto tiene formato "Label: valor", filtra solo esa columna.
+ * Si no, busca en todas las columnas.
+ * columnas: [{ label: 'Cosechero', campo: 'cosechero' }, ...]
+ */
+function matchFiltro(row, q, columnas) {
+  if (!q) return true;
+  var lq = q.toLowerCase();
+  for (var i = 0; i < columnas.length; i++) {
+    var prefix = columnas[i].label.toLowerCase() + ': ';
+    if (lq.startsWith(prefix)) {
+      var val = lq.slice(prefix.length);
+      return String(row[columnas[i].campo] || '').toLowerCase().indexOf(val) >= 0;
+    }
+  }
+  return columnas.some(function(col) {
+    return String(row[col.campo] || '').toLowerCase().indexOf(lq) >= 0;
+  });
+}
+
 function mostrarMensaje(containerId, tipo, texto, duracion) {
   var el = document.getElementById(containerId);
   if (!el) return;

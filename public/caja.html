@@ -94,7 +94,8 @@
   <!-- MOVIMIENTOS -->
   <div id="tab-movimientos" class="tab-content active">
     <div class="filtros-barra">
-      <input type="search" class="fb-buscar" id="filtro-buscar" placeholder="Buscar concepto, forma de pago..." oninput="aplicarFiltroTipo()">
+      <input type="search" class="fb-buscar" id="filtro-buscar" placeholder="Filtrar por..." list="caja-opciones" oninput="aplicarFiltroTipo()">
+      <datalist id="caja-opciones"></datalist>
       <div class="fb-sep"></div>
       <select id="filtro-temporada" onchange="cargarMovimientos()" title="Temporada">
         <option value="">Temporada: Todas</option>
@@ -281,15 +282,19 @@
       tfoot.style.display = '';
     }
 
+    var _cajaCols = [
+      {label:'Concepto',campo:'concepto'},
+      {label:'Tipo',campo:'tipo'},
+      {label:'Forma de pago',campo:'forma_pago'},
+      {label:'Usuario',campo:'usuario'}
+    ];
+
     function aplicarFiltroTipo() {
       var tipo   = document.getElementById('filtro-tipo').value;
-      var q      = (document.getElementById('filtro-buscar').value || '').toLowerCase();
+      var q      = (document.getElementById('filtro-buscar').value || '').trim();
       var filtrados = movimientosCargados.filter(function(m) {
         var matchTipo = !tipo || m.tipo === tipo;
-        var matchQ    = !q   ||
-          (m.concepto   || '').toLowerCase().indexOf(q) >= 0 ||
-          (m.forma_pago || '').toLowerCase().indexOf(q) >= 0 ||
-          (m.observacion|| '').toLowerCase().indexOf(q) >= 0;
+        var matchQ    = matchFiltro(m, q, _cajaCols);
         return matchTipo && matchQ;
       });
       actualizarResumen(filtrados);
@@ -313,6 +318,7 @@
         .then(function(r) { return r.json(); })
         .then(function(data) {
           movimientosCargados = data;
+          poblarDatalist('caja-opciones', data, _cajaCols);
           aplicarFiltroTipo();
         })
         .catch(function() {

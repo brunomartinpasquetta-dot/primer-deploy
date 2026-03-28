@@ -114,7 +114,8 @@
     </div>
     <div id="panel-activa">
       <div class="filtros-barra" style="margin:8px 0 4px;">
-        <input type="search" class="fb-buscar" id="lotes-buscar-activa" placeholder="Buscar lote o variedad..." oninput="filtrarLotesActiva()">
+        <input type="search" class="fb-buscar" id="lotes-buscar-activa" placeholder="Filtrar por..." list="lotes-act-opciones" oninput="filtrarLotesActiva()">
+        <datalist id="lotes-act-opciones"></datalist>
         <button class="fb-limpiar" onclick="limpiarFiltrosLotesActiva()">✕ Limpiar</button>
       </div>
       <table>
@@ -124,7 +125,8 @@
     </div>
     <div id="panel-todos" style="display:none;">
       <div class="filtros-barra" style="margin:8px 0 4px;">
-        <input type="search" class="fb-buscar" id="lotes-buscar-todos" placeholder="Buscar lote o variedad..." oninput="filtrarLotesTodos()">
+        <input type="search" class="fb-buscar" id="lotes-buscar-todos" placeholder="Filtrar por..." list="lotes-tod-opciones" oninput="filtrarLotesTodos()">
+        <datalist id="lotes-tod-opciones"></datalist>
         <button class="fb-limpiar" onclick="limpiarFiltrosLotesTodos()">✕ Limpiar</button>
       </div>
       <table>
@@ -312,21 +314,28 @@
       }).join('');
     }
 
+    var _lotesActCols = [
+      {label:'Nombre',campo:'nombre'},
+      {label:'Variedad',campo:'variedad'}
+    ];
+    var _lotesTodCols = [
+      {label:'Nombre',campo:'nombre'},
+      {label:'Variedad',campo:'variedad'},
+      {label:'Campaña',campo:'temporada'}
+    ];
+
     function filtrarLotesActiva() {
-      var q = (document.getElementById('lotes-buscar-activa').value || '').toLowerCase().trim();
+      var q = (document.getElementById('lotes-buscar-activa').value || '').trim();
       var filtrado = q ? _lotesActivaData.filter(function(l) {
-        return (l.nombre || '').toLowerCase().indexOf(q) >= 0 ||
-               (l.variedad || '').toLowerCase().indexOf(q) >= 0;
+        return matchFiltro(l, q, _lotesActCols);
       }) : _lotesActivaData;
       renderLotesActiva(filtrado);
     }
 
     function filtrarLotesTodos() {
-      var q = (document.getElementById('lotes-buscar-todos').value || '').toLowerCase().trim();
+      var q = (document.getElementById('lotes-buscar-todos').value || '').trim();
       var filtrado = q ? _lotesTodosData.filter(function(l) {
-        return (l.nombre || '').toLowerCase().indexOf(q) >= 0 ||
-               (l.variedad || '').toLowerCase().indexOf(q) >= 0 ||
-               (l.temporada || '').toLowerCase().indexOf(q) >= 0;
+        return matchFiltro(l, q, _lotesTodCols);
       }) : _lotesTodosData;
       renderLotesTodos(filtrado);
     }
@@ -344,6 +353,7 @@
     function cargar(){
       fetch('/api/lotes').then(function(r){return r.json();}).then(function(data){
         _lotesTodosData = data;
+        poblarDatalist('lotes-tod-opciones', data, _lotesTodCols);
         filtrarLotesTodos();
       });
       fetch('/api/temporadas/activa').then(function(r){return r.json();}).then(function(t){
@@ -354,6 +364,7 @@
         }
         fetch('/api/lotes?temporada_id='+t.id).then(function(r){return r.json();}).then(function(data){
           _lotesActivaData = data;
+          poblarDatalist('lotes-act-opciones', data, _lotesActCols);
           filtrarLotesActiva();
         });
       });

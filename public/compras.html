@@ -200,7 +200,8 @@
 
       <!-- ── FILTROS ── -->
       <div class="filtros-barra">
-        <input type="search" class="fb-buscar" id="search-compras" placeholder="Buscar proveedor..." oninput="filtrarTabla()">
+        <input type="search" class="fb-buscar" id="search-compras" placeholder="Filtrar por..." list="compras-opciones" oninput="filtrarTabla()">
+        <datalist id="compras-opciones"></datalist>
         <div class="fb-sep"></div>
         <select id="filtro-temporada" onchange="cargarHistorial()">
           <option value="">Todas las temporadas</option>
@@ -488,13 +489,17 @@
     lucide.createIcons();
   }
 
+  var _comprasCols = [
+    {label:'Proveedor',campo:'proveedor'},
+    {label:'Temporada',campo:'temporada'},
+    {label:'Forma de pago',campo:'forma_pago'}
+  ];
+
   function filtrarTabla() {
-    var q = (document.getElementById('search-compras').value || '').toLowerCase().trim();
+    var q = (document.getElementById('search-compras').value || '').trim();
     if (!q) { renderTabla(_historialData); return; }
     renderTabla(_historialData.filter(function(c) {
-      return (c.proveedor || '').toLowerCase().indexOf(q) !== -1 ||
-             (c.temporada || '').toLowerCase().indexOf(q) !== -1 ||
-             (c.forma_pago || '').toLowerCase().indexOf(q) !== -1;
+      return matchFiltro(c, q, _comprasCols);
     }));
   }
 
@@ -509,6 +514,7 @@
     var url = '/api/compras' + (params.length ? '?' + params.join('&') : '');
     fetch(url).then(function(r){return r.json();}).then(function(data){
       _historialData = data;
+      poblarDatalist('compras-opciones', data, _comprasCols);
       filtrarTabla();
     });
   }

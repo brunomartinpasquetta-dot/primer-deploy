@@ -469,7 +469,8 @@
           <small id="hist-contador"></small>
         </div>
         <div class="filtros-barra" style="margin:8px 0 4px;">
-          <input type="search" class="fb-buscar" id="juntada-buscar" placeholder="Buscar cosechero, lote..." oninput="filtrarJuntada()">
+          <input type="search" class="fb-buscar" id="juntada-buscar" placeholder="Filtrar por..." list="juntada-opciones" oninput="filtrarJuntada()">
+          <datalist id="juntada-opciones"></datalist>
           <button class="fb-limpiar" onclick="limpiarFiltrosJuntada()">✕ Limpiar</button>
         </div>
         <div class="table-wrap" style="overflow-x:auto;">
@@ -931,6 +932,13 @@
           ? totalKg.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:2}) + ' kg'
           : '—';
         _juntadaData = data;
+        var _juntadaCols = [
+          {label:'Cosechero',campo:'cosechero'},
+          {label:'Lote',campo:'lote'},
+          {label:'Depósito',campo:'deposito'},
+          {label:'Tipo',campo:'tipo'}
+        ];
+        poblarDatalist('juntada-opciones', data, _juntadaCols);
         filtrarJuntada();
         guardarUltimaJuntada(data);
         cargarKpisJuntada();

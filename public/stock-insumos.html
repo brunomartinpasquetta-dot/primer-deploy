@@ -338,7 +338,8 @@
 
       <!-- ── Barra de filtros Stock ── -->
       <div class="filtros-barra">
-        <input type="search" class="fb-buscar" id="search-stock" placeholder="Buscar producto, proveedor..." oninput="filtrarStock()">
+        <input type="search" class="fb-buscar" id="search-stock" placeholder="Filtrar por..." list="si-stock-opciones" oninput="filtrarStock()">
+        <datalist id="si-stock-opciones"></datalist>
         <div class="fb-sep"></div>
         <select id="filter-cat" onchange="filtrarStock()" title="Categoría">
           <option value="">Categoría: Todas</option>
@@ -649,18 +650,21 @@
   }
 
   /* ── Filtrar tabla en cliente ── */
+  var _siStockCols = [
+    {label:'Producto',campo:'nombre'},
+    {label:'Categoría',campo:'categoria'},
+    {label:'Proveedor',campo:'proveedor'},
+    {label:'Depósito',campo:'deposito'}
+  ];
+
   function filtrarStock() {
-    var search = (document.getElementById('search-stock').value || '').toLowerCase().trim();
+    var search = (document.getElementById('search-stock').value || '').trim();
     var cat    = document.getElementById('filter-cat').value;
     var prov   = document.getElementById('filter-prov').value;
     var dep    = document.getElementById('filter-dep').value;
     var alerta = document.getElementById('filter-stock').value;
     var filtered = _stockData.filter(function(p) {
-      var matchSearch = !search ||
-        (p.producto  || '').toLowerCase().indexOf(search) !== -1 ||
-        (p.proveedor || '').toLowerCase().indexOf(search) !== -1 ||
-        (p.deposito  || '').toLowerCase().indexOf(search) !== -1 ||
-        (p.categoria || '').toLowerCase().indexOf(search) !== -1;
+      var matchSearch = matchFiltro(p, search, _siStockCols);
       var matchCat  = !cat  || (p.categoria || '') === cat;
       var matchProv = !prov || (p.proveedor || '') === prov;
       var matchDep  = !dep  || (p.deposito  || '') === dep;
@@ -722,6 +726,7 @@
   function cargarStock() {
     fetch('/api/stock-insumos').then(function(r) { return r.json(); }).then(function(data) {
       _stockData = data;
+      poblarDatalist('si-stock-opciones', data, _siStockCols);
 
       /* Actualizar KPIs */
       var productosUnicos = {}, bajosCount = 0;

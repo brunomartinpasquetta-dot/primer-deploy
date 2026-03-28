@@ -71,7 +71,8 @@
   <!-- RECIBIDOS -->
   <div id="tab-recibidos" class="tab-content active">
     <div class="filtros-barra">
-      <input type="search" class="fb-buscar" id="buscar-recibidos" placeholder="Buscar número, banco, emisor..." oninput="filtrarCheques('recibido')">
+      <input type="search" class="fb-buscar" id="buscar-recibidos" placeholder="Filtrar por..." list="cheq-rec-opciones" oninput="filtrarCheques('recibido')">
+      <datalist id="cheq-rec-opciones"></datalist>
       <div class="fb-sep"></div>
       <select id="filtro-estado-recibido" onchange="filtrarCheques('recibido')" title="Estado">
         <option value="">Estado: Todos</option>
@@ -108,7 +109,8 @@
   <!-- EMITIDOS -->
   <div id="tab-emitidos" class="tab-content">
     <div class="filtros-barra">
-      <input type="search" class="fb-buscar" id="buscar-emitidos" placeholder="Buscar número, banco, proveedor..." oninput="filtrarCheques('emitido')">
+      <input type="search" class="fb-buscar" id="buscar-emitidos" placeholder="Filtrar por..." list="cheq-emi-opciones" oninput="filtrarCheques('emitido')">
+      <datalist id="cheq-emi-opciones"></datalist>
       <div class="fb-sep"></div>
       <select id="filtro-estado-emitido" onchange="filtrarCheques('emitido')" title="Estado">
         <option value="">Estado: Todos</option>
@@ -263,19 +265,26 @@
     }
 
     var _chequesData = { recibido: [], emitido: [] };
+    var _cheqRecCols = [
+      {label:'Banco',campo:'banco'},
+      {label:'Emisor',campo:'emisor'},
+      {label:'Estado',campo:'estado'}
+    ];
+    var _cheqEmiCols = [
+      {label:'Banco',campo:'banco'},
+      {label:'Proveedor',campo:'proveedor'},
+      {label:'Estado',campo:'estado'}
+    ];
 
     function filtrarCheques(tipo) {
       var sfx     = tipo === 'recibido' ? '-recibido' : '-emitido';
-      var q       = (document.getElementById('buscar-' + (tipo==='recibido'?'recibidos':'emitidos')).value || '').toLowerCase();
+      var cols    = tipo === 'recibido' ? _cheqRecCols : _cheqEmiCols;
+      var q       = (document.getElementById('buscar-' + (tipo==='recibido'?'recibidos':'emitidos')).value || '').trim();
       var estado  = document.getElementById('filtro-estado' + sfx).value;
       var desde   = document.getElementById('filtro-desde' + sfx).value;
       var hasta   = document.getElementById('filtro-hasta' + sfx).value;
       var data    = _chequesData[tipo].filter(function(c) {
-        var matchQ = !q ||
-          String(c.numero || '').toLowerCase().indexOf(q) >= 0 ||
-          (c.banco     || '').toLowerCase().indexOf(q) >= 0 ||
-          (c.proveedor || '').toLowerCase().indexOf(q) >= 0 ||
-          (c.emisor    || '').toLowerCase().indexOf(q) >= 0;
+        var matchQ = matchFiltro(c, q, cols);
         var matchE = !estado || c.estado === estado;
         var venc   = parseFechaLocal(c.fecha_vencimiento);
         var matchD = !desde || !venc || venc >= new Date(desde);
@@ -365,6 +374,9 @@
         .then(function(r) { return r.json(); })
         .then(function(data) {
           _chequesData[tipo] = data;
+          var dlCols = tipo === 'recibido' ? _cheqRecCols : _cheqEmiCols;
+          var dlId   = tipo === 'recibido' ? 'cheq-rec-opciones' : 'cheq-emi-opciones';
+          poblarDatalist(dlId, data, dlCols);
           renderCheques(data, tipo, tbodyId, cols);
         })
         .catch(function() {
