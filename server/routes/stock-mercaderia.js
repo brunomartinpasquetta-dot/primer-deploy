@@ -50,36 +50,81 @@ router.post('/ingreso', async (req, res) => {
 
 // Registrar egreso / venta de mercaderia
 router.post('/egreso', async (req, res) => {
-  const { temporada_id, lote_id, kilos, destino, precio_kilo, comprador, observacion } = req.body;
+  const { temporada_id, lote_id, kilos, destino, precio_kilo,
+          comprador, cliente_id, forma_pago_id, observacion } = req.body;
   const pool = await getPool();
   const transaction = new sql.Transaction(pool);
   try {
     await transaction.begin();
-    const kilosNum = parseFloat(kilos);
+    const kilosNum  = parseFloat(kilos);
     const precioNum = precio_kilo ? parseFloat(precio_kilo) : null;
+    const total     = (precioNum && precioNum > 0) ? kilosNum * precioNum : 0;
+    const uid       = req.user ? req.user.id : null;
+
+    // Determinar si la forma de pago es Cuenta Corriente
+    let esCuentaCorriente = false;
+    if (forma_pago_id) {
+      const fpRes = await new sql.Request(transaction)
+        .input('id', sql.Int, forma_pago_id)
+        .query('SELECT es_cuenta_corriente FROM FormasPago WHERE id = @id');
+      esCuentaCorriente = !!(fpRes.recordset[0]?.es_cuenta_corriente);
+    }
+
+    // Nombre del comprador para concepto
+    let compradorNombre = comprador || '';
+    if (cliente_id && !compradorNombre) {
+      const cliRes = await new sql.Request(transaction)
+        .input('id', sql.Int, cliente_id)
+        .query('SELECT nombre FROM Clientes WHERE id = @id');
+      compradorNombre = cliRes.recordset[0]?.nombre || '';
+    }
 
     // 1. StockMercaderia — egreso
-    await new sql.Request(transaction)
-      .input('temporada_id', sql.Int,           temporada_id)
-      .input('lote_id',      sql.Int,           lote_id)
-      .input('kilos',        sql.Decimal(10,2), kilosNum)
-      .input('destino',      sql.NVarChar,      destino || 'fresco')
-      .input('precio_kilo',  sql.Decimal(10,2), precioNum)
-      .input('comprador',    sql.NVarChar,      comprador || '')
-      .input('observacion',  sql.NVarChar,      observacion || '')
-      .query(`INSERT INTO StockMercaderia (temporada_id, lote_id, tipo, kilos, destino, precio_kilo, comprador, observacion)
-              VALUES (@temporada_id, @lote_id, 'egreso_venta', @kilos, @destino, @precio_kilo, @comprador, @observacion)`);
+    const smResult = await new sql.Request(transaction)
+      .input('temporada_id',  sql.Int,           temporada_id)
+      .input('lote_id',       sql.Int,           lote_id)
+      .input('kilos',         sql.Decimal(10,2), kilosNum)
+      .input('destino',       sql.NVarChar,      destino || 'fresco')
+      .input('precio_kilo',   sql.Decimal(10,2), precioNum)
+      .input('comprador',     sql.NVarChar,      compradorNombre)
+      .input('cliente_id',    sql.Int,           cliente_id || null)
+      .input('forma_pago_id', sql.Int,           forma_pago_id || null)
+      .input('usuario_id',    sql.Int,           uid)
+      .input('observacion',   sql.NVarChar,      observacion || '')
+      .query(`INSERT INTO StockMercaderia
+                (temporada_id, lote_id, tipo, kilos, destino, precio_kilo,
+                 comprador, cliente_id, forma_pago_id, usuario_id, observacion)
+              OUTPUT INSERTED.id
+              VALUES (@temporada_id, @lote_id, 'egreso_venta', @kilos, @destino, @precio_kilo,
+                      @comprador, @cliente_id, @forma_pago_id, @usuario_id, @observacion)`);
+    const sm_id = smResult.recordset[0].id;
 
-    // 2. Caja — ingreso por venta (solo si hay precio_kilo > 0)
-    if (precioNum && precioNum > 0) {
-      const total = kilosNum * precioNum;
-      await new sql.Request(transaction)
-        .input('concepto',     sql.NVarChar,      `Venta mercadería${comprador ? ' a ' + comprador : ''}`)
-        .input('monto',        sql.Decimal(12,2), total)
-        .input('temporada_id', sql.Int,           temporada_id || null)
-        .input('observacion',  sql.NVarChar,      observacion || '')
-        .query(`INSERT INTO Caja (tipo, concepto, monto, temporada_id, observacion)
-                VALUES ('ingreso', @concepto, @monto, @temporada_id, @observacion)`);
+    if (total > 0) {
+      if (esCuentaCorriente && cliente_id) {
+        // 2a. Cuenta Corriente: débito en CuentaCorrienteClientes (se cobra después)
+        await new sql.Request(transaction)
+          .input('cliente_id',          sql.Int,           cliente_id)
+          .input('monto',               sql.Decimal(12,2), total)
+          .input('forma_pago_id',       sql.Int,           forma_pago_id)
+          .input('temporada_id',        sql.Int,           temporada_id || null)
+          .input('stock_mercaderia_id', sql.Int,           sm_id)
+          .input('observacion',         sql.NVarChar,      `Venta ${kilosNum} kg${observacion ? ' - ' + observacion : ''}`)
+          .query(`INSERT INTO CuentaCorrienteClientes
+                    (cliente_id, tipo, monto, forma_pago_id, temporada_id,
+                     stock_mercaderia_id, observacion, fecha_hora)
+                  VALUES (@cliente_id, 'debito', @monto, @forma_pago_id, @temporada_id,
+                          @stock_mercaderia_id, @observacion, GETDATE())`);
+      } else {
+        // 2b. Pago contado: ingreso directo en Caja
+        await new sql.Request(transaction)
+          .input('concepto',     sql.NVarChar,      `Venta mercadería${compradorNombre ? ' a ' + compradorNombre : ''}`)
+          .input('monto',        sql.Decimal(12,2), total)
+          .input('forma_pago_id',sql.Int,           forma_pago_id || null)
+          .input('temporada_id', sql.Int,           temporada_id || null)
+          .input('observacion',  sql.NVarChar,      observacion || '')
+          .query(`INSERT INTO Caja (tipo, concepto, monto, forma_pago_id, temporada_id, observacion)
+                  VALUES ('ingreso', @concepto, @monto, @forma_pago_id, @temporada_id, @observacion)`);
+      }
     }
 
     await transaction.commit();

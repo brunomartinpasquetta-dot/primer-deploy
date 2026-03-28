@@ -134,11 +134,11 @@ router.post('/', async (req, res) => {
     if (forma_pago_id) {
       const fpCheck = await new sql.Request(transaction)
         .input('id', sql.Int, forma_pago_id)
-        .query('SELECT nombre FROM FormasPago WHERE id = @id');
+        .query('SELECT nombre, es_cuenta_corriente FROM FormasPago WHERE id = @id');
 
       if (fpCheck.recordset.length > 0) {
         const fpNombre = fpCheck.recordset[0].nombre.toLowerCase();
-        const esCuentaCorriente = fpNombre.includes('cuenta corriente');
+        const esCuentaCorriente = !!(fpCheck.recordset[0].es_cuenta_corriente);
         const esCheque = fpNombre.includes('cheque');
 
         if (esCuentaCorriente && proveedor_id) {

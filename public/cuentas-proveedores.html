@@ -7,16 +7,67 @@
   <title>Cuentas Proveedores — Cosecha</title>
   <link rel="icon" href="img/logo.png">
   <script src="js/utils.js"></script>
+  <script src="js/cotizaciones.js"></script>
   <link rel="stylesheet" href="cosecha.css">
   <style>
-    .empty { text-align:center; color:var(--texto-suave); padding:20px; }
-    .saldo-deudor { color:var(--sem-rojo); font-weight:700; }
-    .saldo-cero { color:var(--sem-verde); font-weight:700; }
-    .btn-sm { padding:5px 12px; font-size:12px; border:none; border-radius:6px; cursor:pointer; font-weight:700; background:var(--verde); color:#fff; }
-    .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100; align-items:center; justify-content:center; }
+    /* ── Layout dos columnas ── */
+    .cc-layout { display: grid; grid-template-columns: 300px 1fr; gap: 16px; }
+    @media (max-width: 900px) { .cc-layout { grid-template-columns: 1fr; } }
+
+    /* ── Lista de proveedores ── */
+    .prov-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px; border-radius: 8px; cursor: pointer;
+      border: 1.5px solid transparent; margin-bottom: 4px; transition: all .15s;
+    }
+    .prov-item:hover { background: var(--fondo-dark); }
+    .prov-item.active { border-color: var(--verde); background: #eef7ee; }
+    .prov-nombre { font-weight: 600; font-size: 13px; color: var(--texto); }
+    .prov-sub { font-size: 11px; color: var(--texto-suave); margin-top: 1px; }
+    .saldo-badge {
+      font-size: 12px; font-weight: 700; font-family: 'JetBrains Mono', monospace;
+      padding: 3px 8px; border-radius: 6px; white-space: nowrap;
+    }
+    .saldo-badge.deuda { background: #fde8e8; color: #c0392b; }
+    .saldo-badge.ok    { background: #eef7ee; color: #2d6a4f; }
+    .saldo-badge.cero  { background: var(--fondo-dark); color: var(--texto-suave); }
+
+    /* ── Panel detalle ── */
+    .detalle-header {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; flex-wrap: wrap; padding: 16px 20px;
+      border-bottom: 1px solid var(--borde);
+    }
+    .detalle-nombre { font-size: 16px; font-weight: 700; color: var(--texto); }
+    .detalle-saldo  { font-size: 22px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+    .detalle-saldo.deuda { color: #c0392b; }
+    .detalle-saldo.ok    { color: #2d6a4f; }
+
+    /* ── Tabla movimientos ── */
+    .mov-tipo-debit  { background: #fde8e8; color: #c0392b; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
+    .mov-tipo-credit { background: #eef7ee; color: #2d6a4f; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    .empty-det { text-align: center; color: var(--texto-suave); padding: 32px; font-size: 14px; }
+
+    /* ── KPI mini ── */
+    .kpi-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+    @media (max-width: 600px) { .kpi-row { grid-template-columns: 1fr 1fr; } }
+    .kpi-mini { background: #fff; border-radius: 10px; padding: 14px 16px; border: 1px solid rgba(0,0,0,.06); box-shadow: 0 1px 6px rgba(0,0,0,.05); }
+    .kpi-mini-label { font-size: 10px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--texto-suave); }
+    .kpi-mini-val   { font-size: 20px; font-weight: 700; font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+    .kpi-mini-sub   { font-size: 11px; color: var(--texto-suave); }
+
+    /* ── Modal ── */
+    .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:200; align-items:center; justify-content:center; }
     .modal.open { display:flex; }
-    .modal-content { background:white; border-radius:14px; padding:24px; width:90%; max-width:400px; box-shadow:0 8px 32px rgba(0,0,0,0.15); }
-    .modal-content h3 { color:var(--verde); margin-bottom:16px; font-size:16px; font-weight:700; }
+    .modal-box { background:#fff; border-radius:16px; padding:28px; width:90%; max-width:420px; box-shadow:0 12px 40px rgba(0,0,0,.18); }
+    .modal-title { font-size:16px; font-weight:700; color:var(--verde); margin-bottom:18px; }
+    .form-row { display:grid; gap:6px; margin-bottom:14px; }
+    .form-row label { font-size:12px; font-weight:600; color:var(--texto-suave); text-transform:uppercase; letter-spacing:.5px; }
+    .form-row input, .form-row select { height:38px; padding:0 12px; border:1px solid var(--borde); border-radius:8px; font-size:14px; color:var(--texto); background:#fff; outline:none; width:100%; box-sizing:border-box; }
+    .form-row input:focus, .form-row select:focus { border-color:var(--verde); }
+    .modal-actions { display:flex; gap:8px; margin-top:8px; }
+    .modal-actions .btn { flex:1; }
   </style>
   <script src="js/auth-check.js"></script>
 </head>
@@ -26,10 +77,13 @@
   <!-- ── SIDEBAR ── -->
   <aside class="sidebar">
     <div class="sidebar-brand">
-      <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div>
+      <img src="img/logo-icon.png" style="height:44px;width:44px;border-radius:10px;">
+      <div style="margin-left:10px;display:flex;flex-direction:column;justify-content:center;line-height:1.1;">
+        <span style="color:white;font-weight:700;font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span>
+        <span style="color:rgba(255,255,255,0.5);font-size:10px;letter-spacing:1.5px;margin-top:2px;">SISTEMA DE CULTIVOS</span>
+      </div>
     </div>
     <nav class="sidebar-nav">
-      
       <a href="index.html" class="nav-item"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard</a>
       <div class="nav-section">Campo</div>
       <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
@@ -49,56 +103,106 @@
   <div class="main">
     <header class="topbar">
       <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
-        <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div><span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
+        <img src="img/logo-icon.png" style="height:44px;width:44px;border-radius:10px;">
+        <div style="margin-left:10px;display:flex;flex-direction:column;justify-content:center;line-height:1.1;">
+          <span style="color:white;font-weight:700;font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span>
+          <span style="color:rgba(255,255,255,0.5);font-size:10px;letter-spacing:1.5px;margin-top:2px;">SISTEMA DE CULTIVOS</span>
+        </div>
+        <span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
       </div>
-      <div class="topbar-right">
-        <span class="topbar-date" id="topbar-date"></span>
-      </div>
+      <div class="topbar-right"><span class="topbar-date" id="topbar-date"></span></div>
     </header>
 
     <div class="content">
       <a href="menu-comercial.html" class="btn-volver">← Volver</a>
       <div class="content-header">
-        <div class="content-title">Cuentas Proveedores</div>
-        <div class="content-sub">Cuentas corrientes de proveedores</div>
+        <div class="content-title">Cuentas Corrientes — Proveedores</div>
+        <div class="content-sub">Compras en cuenta corriente y pagos realizados</div>
       </div>
 
-      <div class="card">
-    <table>
-      <thead>
-        <tr><th>Proveedor</th><th>Compras</th><th>Pagado</th><th>Saldo</th><th></th></tr>
-      </thead>
-      <tbody id="tbody">
-        <tr><td colspan="5" class="empty">Cargando...</td></tr>
-      </tbody>
-    </table>
-  </div>
+      <!-- KPIs -->
+      <div class="kpi-row">
+        <div class="kpi-mini">
+          <div class="kpi-mini-label">Total a pagar</div>
+          <div class="kpi-mini-val" id="kpi-deuda">—</div>
+          <div class="kpi-mini-sub" id="kpi-deuda-sub">—</div>
+        </div>
+        <div class="kpi-mini">
+          <div class="kpi-mini-label">Pagado total</div>
+          <div class="kpi-mini-val" id="kpi-pagado">—</div>
+          <div class="kpi-mini-sub">acumulado</div>
+        </div>
+        <div class="kpi-mini">
+          <div class="kpi-mini-label">Proveedores</div>
+          <div class="kpi-mini-val" id="kpi-proveedores">—</div>
+          <div class="kpi-mini-sub">con saldo pendiente</div>
+        </div>
+      </div>
 
-  <!-- MODAL PAGO -->
-  <div class="modal" id="modal-pago">
-    <div class="modal-content">
-      <h3>Registrar pago</h3>
-      <input type="hidden" id="pago-proveedor-id">
-      <label>Proveedor</label>
-      <input type="text" id="pago-proveedor-nombre" disabled>
-      <label>Monto ($)</label>
-      <input type="number" id="pago-monto" placeholder="Ej: 50000" step="0.01" data-miles>
-      <label>Forma de pago</label>
-      <select id="pago-forma"></select>
-      <label>Observacion</label>
-      <input type="text" id="pago-obs" placeholder="Opcional">
-      <button class="btn btn-green" id="btn-pagar" onclick="registrarPago(this)">Confirmar Pago</button>
-      <button class="btn btn-back" onclick="cerrarModal()" style="margin-top:8px;">Cancelar</button>
-      <div id="msg-pago"></div>
-    </div>
-  </div>
+      <!-- Layout dos columnas -->
+      <div class="cc-layout">
 
-    </div>
-  </div>
+        <!-- ── Panel izquierdo: lista ── -->
+        <div>
+          <div class="filtros-barra" style="margin-bottom:8px;">
+            <input type="search" class="fb-buscar" id="buscar-prov" placeholder="Buscar proveedor..."
+                   oninput="filtrarLista()">
+            <button class="fb-limpiar" onclick="limpiarBusqueda()">✕</button>
+          </div>
+          <div id="lista-proveedores" style="max-height:65vh;overflow-y:auto;">
+            <div class="empty-det">Cargando...</div>
+          </div>
+        </div>
+
+        <!-- ── Panel derecho: detalle ── -->
+        <div class="card" style="padding:0;overflow:hidden;">
+          <div id="detalle-placeholder" class="empty-det" style="padding:60px 20px;">
+            <i data-lucide="mouse-pointer-click" style="width:32px;height:32px;opacity:.3;margin-bottom:8px;"></i>
+            <br>Seleccioná un proveedor para ver su cuenta
+          </div>
+
+          <div id="detalle-panel" style="display:none;">
+            <div class="detalle-header">
+              <div>
+                <div class="detalle-nombre" id="det-nombre">—</div>
+                <div style="font-size:12px;color:var(--texto-suave);" id="det-info">—</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                <div>
+                  <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--texto-suave);">Saldo</div>
+                  <div class="detalle-saldo" id="det-saldo">—</div>
+                </div>
+                <button class="btn btn-green" onclick="abrirModalPago()" id="btn-pagar">
+                  + Registrar pago
+                </button>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Tipo</th>
+                    <th>Descripción</th>
+                    <th>Forma pago</th>
+                    <th style="text-align:right;">Monto</th>
+                    <th style="text-align:right;">Saldo</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-movimientos">
+                  <tr><td colspan="6" class="empty-det">—</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /content -->
+  </div><!-- /main -->
 
   <!-- ── BOTTOM NAV ── -->
   <nav class="bottom-nav">
-    
     <a href="index.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="home"></i></span><span>Inicio</span></a>
     <a href="juntada.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="wheat"></i></span><span>Cosecha</span></a>
     <a href="despalillado.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="scissors"></i></span><span>Despalillado</span></a>
@@ -108,85 +212,226 @@
 
 </div>
 
+<!-- ── MODAL PAGO ── -->
+<div class="modal" id="modal-pago">
+  <div class="modal-box">
+    <div class="modal-title">Registrar pago a proveedor</div>
+    <input type="hidden" id="pago-proveedor-id">
+
+    <div class="form-row">
+      <label>Proveedor</label>
+      <input type="text" id="pago-proveedor-nombre" disabled>
+    </div>
+    <div class="form-row">
+      <label>Monto ($) *</label>
+      <input type="text" inputmode="decimal" id="pago-monto" placeholder="Ej: 150.000">
+    </div>
+    <div class="form-row">
+      <label>Forma de pago</label>
+      <select id="pago-forma">
+        <option value="">Sin especificar</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Observación</label>
+      <input type="text" id="pago-obs" placeholder="Opcional">
+    </div>
+    <div id="msg-pago" style="font-size:13px;color:#c0392b;min-height:18px;margin-bottom:8px;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-back" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn btn-green" id="btn-confirmar-pago" onclick="registrarPago(this)">Confirmar pago</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://unpkg.com/lucide@latest"></script>
 <script>
-  lucide.createIcons();
-  document.getElementById('topbar-date').textContent =
-    new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
-</script>
-<script>
-    function cargar() {
-      fetch('/api/cuentas-proveedores/resumen')
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-          const tbody = document.getElementById('tbody');
-          if (data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="empty">Sin proveedores</td></tr>';
-            return;
-          }
-          tbody.innerHTML = data.map(function(p) {
-            const saldo = parseFloat(p.saldo) || 0;
-            return '<tr>' +
-              '<td><strong>' + p.proveedor + '</strong></td>' +
-              '<td>$' + parseFloat(p.total_compras).toLocaleString('es-AR') + '</td>' +
-              '<td>$' + parseFloat(p.total_pagado).toLocaleString('es-AR') + '</td>' +
-              '<td class="' + (saldo > 0 ? 'saldo-deudor' : 'saldo-cero') + '">$' + saldo.toLocaleString('es-AR') + '</td>' +
-              '<td><button class="btn-sm" onclick="abrirModal(' + p.id + ', \'' + p.proveedor + '\')">Pagar</button></td>' +
-              '</tr>';
-          }).join('');
-        });
-    }
+lucide.createIcons();
+document.getElementById('topbar-date').textContent =
+  new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
 
-    function cargarFormasPago() {
-      fetch('/api/caja/formas-pago')
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-          document.getElementById('pago-forma').innerHTML =
-            '<option value="">Sin especificar</option>' +
-            data.map(function(f) { return '<option value="' + f.id + '">' + f.nombre + '</option>'; }).join('');
-        });
-    }
+var _proveedoresData = [];
+var _proveedorSeleccionado = null;
 
-    function abrirModal(id, nombre) {
-      document.getElementById('pago-proveedor-id').value = id;
-      document.getElementById('pago-proveedor-nombre').value = nombre;
-      document.getElementById('pago-monto').value = '';
-      document.getElementById('modal-pago').classList.add('open');
-    }
+function fmtPeso(n) {
+  var v = parseFloat(n || 0);
+  return '$\u202F' + Math.abs(v).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+function fmtFecha(iso) {
+  if (!iso) return '—';
+  var s = iso.toString();
+  if (s.length > 10) return s.slice(0, 16).replace('T', ' ');
+  return s;
+}
 
-    function cerrarModal() {
-      document.getElementById('modal-pago').classList.remove('open');
-    }
+// ── Cargar lista de proveedores ──────────────────────────────────────
+function cargar() {
+  fetch('/api/cuentas-proveedores/resumen')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      _proveedoresData = data;
+      calcularKpis(data);
+      renderLista(data);
+    });
+}
 
-    function registrarPago(btn) {
-      const proveedor_id = document.getElementById('pago-proveedor-id').value;
-      const monto = document.getElementById('pago-monto').value;
-      if (!monto) { alert('Ingresa el monto'); return; }
-      setLoading(btn, true);
-      fetch('/api/cuentas-proveedores/pago', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          proveedor_id: proveedor_id,
-          monto: monto,
-          forma_pago_id: document.getElementById('pago-forma').value || null,
-          observacion: document.getElementById('pago-obs').value
-        })
-      })
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        setLoading(btn, false);
-        if (data.ok) {
-          cerrarModal();
-          cargar();
-        }
-      })
-      .catch(function() { setLoading(btn, false); });
-    }
+function calcularKpis(data) {
+  var totalDeuda   = data.reduce(function(s, p) { return s + Math.max(0, parseFloat(p.saldo) || 0); }, 0);
+  var totalPagado  = data.reduce(function(s, p) { return s + (parseFloat(p.total_pagado) || 0); }, 0);
+  var conDeuda     = data.filter(function(p) { return parseFloat(p.saldo) > 0.01; }).length;
+  document.getElementById('kpi-deuda').textContent      = fmtPeso(totalDeuda);
+  document.getElementById('kpi-deuda-sub').textContent  = conDeuda + ' con saldo';
+  document.getElementById('kpi-pagado').textContent     = fmtPeso(totalPagado);
+  document.getElementById('kpi-proveedores').textContent = conDeuda;
+}
 
-    cargar();
-    cargarFormasPago();
-  cargarTemporadaActiva();
+function renderLista(data) {
+  var el = document.getElementById('lista-proveedores');
+  if (!data.length) { el.innerHTML = '<div class="empty-det">Sin proveedores</div>'; return; }
+  el.innerHTML = data.map(function(p) {
+    var saldo   = parseFloat(p.saldo) || 0;
+    var badgeClass = saldo > 0.01 ? 'deuda' : (saldo < -0.01 ? 'ok' : 'cero');
+    var badgeLabel = fmtPeso(saldo);
+    var isActive   = _proveedorSeleccionado && _proveedorSeleccionado.id === p.id ? ' active' : '';
+    return '<div class="prov-item' + isActive + '" onclick="seleccionar(' + JSON.stringify(p).replace(/"/g,'&quot;') + ')">' +
+      '<div>' +
+        '<div class="prov-nombre">' + p.proveedor + '</div>' +
+        '<div class="prov-sub">' + (p.cant_compras || 0) + ' compras en CC</div>' +
+      '</div>' +
+      '<span class="saldo-badge ' + badgeClass + '">' + badgeLabel + '</span>' +
+    '</div>';
+  }).join('');
+}
+
+function filtrarLista() {
+  var q = document.getElementById('buscar-prov').value.toLowerCase();
+  var filtrado = q ? _proveedoresData.filter(function(p) {
+    return p.proveedor.toLowerCase().indexOf(q) >= 0;
+  }) : _proveedoresData;
+  renderLista(filtrado);
+}
+
+function limpiarBusqueda() {
+  document.getElementById('buscar-prov').value = '';
+  renderLista(_proveedoresData);
+}
+
+// ── Seleccionar proveedor y cargar detalle ───────────────────────────
+function seleccionar(p) {
+  _proveedorSeleccionado = p;
+  document.getElementById('detalle-placeholder').style.display = 'none';
+  document.getElementById('detalle-panel').style.display = '';
+
+  var saldo = parseFloat(p.saldo) || 0;
+  document.getElementById('det-nombre').textContent = p.proveedor;
+  document.getElementById('det-info').textContent   = p.cant_compras + ' compras | Tel: ' + (p.telefono || 'sin datos');
+  var saldoEl = document.getElementById('det-saldo');
+  saldoEl.textContent  = fmtPeso(saldo);
+  saldoEl.className    = 'detalle-saldo ' + (saldo > 0.01 ? 'deuda' : 'ok');
+
+  // Setear en modal
+  document.getElementById('pago-proveedor-id').value     = p.id;
+  document.getElementById('pago-proveedor-nombre').value = p.proveedor;
+
+  // Re-render lista para marcar activo
+  renderLista(_proveedoresData);
+  cargarMovimientos(p.id);
+}
+
+function cargarMovimientos(proveedor_id) {
+  var tbody = document.getElementById('tbody-movimientos');
+  tbody.innerHTML = '<tr><td colspan="6" class="empty-det">Cargando...</td></tr>';
+  fetch('/api/cuentas-proveedores/' + proveedor_id)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (!data.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-det">Sin movimientos registrados</td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.map(function(m) {
+        var esDebito  = m.tipo === 'debito';
+        var badge     = esDebito
+          ? '<span class="mov-tipo-debit">Compra CC</span>'
+          : '<span class="mov-tipo-credit">Pago</span>';
+        var montoStr  = (esDebito ? '-' : '+') + fmtPeso(m.monto);
+        var montoCol  = 'color:' + (esDebito ? '#c0392b' : '#2d6a4f') + ';font-weight:700;';
+        var desc      = m.observacion || (esDebito ? 'Compra en CC' : 'Pago registrado');
+        if (m.compra_id) desc += ' <span style="font-size:10px;opacity:.6;">#' + m.compra_id + '</span>';
+        var saldoAcum = parseFloat(m.saldo_acumulado) || 0;
+        var saldoCol  = saldoAcum > 0.01 ? 'color:#c0392b;' : 'color:#2d6a4f;';
+        return '<tr>' +
+          '<td style="font-size:12px;white-space:nowrap;">' + fmtFecha(m.fecha_hora || m.fecha) + '</td>' +
+          '<td>' + badge + '</td>' +
+          '<td style="font-size:12px;">' + desc + (m.temporada ? '<br><span style="font-size:10px;color:var(--texto-suave);">' + m.temporada + '</span>' : '') + '</td>' +
+          '<td style="font-size:12px;">' + (m.forma_pago || '—') + '</td>' +
+          '<td style="text-align:right;' + montoCol + '" class="mono">' + montoStr + '</td>' +
+          '<td style="text-align:right;' + saldoCol + '" class="mono">' + fmtPeso(saldoAcum) + '</td>' +
+        '</tr>';
+      }).join('');
+    })
+    .catch(function() {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty-det">Error al cargar</td></tr>';
+    });
+}
+
+// ── Modal pago ───────────────────────────────────────────────────────
+function abrirModalPago() {
+  document.getElementById('pago-monto').value = '';
+  document.getElementById('pago-obs').value   = '';
+  document.getElementById('msg-pago').textContent = '';
+  document.getElementById('modal-pago').classList.add('open');
+}
+
+function cerrarModal() {
+  document.getElementById('modal-pago').classList.remove('open');
+}
+
+function registrarPago(btn) {
+  var proveedor_id = document.getElementById('pago-proveedor-id').value;
+  var monto        = _parseVal(document.getElementById('pago-monto').value);
+  var msg          = document.getElementById('msg-pago');
+  if (!monto || monto <= 0) { msg.textContent = 'Ingresá un monto válido'; return; }
+  setLoading(btn, true);
+  fetch('/api/cuentas-proveedores/pago', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      proveedor_id:  proveedor_id,
+      monto:         monto,
+      forma_pago_id: document.getElementById('pago-forma').value || null,
+      observacion:   document.getElementById('pago-obs').value
+    })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    setLoading(btn, false);
+    if (d.ok) {
+      cerrarModal();
+      cargar();
+      if (_proveedorSeleccionado) cargarMovimientos(_proveedorSeleccionado.id);
+    } else {
+      msg.textContent = d.error || 'Error al registrar';
+    }
+  })
+  .catch(function() { setLoading(btn, false); msg.textContent = 'Error de conexión'; });
+}
+
+// ── Cargar formas de pago ────────────────────────────────────────────
+function cargarFormasPago() {
+  fetch('/api/cuentas-proveedores/formas-pago')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      document.getElementById('pago-forma').innerHTML =
+        '<option value="">Sin especificar</option>' +
+        data.map(function(f) {
+          return '<option value="' + f.id + '">' + f.nombre + '</option>';
+        }).join('');
+    });
+}
+
+cargar();
+cargarFormasPago();
+cargarTemporadaActiva();
 </script>
 </body>
 </html>

@@ -11,6 +11,88 @@
   <style>
     .peso { color: #C0392B; }
     .btn-primary { background: #C0392B; }
+
+    /* Tabs modo */
+    .modo-tabs { display:flex; gap:8px; margin-bottom:16px; }
+    .modo-tab {
+      flex:1; padding:10px; border:2px solid var(--borde); border-radius:10px;
+      background:var(--superficie); cursor:pointer; text-align:center;
+      font-size:14px; font-weight:600; color:var(--texto-secundario); transition:.15s;
+    }
+    .modo-tab.active { border-color:var(--verde); background:var(--verde-suave); color:var(--verde); }
+
+    /* Badge pendientes */
+    .badge-pendientes {
+      display:inline-flex; align-items:center; gap:6px;
+      background:var(--sem-amarillo-bg); color:var(--sem-amarillo);
+      border:1px solid var(--sem-amarillo-borde); border-radius:20px;
+      padding:4px 12px; font-size:13px; font-weight:700; margin-bottom:12px;
+    }
+
+    /* Card pendiente */
+    .pendiente-item {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:12px 14px; border:1.5px solid var(--borde); border-radius:10px;
+      background:var(--superficie); margin-bottom:8px; gap:10px;
+      cursor:pointer; transition:.15s;
+    }
+    .pendiente-item:hover { border-color:var(--verde); background:var(--verde-suave); }
+    .pendiente-item.seleccionado { border-color:var(--verde); background:var(--verde-suave); }
+    .pendiente-info { flex:1; }
+    .pendiente-lote { font-weight:700; font-size:14px; color:var(--texto); }
+    .pendiente-meta { font-size:12px; color:var(--texto-secundario); margin-top:2px; }
+    .pendiente-kilos { font-size:15px; font-weight:700; color:var(--verde); white-space:nowrap; }
+
+    /* Badge modo activo */
+    .modo-activo-badge {
+      padding:8px 12px; border-radius:8px; font-size:13px; font-weight:600;
+      margin-bottom:12px; display:flex; align-items:center; gap:8px;
+    }
+
+    /* Preview merma */
+    .merma-preview {
+      margin-top:10px; padding:10px 14px; border-radius:8px;
+      background:var(--sem-rojo-bg); border:1px solid var(--sem-rojo-borde);
+      display:none;
+    }
+    .merma-preview.ok { background:var(--sem-verde-bg); border-color:var(--sem-verde-borde); }
+    .merma-preview-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--texto-secundario); margin-bottom:4px; }
+    .merma-preview-vals { display:flex; gap:16px; align-items:baseline; }
+    .merma-kg { font-size:20px; font-weight:800; color:var(--sem-rojo); }
+    .merma-preview.ok .merma-kg { color:var(--sem-verde); }
+    .merma-pct { font-size:14px; font-weight:700; color:var(--sem-rojo); }
+    .merma-preview.ok .merma-pct { color:var(--sem-verde); }
+    .merma-base { font-size:12px; color:var(--texto-secundario); margin-left:auto; }
+
+    /* KPI merma */
+    .kpi-merma { display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap; }
+    .kpi-merma-card {
+      flex:1; min-width:120px; background:var(--superficie);
+      border:1px solid var(--borde); border-radius:12px; padding:12px 14px;
+    }
+    .kpi-merma-label { font-size:11px; color:var(--texto-secundario); font-weight:600; text-transform:uppercase; letter-spacing:.4px; }
+    .kpi-merma-val { font-size:22px; font-weight:800; color:var(--texto); margin-top:2px; }
+    .kpi-merma-val.rojo { color:var(--sem-rojo); }
+    .kpi-merma-val.verde { color:var(--sem-verde); }
+
+    /* Historial merma */
+    .hist-merma { margin-top:24px; }
+    .hist-merma-title { font-size:13px; font-weight:700; color:var(--texto-secundario); text-transform:uppercase; letter-spacing:.5px; margin-bottom:10px; }
+    .hist-row {
+      display:flex; align-items:center; gap:10px; padding:10px 12px;
+      border:1px solid var(--borde); border-radius:10px; background:var(--superficie); margin-bottom:8px;
+    }
+    .hist-lote { font-weight:700; font-size:14px; flex:1; }
+    .hist-detail { font-size:12px; color:var(--texto-secundario); }
+    .hist-merma-badge {
+      padding:3px 8px; border-radius:6px; font-size:12px; font-weight:700; white-space:nowrap;
+    }
+    .hist-merma-badge.alta { background:var(--sem-rojo-bg); color:var(--sem-rojo); }
+    .hist-merma-badge.media { background:var(--sem-amarillo-bg); color:var(--sem-amarillo); }
+    .hist-merma-badge.baja { background:var(--sem-verde-bg); color:var(--sem-verde); }
+    .hist-merma-badge.sin { background:var(--fondo); color:var(--texto-secundario); }
+    .modo-activo-badge.camara { background:var(--sem-azul-bg); color:var(--sem-azul); border:1px solid var(--sem-azul-borde); }
+    .modo-activo-badge.fresca { background:var(--sem-verde-bg); color:var(--sem-verde); border:1px solid var(--sem-verde-borde); }
   </style>
   <script src="js/auth-check.js"></script>
 </head>
@@ -70,58 +152,154 @@
     <div class="content">
       <a href="menu-campo.html" class="btn-volver">← Volver</a>
       <div class="content-header">
-        <div class="content-title">Registrar despalillado</div>
-        <div class="content-sub">Seleccioná el lote, escaneá el despalillador y confirmá el peso</div>
+        <div class="content-title">Despalillado</div>
+        <div class="content-sub">Registrá el proceso de despalillado de la cosecha</div>
+      </div>
+
+      <!-- ── KPIs MERMA DEL DÍA ── -->
+      <div class="kpi-merma" id="kpi-merma-wrap" style="display:none;">
+        <div class="kpi-merma-card">
+          <div class="kpi-merma-label">Registros hoy</div>
+          <div class="kpi-merma-val" id="kpi-registros">—</div>
+        </div>
+        <div class="kpi-merma-card">
+          <div class="kpi-merma-label">Merma total</div>
+          <div class="kpi-merma-val rojo" id="kpi-merma-kg">— kg</div>
+        </div>
+        <div class="kpi-merma-card">
+          <div class="kpi-merma-label">Merma promedio</div>
+          <div class="kpi-merma-val rojo" id="kpi-merma-pct">— %</div>
+        </div>
       </div>
 
       <div style="max-width:560px;">
-        <div class="card-form">
-          <div class="form-row">
-            <label>Lote</label>
-            <select id="lote" onchange="checkReady()" data-tooltip="Lote de la campaña activa donde se despalilló">
-              <option value="">Cargando lotes...</option>
-            </select>
-          </div>
-        </div>
 
-        <div class="card-form">
-          <div class="section-label" style="margin-top:0;">Despalillador</div>
-          <div class="trabajador-info" id="trabajador-info">Escaneá el QR del despalillador</div>
-          <input type="hidden" id="trabajador-id">
-          <button class="btn btn-scan" onclick="toggleCamera()" data-tooltip="Escaneá el QR del despalillador para identificarlo">
-            <i data-lucide="scan-line"></i> Escanear QR
+        <!-- ── TABS MODO ── -->
+        <div class="modo-tabs">
+          <button class="modo-tab active" id="tab-camara" onclick="setModo('camara')">
+            ❄️ Cámara fría
           </button>
-          <div id="camera-container" class="hidden" style="margin-top:12px;">
-            <video id="video" autoplay playsinline></video>
-            <canvas id="canvas" class="hidden"></canvas>
+          <button class="modo-tab" id="tab-fresca" onclick="setModo('fresca')">
+            🌿 Fruta fresca
+          </button>
+        </div>
+
+        <!-- ── PENDIENTES CÁMARA FRÍA ── -->
+        <div id="sec-camara">
+          <div id="badge-pendientes" class="badge-pendientes" style="display:none;">
+            <i data-lucide="clock"></i> <span id="num-pendientes">0</span> pendientes de despalillar
           </div>
-          <div style="text-align:center;margin-top:10px;">
-            <a href="#" onclick="toggleListaTrabajadores();return false;" style="font-size:13px;color:var(--verde);font-weight:600;text-decoration:none;" data-tooltip="Elegí el despalillador manualmente si no tenés QR">o seleccionar de la lista</a>
+          <div id="lista-pendientes">
+            <div style="color:var(--texto-secundario);font-size:13px;text-align:center;padding:20px 0;">
+              Cargando pendientes...
+            </div>
           </div>
-          <div id="lista-trabajadores-wrap" style="display:none;margin-top:8px;">
-            <select id="lista-trabajadores" onchange="seleccionarTrabajadorLista(this.value)" style="width:100%;padding:10px;border:2px solid var(--borde);border-radius:8px;font-size:15px;">
-              <option value="">— seleccionar despalillador —</option>
-            </select>
+          <div id="aviso-sin-pendientes" style="display:none;padding:16px;text-align:center;color:var(--texto-secundario);font-size:14px;background:var(--superficie);border-radius:10px;border:1px dashed var(--borde);">
+            ✅ No hay cosechas pendientes de despalillar para cámara fría
           </div>
         </div>
 
-        <div class="card-form">
-          <div class="section-label" style="margin-top:0;">Peso</div>
-          <div class="peso" id="peso-display">— kg</div>
-          <div class="form-row" style="margin-top:8px;">
-            <label>Ingreso manual</label>
-            <input type="text" inputmode="decimal" id="peso-manual" placeholder="0.00"
-              data-miles
-              data-tooltip="Ingresá el peso en kg si la balanza no está conectada"
-              oninput="pesoActual=_parseVal(this.value)||null;checkReady()">
+        <!-- ── MODO ACTIVO BADGE ── -->
+        <div id="modo-activo-badge" style="display:none;" class="modo-activo-badge camara">
+          <i data-lucide="info"></i>
+          <span id="modo-activo-texto"></span>
+        </div>
+
+        <!-- ── FORMULARIO REGISTRO ── -->
+        <div id="sec-form" style="display:none;">
+
+          <!-- Lote (solo modo fresca) -->
+          <div class="card-form" id="card-lote-fresca">
+            <div class="form-row">
+              <label>Lote</label>
+              <select id="lote" onchange="checkReady()" data-tooltip="Lote de la campaña activa">
+                <option value="">Cargando lotes...</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Info juntada seleccionada (modo cámara) -->
+          <div class="card-form" id="card-juntada-info" style="display:none;">
+            <div class="form-row">
+              <label>Lote</label>
+              <div id="juntada-lote-label" style="font-weight:600;font-size:15px;padding:8px 0;color:var(--texto);">—</div>
+            </div>
+            <div class="form-row">
+              <label>Cosechero</label>
+              <div id="juntada-cosechero-label" style="font-size:14px;padding:8px 0;color:var(--texto-secundario);">—</div>
+            </div>
+            <div class="form-row">
+              <label>Kilos cosechados</label>
+              <div id="juntada-kilos-label" style="font-weight:700;font-size:16px;padding:8px 0;color:var(--verde);">—</div>
+            </div>
+            <div class="form-row">
+              <label>Destino</label>
+              <div id="juntada-deposito-label" style="font-size:14px;padding:8px 0;color:var(--texto-secundario);">—</div>
+            </div>
+          </div>
+
+          <!-- Despalillador -->
+          <div class="card-form">
+            <div class="section-label" style="margin-top:0;">Despalillador</div>
+            <div class="trabajador-info" id="trabajador-info">Escaneá el QR del despalillador</div>
+            <input type="hidden" id="trabajador-id">
+            <button class="btn btn-scan" onclick="toggleCamera()" data-tooltip="Escaneá el QR del despalillador">
+              <i data-lucide="scan-line"></i> Escanear QR
+            </button>
+            <div id="camera-container" class="hidden" style="margin-top:12px;">
+              <video id="video" autoplay playsinline></video>
+              <canvas id="canvas" class="hidden"></canvas>
+            </div>
+            <div style="text-align:center;margin-top:10px;">
+              <a href="#" onclick="toggleListaTrabajadores();return false;" style="font-size:13px;color:var(--verde);font-weight:600;text-decoration:none;">o seleccionar de la lista</a>
+            </div>
+            <div id="lista-trabajadores-wrap" style="display:none;margin-top:8px;">
+              <select id="lista-trabajadores" onchange="seleccionarTrabajadorLista(this.value)" style="width:100%;padding:10px;border:2px solid var(--borde);border-radius:8px;font-size:15px;">
+                <option value="">— seleccionar despalillador —</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Peso -->
+          <div class="card-form">
+            <div class="section-label" style="margin-top:0;">Peso despalillado</div>
+            <div class="peso" id="peso-display">— kg</div>
+            <div class="form-row" style="margin-top:8px;">
+              <label>Ingreso manual</label>
+              <input type="text" inputmode="decimal" id="peso-manual" placeholder="0.00"
+                data-miles
+                oninput="pesoActual=_parseVal(this.value)||null;checkReady();actualizarMermaPreview()">
+            </div>
+            <!-- Preview merma (solo modo cámara fría) -->
+            <div class="merma-preview" id="merma-preview">
+              <div class="merma-preview-title">Merma estimada</div>
+              <div class="merma-preview-vals">
+                <span class="merma-kg" id="prev-merma-kg">0 kg</span>
+                <span class="merma-pct" id="prev-merma-pct">0%</span>
+                <span class="merma-base" id="prev-merma-base"></span>
+              </div>
+            </div>
+          </div>
+
+          <div id="mensaje"></div>
+          <div style="display:flex;gap:8px;margin-top:4px;">
+            <button class="btn" id="btn-cancelar" onclick="cancelarSeleccion()" style="display:none;flex:0 0 auto;">
+              Cancelar
+            </button>
+            <button class="btn btn-primary" id="btn-confirmar" onclick="confirmar()" disabled style="flex:1;">
+              <i data-lucide="check"></i> Confirmar registro
+            </button>
           </div>
         </div>
 
-        <div id="mensaje"></div>
-        <button class="btn btn-primary" id="btn-confirmar" onclick="confirmar()" disabled style="margin-top:4px;" data-tooltip="Registra el despalillado con el lote, despalillador y peso indicados">
-          <i data-lucide="check"></i> Confirmar registro
-        </button>
       </div>
+
+      <!-- ── HISTORIAL DEL DÍA ── -->
+      <div class="hist-merma" id="hist-merma-wrap" style="display:none;max-width:800px;">
+        <div class="hist-merma-title">Registros del día</div>
+        <div id="hist-merma-lista"></div>
+      </div>
+
     </div>
   </div>
 
@@ -154,8 +332,110 @@
     new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
 
   var trabajadorId = null, pesoActual = null, scanning = false, stream = null;
+  var modoActual = 'camara'; // 'camara' | 'fresca'
+  var juntadaSeleccionada = null; // objeto pendiente seleccionado
 
-  // ── Selección de despalillador por lista ───────────────────────
+  // ── MODO ─────────────────────────────────────────────────────────
+  function setModo(modo) {
+    modoActual = modo;
+    document.getElementById('tab-camara').classList.toggle('active', modo === 'camara');
+    document.getElementById('tab-fresca').classList.toggle('active', modo === 'fresca');
+    document.getElementById('sec-camara').style.display = modo === 'camara' ? '' : 'none';
+
+    juntadaSeleccionada = null;
+    resetForm();
+
+    if (modo === 'fresca') {
+      mostrarFormFresce();
+    } else {
+      document.getElementById('sec-form').style.display = 'none';
+      document.getElementById('modo-activo-badge').style.display = 'none';
+    }
+  }
+
+  function mostrarFormFresce() {
+    document.getElementById('sec-form').style.display = '';
+    document.getElementById('card-lote-fresca').style.display = '';
+    document.getElementById('card-juntada-info').style.display = 'none';
+    document.getElementById('btn-cancelar').style.display = 'none';
+    var badge = document.getElementById('modo-activo-badge');
+    badge.className = 'modo-activo-badge fresca';
+    badge.style.display = '';
+    document.getElementById('modo-activo-texto').textContent = 'Fruta fresca — el despalillado no afecta el stock';
+    lucide.createIcons();
+  }
+
+  // ── PENDIENTES CÁMARA FRÍA ────────────────────────────────────────
+  function cargarPendientes() {
+    fetch('/api/despalillado/pendientes').then(r => r.json()).then(function(data) {
+      var lista = document.getElementById('lista-pendientes');
+      var aviso = document.getElementById('aviso-sin-pendientes');
+      var badge = document.getElementById('badge-pendientes');
+
+      if (!data.length) {
+        lista.style.display = 'none';
+        aviso.style.display = '';
+        badge.style.display = 'none';
+        return;
+      }
+
+      badge.style.display = '';
+      document.getElementById('num-pendientes').textContent = data.length;
+      aviso.style.display = 'none';
+      lista.style.display = '';
+
+      lista.innerHTML = data.map(function(p) {
+        var fecha = new Date(p.fecha_hora).toLocaleString('es-AR', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+        return '<div class="pendiente-item" id="pend-' + p.id + '" onclick="seleccionarPendiente(' + JSON.stringify(p).replace(/"/g,'&quot;') + ')">' +
+          '<div class="pendiente-info">' +
+          '<div class="pendiente-lote">' + p.lote + '</div>' +
+          '<div class="pendiente-meta">Cosechero: ' + p.juntador + ' · ' + fecha + '</div>' +
+          '<div class="pendiente-meta">→ ' + p.deposito_nombre + '</div>' +
+          '</div>' +
+          '<div class="pendiente-kilos">' + p.kilos + ' kg</div>' +
+          '</div>';
+      }).join('');
+      lucide.createIcons();
+    });
+  }
+
+  function seleccionarPendiente(p) {
+    juntadaSeleccionada = p;
+
+    // Marcar visualmente
+    document.querySelectorAll('.pendiente-item').forEach(function(el) { el.classList.remove('seleccionado'); });
+    var el = document.getElementById('pend-' + p.id);
+    if (el) el.classList.add('seleccionado');
+
+    // Mostrar info en el form
+    document.getElementById('sec-form').style.display = '';
+    document.getElementById('card-lote-fresca').style.display = 'none';
+    document.getElementById('card-juntada-info').style.display = '';
+    document.getElementById('juntada-lote-label').textContent = p.lote;
+    document.getElementById('juntada-cosechero-label').textContent = p.juntador;
+    document.getElementById('juntada-kilos-label').textContent = p.kilos + ' kg';
+    document.getElementById('juntada-deposito-label').textContent = '❄️ ' + p.deposito_nombre;
+    document.getElementById('btn-cancelar').style.display = '';
+
+    var badge = document.getElementById('modo-activo-badge');
+    badge.className = 'modo-activo-badge camara';
+    badge.style.display = '';
+    document.getElementById('modo-activo-texto').textContent = 'Cámara fría — al confirmar ingresa al stock de ' + p.deposito_nombre;
+
+    resetTrabajadorForm();
+    actualizarMermaPreview();
+    lucide.createIcons();
+  }
+
+  function cancelarSeleccion() {
+    juntadaSeleccionada = null;
+    document.querySelectorAll('.pendiente-item').forEach(function(el) { el.classList.remove('seleccionado'); });
+    document.getElementById('sec-form').style.display = 'none';
+    document.getElementById('modo-activo-badge').style.display = 'none';
+    resetForm();
+  }
+
+  // ── TRABAJADORES ─────────────────────────────────────────────────
   var listaTrabajadoresLoaded = false;
   function toggleListaTrabajadores() {
     var wrap = document.getElementById('lista-trabajadores-wrap');
@@ -185,18 +465,13 @@
     checkReady();
   }
 
+  // ── LOTES ─────────────────────────────────────────────────────────
   function cargarLotes() {
     fetch('/api/temporadas/activa').then(r => r.json()).then(function(t) {
       var sel = document.getElementById('lote');
-      if (!t) {
-        sel.innerHTML = '<option value="">No hay campaña activa — ir a Configuración</option>';
-        return;
-      }
+      if (!t) { sel.innerHTML = '<option value="">No hay campaña activa</option>'; return; }
       fetch('/api/lotes?temporada_id=' + t.id).then(r => r.json()).then(function(lotes) {
-        if (!lotes.length) {
-          sel.innerHTML = '<option value="">Sin lotes en esta campaña</option>';
-          return;
-        }
+        if (!lotes.length) { sel.innerHTML = '<option value="">Sin lotes en esta campaña</option>'; return; }
         sel.innerHTML = '<option value="">Seleccionar lote...</option>';
         lotes.forEach(function(l) { sel.innerHTML += '<option value="' + l.id + '">' + l.nombre + '</option>'; });
         recordarSeleccion('lote', 'ultimo_lote');
@@ -206,12 +481,14 @@
   cargarLotes();
   window.addEventListener('campanaChange', cargarLotes);
 
+  // ── BALANZA ──────────────────────────────────────────────────────
   var ws = new WebSocket('ws://' + location.host);
   ws.onmessage = function(e) {
     var data = JSON.parse(e.data);
     if (data.tipo === 'peso') { pesoActual = data.valor; document.getElementById('peso-display').textContent = data.valor + ' kg'; checkReady(); }
   };
 
+  // ── CÁMARA QR ────────────────────────────────────────────────────
   function toggleCamera() { if (scanning) { stopCamera(); } else { startCamera(); } }
   function startCamera() {
     scanning = true;
@@ -250,35 +527,153 @@
       }
     });
   }
+
+  // ── VALIDACIÓN Y RESET ────────────────────────────────────────────
   function checkReady() {
-    document.getElementById('btn-confirmar').disabled =
-      !(document.getElementById('lote').value && trabajadorId && pesoActual);
+    var loteOk = modoActual === 'camara'
+      ? (juntadaSeleccionada !== null)
+      : !!document.getElementById('lote').value;
+    document.getElementById('btn-confirmar').disabled = !(loteOk && trabajadorId && pesoActual);
   }
+
+  function resetTrabajadorForm() {
+    trabajadorId = null; pesoActual = null;
+    document.getElementById('trabajador-info').textContent = 'Escaneá el QR del despalillador';
+    document.getElementById('trabajador-info').style.cssText = '';
+    document.getElementById('peso-manual').value = '';
+    document.getElementById('peso-display').textContent = '— kg';
+    document.getElementById('lista-trabajadores-wrap').style.display = 'none';
+    document.getElementById('lista-trabajadores').value = '';
+    checkReady();
+  }
+
+  function resetForm() {
+    resetTrabajadorForm();
+    document.getElementById('mensaje').innerHTML = '';
+  }
+
+  // ── CONFIRMAR ─────────────────────────────────────────────────────
   function confirmar() {
-    var lote_id = document.getElementById('lote').value;
     var kilos = pesoActual || _parseEl('peso-manual');
-    if (!lote_id || !trabajadorId || !kilos) { alert('Completá todos los campos'); return; }
+    if (!trabajadorId || !kilos) { alert('Completá todos los campos'); return; }
+
+    var body;
+    if (modoActual === 'camara' && juntadaSeleccionada) {
+      body = {
+        lote_id: juntadaSeleccionada.lote_id,
+        despalillador_id: trabajadorId,
+        kilos: kilos,
+        juntada_id: juntadaSeleccionada.id
+      };
+    } else {
+      var lote_id = document.getElementById('lote').value;
+      if (!lote_id) { alert('Seleccioná un lote'); return; }
+      body = { lote_id: parseInt(lote_id), despalillador_id: trabajadorId, kilos: kilos };
+    }
+
     var btn = document.getElementById('btn-confirmar');
     setLoading(btn, true);
-    fetch('/api/despalillado', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ lote_id, despalillador_id: trabajadorId, kilos })
+    fetch('/api/despalillado', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
     }).then(r => r.json()).then(function(data) {
       setLoading(btn, false);
       if (data.ok) {
-        mostrarMensaje('mensaje', 'success', 'Registro guardado correctamente');
-        document.getElementById('trabajador-info').textContent = 'Escaneá el QR del despalillador';
-        document.getElementById('trabajador-info').style.cssText = '';
-        document.getElementById('peso-manual').value = '';
-        document.getElementById('peso-display').textContent = '— kg';
-        document.getElementById('lista-trabajadores-wrap').style.display = 'none';
-        document.getElementById('lista-trabajadores').value = '';
-        trabajadorId = null; pesoActual = null; checkReady();
+        var msg = 'Registro guardado correctamente';
+        if (data.merma_kg != null) {
+          msg += ' · Merma: ' + data.merma_kg.toFixed(2) + ' kg (' + data.merma_pct.toFixed(1) + '%)';
+        }
+        mostrarMensaje('mensaje', 'success', msg);
+        juntadaSeleccionada = null;
+        document.getElementById('sec-form').style.display = 'none';
+        document.getElementById('modo-activo-badge').style.display = 'none';
+        document.getElementById('merma-preview').style.display = 'none';
+        resetForm();
+        if (modoActual === 'camara') cargarPendientes();
+        cargarHistorial();
       } else {
         mostrarMensaje('mensaje', 'error', data.error || 'Error al guardar');
       }
     }).catch(function() { setLoading(btn, false); mostrarMensaje('mensaje', 'error', 'Error de conexión'); });
   }
-cargarTemporadaActiva();
+
+  // ── MERMA PREVIEW ─────────────────────────────────────────────────
+  function actualizarMermaPreview() {
+    var preview = document.getElementById('merma-preview');
+    if (modoActual !== 'camara' || !juntadaSeleccionada) {
+      preview.style.display = 'none';
+      return;
+    }
+    var kilosDesp = pesoActual || _parseEl('peso-manual') || 0;
+    var kilosJunt = parseFloat(juntadaSeleccionada.kilos) || 0;
+    if (!kilosDesp || !kilosJunt) { preview.style.display = 'none'; return; }
+
+    var mermaKg  = Math.max(0, kilosJunt - kilosDesp);
+    var mermaPct = kilosJunt > 0 ? ((mermaKg / kilosJunt) * 100) : 0;
+
+    document.getElementById('prev-merma-kg').textContent  = mermaKg.toFixed(2) + ' kg';
+    document.getElementById('prev-merma-pct').textContent = mermaPct.toFixed(1) + '%';
+    document.getElementById('prev-merma-base').textContent = 'Cosechado: ' + kilosJunt.toFixed(2) + ' kg · Despalillado: ' + kilosDesp.toFixed(2) + ' kg';
+
+    preview.style.display = 'block';
+    preview.className = 'merma-preview' + (mermaPct <= 5 ? ' ok' : '');
+  }
+
+  // ── HISTORIAL + KPIs ──────────────────────────────────────────────
+  function cargarHistorial() {
+    fetch('/api/despalillado/hoy')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var wrap     = document.getElementById('hist-merma-wrap');
+        var kpiWrap  = document.getElementById('kpi-merma-wrap');
+        var lista    = document.getElementById('hist-merma-lista');
+
+        if (!data.length) { wrap.style.display = 'none'; kpiWrap.style.display = 'none'; return; }
+
+        // KPIs
+        var conMerma  = data.filter(function(r) { return r.merma_kg != null; });
+        var totalMermaKg  = conMerma.reduce(function(s, r) { return s + parseFloat(r.merma_kg || 0); }, 0);
+        var avgMermaPct   = conMerma.length
+          ? conMerma.reduce(function(s, r) { return s + parseFloat(r.merma_pct || 0); }, 0) / conMerma.length
+          : null;
+
+        document.getElementById('kpi-registros').textContent = data.length;
+        document.getElementById('kpi-merma-kg').textContent  = totalMermaKg.toFixed(2) + ' kg';
+        document.getElementById('kpi-merma-pct').textContent = avgMermaPct != null ? avgMermaPct.toFixed(1) + '%' : '—';
+        kpiWrap.style.display = '';
+
+        // Historial
+        lista.innerHTML = data.map(function(r) {
+          var hora = new Date(r.fecha_hora).toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' });
+          var mermaClass = 'sin', mermaText = 'Sin merma';
+          if (r.merma_pct != null) {
+            var pct = parseFloat(r.merma_pct);
+            mermaClass = pct > 10 ? 'alta' : pct > 5 ? 'media' : 'baja';
+            mermaText  = r.merma_kg.toFixed(2) + ' kg (' + pct.toFixed(1) + '%)';
+          }
+          var deposito = r.deposito_nombre ? ' → ' + r.deposito_nombre : '';
+          return '<div class="hist-row">' +
+            '<div style="flex:1">' +
+              '<div class="hist-lote">' + r.lote + (r.juntada_id ? ' <span style="font-size:11px;color:var(--texto-secundario);">❄️ #' + r.juntada_id + '</span>' : '') + '</div>' +
+              '<div class="hist-detail">' + r.despalillador + ' · ' + hora + deposito + '</div>' +
+            '</div>' +
+            '<div style="text-align:right">' +
+              '<div style="font-weight:700;font-size:15px;">' + parseFloat(r.kilos).toFixed(2) + ' kg</div>' +
+              (r.kilos_juntada ? '<div style="font-size:11px;color:var(--texto-secundario);">Cosechado: ' + parseFloat(r.kilos_juntada).toFixed(2) + ' kg</div>' : '') +
+            '</div>' +
+            '<div><span class="hist-merma-badge ' + mermaClass + '">' + mermaText + '</span></div>' +
+            '</div>';
+        }).join('');
+
+        wrap.style.display = '';
+      });
+  }
+
+  // ── INIT ──────────────────────────────────────────────────────────
+  cargarPendientes();
+  cargarHistorial();
+  cargarTemporadaActiva();
 </script>
 </body>
 </html>

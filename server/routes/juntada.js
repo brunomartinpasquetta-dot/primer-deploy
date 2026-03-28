@@ -41,14 +41,27 @@ router.post('/', async (req, res) => {
         const ventaDirecta = destinos.find(d => d.tipo === 'venta_directa');
         const depItem = destinos.find(d => d.tipo === 'deposito');
 
+        // Obtener tipo de depósitos involucrados para detectar cámara fría
+        let depositoTipos = {};
+        const depIds = destinos.filter(d => d.tipo === 'deposito' && d.deposito_id).map(d => d.deposito_id);
+        if (depIds.length > 0) {
+          const depRes = await transaction.request()
+            .query(`SELECT id, tipo FROM Depositos WHERE id IN (${depIds.join(',')})`);
+          depRes.recordset.forEach(r => { depositoTipos[r.id] = r.tipo; });
+        }
+
+        const esCamaraFria = depItem && depositoTipos[depItem.deposito_id] === 'camara_fria';
+
         await transaction.request()
           .input('id',                   sql.Int,           newId)
           .input('destino',              sql.NVarChar,      destinoResumen)
           .input('deposito_id',          sql.Int,           depItem ? depItem.deposito_id : null)
           .input('precio_venta_directa', sql.Decimal(10,2), ventaDirecta ? ventaDirecta.precio_kilo || null : null)
           .input('comprador_directo',    sql.NVarChar,      ventaDirecta ? ventaDirecta.comprador || '' : '')
+          .input('stock_pendiente',      sql.Bit,           esCamaraFria ? 1 : 0)
           .query(`UPDATE Juntada SET destino=@destino, deposito_id=@deposito_id,
-                  precio_venta_directa=@precio_venta_directa, comprador_directo=@comprador_directo
+                  precio_venta_directa=@precio_venta_directa, comprador_directo=@comprador_directo,
+                  stock_pendiente=@stock_pendiente
                   WHERE id=@id`);
 
         for (const d of destinos) {
@@ -58,6 +71,10 @@ router.post('/', async (req, res) => {
           const uid = req.user ? req.user.id : null;
 
           if (d.tipo === 'deposito') {
+            // Cámara fría: NO insertar MovimientosDeposito ni StockMercaderia todavía
+            // El stock se registrará cuando se complete el despalillado
+            if (depositoTipos[d.deposito_id] === 'camara_fria') continue;
+
             await transaction.request()
               .input('deposito_id',  sql.Int,           d.deposito_id)
               .input('temporada_id', sql.Int,           temporada_id)
@@ -203,11 +220,23 @@ router.post('/:id/destino', async (req, res) => {
     const destinoResumen = tipos.length === 1 ? tipos[0] : 'mixto';
     const depItem = destinos.find(d => d.tipo === 'deposito');
 
+    // Obtener tipo de depósitos involucrados para detectar cámara fría
+    let depositoTipos2 = {};
+    const depIds2 = destinos.filter(d => d.tipo === 'deposito' && d.deposito_id).map(d => d.deposito_id);
+    if (depIds2.length > 0) {
+      const depRes2 = await pool.request()
+        .query(`SELECT id, tipo FROM Depositos WHERE id IN (${depIds2.join(',')})`);
+      depRes2.recordset.forEach(r => { depositoTipos2[r.id] = r.tipo; });
+    }
+
+    const esCamaraFria2 = depItem && depositoTipos2[depItem.deposito_id] === 'camara_fria';
+
     await new sql.Request(transaction)
-      .input('id',          sql.Int,      juntadaId)
-      .input('destino',     sql.NVarChar, destinoResumen)
-      .input('deposito_id', sql.Int,      depItem ? depItem.deposito_id : null)
-      .query(`UPDATE Juntada SET destino=@destino, deposito_id=@deposito_id WHERE id=@id`);
+      .input('id',              sql.Int,      juntadaId)
+      .input('destino',         sql.NVarChar, destinoResumen)
+      .input('deposito_id',     sql.Int,      depItem ? depItem.deposito_id : null)
+      .input('stock_pendiente', sql.Bit,      esCamaraFria2 ? 1 : 0)
+      .query(`UPDATE Juntada SET destino=@destino, deposito_id=@deposito_id, stock_pendiente=@stock_pendiente WHERE id=@id`);
 
     for (const d of destinos) {
       if (!d.kilos || parseFloat(d.kilos) <= 0) continue;
@@ -216,6 +245,9 @@ router.post('/:id/destino', async (req, res) => {
       const uid2 = req.user ? req.user.id : null;
 
       if (d.tipo === 'deposito') {
+        // Cámara fría: NO insertar stock todavía — se registra al despalillar
+        if (depositoTipos2[d.deposito_id] === 'camara_fria') continue;
+
         await new sql.Request(transaction)
           .input('deposito_id',  sql.Int,           d.deposito_id)
           .input('temporada_id', sql.Int,           temporada_id)
@@ -276,8 +308,8 @@ router.get('/hoy', async (req, res) => {
       .query(`SELECT j.id, l.nombre AS lote,
               ju.apellido + ', ' + ju.nombre AS juntador,
               j.kilos, j.fecha_hora,
-              j.destino, j.deposito_id, d.nombre AS deposito_nombre,
-              j.precio_venta_directa, j.comprador_directo
+              j.destino, j.deposito_id, d.nombre AS deposito_nombre, d.tipo AS deposito_tipo,
+              j.precio_venta_directa, j.comprador_directo, j.stock_pendiente
               FROM Juntada j
               JOIN Lotes l ON j.lote_id = l.id
               JOIN Juntadores ju ON j.juntador_id = ju.id

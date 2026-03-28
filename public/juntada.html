@@ -680,7 +680,7 @@
   function renderDestinoForm(tipo, kilos, prefix) {
     var k = (parseFloat(kilos) || 0).toFixed(2);
     var depOpts = depositos.map(function(d) {
-      return '<option value="' + d.id + '">' + d.nombre + '</option>';
+      return '<option value="' + d.id + '" data-tipo="' + (d.tipo || '') + '">' + d.nombre + '</option>';
     }).join('');
 
     if (tipo === 'deposito') {
@@ -689,8 +689,11 @@
         '<input type="number" id="' + prefix + '-kilos-deposito" value="' + k + '" step="0.01" min="0" ' +
         'style="-moz-appearance:textfield;appearance:textfield;" oninput="actualizarRestantes()"></div>' +
         '<div class="form-row"><label>Depósito</label>' +
-        '<select id="' + prefix + '-select-deposito">' +
-        '<option value="">Seleccionar depósito...</option>' + depOpts + '</select></div></div>';
+        '<select id="' + prefix + '-select-deposito" onchange="checkDepositoCamaraFria(this)">' +
+        '<option value="">Seleccionar depósito...</option>' + depOpts + '</select></div>' +
+        '<div id="' + prefix + '-aviso-camara" style="display:none;margin-top:8px;padding:8px 12px;background:var(--sem-amarillo-bg);border-left:3px solid var(--sem-amarillo);border-radius:6px;font-size:13px;color:var(--sem-amarillo);">' +
+        '⚠️ <strong>Cámara fría:</strong> el stock se registrará al completar el despalillado, no ahora.' +
+        '</div></div>';
     }
     if (tipo === 'descarte') {
       return '<div class="destino-form-inner">' +
@@ -739,6 +742,15 @@
     }
     setTimeout(actualizarRestantes, 50);
     checkReady();
+  }
+
+  function checkDepositoCamaraFria(sel) {
+    var opt = sel.options[sel.selectedIndex];
+    var tipo = opt ? opt.getAttribute('data-tipo') : '';
+    // Detectar el prefix por el id del select (p-select-deposito o s-select-deposito)
+    var prefix = sel.id.startsWith('p') ? 'p' : 's';
+    var aviso = document.getElementById(prefix + '-aviso-camara');
+    if (aviso) aviso.style.display = (tipo === 'camara_fria') ? 'block' : 'none';
   }
 
   function getKilosAsignados(prefix) {
