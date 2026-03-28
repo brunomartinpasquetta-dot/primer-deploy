@@ -79,19 +79,29 @@
     tbody.innerHTML = data.map(_row).join('');
   };
 
+  var _COLS = [
+    { label: 'Cosechero', campo: 'cosechero' },
+    { label: 'Lote',      campo: 'lote' },
+    { label: 'Depósito',  campo: 'deposito' },
+    { label: 'Destino',   campo: 'destino_venta' },
+    { label: 'Usuario',   campo: 'usuario' },
+    { label: 'Tipo',      campo: 'tipo' },
+  ];
+
   window.filtrarMovimientosGrid = function (tbodyId, data, query) {
     if (!query) { window.renderMovimientosGrid(tbodyId, data); return; }
-    var q = query.toLowerCase();
-    var filtrado = data.filter(function (m) {
-      return (m.cosechero     || '').toLowerCase().indexOf(q) >= 0 ||
-             (m.lote          || '').toLowerCase().indexOf(q) >= 0 ||
-             (m.deposito      || '').toLowerCase().indexOf(q) >= 0 ||
-             (m.destino_venta || '').toLowerCase().indexOf(q) >= 0 ||
-             (m.usuario       || '').toLowerCase().indexOf(q) >= 0 ||
-             (m.juntada_id  ? String(m.juntada_id)  : '').indexOf(q) >= 0 ||
-             (m.juntador_id ? String(m.juntador_id) : '').indexOf(q) >= 0 ||
-             (m.usuario_id  ? String(m.usuario_id)  : '').indexOf(q) >= 0;
-    });
+    // Usar matchFiltro si está disponible (formato "Columna: valor")
+    var filtrado;
+    if (typeof matchFiltro === 'function') {
+      filtrado = data.filter(function(m) { return matchFiltro(m, query, _COLS); });
+    } else {
+      var q = query.toLowerCase();
+      filtrado = data.filter(function (m) {
+        return _COLS.some(function(col) {
+          return (m[col.campo] || '').toString().toLowerCase().indexOf(q) >= 0;
+        });
+      });
+    }
     window.renderMovimientosGrid(tbodyId, filtrado);
   };
 })();
