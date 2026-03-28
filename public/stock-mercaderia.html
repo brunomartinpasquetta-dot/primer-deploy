@@ -12,11 +12,6 @@
   <script src="js/movimientos-grid.js"></script>
   <link rel="stylesheet" href="cosecha.css">
   <style>
-    .tab { flex:1; padding:11px; text-align:center; border:none; border-radius:7px; cursor:pointer;
-           font-weight:700; background:transparent; color:var(--texto-suave); font-size:13px; }
-    .tab.active { background:var(--superficie); color:var(--verde); box-shadow:0 1px 4px rgba(0,0,0,.09); }
-    .tab-content { display:none; }
-    .tab-content.active { display:block; }
     .empty { text-align:center; color:var(--texto-suave); padding:24px 16px; font-size:13px; }
     .badge-fresco    { background:var(--sem-verde-bg); color:var(--sem-verde); }
     .badge-industria { background:var(--sem-azul-bg);  color:var(--sem-azul); }
@@ -71,20 +66,24 @@
       justify-content: space-between; gap: 10px;
       margin-bottom: 14px; flex-wrap: wrap;
     }
-    .merc-action-left  { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .merc-action-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .merc-btn {
+
+    /* ── Shared stock buttons (identical across insumos + mercadería) ── */
+    .stock-btn {
       display: inline-flex; align-items: center; gap: 6px;
       padding: 9px 16px; border-radius: 7px;
       font-size: 13px; font-weight: 600; border: none;
       cursor: pointer; text-decoration: none; line-height: 1;
       transition: opacity .15s; white-space: nowrap;
     }
-    .merc-btn:hover { opacity: .82; }
-    .merc-btn svg { width: 14px; height: 14px; }
-    .merc-btn-cosecha  { background: #2D5016; color: #fff; }
-    .merc-btn-venta    { background: #E8870A; color: #fff; }
-    .merc-btn-descarte { background: #C0580A; color: #fff; }
+    .stock-btn:hover { opacity: .82; }
+    .stock-btn svg { width: 14px; height: 14px; }
+    .stock-btn-ingreso  { background: #2D5016; color: #fff; }
+    .stock-btn-egreso   { background: #F5A623; color: #fff; }
+    .stock-btn-descarte { background: #C0580A; color: #fff; }
+    .stock-btn-historial { background: #6c757d; color: #fff; }
+    .stock-btn-historial.activo { background: #343a40; }
+
     .merc-search {
       padding: 8px 12px; border: 1px solid var(--borde);
       border-radius: 7px; font-size: 13px; min-width: 200px;
@@ -96,6 +95,13 @@
       border-radius: 7px; font-size: 13px;
       background: #fff; color: var(--texto); cursor: pointer; outline: none;
     }
+    .merc-filter-sel:focus { border-color: #2D5016; }
+    .merc-temporada-sel {
+      padding: 8px 10px; border: 1px solid var(--borde);
+      border-radius: 7px; font-size: 13px; max-width: 160px;
+      background: #fff; color: var(--texto); cursor: pointer; outline: none;
+    }
+    .merc-temporada-sel:focus { border-color: #2D5016; }
     .merc-export-group { display: flex; gap: 4px; }
     .merc-btn-export {
       display: inline-flex; align-items: center; justify-content: center;
@@ -131,6 +137,48 @@
     .merc-alm-bar-fill.warn { background: #f59e0b; }
     .merc-alm-bar-fill.full { background: #c0392b; }
     .merc-alm-stat { font-size: 12px; font-family: 'JetBrains Mono', monospace; color: var(--texto-2); white-space: nowrap; }
+
+    /* ── Historial section (collapsible) ── */
+    #section-historial { margin-top: 16px; }
+    .merc-hist-header {
+      display: flex; align-items: center;
+      justify-content: space-between; margin-bottom: 10px;
+    }
+    .merc-hist-header span { font-weight: 600; font-size: 14px; }
+
+    /* ── Modales ── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.45); z-index: 1000;
+      display: none; align-items: center;
+      justify-content: center; padding: 16px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-card {
+      background: #fff; border-radius: 12px;
+      width: 100%; max-width: 500px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.2); overflow: hidden;
+      max-height: 90vh; overflow-y: auto;
+    }
+    .modal-header {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px; border-bottom: 1px solid var(--borde);
+      background: #f8f9fa; position: sticky; top: 0;
+    }
+    .modal-header h3 { margin: 0; font-size: 15px; }
+    .modal-close {
+      background: none; border: none; cursor: pointer;
+      color: var(--texto-suave); display: flex;
+      padding: 4px; border-radius: 4px; line-height: 1;
+    }
+    .modal-close:hover { background: var(--fondo-dark); color: var(--texto); }
+    .modal-close svg { width: 18px; height: 18px; }
+    .modal-body { padding: 20px; }
+
+    /* ── btn-sm ── */
+    .btn-sm { padding: 6px 12px !important; font-size: 12px !important; }
+    .btn-sm svg { width: 13px; height: 13px; }
 
     @media(max-width:900px) {
       .merc-kpis { grid-template-columns: 1fr 1fr; }
@@ -186,252 +234,116 @@
 
     <div class="content">
       <a href="menu-stock.html" class="btn-volver">← Volver</a>
-      <div class="content-header">
-        <div class="content-title">Stock Mercadería</div>
-        <div class="content-sub">Inventario, depósitos y movimientos de cosecha</div>
-      </div>
-
-      <div class="tabs" style="background:var(--fondo-dark);border:1.5px solid var(--borde);border-radius:var(--radius);padding:3px;margin-bottom:16px;">
-        <button class="tab active" onclick="showTab('stock',this)">Stock actual</button>
-        <button class="tab" onclick="showTab('ingreso',this)">Ingreso depósito</button>
-        <button class="tab" onclick="showTab('egreso',this)">Egreso</button>
-        <button class="tab" onclick="showTab('descarte',this)">Descarte</button>
-        <button class="tab" onclick="showTab('historial',this)">Historial</button>
-      </div>
-
-      <!-- ── TAB: STOCK ACTUAL ───────────────────────────────── -->
-      <div id="tab-stock" class="tab-content active">
-
-        <!-- Temporada -->
-        <div class="card-form" style="margin-bottom:12px;">
-          <div class="form-row" style="margin-bottom:0;">
-            <label>Temporada</label>
-            <select id="filtro-temporada" onchange="cargarStock()">
-              <option value="">Todas</option>
-            </select>
-          </div>
+      <div class="content-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+        <div>
+          <div class="content-title">Stock Mercadería</div>
+          <div class="content-sub">Inventario, depósitos y movimientos de cosecha</div>
         </div>
-
-        <!-- KPI Cards -->
-        <div class="merc-kpis">
-          <div class="merc-kpi">
-            <div class="merc-kpi-icon cosechados"><i data-lucide="wheat"></i></div>
-            <div class="merc-kpi-valor azul" id="kpi-cosechados">—</div>
-            <div class="merc-kpi-label">KG Cosechados</div>
-          </div>
-          <div class="merc-kpi">
-            <div class="merc-kpi-icon deposito"><i data-lucide="warehouse"></i></div>
-            <div class="merc-kpi-valor verde" id="kpi-deposito">—</div>
-            <div class="merc-kpi-label">KG en Depósito</div>
-          </div>
-          <div class="merc-kpi">
-            <div class="merc-kpi-icon vendidos"><i data-lucide="shopping-cart"></i></div>
-            <div class="merc-kpi-valor verde" id="kpi-vendidos">—</div>
-            <div class="merc-kpi-label">KG Vendidos</div>
-          </div>
-          <div class="merc-kpi">
-            <div class="merc-kpi-icon descartados"><i data-lucide="trash-2"></i></div>
-            <div class="merc-kpi-valor rojo" id="kpi-descartados">—</div>
-            <div class="merc-kpi-label">KG Descartados</div>
-          </div>
-        </div>
-
-        <!-- Estado de almacenes -->
-        <div class="merc-almacenes" id="merc-almacenes" style="display:none;">
-          <div class="merc-almacenes-title">Estado de almacenes</div>
-          <div id="merc-almacenes-list"></div>
-        </div>
-
-        <!-- Barra de acciones -->
-        <div class="merc-action-bar">
-          <div class="merc-action-left">
-            <button class="merc-btn merc-btn-cosecha" onclick="irATab('ingreso')">
-              <i data-lucide="plus"></i> Registrar Cosecha
-            </button>
-            <button class="merc-btn merc-btn-venta" onclick="irATab('egreso')">
-              <i data-lucide="minus"></i> Registrar Venta
-            </button>
-            <button class="merc-btn merc-btn-descarte" onclick="irATab('descarte')">
-              <i data-lucide="trash-2"></i> Registrar Descarte
-            </button>
-          </div>
-          <div class="merc-action-right">
-            <input type="text" class="merc-search" id="stock-buscar"
-                   placeholder="Buscar Cosechero, lote..." oninput="filtrarStockGrid()">
-            <select class="merc-filter-sel" id="filter-merc-tipo" onchange="filtrarStockGrid()">
-              <option value="">Filtros: Cosechero, Depósito, Lote</option>
-              <option value="ingreso">Solo Ingresos</option>
-              <option value="egreso">Solo Egresos</option>
-            </select>
-            <div class="merc-export-group">
-              <button class="merc-btn-export" onclick="exportarMercCSV()" title="Exportar Excel (CSV)">
-                <i data-lucide="file-spreadsheet"></i>
-              </button>
-              <button class="merc-btn-export" onclick="window.print()" title="Imprimir / PDF">
-                <i data-lucide="file-text"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Tabla movimientos -->
-        <div class="card">
-          <div class="table-wrap">
-            <table id="tabla-stock-grid">
-              <thead>
-                <tr>
-                  <th><input type="checkbox" class="row-check" id="chk-all-merc" onchange="toggleTodosMerc(this)"></th>
-                  <th style="text-align:center;">#</th>
-                  <th>Cosechero</th>
-                  <th>Fecha</th>
-                  <th>Tipo</th>
-                  <th style="text-align:right;">Kg</th>
-                  <th>Lote</th>
-                  <th>Depósito</th>
-                  <th>Usuario</th>
-                </tr>
-              </thead>
-              <tbody id="tbody-stock-grid"><tr><td colspan="9" class="empty">Cargando...</td></tr></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── TAB: INGRESO A DEPÓSITO ───────────────────────── -->
-      <div id="tab-ingreso" class="tab-content">
-        <div class="card-form">
-          <div class="form-row">
-            <label>Temporada</label>
-            <select id="ing-temporada" onchange="filtrarLotesPorTemporada('ing-lote', this.value)">
-              <option value="">Seleccionar...</option>
-            </select>
-          </div>
-          <div class="form-row">
-            <label>Lote</label>
-            <select id="ing-lote"><option value="">Seleccionar...</option></select>
-          </div>
-          <div class="form-row">
-            <label>Depósito destino</label>
-            <select id="ing-deposito"><option value="">Seleccionar...</option></select>
-          </div>
-          <div class="form-row">
-            <label>Kilos</label>
-            <input type="number" id="ing-kilos" placeholder="Ej: 500" step="0.01" min="0.01" data-miles>
-          </div>
-          <div class="form-row">
-            <label>Fecha</label>
-            <input type="date" id="ing-fecha">
-          </div>
-          <div class="form-row">
-            <label>Observación</label>
-            <input type="text" id="ing-obs" placeholder="Opcional">
-          </div>
-          <button class="btn btn-primary" id="btn-ingreso" onclick="registrarIngreso(this)">
-            <i data-lucide="package-plus"></i> Registrar ingreso al depósito
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <button class="stock-btn stock-btn-ingreso" onclick="openIngresoModal()">
+            <i data-lucide="package-plus"></i> Registrar Ingreso
           </button>
-          <div id="msg-ingreso"></div>
-        </div>
-      </div>
-
-
-      <!-- ── TAB: EGRESO ───────────────────────────────────────── -->
-      <div id="tab-egreso" class="tab-content">
-        <div class="card-form">
-          <div class="dep-select-wrap">
-            <div class="form-row" style="margin-bottom:0;">
-              <label>Depósito origen</label>
-              <select id="venta-deposito"><option value="">Seleccionar...</option></select>
-            </div>
-            <div class="form-row" style="margin-bottom:0;">
-              <label>Stock disponible</label>
-              <div id="venta-stock-info" style="padding:10px 13px;background:var(--fondo);border:1.5px solid var(--borde);border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:var(--sem-verde);">—</div>
-            </div>
-          </div>
-          <div class="form-row">
-            <label>Kilos a retirar</label>
-            <input type="number" id="venta-kilos" placeholder="Ej: 300" step="0.01" min="0.01">
-          </div>
-          <div class="form-row">
-            <label>Motivo del egreso</label>
-            <select id="venta-destino">
-              <option value="transporte">Transporte / despacho</option>
-              <option value="procesamiento">Procesamiento</option>
-              <option value="transferencia">Transferencia a otro depósito</option>
-              <option value="otro">Otro</option>
-            </select>
-          </div>
-          <div class="form-row">
-            <label>Observación</label>
-            <input type="text" id="venta-obs" placeholder="Detalle opcional">
-          </div>
-          <button class="btn btn-primary" id="btn-venta" onclick="registrarEgreso(this)">
-            <i data-lucide="arrow-up-from-line"></i> Registrar egreso
+          <button class="stock-btn stock-btn-egreso" onclick="openEgresoModal()">
+            <i data-lucide="minus"></i> Registrar Egreso
           </button>
-          <div id="msg-venta"></div>
-        </div>
-      </div>
-
-      <!-- ── TAB: DESCARTE ─────────────────────────────────── -->
-      <div id="tab-descarte" class="tab-content">
-        <div class="card-form">
-          <div class="form-row">
-            <label>Origen</label>
-            <select id="desc-origen" onchange="toggleOrigenDescarte()">
-              <option value="deposito">Desde depósito</option>
-              <option value="directo">Directo (no pasó por depósito)</option>
-            </select>
-          </div>
-          <div id="desc-dep-fields">
-            <div class="dep-select-wrap">
-              <div class="form-row" style="margin-bottom:0;">
-                <label>Depósito origen</label>
-                <select id="desc-deposito"><option value="">Seleccionar...</option></select>
-              </div>
-              <div class="form-row" style="margin-bottom:0;">
-                <label>Stock disponible</label>
-                <div id="desc-stock-info" style="padding:10px 13px;background:var(--fondo);border:1.5px solid var(--borde);border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:var(--sem-verde);">—</div>
-              </div>
-            </div>
-          </div>
-          <div id="desc-directo-fields" style="display:none;">
-            <div class="two-col">
-              <div class="form-row">
-                <label>Temporada</label>
-                <select id="desc-temporada"><option value="">Seleccionar...</option></select>
-              </div>
-              <div class="form-row">
-                <label>Lote</label>
-                <select id="desc-lote"><option value="">Seleccionar...</option></select>
-              </div>
-            </div>
-          </div>
-          <div class="form-row">
-            <label>Kilos descartados</label>
-            <input type="number" id="desc-kilos" placeholder="Ej: 50" step="0.01" min="0.01" data-miles>
-          </div>
-          <div class="form-row">
-            <label>Motivo</label>
-            <select id="desc-motivo">
-              <option value="calidad">Calidad insuficiente</option>
-              <option value="plaga">Plaga / enfermedad</option>
-              <option value="daño_fisico">Daño físico</option>
-              <option value="vencimiento">Vencimiento en cámara</option>
-              <option value="otro">Otro</option>
-            </select>
-          </div>
-          <div class="form-row">
-            <label>Observación</label>
-            <input type="text" id="desc-obs" placeholder="Detalle adicional">
-          </div>
-          <button class="btn btn-primary" style="background:var(--sem-rojo);" id="btn-descarte" onclick="registrarDescarte(this)">
-            Registrar descarte
+          <button class="stock-btn stock-btn-descarte" onclick="openDescarteModal()">
+            <i data-lucide="trash-2"></i> Registrar Descarte
           </button>
-          <div id="msg-descarte"></div>
+          <button class="stock-btn stock-btn-historial" id="btn-toggle-hist" onclick="toggleHistorial()">
+            <i data-lucide="clock"></i> Historial de Movimientos
+          </button>
         </div>
       </div>
 
-      <!-- ── TAB: HISTORIAL ────────────────────────────────── -->
-      <div id="tab-historial" class="tab-content">
+      <!-- KPI Cards -->
+      <div class="merc-kpis">
+        <div class="merc-kpi">
+          <div class="merc-kpi-icon cosechados"><i data-lucide="wheat"></i></div>
+          <div class="merc-kpi-valor azul" id="kpi-cosechados">—</div>
+          <div class="merc-kpi-label">KG Cosechados</div>
+        </div>
+        <div class="merc-kpi">
+          <div class="merc-kpi-icon deposito"><i data-lucide="warehouse"></i></div>
+          <div class="merc-kpi-valor verde" id="kpi-deposito">—</div>
+          <div class="merc-kpi-label">KG en Depósito</div>
+        </div>
+        <div class="merc-kpi">
+          <div class="merc-kpi-icon vendidos"><i data-lucide="shopping-cart"></i></div>
+          <div class="merc-kpi-valor verde" id="kpi-vendidos">—</div>
+          <div class="merc-kpi-label">KG Vendidos</div>
+        </div>
+        <div class="merc-kpi">
+          <div class="merc-kpi-icon descartados"><i data-lucide="trash-2"></i></div>
+          <div class="merc-kpi-valor rojo" id="kpi-descartados">—</div>
+          <div class="merc-kpi-label">KG Descartados</div>
+        </div>
+      </div>
+
+      <!-- Estado de almacenes -->
+      <div class="merc-almacenes" id="merc-almacenes" style="display:none;">
+        <div class="merc-almacenes-title">Estado de almacenes</div>
+        <div id="merc-almacenes-list"></div>
+      </div>
+
+      <!-- Búsqueda / filtro / export -->
+      <div style="margin-bottom:12px;">
+        <div style="display:flex;gap:10px;margin-bottom:8px;align-items:center;">
+          <select class="merc-temporada-sel" id="filtro-temporada" onchange="cargarStock()">
+            <option value="">Todas las temporadas</option>
+          </select>
+          <input type="text" class="merc-search" id="stock-buscar" style="flex:1;"
+                 placeholder="Buscar Cosechero, lote..." oninput="filtrarStockGrid()">
+          <select class="merc-filter-sel" id="filter-merc-tipo" onchange="filtrarStockGrid()" style="flex:1;">
+            <option value="">Filtros: Cosechero, Depósito, Lote</option>
+            <option value="ingreso">Solo Ingresos</option>
+            <option value="egreso">Solo Egresos</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:4px;">
+          <button class="btn btn-secondary btn-sm" onclick="exportarCSV()">
+            <i data-lucide="download"></i> Exportar
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="imprimirVista()">
+            <i data-lucide="printer"></i> Imprimir
+          </button>
+        </div>
+      </div>
+
+      <!-- Tabla movimientos -->
+      <div class="card">
+        <div class="table-wrap">
+          <table id="tabla-stock-grid">
+            <thead>
+              <tr>
+                <th><input type="checkbox" class="row-check" id="chk-all-merc" onchange="toggleTodosMerc(this)"></th>
+                <th style="text-align:center;">#</th>
+                <th>Cosechero</th>
+                <th>Fecha</th>
+                <th>Tipo</th>
+                <th style="text-align:right;">Kg</th>
+                <th>Lote</th>
+                <th>Depósito</th>
+                <th>Usuario</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-stock-grid"><tr><td colspan="9" class="empty">Cargando...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Historial (collapsible) -->
+      <div id="section-historial" style="display:none;">
+        <div class="merc-hist-header">
+          <span><i data-lucide="clock" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Historial de Movimientos</span>
+          <div style="display:flex;gap:4px;">
+            <button class="btn btn-secondary btn-sm" onclick="exportarCSVHistorial()">
+              <i data-lucide="download"></i> Exportar
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="imprimirHistorial()">
+              <i data-lucide="printer"></i> Imprimir
+            </button>
+          </div>
+        </div>
         <div class="card-form" style="margin-bottom:12px;">
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:8px;">
             <div class="form-row" style="margin-bottom:0;">
@@ -511,6 +423,156 @@
   </nav>
 </div>
 
+<!-- ── MODAL: REGISTRAR INGRESO ── -->
+<div id="modal-ingreso-merc" class="modal-overlay" onclick="closeOnBackdropMerc(event,'modal-ingreso-merc')">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3><i data-lucide="package-plus" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i> Registrar Ingreso a Depósito</h3>
+      <button class="modal-close" onclick="closeIngresoModal()"><i data-lucide="x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <label>Temporada</label>
+        <select id="ing-temporada" onchange="filtrarLotesPorTemporada('ing-lote', this.value)">
+          <option value="">Seleccionar...</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Lote</label>
+        <select id="ing-lote"><option value="">Seleccionar...</option></select>
+      </div>
+      <div class="form-row">
+        <label>Depósito destino</label>
+        <select id="ing-deposito"><option value="">Seleccionar...</option></select>
+      </div>
+      <div class="form-row">
+        <label>Kilos</label>
+        <input type="number" id="ing-kilos" placeholder="Ej: 500" step="0.01" min="0.01" data-miles>
+      </div>
+      <div class="form-row">
+        <label>Fecha</label>
+        <input type="date" id="ing-fecha">
+      </div>
+      <div class="form-row">
+        <label>Observación</label>
+        <input type="text" id="ing-obs" placeholder="Opcional">
+      </div>
+      <button class="btn btn-primary" id="btn-ingreso" onclick="registrarIngreso(this)" style="margin-top:6px;width:100%;">
+        <i data-lucide="package-plus"></i> Registrar ingreso al depósito
+      </button>
+      <div id="msg-ingreso"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: REGISTRAR EGRESO ── -->
+<div id="modal-egreso-merc" class="modal-overlay" onclick="closeOnBackdropMerc(event,'modal-egreso-merc')">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3><i data-lucide="minus" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i> Registrar Egreso</h3>
+      <button class="modal-close" onclick="closeEgresoModal()"><i data-lucide="x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="dep-select-wrap">
+        <div class="form-row" style="margin-bottom:0;">
+          <label>Depósito origen</label>
+          <select id="venta-deposito"><option value="">Seleccionar...</option></select>
+        </div>
+        <div class="form-row" style="margin-bottom:0;">
+          <label>Stock disponible</label>
+          <div id="venta-stock-info" style="padding:10px 13px;background:var(--fondo);border:1.5px solid var(--borde);border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:var(--sem-verde);">—</div>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>Kilos a retirar</label>
+        <input type="number" id="venta-kilos" placeholder="Ej: 300" step="0.01" min="0.01">
+      </div>
+      <div class="form-row">
+        <label>Motivo del egreso</label>
+        <select id="venta-destino">
+          <option value="transporte">Transporte / despacho</option>
+          <option value="procesamiento">Procesamiento</option>
+          <option value="transferencia">Transferencia a otro depósito</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Observación</label>
+        <input type="text" id="venta-obs" placeholder="Detalle opcional">
+      </div>
+      <button class="btn btn-primary" id="btn-venta" onclick="registrarEgreso(this)" style="margin-top:6px;width:100%;">
+        <i data-lucide="arrow-up-from-line"></i> Registrar egreso
+      </button>
+      <div id="msg-venta"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: REGISTRAR DESCARTE ── -->
+<div id="modal-descarte-merc" class="modal-overlay" onclick="closeOnBackdropMerc(event,'modal-descarte-merc')">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3><i data-lucide="trash-2" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i> Registrar Descarte</h3>
+      <button class="modal-close" onclick="closeDescarteModal()"><i data-lucide="x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <label>Origen</label>
+        <select id="desc-origen" onchange="toggleOrigenDescarte()">
+          <option value="deposito">Desde depósito</option>
+          <option value="directo">Directo (no pasó por depósito)</option>
+        </select>
+      </div>
+      <div id="desc-dep-fields">
+        <div class="dep-select-wrap">
+          <div class="form-row" style="margin-bottom:0;">
+            <label>Depósito origen</label>
+            <select id="desc-deposito"><option value="">Seleccionar...</option></select>
+          </div>
+          <div class="form-row" style="margin-bottom:0;">
+            <label>Stock disponible</label>
+            <div id="desc-stock-info" style="padding:10px 13px;background:var(--fondo);border:1.5px solid var(--borde);border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:var(--sem-verde);">—</div>
+          </div>
+        </div>
+      </div>
+      <div id="desc-directo-fields" style="display:none;">
+        <div class="two-col">
+          <div class="form-row">
+            <label>Temporada</label>
+            <select id="desc-temporada"><option value="">Seleccionar...</option></select>
+          </div>
+          <div class="form-row">
+            <label>Lote</label>
+            <select id="desc-lote"><option value="">Seleccionar...</option></select>
+          </div>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>Kilos descartados</label>
+        <input type="number" id="desc-kilos" placeholder="Ej: 50" step="0.01" min="0.01" data-miles>
+      </div>
+      <div class="form-row">
+        <label>Motivo</label>
+        <select id="desc-motivo">
+          <option value="calidad">Calidad insuficiente</option>
+          <option value="plaga">Plaga / enfermedad</option>
+          <option value="daño_fisico">Daño físico</option>
+          <option value="vencimiento">Vencimiento en cámara</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Observación</label>
+        <input type="text" id="desc-obs" placeholder="Detalle adicional">
+      </div>
+      <button class="btn btn-primary" style="background:var(--sem-rojo);margin-top:6px;width:100%;" id="btn-descarte" onclick="registrarDescarte(this)">
+        Registrar descarte
+      </button>
+      <div id="msg-descarte"></div>
+    </div>
+  </div>
+</div>
+
 <script src="https://unpkg.com/lucide@latest"></script>
 <script>
 lucide.createIcons();
@@ -518,19 +580,61 @@ document.getElementById('topbar-date').textContent =
   new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
 
 var _temporadas = [], _lotes = [], _depositos = [];
+var _historialVisible = false;
+var _stockGridVisible = [];   // datos filtrados visibles en la grilla
+var _historialMercData = [];  // datos del historial cargados
 
 function fmt(n){ return parseFloat(n||0).toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:1}); }
 function fmtFecha(iso){ if(!iso)return '-'; return new Date(iso).toLocaleDateString('es-AR'); }
 
-function showTab(tab, el) {
-  document.querySelectorAll('.tab-content').forEach(function(t){ t.classList.remove('active'); });
-  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
-  document.getElementById('tab-' + tab).classList.add('active');
-  el.classList.add('active');
+/* ── Modal helpers ── */
+function openIngresoModal() {
+  var hoy = new Date().toISOString().split('T')[0];
+  document.getElementById('ing-fecha').value = hoy;
+  document.getElementById('msg-ingreso').innerHTML = '';
+  document.getElementById('modal-ingreso-merc').classList.add('open');
+  lucide.createIcons();
+}
+function closeIngresoModal() {
+  document.getElementById('modal-ingreso-merc').classList.remove('open');
+}
+function openEgresoModal() {
+  document.getElementById('msg-venta').innerHTML = '';
+  document.getElementById('modal-egreso-merc').classList.add('open');
+  lucide.createIcons();
+}
+function closeEgresoModal() {
+  document.getElementById('modal-egreso-merc').classList.remove('open');
+}
+function openDescarteModal() {
+  document.getElementById('msg-descarte').innerHTML = '';
+  document.getElementById('modal-descarte-merc').classList.add('open');
+  lucide.createIcons();
+}
+function closeDescarteModal() {
+  document.getElementById('modal-descarte-merc').classList.remove('open');
+}
+function closeOnBackdropMerc(e, id) {
+  if (e.target === document.getElementById(id)) {
+    document.getElementById(id).classList.remove('open');
+  }
+}
+
+/* ── Historial toggle ── */
+function toggleHistorial() {
+  _historialVisible = !_historialVisible;
+  var sec = document.getElementById('section-historial');
+  var btn = document.getElementById('btn-toggle-hist');
+  sec.style.display = _historialVisible ? '' : 'none';
+  btn.classList.toggle('activo', _historialVisible);
+  if (_historialVisible) {
+    cargarHistorial();
+    sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
   lucide.createIcons();
 }
 
-// ── Carga inicial ─────────────────────────────────────────────
+/* ── Carga inicial ── */
 function init() {
   Promise.all([
     fetch('/api/temporadas').then(function(r){ return r.json(); }),
@@ -544,11 +648,7 @@ function init() {
     poblarDepositos();
     poblarLotesHistorial();
     cargarStock();
-    cargarHistorial();
   });
-  // Fecha por defecto hoy
-  var hoy = new Date().toISOString().split('T')[0];
-  document.getElementById('ing-fecha').value = hoy;
 }
 
 function poblarTemporadas() {
@@ -558,7 +658,6 @@ function poblarTemporadas() {
     var el = document.getElementById(id);
     if (el) el.innerHTML = (id==='filtro-temporada'||id==='hist-temporada' ? '<option value="">Todas</option>' : base) + opts;
   });
-  // Seleccionar temporada activa por defecto en todos los selects
   var activa = _temporadas.find(function(t){ return t.activa; });
   if (activa) {
     ['filtro-temporada','ing-temporada','venta-temporada','desc-temporada','hist-temporada'].forEach(function(id){
@@ -602,23 +701,13 @@ function actualizarStockInfo(prefix) {
   });
 }
 
-// ── Stock actual ──────────────────────────────────────────────
+/* ── Stock actual ── */
 var _stockGridData = [];
 
-/* Navegar a tab desde los botones de acción */
-function irATab(name) {
-  document.querySelectorAll('.tab').forEach(function(btn) {
-    var oc = btn.getAttribute('onclick') || '';
-    if (oc.indexOf("'" + name + "'") !== -1) { showTab(name, btn); }
-  });
-}
-
-/* Select-all checkboxes */
 function toggleTodosMerc(chk) {
   document.querySelectorAll('#tbody-stock-grid .row-check').forEach(function(c){ c.checked = chk.checked; });
 }
 
-/* Render con checkbox */
 function _fmtMercFecha(iso) {
   if (!iso) return '—';
   var d = new Date(iso);
@@ -636,6 +725,7 @@ function _jidM(jid) {
 }
 
 function renderStockGrid(data) {
+  _stockGridVisible = data || [];
   var tbody = document.getElementById('tbody-stock-grid');
   document.getElementById('chk-all-merc').checked = false;
   if (!data || !data.length) {
@@ -682,33 +772,113 @@ function filtrarStockGrid() {
   renderStockGrid(datos);
 }
 
-/* Export CSV */
-function exportarMercCSV() {
-  if (!_stockGridData.length) { alert('Sin datos para exportar.'); return; }
-  var filas = [['#','Cosechero','Fecha','Tipo','Kg','Lote','Depósito','Usuario']];
-  _stockGridData.forEach(function(m) {
-    filas.push([
-      m.juntada_id || '',
-      '"' + (m.cosechero || '') + '"',
-      m.fecha ? new Date(m.fecha).toLocaleDateString('es-AR') : '',
-      m.tipo || '',
-      (parseFloat(m.kilos||0).toFixed(1)),
-      '"' + (m.lote || '') + '"',
-      '"' + (m.deposito || m.destino_venta || '') + '"',
-      '"' + (m.usuario || '') + '"'
-    ]);
-  });
-  var csv = filas.map(function(r){ return r.join(','); }).join('\n');
+/* ── CSV helper ── */
+function _descargarCSV(filas, nombreArchivo) {
+  var csv = filas.map(function(r) {
+    return r.map(function(v) {
+      return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+    }).join(',');
+  }).join('\n');
   var blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
   var url  = URL.createObjectURL(blob);
   var a    = document.createElement('a');
-  a.href = url; a.download = 'stock-mercaderia.csv'; a.click();
+  a.href = url; a.download = nombreArchivo; a.click();
   URL.revokeObjectURL(url);
+}
+
+function _fechaHoy() {
+  var d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+/* ── Exportar grilla de movimientos (datos visibles filtrados) ── */
+function exportarCSV() {
+  var datos = _stockGridVisible;
+  if (!datos.length) { alert('Sin datos visibles para exportar.'); return; }
+  var cabecera = ['#','Cosechero','Fecha','Tipo','Kg','Lote','Depósito','Usuario'];
+  var filas = [cabecera].concat(datos.map(function(m) {
+    return [
+      m.juntada_id || '',
+      m.cosechero  || '',
+      m.fecha ? new Date(m.fecha).toLocaleDateString('es-AR') : '',
+      m.tipo || '',
+      parseFloat(m.kilos||0).toFixed(1),
+      m.lote || '',
+      m.deposito || m.destino_venta || '',
+      m.usuario || ''
+    ];
+  }));
+  _descargarCSV(filas, 'stock-mercaderia-actual-' + _fechaHoy() + '.csv');
+}
+
+/* ── Exportar historial (datos visibles en historial) ── */
+function exportarCSVHistorial() {
+  var datos = _historialMercData;
+  if (!datos.length) { alert('Sin datos en el historial para exportar.'); return; }
+  var cabecera = ['#','Cosechero','Fecha','Tipo','Lote','Destino','Kg','Precio/kg','Total','Comprador','Usuario'];
+  var filas = [cabecera].concat(datos.map(function(m) {
+    return [
+      m.juntada_id || '',
+      m.cosechero  || '',
+      m.fecha ? new Date(m.fecha).toLocaleDateString('es-AR') : '',
+      m.tipo || '',
+      m.lote || '',
+      m.destino_venta || m.deposito || '',
+      parseFloat(m.kilos||0).toFixed(1),
+      m.precio_kilo ? parseFloat(m.precio_kilo).toFixed(2) : '',
+      m.total ? parseFloat(m.total).toFixed(2) : '',
+      m.comprador || '',
+      m.usuario   || ''
+    ];
+  }));
+  _descargarCSV(filas, 'stock-mercaderia-historial-' + _fechaHoy() + '.csv');
+}
+
+/* ── Imprimir grilla de movimientos ── */
+function imprimirVista() {
+  var temporada = (document.getElementById('filtro-temporada').options[document.getElementById('filtro-temporada').selectedIndex] || {}).text || 'Todas';
+  var buscar = document.getElementById('stock-buscar').value || '';
+  var tipo   = document.getElementById('filter-merc-tipo').value || 'Todos';
+  var filtros = 'Temporada: ' + temporada + (buscar ? ' | Búsqueda: ' + buscar : '') + ' | Tipo: ' + (tipo || 'Todos');
+  var tabla = document.getElementById('tabla-stock-grid').outerHTML;
+  _abrirVentanaImpresion('Stock Mercadería', filtros, tabla);
+}
+
+/* ── Imprimir historial ── */
+function imprimirHistorial() {
+  var temporada = (document.getElementById('hist-temporada').options[document.getElementById('hist-temporada').selectedIndex] || {}).text || 'Todas';
+  var tipo      = document.getElementById('hist-tipo').value || 'Todos';
+  var filtros = 'Temporada: ' + temporada + ' | Tipo: ' + (tipo || 'Todos');
+  var tabla = document.querySelector('#section-historial table').outerHTML;
+  _abrirVentanaImpresion('Stock Mercadería — Historial', filtros, tabla);
+}
+
+function _abrirVentanaImpresion(titulo, filtros, tablaHTML) {
+  var fecha = new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + titulo + '</title>' +
+    '<style>' +
+    'body{font-family:Arial,sans-serif;font-size:11px;margin:20px;color:#222;}' +
+    'h2{margin:0 0 4px;font-size:16px;}' +
+    'p.info{margin:0 0 14px;font-size:11px;color:#666;}' +
+    'table{width:100%;border-collapse:collapse;}' +
+    'th{background:#2D5016!important;color:#fff!important;padding:7px 8px;text-align:left;font-size:11px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}' +
+    'td{padding:6px 8px;border-bottom:1px solid #eee;font-size:11px;}' +
+    'tr:nth-child(even){background:#f8f8f8;}' +
+    'input[type=checkbox]{display:none;}' +
+    '</style></head><body>' +
+    '<h2>' + titulo + '</h2>' +
+    '<p class="info">' + filtros + ' &nbsp;|&nbsp; Impreso: ' + fecha + '</p>' +
+    tablaHTML +
+    '</body></html>';
+  var w = window.open('', '_blank');
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  setTimeout(function() { w.print(); w.close(); }, 400);
 }
 
 function cargarStock() {
   var tid = document.getElementById('filtro-temporada').value;
-  // KPIs
   var kpiUrl = '/api/stock-mercaderia/kpis' + (tid ? '?temporada_id='+tid : '');
   fetch(kpiUrl).then(function(r){ return r.json(); }).then(function(k){
     document.getElementById('kpi-cosechados').textContent  = fmt(k.kg_cosechados);
@@ -716,7 +886,6 @@ function cargarStock() {
     document.getElementById('kpi-vendidos').textContent    = fmt(k.kg_vendidos);
     document.getElementById('kpi-descartados').textContent = fmt(k.kg_descartados);
   });
-  // DataGrid de historial
   var params = tid ? 'temporada_id='+tid : '';
   fetch('/api/stock-mercaderia/historial' + (params ? '?'+params : ''))
     .then(function(r){ return r.json(); })
@@ -731,7 +900,7 @@ function cargarStock() {
     });
 }
 
-// ── Egreso de depósito (movimiento físico, sin financiero) ────
+/* ── Egreso de depósito ── */
 function registrarEgreso(btn) {
   var did = document.getElementById('venta-deposito').value;
   var kg  = document.getElementById('venta-kilos').value;
@@ -756,6 +925,7 @@ function registrarEgreso(btn) {
       mostrarMensaje('msg-venta','success','Egreso registrado correctamente');
       document.getElementById('venta-kilos').value='';
       document.getElementById('venta-obs').value='';
+      closeEgresoModal();
       init();
     } else {
       mostrarMensaje('msg-venta','error', data.error||'Error al registrar');
@@ -763,7 +933,7 @@ function registrarEgreso(btn) {
   }).catch(function(){ setLoading(btn,false); mostrarMensaje('msg-venta','error','Error de conexión'); });
 }
 
-// ── Ingreso a depósito ────────────────────────────────────────
+/* ── Ingreso a depósito ── */
 function registrarIngreso(btn) {
   var dep  = document.getElementById('ing-deposito').value;
   var tid  = document.getElementById('ing-temporada').value;
@@ -783,6 +953,7 @@ function registrarIngreso(btn) {
       mostrarMensaje('msg-ingreso','success','Ingreso registrado correctamente');
       document.getElementById('ing-kilos').value='';
       document.getElementById('ing-obs').value='';
+      closeIngresoModal();
       init();
     } else {
       mostrarMensaje('msg-ingreso','error', data.error||'Error al registrar');
@@ -790,66 +961,7 @@ function registrarIngreso(btn) {
   }).catch(function(){ setLoading(btn,false); mostrarMensaje('msg-ingreso','error','Error de conexión'); });
 }
 
-// ── Registro de venta ────────────────────────────────────────
-function toggleOrigenVenta() {
-  var v = document.getElementById('venta-origen').value;
-  document.getElementById('venta-dep-fields').style.display    = v==='deposito' ? '' : 'none';
-  document.getElementById('venta-directo-fields').style.display = v==='directo'  ? '' : 'none';
-}
-
-function registrarVenta(btn) {
-  var origen  = document.getElementById('venta-origen').value;
-  var kg      = parseFloat(document.getElementById('venta-kilos').value);
-  var precio  = document.getElementById('venta-precio').value;
-  var compra  = document.getElementById('venta-comprador').value;
-  var destino = document.getElementById('venta-destino').value;
-  var obs     = document.getElementById('venta-obs').value;
-  if (!kg) { mostrarMensaje('msg-venta','error','Ingresá la cantidad de kilos'); return; }
-
-  setLoading(btn, true);
-  var p;
-  if (origen === 'deposito') {
-    var did = document.getElementById('venta-deposito').value;
-    var tid = _depositos.find(function(d){ return String(d.id)===did; });
-    if (!did) { setLoading(btn,false); mostrarMensaje('msg-venta','error','Seleccioná un depósito'); return; }
-    // Necesitamos temporada_id — usar la de los movimientos o la activa
-    var activa = _temporadas.find(function(t){ return t.activa; });
-    p = fetch('/api/depositos/egreso', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ deposito_id:parseInt(did),
-        temporada_id: activa ? activa.id : _temporadas[0].id,
-        tipo_egreso:'egreso_venta', kilos:kg,
-        precio_kilo: precio ? parseFloat(precio) : null,
-        comprador:compra, destino_venta:destino, observacion:obs })
-    });
-  } else {
-    var tempId = document.getElementById('venta-temporada').value;
-    var loteId = document.getElementById('venta-lote').value;
-    if (!tempId || !loteId) { setLoading(btn,false); mostrarMensaje('msg-venta','error','Seleccioná temporada y lote'); return; }
-    p = fetch('/api/stock-mercaderia/egreso', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ temporada_id:parseInt(tempId), lote_id:parseInt(loteId),
-        kilos:kg, destino:destino,
-        precio_kilo: precio ? parseFloat(precio) : null,
-        comprador:compra, observacion:obs })
-    });
-  }
-  p.then(function(r){ return r.json(); }).then(function(data){
-    setLoading(btn, false);
-    if (data.ok) {
-      mostrarMensaje('msg-venta','success','Venta registrada correctamente');
-      document.getElementById('venta-kilos').value='';
-      document.getElementById('venta-precio').value='';
-      document.getElementById('venta-comprador').value='';
-      document.getElementById('venta-obs').value='';
-      init();
-    } else {
-      mostrarMensaje('msg-venta','error', data.error||'Error al registrar');
-    }
-  }).catch(function(){ setLoading(btn,false); mostrarMensaje('msg-venta','error','Error de conexión'); });
-}
-
-// ── Descarte ─────────────────────────────────────────────────
+/* ── Descarte ── */
 function toggleOrigenDescarte() {
   var v = document.getElementById('desc-origen').value;
   document.getElementById('desc-dep-fields').style.display    = v==='deposito' ? '' : 'none';
@@ -892,6 +1004,7 @@ function registrarDescarte(btn) {
       mostrarMensaje('msg-descarte','success','Descarte registrado');
       document.getElementById('desc-kilos').value='';
       document.getElementById('desc-obs').value='';
+      closeDescarteModal();
       init();
     } else {
       mostrarMensaje('msg-descarte','error', data.error||'Error');
@@ -899,7 +1012,7 @@ function registrarDescarte(btn) {
   }).catch(function(){ setLoading(btn,false); mostrarMensaje('msg-descarte','error','Error de conexión'); });
 }
 
-// ── Historial ────────────────────────────────────────────────
+/* ── Historial ── */
 function poblarLotesHistorial() {
   var tid = document.getElementById('hist-temporada').value;
   var filtrados = tid ? _lotes.filter(function(l){ return String(l.temporada_id) === String(tid); }) : _lotes;
@@ -951,6 +1064,7 @@ function cargarHistorial() {
   fetch('/api/stock-mercaderia/historial?' + params.toString())
     .then(function(r){ return r.json(); })
     .then(function(data){
+      _historialMercData = data;
       if (!data.length) {
         tbody.innerHTML = '<tr><td colspan="11" class="empty">Sin movimientos para los filtros seleccionados</td></tr>';
         return;
@@ -984,7 +1098,6 @@ function cargarHistorial() {
           '<td style="font-size:12px;">'+(m.usuario||'—')+usuChip+'</td>'+
         '</tr>';
       }).join('');
-      // Fila de totales
       tfoot.innerHTML = '<tr style="background:var(--fondo-dark);font-weight:700;border-top:2px solid var(--borde);">'+
         '<td colspan="6" style="text-align:right;padding:10px 8px;">TOTALES</td>'+
         '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;padding:10px 8px;">'+
@@ -1000,7 +1113,7 @@ function cargarHistorial() {
     });
 }
 
-// ── Helpers de cotización ─────────────────────────────────────
+/* ── Helpers cotización (legacy, no-op if elements missing) ── */
 function actualizarHelperPrecio() {
   var precioEl = document.getElementById('venta-precio');
   if (!precioEl) return;
@@ -1020,7 +1133,7 @@ function actualizarHelperPrecio() {
 }
 
 function actualizarHelperRosario() {
-  var ptnARS = parseFloat(document.getElementById('venta-ref-rosario').value) || 0;
+  var ptnARS = parseFloat((document.getElementById('venta-ref-rosario')||{}).value) || 0;
   var el     = document.getElementById('helper-rosario');
   if (!el) return;
   if (!ptnARS) { el.textContent = ''; return; }
@@ -1031,12 +1144,11 @@ function actualizarHelperRosario() {
   el.textContent = '= USD ' + usdTn.toLocaleString('es-AR') + '/tn | $' + parseFloat(pkgARS).toLocaleString('es-AR') + '/kg';
 }
 
-// También actualizar helper cuando cambia el campo kilos
 document.getElementById('venta-kilos').addEventListener('input', actualizarHelperPrecio);
 
 cargarCotizacion();
 
-/* ── Estado de almacenes (mercadería) ── */
+/* ── Estado almacenes (mercadería) ── */
 function cargarEstadoAlmacenesMerc() {
   fetch('/api/depositos/ocupacion?tipo_stock=mercaderia').then(function(r) { return r.json(); }).then(function(data) {
     var sec  = document.getElementById('merc-almacenes');

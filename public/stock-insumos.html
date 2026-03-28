@@ -212,6 +212,16 @@
     .modal-close svg { width: 18px; height: 18px; }
     .modal-body { padding: 20px; }
 
+    .btn-icon-xs { width:24px; height:24px; border:1px solid var(--borde); border-radius:4px; background:#fff; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; color:var(--texto-suave); }
+    .btn-icon-xs:hover { border-color:var(--verde); color:var(--verde); background:var(--verde-suave); }
+    /* ── Modal editar mov ── */
+    #modal-editar-mov { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:200; align-items:center; justify-content:center; }
+    #modal-editar-mov.open { display:flex; }
+    .editar-mov-box { background:#fff; border-radius:12px; padding:22px; width:90%; max-width:360px; box-shadow:0 8px 32px rgba(0,0,0,.12); }
+    .editar-mov-box h4 { margin:0 0 12px; font-size:15px; font-weight:700; color:var(--verde); }
+    .editar-mov-box label { font-size:11px; font-weight:600; color:#64748B; text-transform:uppercase; letter-spacing:.4px; display:block; margin-bottom:3px; }
+    .editar-mov-box textarea { width:100%; padding:7px 9px; font-size:13px; border:1px solid #E2E8F0; border-radius:6px; resize:vertical; box-sizing:border-box; font-family:inherit; outline:none; }
+    .editar-mov-box textarea:focus { border-color:var(--verde); }
     /* ── Estado almacenes ── */
     .ins-almacenes { margin-bottom: 14px; }
     .ins-almacenes-title { font-size: 12px; font-weight: 600; color: var(--texto-suave); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
@@ -223,6 +233,10 @@
     .ins-alm-bar-fill.warn { background: #f59e0b; }
     .ins-alm-bar-fill.full { background: #c0392b; }
     .ins-alm-stat { font-size: 12px; font-family: 'JetBrains Mono', monospace; color: var(--texto-2); white-space: nowrap; }
+
+    /* ── btn-sm ── */
+    .btn-sm { padding: 6px 12px !important; font-size: 12px !important; }
+    .btn-sm svg { width: 13px; height: 13px; }
 
     @media (max-width: 900px) {
       .ins-kpis { grid-template-columns: 1fr 1fr; }
@@ -273,9 +287,28 @@
 
     <div class="content">
       <a href="menu-stock.html" class="btn-volver">← Volver</a>
-      <div class="content-header">
-        <div class="content-title">Stock Insumos</div>
-        <div class="content-sub">Inventario de insumos agrícolas</div>
+      <div class="content-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+        <div>
+          <div class="content-title">Stock Insumos</div>
+          <div class="content-sub">Inventario de insumos agrícolas</div>
+        </div>
+        <div class="ins-action-left" style="flex-wrap:wrap;">
+          <a href="compras.html" class="ins-btn ins-btn-primary">
+            <i data-lucide="plus"></i> Registrar Compra
+          </a>
+          <button class="ins-btn ins-btn-primary" onclick="openIngresoManualModal()">
+            <i data-lucide="package-plus"></i> Registrar Ingreso
+          </button>
+          <button class="ins-btn ins-btn-egreso" onclick="openEgresoModal()">
+            <i data-lucide="minus"></i> Registrar Egreso
+          </button>
+          <a href="aplicaciones.html" class="ins-btn ins-btn-gray">
+            <i data-lucide="droplets"></i> Registrar Aplicación
+          </a>
+          <button class="ins-btn ins-btn-gray" id="btn-toggle-hist" onclick="toggleHistorial()">
+            <i data-lucide="clock"></i> Historial de Movimientos
+          </button>
+        </div>
       </div>
 
       <!-- ── KPI Cards ── -->
@@ -298,44 +331,27 @@
       </div>
 
       <!-- ── Estado de almacenes ── -->
-      <div class="ins-almacenes" id="ins-almacenes" style="display:none;">
+      <div class="ins-almacenes" id="almacenes-insumos" style="display:none;">
         <div class="ins-almacenes-title">Estado de almacenes</div>
         <div id="ins-almacenes-list"></div>
       </div>
 
-      <!-- ── Barra de acciones ── -->
-      <div class="ins-action-bar">
-        <div class="ins-action-left">
-          <a href="compras.html" class="ins-btn ins-btn-primary">
-            <i data-lucide="plus"></i> Registrar Compra
-          </a>
-          <button class="ins-btn ins-btn-primary" onclick="openIngresoManualModal()">
-            <i data-lucide="package-plus"></i> Agregar Insumo
-          </button>
-          <button class="ins-btn ins-btn-egreso" onclick="openEgresoModal()">
-            <i data-lucide="minus"></i> Registrar Egreso
-          </button>
-          <a href="aplicaciones.html" class="ins-btn ins-btn-gray">
-            <i data-lucide="droplets"></i> Registrar Aplicación
-          </a>
-          <button class="ins-btn ins-btn-gray" id="btn-toggle-hist" onclick="toggleHistorial()">
-            <i data-lucide="clock"></i> Historial de Movimientos
-          </button>
-        </div>
-        <div class="ins-action-right">
-          <input type="text" class="ins-search" id="search-stock"
+      <!-- ── Búsqueda / filtro / export ── -->
+      <div style="margin-bottom:12px;">
+        <div style="display:flex;gap:10px;margin-bottom:8px;align-items:center;">
+          <input type="text" class="ins-search" id="search-stock" style="flex:1;"
                  placeholder="Buscar Insumo..." oninput="filtrarStock()">
-          <select class="ins-filter-sel" id="filter-stock" onchange="filtrarStock()">
+          <select class="ins-filter-sel" id="filter-stock" onchange="filtrarStock()" style="flex:1;">
             <option value="">Filtros: Tipo, Alerta</option>
           </select>
-          <div class="ins-export-group">
-            <button class="ins-btn-export" onclick="exportarCSV()" title="Exportar Excel (CSV)">
-              <i data-lucide="file-spreadsheet"></i>
-            </button>
-            <button class="ins-btn-export" onclick="exportarPDF()" title="Imprimir / PDF">
-              <i data-lucide="file-text"></i>
-            </button>
-          </div>
+        </div>
+        <div style="display:flex;gap:4px;">
+          <button class="btn btn-secondary btn-sm" onclick="exportarCSV()">
+            <i data-lucide="download"></i> Exportar
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="imprimirVista()">
+            <i data-lucide="printer"></i> Imprimir
+          </button>
         </div>
       </div>
 
@@ -352,6 +368,7 @@
                 <th>Comprado</th>
                 <th>Usado</th>
                 <th>Valor Estimado</th>
+                <th>Depósito</th>
               </tr>
             </thead>
             <tbody id="tbody-stock">
@@ -365,6 +382,14 @@
       <div id="section-historial" style="display:none;">
         <div class="hist-header">
           <span><i data-lucide="clock" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Historial de Movimientos</span>
+          <div style="display:flex;gap:4px;">
+            <button class="btn btn-secondary btn-sm" onclick="exportarCSVHistorial()">
+              <i data-lucide="download"></i> Exportar
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="imprimirHistorial()">
+              <i data-lucide="printer"></i> Imprimir
+            </button>
+          </div>
         </div>
         <div class="card-form" style="margin-bottom:12px;">
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:8px;">
@@ -423,10 +448,11 @@
                   <th>Lote</th>
                   <th>Depósito</th>
                   <th>Usuario</th>
+                  <th style="width:36px;"></th>
                 </tr>
               </thead>
               <tbody id="tbody-historial">
-                <tr><td colspan="9" class="activity-empty">Cargando...</td></tr>
+                <tr><td colspan="10" class="activity-empty">Cargando...</td></tr>
               </tbody>
               <tfoot id="tfoot-historial"></tfoot>
             </table>
@@ -547,6 +573,8 @@
 
   var _lotesTodos = [];
   var _stockData  = [];
+  var _stockDataVisible    = []; // datos filtrados visibles en la grilla
+  var _historialInsumosData = []; // datos del historial cargados
   var _historialVisible = false;
 
   /* ── Modal ingreso manual ── */
@@ -597,6 +625,7 @@
       if (data.ok) {
         closeIngresoManualModal();
         cargarStock();
+        cargarAlmacenesInsumos();
       } else {
         document.getElementById('msg-ingreso-manual').innerHTML = '<p style="color:var(--sem-rojo);font-size:13px;margin-top:8px;">' + (data.error || 'Error') + '</p>';
       }
@@ -624,7 +653,9 @@
     sec.style.display = _historialVisible ? '' : 'none';
     if (_historialVisible) {
       btn.classList.add('activo');
+      cargarHistorial();   // siempre recarga al abrir
       lucide.createIcons();
+      sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } else {
       btn.classList.remove('activo');
     }
@@ -661,9 +692,10 @@
 
   /* ── Renderizar tabla stock ── */
   function renderStockTabla(data) {
+    _stockDataVisible = data || [];
     var tbody = document.getElementById('tbody-stock');
     if (!data.length) {
-      tbody.innerHTML = '<tr><td colspan="7" class="activity-empty">Sin productos para los filtros seleccionados</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" class="activity-empty">Sin productos para los filtros seleccionados</td></tr>';
       return;
     }
     tbody.innerHTML = data.map(function(p) {
@@ -680,6 +712,7 @@
         '<td>' + parseFloat(p.total_comprado).toFixed(2) + '</td>' +
         '<td>' + parseFloat(p.total_usado).toFixed(2) + '</td>' +
         '<td style="text-align:right;">$' + valor.toLocaleString('es-AR') + '</td>' +
+        '<td style="font-size:12px;color:var(--texto-suave);">' + (p.ultimo_deposito || '—') + '</td>' +
         '</tr>';
     }).join('');
   }
@@ -714,32 +747,110 @@
     });
   }
 
-  /* ── Export CSV ── */
-  function exportarCSV() {
-    if (!_stockData.length) { alert('Sin datos para exportar.'); return; }
-    var filas = [['Producto','Tipo','Stock Actual','Comprado','Usado','Valor Estimado']];
-    _stockData.forEach(function(p) {
-      var stock = parseFloat(p.stock_actual) || 0;
-      var valor = stock * (parseFloat(p.costo_unitario) || 0);
-      filas.push([
-        '"' + (p.nombre || '') + '"',
-        '"' + (p.tipo || '') + '"',
-        (stock.toFixed(2) + ' ' + (p.presentacion || '')).trim(),
-        parseFloat(p.total_comprado).toFixed(2),
-        parseFloat(p.total_usado).toFixed(2),
-        valor.toLocaleString('es-AR')
-      ]);
-    });
-    var csv = filas.map(function(r) { return r.join(','); }).join('\n');
+  /* ── CSV helper ── */
+  function _descargarCSV(filas, nombreArchivo) {
+    var csv = filas.map(function(r) {
+      return r.map(function(v) {
+        return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+      }).join(',');
+    }).join('\n');
     var blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     var url  = URL.createObjectURL(blob);
     var a    = document.createElement('a');
-    a.href = url; a.download = 'stock-insumos.csv'; a.click();
+    a.href = url; a.download = nombreArchivo; a.click();
     URL.revokeObjectURL(url);
   }
 
-  /* ── Export PDF (imprimir) ── */
-  function exportarPDF() { window.print(); }
+  function _fechaHoy() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
+  /* ── Exportar grilla stock actual (datos visibles filtrados) ── */
+  function exportarCSV() {
+    var datos = _stockDataVisible;
+    if (!datos.length) { alert('Sin datos visibles para exportar.'); return; }
+    var cabecera = ['Producto','Tipo','Stock Actual','Comprado','Usado','Valor Estimado','Depósito'];
+    var filas = [cabecera].concat(datos.map(function(p) {
+      var stock = parseFloat(p.stock_actual) || 0;
+      var valor = stock * (parseFloat(p.costo_unitario) || 0);
+      return [
+        p.nombre || '',
+        p.tipo || '',
+        (stock.toFixed(2) + ' ' + (p.presentacion || '')).trim(),
+        parseFloat(p.total_comprado||0).toFixed(2),
+        parseFloat(p.total_usado||0).toFixed(2),
+        valor.toLocaleString('es-AR'),
+        p.ultimo_deposito || ''
+      ];
+    }));
+    _descargarCSV(filas, 'stock-insumos-' + _fechaHoy() + '.csv');
+  }
+
+  /* ── Exportar historial (datos cargados en historial) ── */
+  function exportarCSVHistorial() {
+    var datos = _historialInsumosData;
+    if (!datos.length) { alert('Sin datos en el historial para exportar.'); return; }
+    var cabecera = ['#','Fecha','Producto','Movimiento','Cantidad','Aplica','Lote','Depósito','Usuario'];
+    var filas = [cabecera].concat(datos.map(function(m) {
+      var esIngreso = m.tipo === 'compra';
+      return [
+        m.id || '',
+        m.fecha_hora ? new Date(m.fecha_hora).toLocaleDateString('es-AR') : '',
+        m.producto || '',
+        esIngreso ? 'Ingreso' : 'Egreso',
+        parseFloat(m.cantidad||0).toFixed(2) + ' ' + (m.presentacion || ''),
+        m.empleado || (esIngreso ? m.proveedor || '' : '') || '',
+        m.lote || '',
+        m.deposito_nombre || '',
+        m.usuario || ''
+      ];
+    }));
+    _descargarCSV(filas, 'stock-insumos-historial-' + _fechaHoy() + '.csv');
+  }
+
+  /* ── Imprimir grilla de stock actual ── */
+  function imprimirVista() {
+    var buscar = document.getElementById('search-stock').value || '';
+    var filtro = document.getElementById('filter-stock').value || '';
+    var filtros = (buscar ? 'Búsqueda: ' + buscar + ' | ' : '') + (filtro ? 'Filtro: ' + filtro : 'Sin filtros');
+    var tabla = document.getElementById('tabla-stock').outerHTML;
+    _abrirVentanaImpresion('Stock Insumos', filtros, tabla);
+  }
+
+  /* ── Imprimir historial ── */
+  function imprimirHistorial() {
+    var producto = (document.getElementById('hist-producto').options[document.getElementById('hist-producto').selectedIndex] || {}).text || 'Todos';
+    var tipo     = document.getElementById('hist-tipo').value || 'Todos';
+    var filtros  = 'Producto: ' + producto + ' | Tipo: ' + (tipo || 'Todos');
+    var tabla    = document.querySelector('#section-historial table').outerHTML;
+    _abrirVentanaImpresion('Stock Insumos — Historial', filtros, tabla);
+  }
+
+  function _abrirVentanaImpresion(titulo, filtros, tablaHTML) {
+    var fecha = new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+    var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + titulo + '</title>' +
+      '<style>' +
+      'body{font-family:Arial,sans-serif;font-size:11px;margin:20px;color:#222;}' +
+      'h2{margin:0 0 4px;font-size:16px;}' +
+      'p.info{margin:0 0 14px;font-size:11px;color:#666;}' +
+      'table{width:100%;border-collapse:collapse;}' +
+      'th{background:#2D5016!important;color:#fff!important;padding:7px 8px;text-align:left;font-size:11px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}' +
+      'td{padding:6px 8px;border-bottom:1px solid #eee;font-size:11px;}' +
+      'tr:nth-child(even){background:#f8f8f8;}' +
+      'input[type=checkbox]{display:none;}' +
+      '.badge{display:inline-block;padding:2px 6px;border-radius:4px;}' +
+      '</style></head><body>' +
+      '<h2>' + titulo + '</h2>' +
+      '<p class="info">' + filtros + ' &nbsp;|&nbsp; Impreso: ' + fecha + '</p>' +
+      tablaHTML +
+      '</body></html>';
+    var w = window.open('', '_blank');
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    setTimeout(function() { w.print(); w.close(); }, 400);
+  }
 
   var _depositosInsumos = [];
 
@@ -761,14 +872,14 @@
     });
     fetch('/api/depositos?tipo_stock=insumos').then(function(r) { return r.json(); }).then(function(data) {
       _depositosInsumos = data;
-      cargarEstadoAlmacenes();
+      cargarAlmacenesInsumos();
     });
   }
 
   /* ── Estado de almacenes (insumos) ── */
-  function cargarEstadoAlmacenes() {
+  function cargarAlmacenesInsumos() {
     fetch('/api/depositos/ocupacion?tipo_stock=insumos').then(function(r) { return r.json(); }).then(function(data) {
-      var sec  = document.getElementById('ins-almacenes');
+      var sec  = document.getElementById('almacenes-insumos');
       var list = document.getElementById('ins-almacenes-list');
       if (!data.length) { sec.style.display = 'none'; return; }
       sec.style.display = '';
@@ -788,7 +899,7 @@
           '</div>';
       }).join('');
     }).catch(function() {
-      document.getElementById('ins-almacenes').style.display = 'none';
+      document.getElementById('almacenes-insumos').style.display = 'none';
     });
   }
 
@@ -890,7 +1001,7 @@
 
     var tbody = document.getElementById('tbody-historial');
     var tfoot = document.getElementById('tfoot-historial');
-    tbody.innerHTML = '<tr><td colspan="9" class="activity-empty" style="color:var(--verde);">Cargando...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" class="activity-empty" style="color:var(--verde);">Cargando...</td></tr>';
     tfoot.innerHTML = '';
 
     fetch('/api/stock-insumos/historial?' + params.toString())
@@ -899,11 +1010,13 @@
         if (tipo === 'egreso') {
           data = data.filter(function(m){ return m.tipo !== 'compra'; });
         }
+        _historialInsumosData = data;
         if (!data.length) {
-          tbody.innerHTML = '<tr><td colspan="9" class="activity-empty">Sin movimientos para los filtros seleccionados</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="10" class="activity-empty">Sin movimientos para los filtros seleccionados</td></tr>';
           return;
         }
         var totIngreso = 0, totEgreso = 0;
+        var _puedeEditarMov = window.tienePermiso ? window.tienePermiso('editar_movimientos') : false;
         tbody.innerHTML = data.map(function(m) {
           var esIngreso = m.tipo === 'compra';
           var bg        = esIngreso ? 'background:#f0faf0;' : 'background:#fff5f5;';
@@ -937,6 +1050,9 @@
             '<td style="font-size:12px;">' + (m.lote || '—') + '</td>' +
             '<td style="font-size:12px;">' + (m.deposito_nombre || '—') + '</td>' +
             '<td style="font-size:12px;color:var(--texto-suave);">' + (m.usuario || '—') + '</td>' +
+            '<td style="text-align:center;">' + (_puedeEditarMov
+              ? '<button class="btn-icon-xs" onclick="abrirEditarMov('+m.id+',\''+((m.observacion||'').replace(/'/g,'\\\''))+'\')" title="Editar observación"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button>'
+              : '') + '</td>' +
             '</tr>';
         }).join('');
         tfoot.innerHTML = '<tr style="font-weight:700;background:var(--fondo);">' +
@@ -945,17 +1061,59 @@
             (totIngreso ? '<span style="color:#2d6a4f;">+' + totIngreso.toLocaleString('es-AR',{maximumFractionDigits:2}) + '</span> ' : '') +
             (totEgreso  ? '<span style="color:#c0392b;">−' + totEgreso.toLocaleString('es-AR',{maximumFractionDigits:2}) + '</span>' : '') +
           '</td>' +
-          '<td colspan="4"></td></tr>';
+          '<td colspan="5"></td></tr>';
       })
       .catch(function() {
-        tbody.innerHTML = '<tr><td colspan="9" class="activity-empty" style="color:#c0392b;">Error al cargar historial</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="activity-empty" style="color:#c0392b;">Error al cargar historial</td></tr>';
       });
   }
 
   cargarStock();
   cargarEgresoInit();
-  cargarHistorial();
   cargarTemporadaActiva();
+
+  /* ── Editar movimiento ── */
+  function abrirEditarMov(id, obs) {
+    document.getElementById('edit-mov-id').value = id;
+    document.getElementById('edit-mov-obs').value = obs || '';
+    document.getElementById('edit-mov-msg').textContent = '';
+    document.getElementById('modal-editar-mov').classList.add('open');
+  }
+  function cerrarEditarMov() {
+    document.getElementById('modal-editar-mov').classList.remove('open');
+  }
+  function guardarEditarMov(btn) {
+    var id  = document.getElementById('edit-mov-id').value;
+    var obs = document.getElementById('edit-mov-obs').value;
+    setLoading(btn, true);
+    fetch('/api/stock-insumos/historial/' + id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ observacion: obs })
+    }).then(function(r){ return r.json(); }).then(function(data){
+      setLoading(btn, false);
+      if (data.ok) { cerrarEditarMov(); cargarHistorial(); }
+      else document.getElementById('edit-mov-msg').innerHTML = '<span style="color:#EF4444;">' + (data.error || 'Error') + '</span>';
+    }).catch(function(){
+      setLoading(btn, false);
+      document.getElementById('edit-mov-msg').innerHTML = '<span style="color:#EF4444;">Error de conexión</span>';
+    });
+  }
 </script>
+
+<!-- MODAL EDITAR MOVIMIENTO -->
+<div id="modal-editar-mov">
+  <div class="editar-mov-box">
+    <h4>Editar observación</h4>
+    <input type="hidden" id="edit-mov-id">
+    <label>Observación</label>
+    <textarea id="edit-mov-obs" rows="3"></textarea>
+    <div id="edit-mov-msg" style="font-size:12px;margin-top:5px;"></div>
+    <div style="display:flex;gap:8px;margin-top:12px;">
+      <button class="btn btn-secondary" style="flex:1;" onclick="cerrarEditarMov()">Cancelar</button>
+      <button class="btn btn-primary" style="flex:1;" onclick="guardarEditarMov(this)">Guardar</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
