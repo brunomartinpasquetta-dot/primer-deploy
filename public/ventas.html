@@ -134,7 +134,7 @@
               <input type="text" inputmode="decimal" id="precio_kilo" placeholder="Ej: 450" data-miles oninput="calcularTotal()">
             </div>
             <div class="form-row" style="margin-bottom:0;">
-              <label>Total estimado</label>
+              <label>Total</label>
               <div class="total-venta" style="padding:6px 0;">$<span id="total-display">0</span></div>
             </div>
           </div>
@@ -225,15 +225,17 @@
 
   function _parseInput(id) {
     var el = document.getElementById(id);
-    var raw = el.dataset.rawValue !== undefined
+    var raw = (el.dataset.rawValue !== undefined && el.dataset.rawValue !== '')
       ? el.dataset.rawValue
       : String(el.value).replace(/\./g, '').replace(',', '.');
     return parseFloat(raw) || 0;
   }
 
   function calcularTotal() {
-    var kilos = _parseInput('kilos');
-    var precio = _parseInput('precio_kilo');
+    var kilosEl  = document.getElementById('kilos');
+    var precioEl = document.getElementById('precio_kilo');
+    var kilos  = parseFloat(String(kilosEl.value).replace(/\./g, '').replace(',', '.'))  || 0;
+    var precio = parseFloat(String(precioEl.value).replace(/\./g, '').replace(',', '.')) || 0;
     document.getElementById('total-display').textContent = (kilos * precio).toLocaleString('es-AR', { minimumFractionDigits: 2 });
   }
 
