@@ -90,6 +90,46 @@ router.post('/egreso', async (req, res) => {
   }
 });
 
+// Stock actual agregado por variedad/lote + depósito (desde MovimientosDeposito)
+router.get('/actual', async (req, res) => {
+  try {
+    let { temporada_id } = req.query;
+    const pool = await getPool();
+
+    // Si no viene temporada_id, usar la activa
+    if (!temporada_id) {
+      const tRes = await pool.request()
+        .query(`SELECT TOP 1 id FROM Temporadas WHERE activa = 1`);
+      if (tRes.recordset.length) temporada_id = tRes.recordset[0].id;
+    }
+    if (!temporada_id) return res.json([]);
+
+    const result = await pool.request()
+      .input('temporada_id', sql.Int, parseInt(temporada_id))
+      .query(`
+        SELECT
+          CASE WHEN l.variedad IS NOT NULL AND l.variedad != ''
+               THEN l.variedad ELSE l.nombre END AS variedad,
+          d.nombre AS deposito,
+          d.tipo   AS deposito_tipo,
+          SUM(CASE WHEN m.tipo = 'ingreso' THEN m.kilos ELSE -m.kilos END) AS kg_disponibles,
+          t.nombre AS temporada
+        FROM MovimientosDeposito m
+        JOIN Lotes      l ON m.lote_id      = l.id
+        JOIN Depositos  d ON m.deposito_id  = d.id
+        JOIN Temporadas t ON m.temporada_id = t.id
+        WHERE m.temporada_id = @temporada_id
+        GROUP BY l.variedad, l.nombre, d.nombre, d.tipo, t.nombre
+        HAVING SUM(CASE WHEN m.tipo = 'ingreso' THEN m.kilos ELSE -m.kilos END) > 0
+        ORDER BY l.variedad, l.nombre, d.nombre
+      `);
+
+    res.json(result.recordset);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // KPIs de kg: cosechados (Juntada) + deposito/vendidos/descartados (MovimientosDeposito)
 router.get('/kpis', async (req, res) => {
   try {

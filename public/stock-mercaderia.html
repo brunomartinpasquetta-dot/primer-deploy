@@ -180,6 +180,35 @@
     .btn-sm { padding: 6px 12px !important; font-size: 12px !important; }
     .btn-sm svg { width: 13px; height: 13px; }
 
+    /* ── Stock Actual section ── */
+    .seccion-stock-actual { margin-bottom: 20px; }
+    .seccion-header {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .seccion-header h3 {
+      margin: 0; font-size: 14px; font-weight: 700; color: var(--texto);
+      display: flex; align-items: center; gap: 6px;
+    }
+    #tabla-stock-actual thead th {
+      background: #2D5016; color: #fff;
+      font-weight: 700; text-transform: uppercase;
+      font-size: 11px; letter-spacing: .5px; padding: 11px 12px;
+    }
+    #tabla-stock-actual tbody td { padding: 10px 12px; }
+    #tabla-stock-actual tbody tr:hover { background: var(--fondo-dark); }
+    .seccion-historial-titulo {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      margin: 20px 0 10px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--borde);
+    }
+    .seccion-historial-titulo h3 {
+      margin: 0; font-size: 14px; font-weight: 700; color: var(--texto);
+    }
+
     @media(max-width:900px) {
       .merc-kpis { grid-template-columns: 1fr 1fr; }
       .merc-action-bar { flex-direction: column; align-items: flex-start; }
@@ -283,6 +312,43 @@
       <div class="merc-almacenes" id="merc-almacenes" style="display:none;">
         <div class="merc-almacenes-title">Estado de almacenes</div>
         <div id="merc-almacenes-list"></div>
+      </div>
+
+      <!-- ── Stock Actual por variedad + depósito ── -->
+      <div class="seccion-stock-actual">
+        <div class="seccion-header">
+          <h3><i data-lucide="warehouse" style="width:15px;height:15px;"></i> Stock Actual</h3>
+          <div style="display:flex;gap:4px;">
+            <button class="btn btn-secondary btn-sm" onclick="exportarStockActual()">
+              <i data-lucide="download"></i> Exportar
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="imprimirStockActual()">
+              <i data-lucide="printer"></i> Imprimir
+            </button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table id="tabla-stock-actual">
+              <thead>
+                <tr>
+                  <th>VARIEDAD / LOTE</th>
+                  <th>DEPÓSITO</th>
+                  <th>TIPO DEPÓSITO</th>
+                  <th style="text-align:right;">KG DISPONIBLES</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-stock-actual">
+                <tr><td colspan="4" class="empty">Cargando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Historial de Movimientos (título de sección) ── -->
+      <div class="seccion-historial-titulo">
+        <h3><i data-lucide="list" style="width:15px;height:15px;vertical-align:middle;margin-right:4px;"></i> Historial de Movimientos</h3>
       </div>
 
       <!-- Búsqueda / filtro / export -->
@@ -583,6 +649,7 @@ var _temporadas = [], _lotes = [], _depositos = [];
 var _historialVisible = false;
 var _stockGridVisible = [];   // datos filtrados visibles en la grilla
 var _historialMercData = [];  // datos del historial cargados
+var _stockActualData   = [];  // stock actual por variedad+depósito
 
 function fmt(n){ return parseFloat(n||0).toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:1}); }
 function fmtFecha(iso){ if(!iso)return '-'; return new Date(iso).toLocaleDateString('es-AR'); }
@@ -877,8 +944,72 @@ function _abrirVentanaImpresion(titulo, filtros, tablaHTML) {
   setTimeout(function() { w.print(); w.close(); }, 400);
 }
 
+/* ── Stock Actual por variedad + depósito ── */
+function cargarStockActual() {
+  var tid = document.getElementById('filtro-temporada').value;
+  var url = '/api/stock-mercaderia/actual' + (tid ? '?temporada_id=' + tid : '');
+  document.getElementById('tbody-stock-actual').innerHTML =
+    '<tr><td colspan="4" class="empty">Cargando...</td></tr>';
+  fetch(url).then(function(r){ return r.json(); }).then(function(data){
+    _stockActualData = data || [];
+    var tbody = document.getElementById('tbody-stock-actual');
+    if (!data || !data.length) {
+      tbody.innerHTML = '<tr><td colspan="4" class="empty">Sin stock en depósitos</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(function(row){
+      var tipoLabel = row.deposito_tipo === 'frio' ? 'Frío' :
+                      row.deposito_tipo === 'camara' ? 'Cámara' :
+                      row.deposito_tipo ? row.deposito_tipo : '—';
+      return '<tr>' +
+        '<td>' + (row.variedad || '—') + '</td>' +
+        '<td>' + (row.deposito || '—') + '</td>' +
+        '<td><span class="badge">' + tipoLabel + '</span></td>' +
+        '<td style="text-align:right;font-weight:700;color:var(--sem-verde);">' +
+          fmt(row.kg_disponibles) + ' kg</td>' +
+        '</tr>';
+    }).join('');
+  }).catch(function(){
+    document.getElementById('tbody-stock-actual').innerHTML =
+      '<tr><td colspan="4" class="empty">Error al cargar stock actual</td></tr>';
+  });
+}
+
+function exportarStockActual() {
+  if (!_stockActualData.length) { alert('No hay datos para exportar'); return; }
+  var filas = _stockActualData.map(function(r){
+    return [r.variedad||'', r.deposito||'', r.deposito_tipo||'',
+            parseFloat(r.kg_disponibles||0).toFixed(1)];
+  });
+  filas.unshift(['Variedad/Lote','Depósito','Tipo Depósito','KG Disponibles']);
+  _descargarCSV(filas, 'stock-actual-' + _fechaHoy() + '.csv');
+}
+
+function imprimirStockActual() {
+  var tid = document.getElementById('filtro-temporada');
+  var tNombre = tid && tid.selectedOptions[0] ? tid.selectedOptions[0].text : 'Todas';
+  var filtros = [['Temporada', tNombre]];
+  var thStyle = 'background:#2D5016;color:#fff;padding:8px 12px;text-align:left;font-size:12px;';
+  var filas = (_stockActualData || []).map(function(r){
+    return '<tr><td style="padding:7px 12px;">' + (r.variedad||'—') + '</td>' +
+           '<td style="padding:7px 12px;">' + (r.deposito||'—') + '</td>' +
+           '<td style="padding:7px 12px;">' + (r.deposito_tipo||'—') + '</td>' +
+           '<td style="padding:7px 12px;text-align:right;font-weight:700;">' +
+             fmt(r.kg_disponibles) + ' kg</td></tr>';
+  }).join('');
+  var tabla = '<table style="width:100%;border-collapse:collapse;">' +
+    '<thead><tr>' +
+      '<th style="' + thStyle + '">VARIEDAD / LOTE</th>' +
+      '<th style="' + thStyle + '">DEPÓSITO</th>' +
+      '<th style="' + thStyle + '">TIPO DEPÓSITO</th>' +
+      '<th style="' + thStyle + 'text-align:right;">KG DISPONIBLES</th>' +
+    '</tr></thead><tbody>' + filas + '</tbody></table>';
+  _abrirVentanaImpresion('Stock Actual — Mercadería', filtros, tabla);
+}
+
 function cargarStock() {
   var tid = document.getElementById('filtro-temporada').value;
+  cargarStockActual();
   var kpiUrl = '/api/stock-mercaderia/kpis' + (tid ? '?temporada_id='+tid : '');
   fetch(kpiUrl).then(function(r){ return r.json(); }).then(function(k){
     document.getElementById('kpi-cosechados').textContent  = fmt(k.kg_cosechados);
