@@ -11,7 +11,8 @@ router.get('/', async (req, res) => {
         SELECT
           p.id   AS producto_id,
           p.nombre AS producto,
-          p.unidad_medida AS unidad,
+          ISNULL(p.unidad_medida, p.presentacion) AS unidad,
+          p.contenido_litros,
           p.tipo AS categoria,
           ISNULL(si.proveedor, 'Sin proveedor') AS proveedor,
           ISNULL(d.nombre, '—') AS deposito,
@@ -25,7 +26,7 @@ router.get('/', async (req, res) => {
         JOIN StockInsumos si ON si.producto_id = p.id
         LEFT JOIN Depositos d ON si.deposito_id = d.id
         WHERE p.activo = 1
-        GROUP BY p.id, p.nombre, p.unidad_medida, p.tipo,
+        GROUP BY p.id, p.nombre, p.unidad_medida, p.presentacion, p.contenido_litros, p.tipo,
                  ISNULL(si.proveedor, 'Sin proveedor'),
                  ISNULL(d.nombre, '—'), d.tipo
         HAVING SUM(CASE

@@ -295,8 +295,10 @@ router.get('/ocupacion', async (req, res) => {
       // Ocupación desde StockInsumos (por deposito_id)
       const result = await dbReq.query(`
         SELECT d.id, d.nombre, d.tipo, d.tipo_stock, d.capacidad_kg,
-               ISNULL(SUM(CASE WHEN si.tipo IN ('compra','ingreso_manual') THEN si.cantidad ELSE 0 END), 0) -
-               ISNULL(SUM(CASE WHEN si.tipo NOT IN ('compra','ingreso_manual') THEN si.cantidad ELSE 0 END), 0) AS ocupado_kg
+               ISNULL(SUM(CASE
+                 WHEN si.tipo IN ('compra','ingreso_manual') THEN si.cantidad
+                 WHEN si.tipo IN ('egreso','aplicacion','merma','vencimiento','perdida') THEN -si.cantidad
+                 ELSE 0 END), 0) AS ocupado_kg
         FROM Depositos d
         LEFT JOIN StockInsumos si ON si.deposito_id = d.id
         WHERE ${where}

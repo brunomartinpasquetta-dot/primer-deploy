@@ -112,6 +112,7 @@ router.get('/actual', async (req, res) => {
           d.nombre AS deposito,
           d.tipo   AS deposito_tipo,
           COUNT(DISTINCT m.lote_id) AS lotes_involucrados,
+          CASE WHEN COUNT(DISTINCT m.lote_id) = 1 THEN MIN(l.nombre) ELSE NULL END AS lote_nombre,
           SUM(CASE WHEN m.tipo = 'ingreso' THEN m.kilos ELSE -m.kilos END) AS kg_disponibles
         FROM MovimientosDeposito m
         JOIN Lotes      l ON m.lote_id      = l.id

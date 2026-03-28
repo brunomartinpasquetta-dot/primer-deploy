@@ -16,18 +16,40 @@ function formatearNumero(valor) {
   return n.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 }
 
-// Aplicar en un input específico: toggle formato/edición con focus/blur
+// Aplicar en un input específico: formato automático con debounce + blur
 function formatearMiles(input) {
-  input.addEventListener('blur', function () {
-    var raw = parseFloat(String(this.value).replace(/\./g, '').replace(',', '.'));
+  var _timer = null;
+
+  function _aplicar(el) {
+    var raw = parseFloat(String(el.value).replace(/\./g, '').replace(',', '.'));
     if (!isNaN(raw)) {
-      this.dataset.rawValue = raw;
-      this.value = raw.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+      el.dataset.rawValue = raw;
+      var formatted = raw.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+      if (el.value !== formatted) el.value = formatted;
     }
+  }
+
+  input.addEventListener('blur', function () {
+    clearTimeout(_timer);
+    _aplicar(this);
   });
+
+  input.addEventListener('input', function () {
+    var el = this;
+    var v = el.value;
+    // No formatear mientras el usuario escribe decimales
+    if (v.endsWith(',') || v.endsWith('.')) return;
+    clearTimeout(_timer);
+    _timer = setTimeout(function () { _aplicar(el); }, 600);
+  });
+
   input.addEventListener('focus', function () {
-    var raw = this.dataset.rawValue !== undefined ? this.dataset.rawValue : String(this.value).replace(/\./g, '').replace(',', '.');
+    clearTimeout(_timer);
+    var raw = this.dataset.rawValue !== undefined
+      ? this.dataset.rawValue
+      : String(this.value).replace(/\./g, '').replace(',', '.');
     this.value = raw;
+    this.dataset.rawValue = raw;
   });
 }
 

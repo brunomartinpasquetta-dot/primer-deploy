@@ -712,7 +712,9 @@
           cant.toLocaleString('es-AR', {minimumFractionDigits:0,maximumFractionDigits:2}) +
           (bajo ? ' ⚠️' : '') +
         '</td>' +
-        '<td style="font-size:12px;color:var(--texto-suave);">' + (p.unidad || '—') + '</td>' +
+        '<td style="font-size:12px;color:var(--texto-suave);">' +
+          (p.contenido_litros ? parseFloat(p.contenido_litros).toLocaleString('es-AR') + ' ' : '') +
+          (p.unidad || '—') + '</td>' +
         '</tr>';
     }).join('');
     lucide.createIcons();
