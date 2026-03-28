@@ -55,7 +55,7 @@
       .kpi-row-2 { grid-template-columns: 1fr 1fr; }
     }
     @media (max-width: 480px) {
-      .kpi-row-3 { gap: 8px; }
+      .kpi-row-3 { grid-template-columns: 1fr; gap: 8px; }
       .kpi-row-2 { grid-template-columns: 1fr; gap: 8px; }
     }
 
@@ -529,14 +529,11 @@ function cargar() {
 // cotizaciones.js ya define cargarCotizacion() que actualiza topbar, hero-blue y bd-*
 
 function cargarFrutilla() {
-  fetch('/api/cotizaciones/locales?cultivo=frutilla')
+  fetch('/api/cotizaciones/frutilla')
     .then(function(r) { return r.json(); })
-    .then(function(data) {
-      if (!data || !data.length) return;
-      var ultimo = data[data.length - 1];
-      if (!ultimo || !ultimo.precio) return;
-      var val = '$' + Math.round(ultimo.precio).toLocaleString('es-AR') + '/kg';
-      window._heroFrutilla = val;
+    .then(function(d) {
+      if (d.error || !d.precio_modal) return;
+      var val = '$' + Math.round(d.precio_modal).toLocaleString('es-AR') + '/kg';
       var hf = document.getElementById('hero-frutilla');
       if (hf) hf.textContent = val;
     })
@@ -544,7 +541,7 @@ function cargarFrutilla() {
 }
 
 function cargarDepositos() {
-  fetch('/api/depositos/ocupacion')
+  fetch('/api/depositos/ocupacion?tipo_stock=mercaderia')
     .then(function(r) { return r.json(); })
     .then(function(data) {
       var panel = document.getElementById('depositos-panel');
