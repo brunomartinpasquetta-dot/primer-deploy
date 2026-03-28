@@ -347,28 +347,28 @@
         </div>
       </div>
 
-      <!-- Búsqueda / filtro / export -->
-      <div style="margin-bottom:12px;">
-        <div style="display:flex;gap:10px;margin-bottom:8px;align-items:center;">
-          <select class="merc-temporada-sel" id="filtro-temporada" onchange="cargarStock()">
-            <option value="">Todas las temporadas</option>
-          </select>
-          <input type="text" class="merc-search" id="stock-buscar" style="flex:1;"
-                 placeholder="Buscar Cosechero, lote..." oninput="filtrarStockGrid()">
-          <select class="merc-filter-sel" id="filter-merc-tipo" onchange="filtrarStockGrid()" style="flex:1;">
-            <option value="">Filtros: Cosechero, Depósito, Lote</option>
-            <option value="ingreso">Solo Ingresos</option>
-            <option value="egreso">Solo Egresos</option>
-          </select>
-        </div>
-        <div style="display:flex;gap:4px;">
-          <button class="btn btn-secondary btn-sm" onclick="exportarCSV()">
-            <i data-lucide="download"></i> Exportar
-          </button>
-          <button class="btn btn-secondary btn-sm" onclick="imprimirVista()">
-            <i data-lucide="printer"></i> Imprimir
-          </button>
-        </div>
+      <!-- Barra de filtros unificada — movimientos -->
+      <div class="filtros-barra">
+        <input type="search" class="fb-buscar" id="stock-buscar" placeholder="Buscar cosechero, lote, depósito..." oninput="filtrarStockGrid()">
+        <div class="fb-sep"></div>
+        <select id="filtro-temporada" onchange="cargarStock()" title="Temporada">
+          <option value="">Temporada: Todas</option>
+        </select>
+        <select id="filter-lote" onchange="filtrarStockGrid()" title="Lote">
+          <option value="">Lote: Todos</option>
+        </select>
+        <select id="filter-dep" onchange="filtrarStockGrid()" title="Depósito">
+          <option value="">Depósito: Todos</option>
+        </select>
+        <select id="filter-merc-tipo" onchange="filtrarStockGrid()" title="Tipo">
+          <option value="">Tipo: Todos</option>
+          <option value="ingreso">Ingreso</option>
+          <option value="egreso">Egreso</option>
+        </select>
+        <div class="fb-sep"></div>
+        <button class="aplic-btn-export" onclick="exportarCSV()" title="Exportar CSV"><i data-lucide="download"></i></button>
+        <button class="aplic-btn-export" onclick="imprimirVista()" title="Imprimir"><i data-lucide="printer"></i></button>
+        <button class="fb-limpiar" onclick="limpiarFiltrosGrid()">✕ Limpiar</button>
       </div>
 
       <!-- Tabla movimientos -->
@@ -406,44 +406,26 @@
             </button>
           </div>
         </div>
-        <div class="card-form" style="margin-bottom:12px;">
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:8px;">
-            <div class="form-row" style="margin-bottom:0;">
-              <label>Temporada</label>
-              <select id="hist-temporada" onchange="poblarLotesHistorial();cargarHistorial()"><option value="">Todas</option></select>
-            </div>
-            <div class="form-row" style="margin-bottom:0;">
-              <label>Lote</label>
-              <select id="hist-lote" onchange="cargarHistorial()"><option value="">Todos los lotes</option></select>
-            </div>
-            <div class="form-row" style="margin-bottom:0;">
-              <label>Tipo</label>
-              <select id="hist-tipo" onchange="cargarHistorial()">
-                <option value="">Todos</option>
-                <option value="ingreso">Ingreso</option>
-                <option value="egreso">Egreso</option>
-              </select>
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
-            <label class="toggle-fecha" style="margin:0;">
-              <input type="checkbox" id="filtrar-fechas" onchange="toggleFechasHistorial()">
-              <span>Filtrar por rango de fechas</span>
-            </label>
-            <button class="btn btn-secondary" onclick="limpiarFiltrosHistorial()">Limpiar</button>
-          </div>
-          <div id="rango-fechas" style="display:none;margin-top:8px;">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-              <div class="form-row" style="margin-bottom:0;">
-                <label>Desde</label>
-                <input type="date" id="hist-desde" onchange="cargarHistorial()">
-              </div>
-              <div class="form-row" style="margin-bottom:0;">
-                <label>Hasta</label>
-                <input type="date" id="hist-hasta" onchange="cargarHistorial()">
-              </div>
-            </div>
-          </div>
+        <!-- Barra de filtros historial -->
+        <div class="filtros-barra" style="margin-bottom:8px;">
+          <select id="hist-temporada" onchange="poblarLotesHistorial();cargarHistorial()" title="Temporada">
+            <option value="">Temporada: Todas</option>
+          </select>
+          <select id="hist-lote" onchange="cargarHistorial()" title="Lote">
+            <option value="">Lote: Todos</option>
+          </select>
+          <select id="hist-tipo" onchange="cargarHistorial()" title="Tipo">
+            <option value="">Tipo: Todos</option>
+            <option value="ingreso">Ingreso</option>
+            <option value="egreso">Egreso</option>
+          </select>
+          <div class="fb-sep"></div>
+          <input type="date" id="hist-desde" onchange="cargarHistorial()" title="Desde">
+          <input type="date" id="hist-hasta" onchange="cargarHistorial()" title="Hasta">
+          <div class="fb-sep"></div>
+          <button class="aplic-btn-export" onclick="exportarCSVHistorial()" title="Exportar CSV"><i data-lucide="download"></i></button>
+          <button class="aplic-btn-export" onclick="imprimirHistorial()" title="Imprimir"><i data-lucide="printer"></i></button>
+          <button class="fb-limpiar" onclick="limpiarFiltrosHistorial()">✕ Limpiar</button>
         </div>
         <div class="card">
           <div class="table-wrap">
@@ -819,8 +801,10 @@ function renderStockGrid(data) {
 }
 
 function filtrarStockGrid() {
-  var q     = (document.getElementById('stock-buscar').value || '').toLowerCase();
-  var tipo  = document.getElementById('filter-merc-tipo').value;
+  var q    = (document.getElementById('stock-buscar').value || '').toLowerCase();
+  var tipo = document.getElementById('filter-merc-tipo').value;
+  var lote = document.getElementById('filter-lote').value;
+  var dep  = document.getElementById('filter-dep').value;
   var datos = _stockGridData.filter(function(m) {
     var matchQ = !q ||
       (m.cosechero     || '').toLowerCase().indexOf(q) >= 0 ||
@@ -828,11 +812,21 @@ function filtrarStockGrid() {
       (m.deposito      || '').toLowerCase().indexOf(q) >= 0 ||
       (m.destino_venta || '').toLowerCase().indexOf(q) >= 0 ||
       (m.usuario       || '').toLowerCase().indexOf(q) >= 0 ||
-      (m.juntada_id  ? String(m.juntada_id)  : '').indexOf(q) >= 0;
+      (m.juntada_id  ? String(m.juntada_id) : '').indexOf(q) >= 0;
     var matchTipo = !tipo || m.tipo === tipo;
-    return matchQ && matchTipo;
+    var matchLote = !lote || (m.lote || '') === lote;
+    var matchDep  = !dep  || (m.deposito || m.destino_venta || '') === dep;
+    return matchQ && matchTipo && matchLote && matchDep;
   });
   renderStockGrid(datos);
+}
+
+function limpiarFiltrosGrid() {
+  document.getElementById('stock-buscar').value = '';
+  document.getElementById('filter-merc-tipo').value = '';
+  document.getElementById('filter-lote').value = '';
+  document.getElementById('filter-dep').value = '';
+  renderStockGrid(_stockGridData);
 }
 
 /* ── CSV helper ── */
@@ -1026,6 +1020,17 @@ function cargarStock() {
       _stockGridData = data;
       document.getElementById('stock-buscar').value = '';
       document.getElementById('filter-merc-tipo').value = '';
+      // Poblar filtros dinámicos
+      var lotes = [], deps = [];
+      data.forEach(function(m) {
+        if (m.lote && lotes.indexOf(m.lote) < 0) lotes.push(m.lote);
+        var d = m.deposito || m.destino_venta || '';
+        if (d && deps.indexOf(d) < 0) deps.push(d);
+      });
+      document.getElementById('filter-lote').innerHTML = '<option value="">Lote: Todos</option>' +
+        lotes.sort().map(function(l){ return '<option value="'+l+'">'+l+'</option>'; }).join('');
+      document.getElementById('filter-dep').innerHTML = '<option value="">Depósito: Todos</option>' +
+        deps.sort().map(function(d){ return '<option value="'+d+'">'+d+'</option>'; }).join('');
       renderStockGrid(data);
     })
     .catch(function(){
@@ -1158,22 +1163,10 @@ function limpiarFiltrosHistorial() {
   document.getElementById('hist-temporada').value = '';
   document.getElementById('hist-lote').value = '';
   document.getElementById('hist-tipo').value = '';
-  document.getElementById('filtrar-fechas').checked = false;
-  document.getElementById('rango-fechas').style.display = 'none';
   document.getElementById('hist-desde').value = '';
   document.getElementById('hist-hasta').value = '';
   document.getElementById('tbody-historial').innerHTML = '<tr><td colspan="11" class="empty">Seleccioná filtros para ver movimientos</td></tr>';
   document.getElementById('tfoot-historial').innerHTML = '';
-}
-
-function toggleFechasHistorial() {
-  var checked = document.getElementById('filtrar-fechas').checked;
-  document.getElementById('rango-fechas').style.display = checked ? '' : 'none';
-  if (!checked) {
-    document.getElementById('hist-desde').value = '';
-    document.getElementById('hist-hasta').value = '';
-  }
-  cargarHistorial();
 }
 
 function cargarHistorial() {

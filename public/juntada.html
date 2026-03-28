@@ -468,6 +468,10 @@
           <h3>Registros de hoy</h3>
           <small id="hist-contador"></small>
         </div>
+        <div class="filtros-barra" style="margin:8px 0 4px;">
+          <input type="search" class="fb-buscar" id="juntada-buscar" placeholder="Buscar cosechero, lote..." oninput="filtrarJuntada()">
+          <button class="fb-limpiar" onclick="limpiarFiltrosJuntada()">✕ Limpiar</button>
+        </div>
         <div class="table-wrap" style="overflow-x:auto;">
           <table>
             <thead>
@@ -899,6 +903,18 @@
     return f.getFullYear() === _d.getFullYear() && f.getMonth() === _d.getMonth() && f.getDate() === _d.getDate();
   }
 
+  var _juntadaData = [];
+
+  function filtrarJuntada() {
+    var q = (document.getElementById('juntada-buscar').value || '').trim();
+    filtrarMovimientosGrid('tbody-hist-hoy', _juntadaData, q);
+  }
+
+  function limpiarFiltrosJuntada() {
+    document.getElementById('juntada-buscar').value = '';
+    renderMovimientosGrid('tbody-hist-hoy', _juntadaData);
+  }
+
   function cargarHistorial() {
     var f = _fechasHoy();
     fetch('/api/stock-mercaderia/historial?desde=' + f.hoy + '&hasta=' + f.manana)
@@ -914,7 +930,8 @@
         document.getElementById('hist-total').textContent = totalKg > 0
           ? totalKg.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:2}) + ' kg'
           : '—';
-        renderMovimientosGrid('tbody-hist-hoy', data);
+        _juntadaData = data;
+        filtrarJuntada();
         guardarUltimaJuntada(data);
         cargarKpisJuntada();
       })

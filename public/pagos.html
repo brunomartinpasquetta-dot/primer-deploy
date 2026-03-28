@@ -73,27 +73,13 @@
 
   <!-- RESUMEN -->
   <div id="tab-resumen" class="tab-content active">
-    <div class="card" style="margin-bottom:12px; padding:16px;">
-      <div>
-        <label>Temporada</label>
-        <select id="filtro-temporada" onchange="cargarResumen()"></select>
-      </div>
-      <label class="toggle-fecha">
-        <input type="checkbox" id="filtrar-fechas" onchange="toggleFechas()">
-        <span>Filtrar por rango de fechas</span>
-      </label>
-      <div id="rango-fechas" style="display:none;">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <div>
-            <label>Desde</label>
-            <input type="date" id="filtro-desde" onchange="cargarResumen()">
-          </div>
-          <div>
-            <label>Hasta</label>
-            <input type="date" id="filtro-hasta" onchange="cargarResumen()">
-          </div>
-        </div>
-      </div>
+    <div class="filtros-barra">
+      <input type="search" class="fb-buscar" id="pagos-buscar" placeholder="Buscar juntador..." oninput="buscarResumen()">
+      <div class="fb-sep"></div>
+      <select id="filtro-temporada" onchange="cargarResumen()"></select>
+      <input type="date" id="filtro-desde" onchange="cargarResumen()">
+      <input type="date" id="filtro-hasta" onchange="cargarResumen()">
+      <button class="fb-limpiar" onclick="limpiarFiltrosPagos()">✕ Limpiar</button>
     </div>
     <div class="card">
       <table>
@@ -160,7 +146,7 @@
       <label>Juntador</label>
       <select id="ant-juntador"></select>
       <label>Monto ($)</label>
-      <input type="number" id="ant-monto" placeholder="Ej: 5000" step="0.01" data-miles>
+      <input type="text" inputmode="decimal" id="ant-monto" placeholder="Ej: 5000" data-miles>
       <label>Observacion</label>
       <input type="text" id="ant-obs" placeholder="Opcional">
       <button class="btn btn-red" id="btn-anticipo" onclick="registrarAnticipo(this)">Registrar Anticipo</button>
@@ -179,7 +165,7 @@
       <label>Temporada</label>
       <select id="precio-temporada"></select>
       <label>Precio por kilo ($)</label>
-      <input type="number" id="precio-valor" placeholder="Ej: 800" step="0.01" data-miles>
+      <input type="text" inputmode="decimal" id="precio-valor" placeholder="Ej: 800" data-miles>
       <label>Destino</label>
       <select id="precio-destino">
         <option value="fresco">Fresco</option>
@@ -222,14 +208,50 @@
       el.classList.add('active');
     }
 
-    function toggleFechas() {
-      var checked = document.getElementById('filtrar-fechas').checked;
-      document.getElementById('rango-fechas').style.display = checked ? '' : 'none';
-      if (!checked) {
-        document.getElementById('filtro-desde').value = '';
-        document.getElementById('filtro-hasta').value = '';
-      }
+    var _resumenData = [];
+
+    function limpiarFiltrosPagos() {
+      document.getElementById('pagos-buscar').value = '';
+      document.getElementById('filtro-desde').value = '';
+      document.getElementById('filtro-hasta').value = '';
       cargarResumen();
+    }
+
+    function buscarResumen() {
+      var q = (document.getElementById('pagos-buscar').value || '').toLowerCase().trim();
+      var filtrado = q ? _resumenData.filter(function(j) {
+        return (j.juntador || '').toLowerCase().indexOf(q) >= 0;
+      }) : _resumenData;
+      renderResumen(filtrado);
+    }
+
+    function renderResumen(data) {
+      var tbody = document.getElementById('tbody-resumen');
+      if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty">Sin datos</td></tr>';
+        document.getElementById('tbody-total-trabajador').innerHTML = '<tr><td colspan="3" class="empty">Sin datos</td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.map(function(j) {
+        const saldo = parseFloat(j.saldo_pendiente) || 0;
+        return '<tr>' +
+          '<td><strong>' + j.juntador + '</strong></td>' +
+          '<td>' + (j.tipo || 'juntador') + '</td>' +
+          '<td>' + parseFloat(j.total_kilos).toFixed(2) + ' kg</td>' +
+          '<td>$' + parseFloat(j.anticipos).toLocaleString('es-AR') + '</td>' +
+          '<td>$' + parseFloat(j.liquidado).toLocaleString('es-AR') + '</td>' +
+          '<td class="' + (saldo > 0 ? 'saldo-positivo' : 'saldo-cero') + '">$' + saldo.toLocaleString('es-AR') + '</td>' +
+          '</tr>';
+      }).join('');
+      document.getElementById('tbody-total-trabajador').innerHTML = data.map(function(j) {
+        var totalPagado = (parseFloat(j.anticipos) || 0) + (parseFloat(j.liquidado) || 0);
+        var nPagos = (parseFloat(j.anticipos) > 0 ? 1 : 0) + (parseFloat(j.liquidado) > 0 ? 1 : 0);
+        return '<tr>' +
+          '<td><strong>' + j.juntador + '</strong></td>' +
+          '<td style="text-align:center;">' + nPagos + '</td>' +
+          '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;">$' + totalPagado.toLocaleString('es-AR') + '</td>' +
+          '</tr>';
+      }).join('');
     }
 
     function cargarDatos() {
@@ -270,34 +292,8 @@
       fetch(url)
         .then(function(r) { return r.json(); })
         .then(function(data) {
-          const tbody = document.getElementById('tbody-resumen');
-          if (data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="empty">Sin datos</td></tr>';
-            return;
-          }
-          tbody.innerHTML = data.map(function(j) {
-            const saldo = parseFloat(j.saldo_pendiente) || 0;
-            return '<tr>' +
-              '<td><strong>' + j.juntador + '</strong></td>' +
-              '<td>' + (j.tipo || 'juntador') + '</td>' +
-              '<td>' + parseFloat(j.total_kilos).toFixed(2) + ' kg</td>' +
-              '<td>$' + parseFloat(j.anticipos).toLocaleString('es-AR') + '</td>' +
-              '<td>$' + parseFloat(j.liquidado).toLocaleString('es-AR') + '</td>' +
-              '<td class="' + (saldo > 0 ? 'saldo-positivo' : 'saldo-cero') + '">$' + saldo.toLocaleString('es-AR') + '</td>' +
-              '</tr>';
-          }).join('');
-
-          // ── Resumen por trabajador ──
-          var tbodyTrab = document.getElementById('tbody-total-trabajador');
-          tbodyTrab.innerHTML = data.map(function(j) {
-            var totalPagado = (parseFloat(j.anticipos) || 0) + (parseFloat(j.liquidado) || 0);
-            var nPagos = (parseFloat(j.anticipos) > 0 ? 1 : 0) + (parseFloat(j.liquidado) > 0 ? 1 : 0);
-            return '<tr>' +
-              '<td><strong>' + j.juntador + '</strong></td>' +
-              '<td style="text-align:center;">' + nPagos + '</td>' +
-              '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;">$' + totalPagado.toLocaleString('es-AR') + '</td>' +
-              '</tr>';
-          }).join('');
+          _resumenData = data;
+          buscarResumen();
         });
     }
 

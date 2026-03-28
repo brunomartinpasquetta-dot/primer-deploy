@@ -336,23 +336,27 @@
         <div id="ins-almacenes-list"></div>
       </div>
 
-      <!-- ── Búsqueda / filtro / export ── -->
-      <div style="margin-bottom:12px;">
-        <div style="display:flex;gap:10px;margin-bottom:8px;align-items:center;">
-          <input type="text" class="ins-search" id="search-stock" style="flex:1;"
-                 placeholder="Buscar Insumo..." oninput="filtrarStock()">
-          <select class="ins-filter-sel" id="filter-stock" onchange="filtrarStock()" style="flex:1;">
-            <option value="">Filtros: Tipo, Alerta</option>
-          </select>
-        </div>
-        <div style="display:flex;gap:4px;">
-          <button class="btn btn-secondary btn-sm" onclick="exportarCSV()">
-            <i data-lucide="download"></i> Exportar
-          </button>
-          <button class="btn btn-secondary btn-sm" onclick="imprimirVista()">
-            <i data-lucide="printer"></i> Imprimir
-          </button>
-        </div>
+      <!-- ── Barra de filtros Stock ── -->
+      <div class="filtros-barra">
+        <input type="search" class="fb-buscar" id="search-stock" placeholder="Buscar producto, proveedor..." oninput="filtrarStock()">
+        <div class="fb-sep"></div>
+        <select id="filter-cat" onchange="filtrarStock()" title="Categoría">
+          <option value="">Categoría: Todas</option>
+        </select>
+        <select id="filter-prov" onchange="filtrarStock()" title="Proveedor">
+          <option value="">Proveedor: Todos</option>
+        </select>
+        <select id="filter-dep" onchange="filtrarStock()" title="Depósito">
+          <option value="">Depósito: Todos</option>
+        </select>
+        <select id="filter-stock" onchange="filtrarStock()" title="Alerta">
+          <option value="">Alerta: Todas</option>
+          <option value="__alerta__">Solo stock bajo</option>
+        </select>
+        <div class="fb-sep"></div>
+        <button class="aplic-btn-export" onclick="exportarCSV()" title="Exportar CSV"><i data-lucide="download"></i></button>
+        <button class="aplic-btn-export" onclick="imprimirVista()" title="Imprimir"><i data-lucide="printer"></i></button>
+        <button class="fb-limpiar" onclick="limpiarFiltrosStock()">✕ Limpiar</button>
       </div>
 
       <!-- ── Tabla Stock Actual ── -->
@@ -390,48 +394,25 @@
             </button>
           </div>
         </div>
-        <div class="card-form" style="margin-bottom:12px;">
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:8px;">
-            <div class="form-row" style="margin-bottom:0;">
-              <label>Producto</label>
-              <select id="hist-producto" onchange="cargarHistorial()">
-                <option value="">Todos</option>
-              </select>
-            </div>
-            <div class="form-row" style="margin-bottom:0;">
-              <label>Lote</label>
-              <select id="hist-lote" onchange="cargarHistorial()">
-                <option value="">Todos</option>
-              </select>
-            </div>
-            <div class="form-row" style="margin-bottom:0;">
-              <label>Tipo</label>
-              <select id="hist-tipo" onchange="cargarHistorial()">
-                <option value="">Todos</option>
-                <option value="ingreso">Ingreso (compra)</option>
-                <option value="egreso">Egreso (aplica/merma/...)</option>
-              </select>
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
-            <label style="margin:0;display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
-              <input type="checkbox" id="filtrar-fechas" onchange="toggleFechasHistorial()">
-              <span>Filtrar por rango de fechas</span>
-            </label>
-            <button class="btn btn-secondary" onclick="limpiarFiltrosHistorial()">Limpiar</button>
-          </div>
-          <div id="rango-fechas" style="display:none;margin-top:8px;">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-              <div class="form-row" style="margin-bottom:0;">
-                <label>Desde</label>
-                <input type="date" id="hist-desde" onchange="cargarHistorial()">
-              </div>
-              <div class="form-row" style="margin-bottom:0;">
-                <label>Hasta</label>
-                <input type="date" id="hist-hasta" onchange="cargarHistorial()">
-              </div>
-            </div>
-          </div>
+        <!-- Barra de filtros historial -->
+        <div class="filtros-barra" style="margin-bottom:8px;">
+          <select id="hist-producto" onchange="cargarHistorial()" title="Producto">
+            <option value="">Producto: Todos</option>
+          </select>
+          <select id="hist-lote" onchange="cargarHistorial()" title="Lote">
+            <option value="">Lote: Todos</option>
+          </select>
+          <select id="hist-tipo" onchange="cargarHistorial()" title="Movimiento">
+            <option value="">Movimiento: Todos</option>
+            <option value="ingreso">Ingreso</option>
+            <option value="egreso">Egreso</option>
+          </select>
+          <div class="fb-sep"></div>
+          <input type="date" id="hist-desde" onchange="cargarHistorial()" title="Desde">
+          <input type="date" id="hist-hasta" onchange="cargarHistorial()" title="Hasta">
+          <div class="fb-sep"></div>
+          <button class="aplic-btn-export" onclick="imprimirHistorial()" title="Imprimir"><i data-lucide="printer"></i></button>
+          <button class="fb-limpiar" onclick="limpiarFiltrosHistorial()">✕ Limpiar</button>
         </div>
         <div class="card">
           <div class="table-wrap">
@@ -670,25 +651,33 @@
   /* ── Filtrar tabla en cliente ── */
   function filtrarStock() {
     var search = (document.getElementById('search-stock').value || '').toLowerCase().trim();
-    var filtro  = document.getElementById('filter-stock').value;
+    var cat    = document.getElementById('filter-cat').value;
+    var prov   = document.getElementById('filter-prov').value;
+    var dep    = document.getElementById('filter-dep').value;
+    var alerta = document.getElementById('filter-stock').value;
     var filtered = _stockData.filter(function(p) {
       var matchSearch = !search ||
         (p.producto  || '').toLowerCase().indexOf(search) !== -1 ||
         (p.proveedor || '').toLowerCase().indexOf(search) !== -1 ||
         (p.deposito  || '').toLowerCase().indexOf(search) !== -1 ||
         (p.categoria || '').toLowerCase().indexOf(search) !== -1;
-      var matchFiltro;
-      if (filtro === '__alerta__') {
-        matchFiltro = parseFloat(p.cantidad_disponible) <= 2;
-      } else if (filtro) {
-        matchFiltro = (p.categoria || '') === filtro;
-      } else {
-        matchFiltro = true;
-      }
-      return matchSearch && matchFiltro;
+      var matchCat  = !cat  || (p.categoria || '') === cat;
+      var matchProv = !prov || (p.proveedor || '') === prov;
+      var matchDep  = !dep  || (p.deposito  || '') === dep;
+      var matchAlt  = alerta !== '__alerta__' || parseFloat(p.cantidad_disponible) <= 2;
+      return matchSearch && matchCat && matchProv && matchDep && matchAlt;
     });
     renderStockTabla(filtered);
     document.getElementById('chk-all').checked = false;
+  }
+
+  function limpiarFiltrosStock() {
+    document.getElementById('search-stock').value = '';
+    document.getElementById('filter-cat').value = '';
+    document.getElementById('filter-prov').value = '';
+    document.getElementById('filter-dep').value = '';
+    document.getElementById('filter-stock').value = '';
+    filtrarStock();
   }
 
   /* ── Renderizar tabla stock ── */
@@ -744,13 +733,19 @@
       document.getElementById('kpi-bajo').textContent = bajosCount;
       document.getElementById('kpi-valor').textContent = data.length + ' líneas';
 
-      /* Poblar filtro tipos/categorías */
-      var tipos = [];
-      data.forEach(function(p) { if (p.categoria && tipos.indexOf(p.categoria) === -1) tipos.push(p.categoria); });
-      var sel = document.getElementById('filter-stock');
-      sel.innerHTML = '<option value="">Filtros: Categoría, Alerta</option>' +
-        tipos.map(function(t) { return '<option value="' + t + '">Cat: ' + t + '</option>'; }).join('') +
-        '<option value="__alerta__">Solo stock bajo</option>';
+      /* Poblar filtros dinámicos */
+      var cats = [], provs = [], deps = [];
+      data.forEach(function(p) {
+        if (p.categoria && cats.indexOf(p.categoria) === -1) cats.push(p.categoria);
+        if (p.proveedor && provs.indexOf(p.proveedor) === -1) provs.push(p.proveedor);
+        if (p.deposito  && deps.indexOf(p.deposito)   === -1) deps.push(p.deposito);
+      });
+      document.getElementById('filter-cat').innerHTML = '<option value="">Categoría: Todas</option>' +
+        cats.sort().map(function(t) { return '<option value="'+t+'">'+t+'</option>'; }).join('');
+      document.getElementById('filter-prov').innerHTML = '<option value="">Proveedor: Todos</option>' +
+        provs.sort().map(function(t) { return '<option value="'+t+'">'+t+'</option>'; }).join('');
+      document.getElementById('filter-dep').innerHTML = '<option value="">Depósito: Todos</option>' +
+        deps.sort().map(function(t) { return '<option value="'+t+'">'+t+'</option>'; }).join('');
 
       /* Renderizar tabla */
       renderStockTabla(data);
@@ -962,22 +957,10 @@
   }
 
   /* ── Historial ── */
-  function toggleFechasHistorial() {
-    var checked = document.getElementById('filtrar-fechas').checked;
-    document.getElementById('rango-fechas').style.display = checked ? '' : 'none';
-    if (!checked) {
-      document.getElementById('hist-desde').value = '';
-      document.getElementById('hist-hasta').value = '';
-    }
-    cargarHistorial();
-  }
-
   function limpiarFiltrosHistorial() {
     document.getElementById('hist-producto').value = '';
     document.getElementById('hist-lote').value = '';
     document.getElementById('hist-tipo').value = '';
-    document.getElementById('filtrar-fechas').checked = false;
-    document.getElementById('rango-fechas').style.display = 'none';
     document.getElementById('hist-desde').value = '';
     document.getElementById('hist-hasta').value = '';
     cargarHistorial();

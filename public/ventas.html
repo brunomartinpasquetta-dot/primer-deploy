@@ -149,27 +149,19 @@
       </div>
 
       <!-- ── Filtros historial ── -->
-      <div class="card" style="margin-bottom:12px; padding:16px;">
-        <div class="two-col">
-          <div>
-            <label>Temporada</label>
-            <select id="filtro-temporada" onchange="cargarHistorial()">
-              <option value="">Todas</option>
-            </select>
-          </div>
-          <div>
-            <label>
-              <input type="checkbox" id="filtrar-fechas" onchange="toggleFechas()" style="margin-right:6px;">
-              Filtrar por fechas
-            </label>
-            <div id="rango-fechas" style="display:none;margin-top:6px;">
-              <div class="two-col">
-                <div><label>Desde</label><input type="date" id="filtro-desde" onchange="cargarHistorial()"></div>
-                <div><label>Hasta</label><input type="date" id="filtro-hasta" onchange="cargarHistorial()"></div>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div class="filtros-barra">
+        <input type="search" class="fb-buscar" id="filtro-buscar" placeholder="Buscar comprador, lote, depósito..." oninput="buscarHistorial()">
+        <div class="fb-sep"></div>
+        <select id="filtro-temporada" onchange="cargarHistorial()" title="Temporada">
+          <option value="">Temporada: Todas</option>
+        </select>
+        <select id="filtro-deposito" onchange="buscarHistorial()" title="Depósito">
+          <option value="">Depósito: Todos</option>
+        </select>
+        <div class="fb-sep"></div>
+        <input type="date" id="filtro-desde" onchange="cargarHistorial()" title="Desde">
+        <input type="date" id="filtro-hasta" onchange="cargarHistorial()" title="Hasta">
+        <button class="fb-limpiar" onclick="limpiarFiltrosVentas()">✕ Limpiar</button>
       </div>
 
       <!-- ── Tabla historial ── -->
@@ -213,13 +205,30 @@
     document.getElementById('form-nuevo').classList.toggle('visible');
   }
 
-  function toggleFechas() {
-    var checked = document.getElementById('filtrar-fechas').checked;
-    document.getElementById('rango-fechas').style.display = checked ? '' : 'none';
-    if (!checked) {
-      document.getElementById('filtro-desde').value = '';
-      document.getElementById('filtro-hasta').value = '';
-    }
+  var _historialVentas = [];
+
+  function buscarHistorial() {
+    var q   = (document.getElementById('filtro-buscar').value || '').toLowerCase();
+    var dep = document.getElementById('filtro-deposito').value;
+    var data = _historialVentas.filter(function(v) {
+      var matchQ = !q ||
+        (v.comprador     || '').toLowerCase().indexOf(q) >= 0 ||
+        (v.lote          || '').toLowerCase().indexOf(q) >= 0 ||
+        (v.deposito      || '').toLowerCase().indexOf(q) >= 0 ||
+        (v.destino_venta || '').toLowerCase().indexOf(q) >= 0 ||
+        (v.usuario       || '').toLowerCase().indexOf(q) >= 0;
+      var matchDep = !dep || (v.deposito || '') === dep;
+      return matchQ && matchDep;
+    });
+    renderHistorial(data);
+  }
+
+  function limpiarFiltrosVentas() {
+    document.getElementById('filtro-buscar').value = '';
+    document.getElementById('filtro-temporada').value = '';
+    document.getElementById('filtro-deposito').value = '';
+    document.getElementById('filtro-desde').value = '';
+    document.getElementById('filtro-hasta').value = '';
     cargarHistorial();
   }
 
@@ -380,9 +389,45 @@
     return d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
   }
 
+  function renderHistorial(data) {
+    var tbody = document.getElementById('tbody-historial');
+    var tfoot = document.getElementById('tfoot-historial');
+    if (!data.length) {
+      tbody.innerHTML = '<tr><td colspan="10" class="empty">Sin ventas registradas</td></tr>';
+      tfoot.innerHTML = ''; return;
+    }
+    var totalKg = 0, totalPesos = 0;
+    var mono = "font-family:'JetBrains Mono',monospace;";
+    tbody.innerHTML = data.map(function(v) {
+      var kg = parseFloat(v.kilos) || 0;
+      var precio = parseFloat(v.precio_kilo) || 0;
+      var total = parseFloat(v.total) || 0;
+      totalKg += kg; totalPesos += total;
+      return '<tr>' +
+        '<td style="'+mono+'color:var(--texto-suave);font-size:11px;">#' + (v.id || '-') + '</td>' +
+        '<td>' + formatFechaHora(v.fecha) + (v.temporada ? '<br><small style="color:var(--texto-suave)">' + v.temporada + '</small>' : '') + '</td>' +
+        '<td>' + (v.deposito || '<em style="color:var(--texto-suave)">Directa</em>') + '</td>' +
+        '<td>' + (v.lote || '-') + '</td>' +
+        '<td>' + (v.comprador || '-') + '</td>' +
+        '<td>' + (v.destino_venta || '-') + '</td>' +
+        '<td style="'+mono+'">' + kg.toLocaleString('es-AR', { minimumFractionDigits: 2 }) + ' kg</td>' +
+        '<td style="'+mono+'">' + (precio > 0 ? '$' + precio.toLocaleString('es-AR', { minimumFractionDigits: 2 }) : '-') + '</td>' +
+        '<td style="'+mono+'font-weight:700;">' + (total > 0 ? '$' + total.toLocaleString('es-AR', { minimumFractionDigits: 2 }) : '-') + '</td>' +
+        '<td style="font-size:12px;color:var(--texto-suave);">' + (v.usuario || '-') + '</td>' +
+        '</tr>';
+    }).join('');
+    tfoot.innerHTML = '<tr style="background:var(--fondo-dark);font-weight:700;">' +
+      '<td colspan="6" style="padding:10px 12px;">TOTALES</td>' +
+      '<td style="padding:10px 12px;font-family:\'JetBrains Mono\',monospace;">' + totalKg.toLocaleString('es-AR', { minimumFractionDigits: 2 }) + ' kg</td>' +
+      '<td></td>' +
+      '<td style="padding:10px 12px;font-family:\'JetBrains Mono\',monospace;">$' + totalPesos.toLocaleString('es-AR', { minimumFractionDigits: 2 }) + '</td>' +
+      '<td></td>' +
+      '</tr>';
+  }
+
   function cargarHistorial() {
     var params = ['tipo=egreso_venta'];
-    var tid = document.getElementById('filtro-temporada').value;
+    var tid   = document.getElementById('filtro-temporada').value;
     var desde = document.getElementById('filtro-desde').value;
     var hasta = document.getElementById('filtro-hasta').value;
     if (tid)   params.push('temporada_id=' + tid);
@@ -391,41 +436,13 @@
     fetch('/api/stock-mercaderia/historial?' + params.join('&'))
       .then(function(r) { return r.json(); })
       .then(function(data) {
-        var tbody = document.getElementById('tbody-historial');
-        var tfoot = document.getElementById('tfoot-historial');
-        if (!data.length) {
-          tbody.innerHTML = '<tr><td colspan="10" class="empty">Sin ventas registradas</td></tr>';
-          tfoot.innerHTML = '';
-          return;
-        }
-        var totalKg = 0, totalPesos = 0;
-        var mono = "font-family:'JetBrains Mono',monospace;";
-        tbody.innerHTML = data.map(function(v) {
-          var kg = parseFloat(v.kilos) || 0;
-          var precio = parseFloat(v.precio_kilo) || 0;
-          var total = parseFloat(v.total) || 0;
-          totalKg += kg;
-          totalPesos += total;
-          return '<tr>' +
-            '<td style="'+mono+'color:var(--texto-suave);font-size:11px;">#' + (v.id || '-') + '</td>' +
-            '<td>' + formatFechaHora(v.fecha) + (v.temporada ? '<br><small style="color:var(--texto-suave)">' + v.temporada + '</small>' : '') + '</td>' +
-            '<td>' + (v.deposito || '<em style="color:var(--texto-suave)">Directa</em>') + '</td>' +
-            '<td>' + (v.lote || '-') + '</td>' +
-            '<td>' + (v.comprador || '-') + '</td>' +
-            '<td>' + (v.destino_venta || '-') + '</td>' +
-            '<td style="'+mono+'">' + kg.toLocaleString('es-AR', { minimumFractionDigits: 2 }) + ' kg</td>' +
-            '<td style="'+mono+'">' + (precio > 0 ? '$' + precio.toLocaleString('es-AR', { minimumFractionDigits: 2 }) : '-') + '</td>' +
-            '<td style="'+mono+'font-weight:700;">' + (total > 0 ? '$' + total.toLocaleString('es-AR', { minimumFractionDigits: 2 }) : '-') + '</td>' +
-            '<td style="font-size:12px;color:var(--texto-suave);">' + (v.usuario || '-') + '</td>' +
-            '</tr>';
-        }).join('');
-        tfoot.innerHTML = '<tr style="background:var(--fondo-dark);font-weight:700;">' +
-          '<td colspan="6" style="padding:10px 12px;">TOTALES</td>' +
-          '<td style="padding:10px 12px;font-family:\'JetBrains Mono\',monospace;">' + totalKg.toLocaleString('es-AR', { minimumFractionDigits: 2 }) + ' kg</td>' +
-          '<td></td>' +
-          '<td style="padding:10px 12px;font-family:\'JetBrains Mono\',monospace;">$' + totalPesos.toLocaleString('es-AR', { minimumFractionDigits: 2 }) + '</td>' +
-          '<td></td>' +
-          '</tr>';
+        _historialVentas = data;
+        // Poblar filtro depósito
+        var deps = [];
+        data.forEach(function(v) { if (v.deposito && deps.indexOf(v.deposito) < 0) deps.push(v.deposito); });
+        document.getElementById('filtro-deposito').innerHTML = '<option value="">Depósito: Todos</option>' +
+          deps.sort().map(function(d){ return '<option value="'+d+'">'+d+'</option>'; }).join('');
+        buscarHistorial();
       });
   }
 

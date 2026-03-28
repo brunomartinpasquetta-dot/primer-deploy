@@ -409,6 +409,73 @@ input, select, textarea {
 
 @media (max-width: 1000px) { .dash-grid { grid-template-columns: 1fr; } }
 
+/* ── BARRA DE FILTROS UNIFICADA ─────────────── */
+.filtros-barra {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+.filtros-barra .fb-buscar {
+  flex: 1 1 180px;
+  min-width: 130px;
+  padding: 7px 10px;
+  border: 1.5px solid var(--borde);
+  border-radius: 8px;
+  font-size: 13px;
+  background: var(--fondo);
+  outline: none;
+}
+.filtros-barra .fb-buscar:focus { border-color: var(--verde); }
+.filtros-barra select {
+  flex: 0 1 auto;
+  padding: 7px 10px;
+  border: 1.5px solid var(--borde);
+  border-radius: 8px;
+  font-size: 13px;
+  background: var(--fondo);
+  outline: none;
+  cursor: pointer;
+}
+.filtros-barra select:focus { border-color: var(--verde); }
+.filtros-barra input[type="date"] {
+  flex: 0 1 130px;
+  padding: 7px 8px;
+  border: 1.5px solid var(--borde);
+  border-radius: 8px;
+  font-size: 13px;
+  background: var(--fondo);
+  outline: none;
+}
+.filtros-barra input[type="date"]:focus { border-color: var(--verde); }
+.fb-sep { width: 1px; height: 22px; background: var(--borde); flex-shrink: 0; }
+.fb-limpiar {
+  margin-left: auto;
+  background: none;
+  border: 1.5px solid var(--borde);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--texto-suave);
+  white-space: nowrap;
+  transition: background .15s;
+}
+.fb-limpiar:hover { background: var(--fondo-dark); color: var(--texto); }
+@media (max-width: 600px) {
+  .filtros-barra { gap: 6px; }
+  .filtros-barra .fb-buscar { flex: 1 1 100%; }
+  .filtros-barra select, .filtros-barra input[type="date"] { flex: 1 1 calc(50% - 3px); }
+  .fb-sep { display: none; }
+  .fb-limpiar { margin-left: 0; flex: 1 1 100%; text-align: center; }
+}
+
 /* ── CARDS ──────────────────────────────────── */
 .card {
   background: var(--superficie);
@@ -461,7 +528,7 @@ input, select, textarea {
 .action-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
+  gap: 12px;
   margin-bottom: 24px;
 }
 
@@ -481,7 +548,7 @@ input, select, textarea {
   background: var(--superficie);
   border: 1px solid var(--borde);
   border-radius: var(--radius-lg);
-  padding: 10px 12px;
+  padding: 16px 20px;
   min-height: auto;
   display: flex;
   flex-direction: column;
@@ -515,19 +582,19 @@ input, select, textarea {
 }
 
 .action-card-icon {
-  font-size: 18px;
+  font-size: 24px;
   line-height: 1;
   display: block;
 }
 
 .action-card-label {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   line-height: 1.2;
 }
 
 .action-card-sub {
-  font-size: 11px;
+  font-size: 12px;
   opacity: .65;
   line-height: 1.4;
 }
@@ -546,13 +613,13 @@ input, select, textarea {
   flex-direction: column;
   align-items: center;
   gap: 7px;
-  padding: 10px 8px;
+  padding: 16px 10px;
   border-radius: var(--radius);
   background: var(--fondo);
   border: 1.5px solid var(--borde);
   text-decoration: none;
   color: var(--texto-2);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   transition: all .13s;
   text-align: center;

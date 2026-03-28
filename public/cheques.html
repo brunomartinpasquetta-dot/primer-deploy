@@ -70,6 +70,20 @@
 
   <!-- RECIBIDOS -->
   <div id="tab-recibidos" class="tab-content active">
+    <div class="filtros-barra">
+      <input type="search" class="fb-buscar" id="buscar-recibidos" placeholder="Buscar número, banco, emisor..." oninput="filtrarCheques('recibido')">
+      <div class="fb-sep"></div>
+      <select id="filtro-estado-recibido" onchange="filtrarCheques('recibido')" title="Estado">
+        <option value="">Estado: Todos</option>
+        <option value="en_cartera">En cartera</option>
+        <option value="depositado">Depositado</option>
+        <option value="rechazado">Rechazado</option>
+        <option value="endosado">Endosado</option>
+      </select>
+      <input type="date" id="filtro-desde-recibido" onchange="filtrarCheques('recibido')" title="Vencimiento desde">
+      <input type="date" id="filtro-hasta-recibido" onchange="filtrarCheques('recibido')" title="Vencimiento hasta">
+      <button class="fb-limpiar" onclick="limpiarCheques('recibido')">✕ Limpiar</button>
+    </div>
     <div class="card" style="padding: 0; overflow: hidden;">
       <div class="table-wrap">
         <table>
@@ -93,6 +107,19 @@
 
   <!-- EMITIDOS -->
   <div id="tab-emitidos" class="tab-content">
+    <div class="filtros-barra">
+      <input type="search" class="fb-buscar" id="buscar-emitidos" placeholder="Buscar número, banco, proveedor..." oninput="filtrarCheques('emitido')">
+      <div class="fb-sep"></div>
+      <select id="filtro-estado-emitido" onchange="filtrarCheques('emitido')" title="Estado">
+        <option value="">Estado: Todos</option>
+        <option value="pendiente">Pendiente</option>
+        <option value="cobrado">Cobrado</option>
+        <option value="anulado">Anulado</option>
+      </select>
+      <input type="date" id="filtro-desde-emitido" onchange="filtrarCheques('emitido')" title="Vencimiento desde">
+      <input type="date" id="filtro-hasta-emitido" onchange="filtrarCheques('emitido')" title="Vencimiento hasta">
+      <button class="fb-limpiar" onclick="limpiarCheques('emitido')">✕ Limpiar</button>
+    </div>
     <div class="card" style="padding: 0; overflow: hidden;">
       <div class="table-wrap">
         <table>
@@ -235,71 +262,110 @@
       return new Date(parseInt(partes[0]), parseInt(partes[1]) - 1, parseInt(partes[2]));
     }
 
+    var _chequesData = { recibido: [], emitido: [] };
+
+    function filtrarCheques(tipo) {
+      var sfx     = tipo === 'recibido' ? '-recibido' : '-emitido';
+      var q       = (document.getElementById('buscar-' + (tipo==='recibido'?'recibidos':'emitidos')).value || '').toLowerCase();
+      var estado  = document.getElementById('filtro-estado' + sfx).value;
+      var desde   = document.getElementById('filtro-desde' + sfx).value;
+      var hasta   = document.getElementById('filtro-hasta' + sfx).value;
+      var data    = _chequesData[tipo].filter(function(c) {
+        var matchQ = !q ||
+          String(c.numero || '').toLowerCase().indexOf(q) >= 0 ||
+          (c.banco     || '').toLowerCase().indexOf(q) >= 0 ||
+          (c.proveedor || '').toLowerCase().indexOf(q) >= 0 ||
+          (c.emisor    || '').toLowerCase().indexOf(q) >= 0;
+        var matchE = !estado || c.estado === estado;
+        var venc   = parseFechaLocal(c.fecha_vencimiento);
+        var matchD = !desde || !venc || venc >= new Date(desde);
+        var matchH = !hasta || !venc || venc <= new Date(hasta);
+        return matchQ && matchE && matchD && matchH;
+      });
+      var tbodyId = tipo === 'recibido' ? 'tbody-recibidos' : 'tbody-emitidos';
+      renderCheques(data, tipo, tbodyId, tipo === 'recibido' ? 6 : 7);
+    }
+
+    function limpiarCheques(tipo) {
+      var sfx = tipo === 'recibido' ? '-recibido' : '-emitido';
+      document.getElementById('buscar-' + (tipo==='recibido'?'recibidos':'emitidos')).value = '';
+      document.getElementById('filtro-estado' + sfx).value = '';
+      document.getElementById('filtro-desde' + sfx).value = '';
+      document.getElementById('filtro-hasta' + sfx).value = '';
+      filtrarCheques(tipo);
+    }
+
+    function renderCheques(data, tipo, tbodyId, cols) {
+      var tbody = document.getElementById(tbodyId);
+      if (!data.length) {
+        tbody.innerHTML = '<tr><td colspan="' + cols + '" class="empty">Sin cheques para los filtros seleccionados</td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.map(function(c) {
+        var venc     = parseFechaLocal(c.fecha_vencimiento);
+        var diasVenc = venc ? Math.floor((venc - hoy) / (1000 * 60 * 60 * 24)) : null;
+        var rowClass = '';
+        if (diasVenc !== null && c.estado === 'pendiente') {
+          if (diasVenc < 0) rowClass = 'vencido';
+          else if (diasVenc <= 7) rowClass = 'vence-pronto';
+        }
+        var fechaVenc = venc ? venc.toLocaleDateString('es-AR') : '-';
+        var badge     = '<span class="badge badge-' + c.estado + '">' + c.estado + '</span>';
+        var acciones  = '';
+        if (c.estado === 'pendiente') {
+          if (tipo === 'recibido') {
+            acciones = '<select class="estado-select" onchange="cambiarEstado(' + c.id + ', this.value, \'recibido\')">' +
+              '<option value="">Cambiar...</option>' +
+              '<option value="cobrado">Cobrado</option>' +
+              '<option value="depositado">Depositado</option>' +
+              '<option value="rechazado">Rechazado</option>' +
+              '</select>';
+          } else {
+            acciones = '<select class="estado-select" onchange="cambiarEstado(' + c.id + ', this.value, \'emitido\')">' +
+              '<option value="">Cambiar...</option>' +
+              '<option value="cobrado">Cobrado</option>' +
+              '<option value="rechazado">Rechazado</option>' +
+              '</select>';
+          }
+        }
+        var esEcheq = c.tipo_cheque === 'echeq';
+        var numCol  = esEcheq
+          ? '<span style="background:#dbeafe;color:#1e40af;font-size:11px;font-weight:700;padding:1px 6px;border-radius:10px;margin-right:4px;">E-Cheq</span>' + (c.id_echeq || '-')
+          : (c.numero || '-');
+        var bancoCol = esEcheq
+          ? '<span style="color:#888;font-size:11px;">CBU: ' + (c.cbu_origen ? c.cbu_origen.slice(-8) : '-') + '</span>'
+          : (c.banco || '-');
+        if (tipo === 'recibido') {
+          return '<tr class="' + rowClass + '">' +
+            '<td>' + numCol + '</td>' +
+            '<td>' + bancoCol + '</td>' +
+            '<td>$' + parseFloat(c.monto).toLocaleString('es-AR') + '</td>' +
+            '<td>' + fechaVenc + '</td>' +
+            '<td>' + badge + '</td>' +
+            '<td>' + acciones + '</td>' +
+            '</tr>';
+        } else {
+          return '<tr class="' + rowClass + '">' +
+            '<td>' + numCol + '</td>' +
+            '<td>' + bancoCol + '</td>' +
+            '<td>' + (c.proveedor || '-') + '</td>' +
+            '<td>$' + parseFloat(c.monto).toLocaleString('es-AR') + '</td>' +
+            '<td>' + fechaVenc + '</td>' +
+            '<td>' + badge + '</td>' +
+            '<td>' + acciones + '</td>' +
+            '</tr>';
+        }
+      }).join('');
+    }
+
     function cargarCheques(tipo, tbodyId, cols) {
       var tbody = document.getElementById(tbodyId);
       tbody.innerHTML = '<tr><td colspan="' + cols + '" class="empty">Cargando...</td></tr>';
       fetch('/api/cheques?tipo=' + tipo)
         .then(function(r) { return r.json(); })
         .then(function(data) {
-          if (data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="' + cols + '" class="empty">Sin cheques</td></tr>';
-            return;
-          }
-          tbody.innerHTML = data.map(function(c) {
-            var venc = parseFechaLocal(c.fecha_vencimiento);
-            var diasVenc = venc ? Math.floor((venc - hoy) / (1000 * 60 * 60 * 24)) : null;
-            var rowClass = '';
-            if (diasVenc !== null && c.estado === 'pendiente') {
-              if (diasVenc < 0) rowClass = 'vencido';
-              else if (diasVenc <= 7) rowClass = 'vence-pronto';
-            }
-            var fechaVenc = venc ? venc.toLocaleDateString('es-AR') : '-';
-            var badge = '<span class="badge badge-' + c.estado + '">' + c.estado + '</span>';
-            var acciones = '';
-            if (c.estado === 'pendiente') {
-              if (tipo === 'recibido') {
-                acciones = '<select class="estado-select" onchange="cambiarEstado(' + c.id + ', this.value, \'recibido\')">' +
-                  '<option value="">Cambiar...</option>' +
-                  '<option value="cobrado">Cobrado</option>' +
-                  '<option value="depositado">Depositado</option>' +
-                  '<option value="rechazado">Rechazado</option>' +
-                  '</select>';
-              } else {
-                acciones = '<select class="estado-select" onchange="cambiarEstado(' + c.id + ', this.value, \'emitido\')">' +
-                  '<option value="">Cambiar...</option>' +
-                  '<option value="cobrado">Cobrado</option>' +
-                  '<option value="rechazado">Rechazado</option>' +
-                  '</select>';
-              }
-            }
-            var esEcheq = c.tipo_cheque === 'echeq';
-            var numCol = esEcheq
-              ? '<span style="background:#dbeafe;color:#1e40af;font-size:11px;font-weight:700;padding:1px 6px;border-radius:10px;margin-right:4px;">E-Cheq</span>' + (c.id_echeq || '-')
-              : (c.numero || '-');
-            var bancoCol = esEcheq
-              ? '<span style="color:#888;font-size:11px;">CBU: ' + (c.cbu_origen ? c.cbu_origen.slice(-8) : '-') + '</span>'
-              : (c.banco || '-');
-            if (tipo === 'recibido') {
-              return '<tr class="' + rowClass + '">' +
-                '<td>' + numCol + '</td>' +
-                '<td>' + bancoCol + '</td>' +
-                '<td>$' + parseFloat(c.monto).toLocaleString('es-AR') + '</td>' +
-                '<td>' + fechaVenc + '</td>' +
-                '<td>' + badge + '</td>' +
-                '<td>' + acciones + '</td>' +
-                '</tr>';
-            } else {
-              return '<tr class="' + rowClass + '">' +
-                '<td>' + numCol + '</td>' +
-                '<td>' + bancoCol + '</td>' +
-                '<td>' + (c.proveedor || '-') + '</td>' +
-                '<td>$' + parseFloat(c.monto).toLocaleString('es-AR') + '</td>' +
-                '<td>' + fechaVenc + '</td>' +
-                '<td>' + badge + '</td>' +
-                '<td>' + acciones + '</td>' +
-                '</tr>';
-            }
-          }).join('');
+          _chequesData[tipo] = data;
+          renderCheques(data, tipo, tbodyId, cols);
         })
         .catch(function() {
           tbody.innerHTML = '<tr><td colspan="' + cols + '" class="empty">Error al cargar</td></tr>';

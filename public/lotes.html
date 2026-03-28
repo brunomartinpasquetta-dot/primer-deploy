@@ -113,12 +113,20 @@
       <button id="tab-todos" onclick="mostrarTab('todos')" class="lotes-tab-btn">Todos los lotes</button>
     </div>
     <div id="panel-activa">
+      <div class="filtros-barra" style="margin:8px 0 4px;">
+        <input type="search" class="fb-buscar" id="lotes-buscar-activa" placeholder="Buscar lote o variedad..." oninput="filtrarLotesActiva()">
+        <button class="fb-limpiar" onclick="limpiarFiltrosLotesActiva()">✕ Limpiar</button>
+      </div>
       <table>
         <thead><tr><th>Nombre</th><th>Hectáreas</th><th>Variedad</th><th>Implantación / Densidad</th><th>Estado</th><th></th></tr></thead>
         <tbody id="tbody-activa"><tr><td colspan="6" class="empty">Cargando...</td></tr></tbody>
       </table>
     </div>
     <div id="panel-todos" style="display:none;">
+      <div class="filtros-barra" style="margin:8px 0 4px;">
+        <input type="search" class="fb-buscar" id="lotes-buscar-todos" placeholder="Buscar lote o variedad..." oninput="filtrarLotesTodos()">
+        <button class="fb-limpiar" onclick="limpiarFiltrosLotesTodos()">✕ Limpiar</button>
+      </div>
       <table>
         <thead><tr><th>Nombre</th><th>Campaña</th><th>Hectáreas</th><th>Variedad</th><th>Implantación / Densidad</th><th>Estado</th><th></th></tr></thead>
         <tbody id="tbody-todos"><tr><td colspan="7" class="empty">Cargando...</td></tr></tbody>
@@ -263,8 +271,10 @@
       document.getElementById('tab-todos').classList.toggle('active', tab === 'todos');
     }
 
-    function cargar(){
-      // Pestaña todos
+    var _lotesActivaData = [];
+    var _lotesTodosData = [];
+
+    function renderLotesActiva(data) {
       function btnEditar(l) {
         return '<button onclick="abrirEditar('+l.id+',\''+encodeURIComponent(l.nombre||'')+'\',' +
           (l.hectareas||'')+',' +
@@ -272,16 +282,69 @@
           (l.cantidad_plantines||'')+')" ' +
           'style="padding:4px 10px;font-size:12px;background:#f0f4e8;color:#2D5016;border:1px solid #a8d5b5;border-radius:6px;cursor:pointer;font-weight:600;">Editar</button>';
       }
+      var tbody = document.getElementById('tbody-activa');
+      if (!data.length) { tbody.innerHTML='<tr><td colspan="6" class="empty">Sin lotes en la campaña activa</td></tr>'; return; }
+      tbody.innerHTML=data.map(function(l){
+        return '<tr><td><strong>'+l.nombre+'</strong></td>'+
+          '<td>'+(l.hectareas?l.hectareas+' ha':'-')+'</td><td>'+(l.variedad||'-')+'</td>'+
+          '<td>'+renderImplantacion(l)+'</td>'+
+          '<td><span class="'+(l.activo?'badge-activo':'badge-inactivo')+'">'+(l.activo?'Activo':'Inactivo')+'</span></td>'+
+          '<td>'+btnEditar(l)+'</td></tr>';
+      }).join('');
+    }
+
+    function renderLotesTodos(data) {
+      function btnEditar(l) {
+        return '<button onclick="abrirEditar('+l.id+',\''+encodeURIComponent(l.nombre||'')+'\',' +
+          (l.hectareas||'')+',' +
+          '\''+encodeURIComponent(l.variedad||'')+'\',' +
+          (l.cantidad_plantines||'')+')" ' +
+          'style="padding:4px 10px;font-size:12px;background:#f0f4e8;color:#2D5016;border:1px solid #a8d5b5;border-radius:6px;cursor:pointer;font-weight:600;">Editar</button>';
+      }
+      var tbody = document.getElementById('tbody-todos');
+      if (!data.length) { tbody.innerHTML='<tr><td colspan="7" class="empty">Sin lotes</td></tr>'; return; }
+      tbody.innerHTML=data.map(function(l){
+        return '<tr><td><strong>'+l.nombre+'</strong></td><td>'+(l.temporada||'-')+'</td>'+
+          '<td>'+(l.hectareas?l.hectareas+' ha':'-')+'</td><td>'+(l.variedad||'-')+'</td>'+
+          '<td>'+renderImplantacion(l)+'</td>'+
+          '<td><span class="'+(l.activo?'badge-activo':'badge-inactivo')+'">'+(l.activo?'Activo':'Inactivo')+'</span></td>'+
+          '<td>'+btnEditar(l)+'</td></tr>';
+      }).join('');
+    }
+
+    function filtrarLotesActiva() {
+      var q = (document.getElementById('lotes-buscar-activa').value || '').toLowerCase().trim();
+      var filtrado = q ? _lotesActivaData.filter(function(l) {
+        return (l.nombre || '').toLowerCase().indexOf(q) >= 0 ||
+               (l.variedad || '').toLowerCase().indexOf(q) >= 0;
+      }) : _lotesActivaData;
+      renderLotesActiva(filtrado);
+    }
+
+    function filtrarLotesTodos() {
+      var q = (document.getElementById('lotes-buscar-todos').value || '').toLowerCase().trim();
+      var filtrado = q ? _lotesTodosData.filter(function(l) {
+        return (l.nombre || '').toLowerCase().indexOf(q) >= 0 ||
+               (l.variedad || '').toLowerCase().indexOf(q) >= 0 ||
+               (l.temporada || '').toLowerCase().indexOf(q) >= 0;
+      }) : _lotesTodosData;
+      renderLotesTodos(filtrado);
+    }
+
+    function limpiarFiltrosLotesActiva() {
+      document.getElementById('lotes-buscar-activa').value = '';
+      renderLotesActiva(_lotesActivaData);
+    }
+
+    function limpiarFiltrosLotesTodos() {
+      document.getElementById('lotes-buscar-todos').value = '';
+      renderLotesTodos(_lotesTodosData);
+    }
+
+    function cargar(){
       fetch('/api/lotes').then(function(r){return r.json();}).then(function(data){
-        var tbody = document.getElementById('tbody-todos');
-        if(!data.length){ tbody.innerHTML='<tr><td colspan="7" class="empty">Sin lotes</td></tr>'; return; }
-        tbody.innerHTML=data.map(function(l){
-          return '<tr><td><strong>'+l.nombre+'</strong></td><td>'+(l.temporada||'-')+'</td>'+
-            '<td>'+(l.hectareas?l.hectareas+' ha':'-')+'</td><td>'+(l.variedad||'-')+'</td>'+
-            '<td>'+renderImplantacion(l)+'</td>'+
-            '<td><span class="'+(l.activo?'badge-activo':'badge-inactivo')+'">'+(l.activo?'Activo':'Inactivo')+'</span></td>'+
-            '<td>'+btnEditar(l)+'</td></tr>';
-        }).join('');
+        _lotesTodosData = data;
+        filtrarLotesTodos();
       });
       fetch('/api/temporadas/activa').then(function(r){return r.json();}).then(function(t){
         var tbody = document.getElementById('tbody-activa');
@@ -290,14 +353,8 @@
           return;
         }
         fetch('/api/lotes?temporada_id='+t.id).then(function(r){return r.json();}).then(function(data){
-          if(!data.length){ tbody.innerHTML='<tr><td colspan="6" class="empty">Sin lotes en la campaña activa</td></tr>'; return; }
-          tbody.innerHTML=data.map(function(l){
-            return '<tr><td><strong>'+l.nombre+'</strong></td>'+
-              '<td>'+(l.hectareas?l.hectareas+' ha':'-')+'</td><td>'+(l.variedad||'-')+'</td>'+
-              '<td>'+renderImplantacion(l)+'</td>'+
-              '<td><span class="'+(l.activo?'badge-activo':'badge-inactivo')+'">'+(l.activo?'Activo':'Inactivo')+'</span></td>'+
-              '<td>'+btnEditar(l)+'</td></tr>';
-          }).join('');
+          _lotesActivaData = data;
+          filtrarLotesActiva();
         });
       });
     }

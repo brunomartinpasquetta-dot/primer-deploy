@@ -93,39 +93,21 @@
 
   <!-- MOVIMIENTOS -->
   <div id="tab-movimientos" class="tab-content active">
-    <div class="card" style="margin-bottom:12px; padding:16px;">
-      <div class="filtros" style="grid-template-columns:1fr 1fr;">
-        <div>
-          <label>Temporada</label>
-          <select id="filtro-temporada" onchange="cargarMovimientos()">
-            <option value="">Todas</option>
-          </select>
-        </div>
-        <div>
-          <label>Tipo</label>
-          <select id="filtro-tipo" onchange="aplicarFiltroTipo()">
-            <option value="">Todos</option>
-            <option value="ingreso">Ingreso</option>
-            <option value="egreso">Egreso</option>
-          </select>
-        </div>
-      </div>
-      <label class="toggle-fecha">
-        <input type="checkbox" id="filtrar-fechas" onchange="toggleFechas()">
-        <span>Filtrar por rango de fechas</span>
-      </label>
-      <div id="rango-fechas" style="display:none;">
-        <div class="filtros" style="grid-template-columns:1fr 1fr;">
-          <div>
-            <label>Desde</label>
-            <input type="date" id="filtro-desde" onchange="cargarMovimientos()">
-          </div>
-          <div>
-            <label>Hasta</label>
-            <input type="date" id="filtro-hasta" onchange="cargarMovimientos()">
-          </div>
-        </div>
-      </div>
+    <div class="filtros-barra">
+      <input type="search" class="fb-buscar" id="filtro-buscar" placeholder="Buscar concepto, forma de pago..." oninput="aplicarFiltroTipo()">
+      <div class="fb-sep"></div>
+      <select id="filtro-temporada" onchange="cargarMovimientos()" title="Temporada">
+        <option value="">Temporada: Todas</option>
+      </select>
+      <select id="filtro-tipo" onchange="aplicarFiltroTipo()" title="Tipo">
+        <option value="">Tipo: Todos</option>
+        <option value="ingreso">Ingreso</option>
+        <option value="egreso">Egreso</option>
+      </select>
+      <div class="fb-sep"></div>
+      <input type="date" id="filtro-desde" onchange="cargarMovimientos()" title="Desde">
+      <input type="date" id="filtro-hasta" onchange="cargarMovimientos()" title="Hasta">
+      <button class="fb-limpiar" onclick="limpiarFiltrosCaja()">✕ Limpiar</button>
     </div>
     <div class="card" style="padding: 0; overflow: hidden;">
       <div class="table-wrap">
@@ -212,13 +194,12 @@
       el.classList.add('active');
     }
 
-    function toggleFechas() {
-      var checked = document.getElementById('filtrar-fechas').checked;
-      document.getElementById('rango-fechas').style.display = checked ? '' : 'none';
-      if (!checked) {
-        document.getElementById('filtro-desde').value = '';
-        document.getElementById('filtro-hasta').value = '';
-      }
+    function limpiarFiltrosCaja() {
+      document.getElementById('filtro-buscar').value = '';
+      document.getElementById('filtro-temporada').value = '';
+      document.getElementById('filtro-tipo').value = '';
+      document.getElementById('filtro-desde').value = '';
+      document.getElementById('filtro-hasta').value = '';
       cargarMovimientos();
     }
 
@@ -301,8 +282,16 @@
     }
 
     function aplicarFiltroTipo() {
-      var tipo = document.getElementById('filtro-tipo').value;
-      var filtrados = tipo ? movimientosCargados.filter(function(m) { return m.tipo === tipo; }) : movimientosCargados;
+      var tipo   = document.getElementById('filtro-tipo').value;
+      var q      = (document.getElementById('filtro-buscar').value || '').toLowerCase();
+      var filtrados = movimientosCargados.filter(function(m) {
+        var matchTipo = !tipo || m.tipo === tipo;
+        var matchQ    = !q   ||
+          (m.concepto   || '').toLowerCase().indexOf(q) >= 0 ||
+          (m.forma_pago || '').toLowerCase().indexOf(q) >= 0 ||
+          (m.observacion|| '').toLowerCase().indexOf(q) >= 0;
+        return matchTipo && matchQ;
+      });
       actualizarResumen(filtrados);
       renderMovimientos(filtrados);
     }
