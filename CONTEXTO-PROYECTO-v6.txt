@@ -146,6 +146,36 @@ M14. Script instalación PC Windows
 M15. Modo offline PWA
 M16. Deploy Railway/Azure para demos
 
+UNIFICACIÓN DE FILTROS — Estado al 28/03/2026
+----------------------------------------------
+Tarea completada: todos los módulos con grilla usan .filtros-barra.
+
+PATRÓN ESTÁNDAR OBLIGATORIO:
+<div class="filtros-barra">
+  <input type="search" class="fb-buscar" list="[id]-opciones" placeholder="Filtrar por...">
+  <datalist id="[id]-opciones"></datalist>  <!-- poblado dinámicamente con matchFiltro -->
+  <div class="fb-sep"></div>
+  <select id="filtro-temporada" onchange="...">  <!-- SOLO si dispara re-fetch -->
+  <input type="date" id="filtro-desde">
+  <input type="date" id="filtro-hasta">
+  <button class="fb-limpiar" onclick="limpiar...()">✕ Limpiar</button>
+</div>
+
+DATALIST DINÁMICO: poblarDatalist(id, data, columnas) en utils.js
+FILTRADO: matchFiltro(row, q, columnas) — formato "Columna: valor" filtra esa columna,
+          texto libre busca en todas las columnas.
+
+✅ COMPLETADOS: cosecha.css, aplicaciones.html, stock-insumos.html,
+   stock-mercaderia.html, ventas.html, caja.html, cheques.html,
+   pagos.html, compras.html, personal.html, juntada.html, lotes.html
+
+NOTAS TÉCNICAS FILTROS:
+- toggleFechas() y toggleFiltrosAvanzados() ELIMINADOS — fechas siempre visibles
+- Selects de columna ELIMINADOS — reemplazados por datalist en input único
+- Solo se mantienen selects de temporada cuando disparan re-fetch al servidor
+- Filtrado SIEMPRE client-side sobre array en memoria (_xxxData)
+- Cada limpiar[Modulo]() resetea todos los controles y re-renderiza
+
 MODIFICACIONES POST AUDITORÍA (ejecutadas)
 -------------------------------------------
 PA-01. Cosecha: destino obligatorio sin kilos huérfanos ✅

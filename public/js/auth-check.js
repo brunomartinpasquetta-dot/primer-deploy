@@ -33,11 +33,27 @@
     return;
   }
 
-  var rol = payload.rol;
+  var rol    = payload.rol;
   var nombre = payload.nombre;
 
-  // Encargado intenta acceder a página admin → redirigir
-  if (rol === 'encargado' && ADMIN_ONLY_PAGES.includes(currentPage)) {
+  // Exponer usuario globalmente para uso en páginas
+  window.cosechaUser = { id: payload.id, nombre: nombre, rol: rol };
+
+  // Cargar permisos desde caché localStorage, refrescar async
+  var _cachedPerms = [];
+  try { _cachedPerms = JSON.parse(localStorage.getItem('cosecha_permisos') || '[]'); } catch(e) {}
+  window.cosechaPermisos = _cachedPerms;
+  window.tienePermiso = function(p) { return window.cosechaPermisos.includes(p); };
+  // Refresh async (sin bloquear)
+  fetch('/api/permisos/mi-rol').then(function(r){ return r.json(); }).then(function(data){
+    if (Array.isArray(data)) {
+      localStorage.setItem('cosecha_permisos', JSON.stringify(data));
+      window.cosechaPermisos = data;
+    }
+  }).catch(function(){});
+
+  // No-admin intenta acceder a página admin → redirigir
+  if (rol !== 'administrador' && ADMIN_ONLY_PAGES.includes(currentPage)) {
     location.href = 'index.html';
     return;
   }
@@ -85,8 +101,8 @@
         '<button onclick="cerrarSesion()" data-tooltip="Cerrar sesión del sistema" style="width:100%;padding:8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:rgba(255,255,255,0.7);font-size:12px;cursor:pointer;">Cerrar sesión</button>';
     }
 
-    // Ocultar ítems admin en sidebar si es encargado
-    if (rol === 'encargado') {
+    // Ocultar ítems admin en sidebar si no es admin
+    if (rol !== 'administrador') {
       ADMIN_ONLY_HREFS.forEach(function (href) {
         document.querySelectorAll('a[href="' + href + '"]').forEach(function (el) {
           // Ocultar el ítem y su posible nav-section anterior si queda vacía

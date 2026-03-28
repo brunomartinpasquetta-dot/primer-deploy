@@ -10,16 +10,41 @@
   <script src="js/utils.js"></script>
   <link rel="stylesheet" href="cosecha.css">
   <style>
-    label { font-weight: 600; color: var(--texto-2); display: block; margin-bottom: 5px; margin-top: 12px; font-size: 13px; }
-    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-    .badge-admin { background: #FEF3C7; color: #92400E; }
-    .badge-enc   { background: var(--verde-suave); color: var(--verde); }
-    .badge-inact { background: var(--fondo-dark); color: var(--texto-suave); }
-    .btn-sm { padding: 5px 12px; font-size: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
-    .btn-danger { background: var(--error-bg); color: var(--error-text); }
-    .msg-success { background: var(--success-bg); border: 1px solid var(--success-border); color: var(--success-text); padding: 10px 14px; border-radius: var(--radius); font-size: 13px; font-weight: 600; margin-top: 10px; }
-    .msg-error   { background: var(--error-bg);   border: 1px solid var(--error-border);   color: var(--error-text);   padding: 10px 14px; border-radius: var(--radius); font-size: 13px; font-weight: 600; margin-top: 10px; }
+    /* ── Badges rol ── */
+    .badge-rol { display:inline-block; padding:2px 9px; border-radius:20px; font-size:11px; font-weight:600; }
+    .rol-administrador { background:#FEF3C7; color:#92400E; }
+    .rol-ingeniero      { background:#EDE9FE; color:#5B21B6; }
+    .rol-encargado      { background:var(--verde-suave); color:var(--verde); }
+    .rol-usuario        { background:#F1F5F9; color:#475569; }
+    .badge-activo   { background:var(--success-bg); color:var(--success-text); }
+    .badge-inactivo { background:var(--fondo-dark); color:var(--texto-suave); }
+    .btn-sm-danger { padding:4px 10px; font-size:12px; border-radius:5px; cursor:pointer; font-weight:600; background:var(--error-bg); color:var(--error-text); border:1px solid var(--error-border); }
+
+    /* ── Permisos section ── */
+    .permisos-tabs { display:flex; gap:4px; margin-bottom:0; flex-wrap:wrap; }
+    .tab-rol { padding:6px 14px; border:1px solid #E2E8F0; border-bottom:none; border-radius:7px 7px 0 0; background:#F8FAFC; font-size:12px; font-weight:600; color:#64748B; cursor:pointer; }
+    .tab-rol.active { background:#fff; border-color:#E2E8F0; color:#2D5016; border-bottom:1px solid #fff; margin-bottom:-1px; z-index:1; }
+    .permisos-panel { border:1px solid #E2E8F0; border-radius:0 8px 8px 8px; padding:16px; background:#fff; display:none; }
+    .permisos-panel.active { display:block; }
+    .perm-grupo { margin-bottom:14px; }
+    .perm-grupo-title { font-size:11px; font-weight:700; color:#94A3B8; text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; border-bottom:1px solid #F1F5F9; padding-bottom:4px; }
+    .perm-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:6px; }
+    .perm-item { display:flex; align-items:center; gap:7px; padding:5px 8px; border:1px solid #F1F5F9; border-radius:5px; background:#FAFAFA; font-size:12px; color:#374151; cursor:pointer; }
+    .perm-item:hover { border-color:#D1FAE5; background:#F0FDF4; }
+    .perm-item input[type="checkbox"] { width:14px; height:14px; accent-color:#2D5016; cursor:pointer; flex-shrink:0; }
+    .perm-item.habilitado { background:#F0FDF4; border-color:#BBF7D0; color:#065F46; }
+    .perm-save-row { display:flex; align-items:center; gap:10px; margin-top:12px; padding-top:12px; border-top:1px solid #F1F5F9; }
+    .perm-save-msg { font-size:12px; }
+    .perm-ok  { color:#2D5016; }
+    .perm-err { color:#EF4444; }
+
+    /* ── Form flat ── */
+    .field-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:10px; }
+    .field-flat label { font-size:11px; font-weight:600; color:#64748B; text-transform:uppercase; letter-spacing:.4px; display:block; margin-bottom:3px; }
+    .field-flat input, .field-flat select { width:100%; height:32px; padding:4px 8px; font-size:14px; border:1px solid #E2E8F0; border-radius:6px; background:#fff; outline:none; box-sizing:border-box; }
+    .field-flat input:focus, .field-flat select:focus { border-color:#2D5016; }
+    .msg-ok  { background:var(--success-bg); border:1px solid var(--success-border); color:var(--success-text); padding:9px 13px; border-radius:7px; font-size:12px; font-weight:600; margin-top:8px; }
+    .msg-err { background:var(--error-bg); border:1px solid var(--error-border); color:var(--error-text); padding:9px 13px; border-radius:7px; font-size:12px; font-weight:600; margin-top:8px; }
   </style>
 </head>
 <body>
@@ -68,11 +93,11 @@
     <div class="content">
       <div class="content-header">
         <div class="content-title">Usuarios</div>
-        <div class="content-sub">Gestión de accesos al sistema</div>
+        <div class="content-sub">Gestión de accesos y permisos por rol</div>
       </div>
 
-      <!-- Lista de usuarios -->
-      <div class="card" style="margin-bottom:20px;">
+      <!-- ── LISTA ── -->
+      <div class="card" style="margin-bottom:16px;">
         <div class="card-header">
           <span class="card-title">Usuarios registrados</span>
           <button onclick="cargar()" style="font-size:12px;font-weight:600;color:var(--verde);background:none;border:none;cursor:pointer;">↻ Actualizar</button>
@@ -95,35 +120,48 @@
         </div>
       </div>
 
-      <!-- Crear nuevo usuario -->
-      <div class="card">
+      <!-- ── NUEVO USUARIO ── -->
+      <div class="card" style="margin-bottom:16px;">
         <div class="card-header"><span class="card-title">Nuevo usuario</span></div>
         <div class="card-body">
-          <div class="two-col">
-            <div>
-              <label>Nombre completo</label>
-              <input type="text" id="u-nombre" class="input-field" placeholder="Ej: Juan Pérez">
-            </div>
-            <div>
-              <label>Nombre de usuario</label>
-              <input type="text" id="u-usuario" class="input-field" placeholder="Ej: jperez" autocomplete="off">
-            </div>
+          <div class="field-grid-2">
+            <div class="field-flat"><label>Nombre completo</label><input type="text" id="u-nombre" placeholder="Ej: Juan Pérez"></div>
+            <div class="field-flat"><label>Nombre de usuario</label><input type="text" id="u-usuario" placeholder="Ej: jperez" autocomplete="off"></div>
           </div>
-          <div class="two-col">
-            <div>
-              <label>Contraseña</label>
-              <input type="password" id="u-password" class="input-field" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
-            </div>
-            <div>
+          <div class="field-grid-2">
+            <div class="field-flat"><label>Contraseña</label><input type="password" id="u-password" placeholder="Mínimo 6 caracteres" autocomplete="new-password"></div>
+            <div class="field-flat">
               <label>Rol</label>
-              <select id="u-rol" class="input-field">
-                <option value="encargado">Encargado</option>
+              <select id="u-rol">
+                <option value="usuario">Usuario</option>
+                <option value="encargado" selected>Encargado</option>
+                <option value="ingeniero">Ingeniero</option>
                 <option value="administrador">Administrador</option>
               </select>
             </div>
           </div>
-          <button class="btn btn--primary" id="btn-crear" onclick="crear(this)" style="margin-top:16px;">+ Crear usuario</button>
+          <button class="btn btn--primary" id="btn-crear" onclick="crear(this)" style="margin-top:8px;">+ Crear usuario</button>
           <div id="msg-crear"></div>
+        </div>
+      </div>
+
+      <!-- ── PERMISOS POR ROL ── -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Permisos por rol</span>
+          <span style="font-size:11px;color:var(--texto-suave);">Los cambios se aplican inmediatamente</span>
+        </div>
+        <div class="card-body">
+          <div class="permisos-tabs">
+            <button class="tab-rol active" onclick="cambiarTabRol('administrador',this)">Administrador</button>
+            <button class="tab-rol" onclick="cambiarTabRol('ingeniero',this)">Ingeniero</button>
+            <button class="tab-rol" onclick="cambiarTabRol('encargado',this)">Encargado</button>
+            <button class="tab-rol" onclick="cambiarTabRol('usuario',this)">Usuario</button>
+          </div>
+          <div id="permisos-administrador" class="permisos-panel active"></div>
+          <div id="permisos-ingeniero"     class="permisos-panel"></div>
+          <div id="permisos-encargado"     class="permisos-panel"></div>
+          <div id="permisos-usuario"       class="permisos-panel"></div>
         </div>
       </div>
 
@@ -132,21 +170,11 @@
 
   <!-- ── BOTTOM NAV ── -->
   <nav class="bottom-nav">
-    <a href="index.html" class="bottom-nav-item">
-      <span class="bottom-nav-icon"><i data-lucide="home"></i></span><span>Inicio</span>
-    </a>
-    <a href="juntada.html" class="bottom-nav-item">
-      <span class="bottom-nav-icon"><i data-lucide="wheat"></i></span><span>Cosecha</span>
-    </a>
-    <a href="despalillado.html" class="bottom-nav-item">
-      <span class="bottom-nav-icon"><i data-lucide="scissors"></i></span><span>Despalillado</span>
-    </a>
-    <a href="aplicaciones.html" class="bottom-nav-item">
-      <span class="bottom-nav-icon"><i data-lucide="droplets"></i></span><span>Aplicaciones</span>
-    </a>
-    <a href="menu-campo.html" class="bottom-nav-item">
-      <span class="bottom-nav-icon"><i data-lucide="menu"></i></span><span>Menú</span>
-    </a>
+    <a href="index.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="home"></i></span><span>Inicio</span></a>
+    <a href="juntada.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="wheat"></i></span><span>Cosecha</span></a>
+    <a href="despalillado.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="scissors"></i></span><span>Despalillado</span></a>
+    <a href="aplicaciones.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="droplets"></i></span><span>Aplicaciones</span></a>
+    <a href="menu-campo.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="menu"></i></span><span>Menú</span></a>
   </nav>
 
 </div>
@@ -157,89 +185,156 @@
   document.getElementById('topbar-date').textContent =
     new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
 
+  var ROL_LABELS = {
+    administrador: 'Administrador',
+    ingeniero: 'Ingeniero',
+    encargado: 'Encargado',
+    usuario: 'Usuario'
+  };
+
+  // ── Lista usuarios ──────────────────────────────────────────────
   async function cargar() {
-    const tbody = document.getElementById('tbody-usuarios');
+    var tbody = document.getElementById('tbody-usuarios');
     tbody.innerHTML = '<tr><td colspan="5" class="activity-empty">Cargando...</td></tr>';
-    const data = await fetch('/api/usuarios').then(r => r.json()).catch(() => []);
+    var data = await fetch('/api/usuarios').then(function(r){ return r.json(); }).catch(function(){ return []; });
     if (!data.length) {
       tbody.innerHTML = '<tr><td colspan="5" class="activity-empty">Sin usuarios</td></tr>';
       return;
     }
-    tbody.innerHTML = data.map(u => `
-      <tr>
-        <td style="font-weight:600;">${u.nombre}</td>
-        <td style="font-family:'JetBrains Mono',monospace;font-size:13px;">${u.usuario}</td>
-        <td>
-          <span class="badge ${u.rol === 'administrador' ? 'badge-admin' : 'badge-enc'}">
-            ${u.rol === 'administrador' ? 'Admin' : 'Encargado'}
-          </span>
-        </td>
-        <td>
-          ${u.activo
-            ? '<span class="badge" style="background:var(--success-bg);color:var(--success-text);">Activo</span>'
-            : '<span class="badge badge-inact">Inactivo</span>'}
-        </td>
-        <td>
-          ${u.activo
-            ? `<button class="btn-sm btn-danger" onclick="desactivar(${u.id}, '${u.nombre}')">Desactivar</button>`
-            : ''}
-        </td>
-      </tr>
-    `).join('');
+    tbody.innerHTML = data.map(function(u) {
+      var rolClass = 'rol-' + u.rol;
+      var rolLabel = ROL_LABELS[u.rol] || u.rol;
+      return '<tr>' +
+        '<td style="font-weight:600;">' + u.nombre + '</td>' +
+        '<td style="font-family:\'JetBrains Mono\',monospace;font-size:13px;">' + u.usuario + '</td>' +
+        '<td><span class="badge-rol ' + rolClass + '">' + rolLabel + '</span></td>' +
+        '<td>' + (u.activo
+          ? '<span class="badge-rol badge-activo">Activo</span>'
+          : '<span class="badge-rol badge-inactivo">Inactivo</span>') + '</td>' +
+        '<td>' + (u.activo
+          ? '<button class="btn-sm-danger" onclick="desactivar('+u.id+',\''+u.nombre+'\')">Desactivar</button>'
+          : '') + '</td>' +
+        '</tr>';
+    }).join('');
   }
 
+  // ── Crear usuario ───────────────────────────────────────────────
   async function crear(btn) {
-    const nombre   = document.getElementById('u-nombre').value.trim();
-    const usuario  = document.getElementById('u-usuario').value.trim();
-    const password = document.getElementById('u-password').value;
-    const rol      = document.getElementById('u-rol').value;
-    const msgEl    = document.getElementById('msg-crear');
+    var nombre   = document.getElementById('u-nombre').value.trim();
+    var usuario  = document.getElementById('u-usuario').value.trim();
+    var password = document.getElementById('u-password').value;
+    var rol      = document.getElementById('u-rol').value;
+    var msgEl    = document.getElementById('msg-crear');
     msgEl.innerHTML = '';
-
     if (!nombre || !usuario || !password || !rol) {
-      msgEl.innerHTML = '<div class="msg-error">Completá todos los campos</div>';
-      return;
+      msgEl.innerHTML = '<div class="msg-err">Completá todos los campos</div>'; return;
     }
     if (password.length < 6) {
-      msgEl.innerHTML = '<div class="msg-error">La contraseña debe tener al menos 6 caracteres</div>';
-      return;
+      msgEl.innerHTML = '<div class="msg-err">La contraseña debe tener al menos 6 caracteres</div>'; return;
     }
-
-    btn.disabled = true;
-    btn.textContent = 'Creando...';
+    btn.disabled = true; btn.textContent = 'Creando...';
     try {
-      const res  = await fetch('/api/usuarios', {
+      var res  = await fetch('/api/usuarios', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre, usuario, password, rol })
+        body: JSON.stringify({ nombre: nombre, usuario: usuario, password: password, rol: rol })
       });
-      const data = await res.json();
-      if (data.error) {
-        msgEl.innerHTML = '<div class="msg-error">' + data.error + '</div>';
-        return;
-      }
-      msgEl.innerHTML = '<div class="msg-success">Usuario creado correctamente</div>';
+      var data = await res.json();
+      if (data.error) { msgEl.innerHTML = '<div class="msg-err">' + data.error + '</div>'; return; }
+      msgEl.innerHTML = '<div class="msg-ok">Usuario creado correctamente</div>';
       document.getElementById('u-nombre').value = '';
       document.getElementById('u-usuario').value = '';
       document.getElementById('u-password').value = '';
       document.getElementById('u-rol').value = 'encargado';
       cargar();
-      setTimeout(() => { msgEl.innerHTML = ''; }, 3000);
+      setTimeout(function(){ msgEl.innerHTML = ''; }, 3000);
     } finally {
-      btn.disabled = false;
-      btn.textContent = '+ Crear usuario';
+      btn.disabled = false; btn.textContent = '+ Crear usuario';
     }
   }
 
+  // ── Desactivar usuario ──────────────────────────────────────────
   async function desactivar(id, nombre) {
     if (!confirm('¿Desactivar a ' + nombre + '?')) return;
-    const res  = await fetch('/api/usuarios/' + id, { method: 'DELETE' });
-    const data = await res.json();
+    var res  = await fetch('/api/usuarios/' + id, { method: 'DELETE' });
+    var data = await res.json();
     if (data.ok) cargar();
   }
 
+  // ── Permisos por rol ────────────────────────────────────────────
+  var _permisosData = null;   // { catalogo, roles, data }
+
+  async function cargarPermisos() {
+    _permisosData = await fetch('/api/permisos').then(function(r){ return r.json(); }).catch(function(){ return null; });
+    if (!_permisosData) return;
+    _permisosData.roles.forEach(function(rol) { renderPermisosRol(rol); });
+  }
+
+  function renderPermisosRol(rol) {
+    if (!_permisosData) return;
+    var panel = document.getElementById('permisos-' + rol);
+    if (!panel) return;
+    var dataRol = _permisosData.data[rol] || {};
+    // Agrupar por grupo
+    var grupos = {};
+    _permisosData.catalogo.forEach(function(p) {
+      if (!grupos[p.grupo]) grupos[p.grupo] = [];
+      grupos[p.grupo].push(p);
+    });
+    var html = '';
+    Object.keys(grupos).forEach(function(grupo) {
+      html += '<div class="perm-grupo">';
+      html += '<div class="perm-grupo-title">' + grupo + '</div>';
+      html += '<div class="perm-grid">';
+      grupos[grupo].forEach(function(p) {
+        var hab = !!dataRol[p.key];
+        html += '<label class="perm-item' + (hab ? ' habilitado' : '') + '" id="perm-lbl-'+rol+'-'+p.key+'">' +
+          '<input type="checkbox"' + (hab ? ' checked' : '') + ' onchange="togglePermiso(\''+rol+'\',\''+p.key+'\',this)">' +
+          p.label + '</label>';
+      });
+      html += '</div></div>';
+    });
+    // Admin: advertencia
+    if (rol === 'administrador') {
+      html = '<div style="padding:10px 12px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:7px;font-size:12px;color:#92400E;margin-bottom:12px;">⚠️ El rol Administrador siempre tiene acceso total. Estos permisos son informativos.</div>' + html;
+    }
+    panel.innerHTML = html;
+  }
+
+  async function togglePermiso(rol, permiso, checkbox) {
+    var habilitado = checkbox.checked;
+    var lbl = document.getElementById('perm-lbl-' + rol + '-' + permiso);
+    if (lbl) lbl.classList.toggle('habilitado', habilitado);
+    var res = await fetch('/api/permisos/' + rol + '/' + permiso, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ habilitado: habilitado })
+    }).then(function(r){ return r.json(); }).catch(function(){ return { error: 'Error de conexión' }; });
+    if (res.error) {
+      // Revertir si falla
+      checkbox.checked = !habilitado;
+      if (lbl) lbl.classList.toggle('habilitado', !habilitado);
+      alert('Error: ' + res.error);
+    } else {
+      // Actualizar caché local
+      if (_permisosData && _permisosData.data[rol]) {
+        _permisosData.data[rol][permiso] = habilitado;
+      }
+    }
+  }
+
+  function cambiarTabRol(rol, btn) {
+    document.querySelectorAll('.tab-rol').forEach(function(t){ t.classList.remove('active'); });
+    document.querySelectorAll('.permisos-panel').forEach(function(p){ p.classList.remove('active'); });
+    btn.classList.add('active');
+    var panel = document.getElementById('permisos-' + rol);
+    if (panel) panel.classList.add('active');
+  }
+
+  // ── Init ────────────────────────────────────────────────────────
   cargar();
-cargarTemporadaActiva();
+  cargarPermisos();
+  cargarTemporadaActiva();
 </script>
 </body>
 </html>

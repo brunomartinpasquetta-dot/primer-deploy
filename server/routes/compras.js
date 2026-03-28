@@ -6,6 +6,11 @@ router.get('/', async (req, res) => {
   const { temporada_id, desde, hasta } = req.query;
   try {
     const pool = await getPool();
+    // Migración: agregar usuario_id si no existe
+    await pool.request().query(`
+      IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='Compras' AND COLUMN_NAME='usuario_id')
+        ALTER TABLE Compras ADD usuario_id INT NULL
+    `);
     const colCheck = await pool.request().query(
       `SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='Compras' AND COLUMN_NAME='fecha_hora'`
     );
@@ -14,11 +19,13 @@ router.get('/', async (req, res) => {
     let query = `SELECT c.id, c.fecha, c.total, c.observacion,
               p.nombre AS proveedor,
               t.nombre AS temporada,
-              fp.nombre AS forma_pago
+              fp.nombre AS forma_pago,
+              u.nombre AS usuario
               FROM Compras c
               JOIN Proveedores p ON c.proveedor_id = p.id
               LEFT JOIN Temporadas t ON c.temporada_id = t.id
               LEFT JOIN FormasPago fp ON c.forma_pago_id = fp.id
+              LEFT JOIN Usuarios u ON c.usuario_id = u.id
               WHERE 1=1`;
     if (temporada_id) {
       query += ' AND c.temporada_id = @temporada_id';
@@ -57,7 +64,7 @@ router.get('/:id/detalle', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-  const { proveedor_id, temporada_id, fecha, observacion, forma_pago_id, items } = req.body;
+  const { proveedor_id, temporada_id, fecha, observacion, forma_pago_id, deposito_id, items } = req.body;
   if (!items || items.length === 0) {
     return res.status(400).json({ error: 'La compra debe tener al menos un item' });
   }
@@ -76,16 +83,18 @@ router.post('/', async (req, res) => {
       return acc + (parseFloat(item.cantidad) * parseFloat(item.precio_unit));
     }, 0);
 
+    const uid = req.user ? req.user.id : null;
     const compraResult = await new sql.Request(transaction)
-      .input('proveedor_id',  sql.Int,         proveedor_id)
-      .input('temporada_id',  sql.Int,         temporada_id || null)
-      .input('fecha',         sql.Date,        fecha || new Date())
+      .input('proveedor_id',  sql.Int,           proveedor_id)
+      .input('temporada_id',  sql.Int,           temporada_id || null)
+      .input('fecha',         sql.Date,          fecha || new Date())
       .input('total',         sql.Decimal(12,2), total)
-      .input('forma_pago_id', sql.Int,         forma_pago_id || null)
-      .input('observacion',   sql.NVarChar,    observacion || '')
-      .query(`INSERT INTO Compras (proveedor_id, temporada_id, fecha, total, forma_pago_id, observacion)
+      .input('forma_pago_id', sql.Int,           forma_pago_id || null)
+      .input('observacion',   sql.NVarChar,      observacion || '')
+      .input('usuario_id',    sql.Int,           uid)
+      .query(`INSERT INTO Compras (proveedor_id, temporada_id, fecha, total, forma_pago_id, observacion, usuario_id)
               OUTPUT INSERTED.id
-              VALUES (@proveedor_id, @temporada_id, @fecha, @total, @forma_pago_id, @observacion)`);
+              VALUES (@proveedor_id, @temporada_id, @fecha, @total, @forma_pago_id, @observacion, @usuario_id)`);
 
     const compra_id = compraResult.recordset[0].id;
 
@@ -107,6 +116,19 @@ router.post('/', async (req, res) => {
         .query(`UPDATE Productos
                 SET stock_actual = ISNULL(stock_actual, 0) + @cantidad, costo_unitario = @precio_unit
                 WHERE id = @producto_id`);
+
+      if (deposito_id) {
+        const uid = req.user ? req.user.id : null;
+        await new sql.Request(transaction)
+          .input('producto_id', sql.Int,           item.producto_id)
+          .input('cantidad',    sql.Decimal(10,2), item.cantidad)
+          .input('costo_total', sql.Decimal(10,2), parseFloat(item.cantidad) * parseFloat(item.precio_unit))
+          .input('proveedor',   sql.NVarChar,      proveedorNombre)
+          .input('usuario_id',  sql.Int,           uid)
+          .input('deposito_id', sql.Int,           deposito_id)
+          .query(`INSERT INTO StockInsumos (producto_id, tipo, cantidad, costo_total, proveedor, usuario_id, deposito_id, fecha_hora)
+                  VALUES (@producto_id, 'compra', @cantidad, @costo_total, @proveedor, @usuario_id, @deposito_id, GETDATE())`);
+      }
     }
 
     if (forma_pago_id) {
@@ -170,6 +192,21 @@ router.post('/', async (req, res) => {
     res.json({ ok: true, compra_id: compra_id });
   } catch (err) {
     await transaction.rollback();
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PATCH /:id — editar observación de una compra
+router.patch('/:id', async (req, res) => {
+  const { observacion } = req.body;
+  try {
+    const pool = await getPool();
+    await pool.request()
+      .input('id',          sql.Int,      req.params.id)
+      .input('observacion', sql.NVarChar, observacion || '')
+      .query('UPDATE Compras SET observacion = @observacion WHERE id = @id');
+    res.json({ ok: true });
+  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });

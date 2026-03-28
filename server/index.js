@@ -49,6 +49,7 @@ app.use('/api/proveedores',       requireAuth, encargadoOAdmin, require('./route
 app.use('/api/compras',           requireAuth, encargadoOAdmin, require('./routes/compras'));
 app.use('/api/clientes',          requireAuth, encargadoOAdmin, require('./routes/clientes'));
 app.use('/api/personal',          requireAuth, encargadoOAdmin, require('./routes/personal'));
+app.use('/api/permisos',          requireAuth, require('./routes/permisos'));
 
 // WebSocket para balanza
 wss.on('connection', (ws) => {

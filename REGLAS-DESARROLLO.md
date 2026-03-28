@@ -64,6 +64,18 @@
 - Formato: "tipo: módulo - descripción"
 - Tipos: feat | fix | ui | perf | security | cleanup | refactor
 
+## FILTROS — PATRÓN OBLIGATORIO
+- Todo módulo con grilla DEBE usar `.filtros-barra` (nunca controles sueltos)
+- Clases: `.filtros-barra`, `.fb-buscar`, `.fb-sep`, `.fb-limpiar` (ya en cosecha.css)
+- Input único con `<datalist>` poblado por `poblarDatalist(id, data, columnas)` de utils.js
+- Filtrado con `matchFiltro(row, q, columnas)`: "Columna: valor" → filtra esa col; texto libre → todas
+- Filtrado SIEMPRE client-side sobre array en memoria — nunca re-fetch por cada filtro
+- Selects de columna (lote, tipo, categoría, etc.) PROHIBIDOS en la barra — van al datalist
+- Solo se permite `<select>` de temporada si dispara un re-fetch al servidor
+- Función `limpiarXxx()` obligatoria: resetea todos los controles y re-renderiza
+- `toggleFechas()` y `toggleFiltrosAvanzados()` — ELIMINADOS, fechas siempre visibles
+- Helpers disponibles en utils.js: `_parseVal(v)`, `_parseEl(id)`, `poblarDatalist()`, `matchFiltro()`
+
 ## ANTES DE CADA MODIFICACIÓN
 1. Leer este archivo
 2. Leer CONTEXTO-PROYECTO-v6.txt
