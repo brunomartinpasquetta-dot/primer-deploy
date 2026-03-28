@@ -195,7 +195,7 @@
       </div>
       <div class="form-row">
         <label>Kilos</label>
-        <input type="number" id="ingreso-kilos" placeholder="Ej: 500" step="0.01" min="0" data-miles>
+        <input type="text" inputmode="decimal" id="ingreso-kilos" placeholder="Ej: 500" data-miles>
       </div>
       <div class="form-row">
         <label>Fecha</label>
@@ -237,7 +237,7 @@
       </div>
       <div class="form-row">
         <label>Kilos</label>
-        <input type="number" id="egreso-kilos" placeholder="Ej: 200" step="0.01" min="0" data-miles>
+        <input type="text" inputmode="decimal" id="egreso-kilos" placeholder="Ej: 200" data-miles>
       </div>
       <div class="form-row">
         <label>Fecha</label>
@@ -247,7 +247,7 @@
       <div class="egreso-fields" id="fields-venta">
         <div class="form-row">
           <label>Precio $/kg</label>
-          <input type="number" id="egreso-precio" placeholder="Ej: 1200" step="0.01" min="0" data-miles>
+          <input type="text" inputmode="decimal" id="egreso-precio" placeholder="Ej: 1200" data-miles>
         </div>
         <div class="form-row">
           <label>Comprador</label>
@@ -309,7 +309,7 @@
       <div class="two-col">
         <div class="form-row">
           <label>Capacidad (kg)</label>
-          <input type="number" id="dep-capacidad" placeholder="Ej: 50000" step="0.01" data-miles data-tooltip="Capacidad máxima del depósito en kilogramos">
+          <input type="text" inputmode="decimal" id="dep-capacidad" placeholder="Ej: 50000" data-miles data-tooltip="Capacidad máxima del depósito en kilogramos">
         </div>
         <div class="form-row">
           <label>Costo $/kg/día</label>
@@ -482,8 +482,8 @@ function guardarDeposito(btn) {
 
   var tipoStock = document.getElementById('dep-tipo-stock').value || 'mercaderia';
   var payload = { nombre: nombre, tipo: tipo, tipo_stock: tipoStock,
-    capacidad_kg: cap ? parseFloat(cap) : null,
-    costo_kg_dia: costo ? parseFloat(costo) : null,
+    capacidad_kg: cap ? _parseVal(cap) : null,
+    costo_kg_dia: costo ? _parseVal(costo) : null,
     ubicacion: ubic, observacion: obs };
 
   var url    = id ? '/api/depositos/' + id : '/api/depositos';
@@ -590,13 +590,14 @@ function confirmarIngreso(btn) {
   var obs   = document.getElementById('ingreso-obs').value.trim();
   var msgEl = document.getElementById('msg-ingreso');
   if (!tid)   { msgEl.innerHTML = '<div class="msg-error">Seleccioná una campaña</div>'; return; }
-  if (!kilos || parseFloat(kilos) <= 0) { msgEl.innerHTML = '<div class="msg-error">Ingresá los kilos</div>'; return; }
+  var kilosNum = _parseVal(kilos);
+  if (!kilosNum || kilosNum <= 0) { msgEl.innerHTML = '<div class="msg-error">Ingresá los kilos</div>'; return; }
   setLoading(btn, true);
   fetch('/api/depositos/ingreso', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ deposito_id: parseInt(depId), temporada_id: parseInt(tid),
-      lote_id: lid ? parseInt(lid) : null, kilos: parseFloat(kilos),
+      lote_id: lid ? parseInt(lid) : null, kilos: kilosNum,
       fecha: fecha || null, observacion: obs })
   }).then(function(r){ return r.json(); }).then(function(data){
     setLoading(btn, false);
@@ -655,16 +656,17 @@ function confirmarEgreso(btn) {
   var msgEl  = document.getElementById('msg-egreso');
   if (!_tipoEgreso) { msgEl.innerHTML = '<div class="msg-error">Seleccioná Venta o Descarte</div>'; return; }
   if (!tid)   { msgEl.innerHTML = '<div class="msg-error">Seleccioná una campaña</div>'; return; }
-  if (!kilos || parseFloat(kilos) <= 0) { msgEl.innerHTML = '<div class="msg-error">Ingresá los kilos</div>'; return; }
+  var kilosNum2 = _parseVal(kilos);
+  if (!kilosNum2 || kilosNum2 <= 0) { msgEl.innerHTML = '<div class="msg-error">Ingresá los kilos</div>'; return; }
   var payload = {
     deposito_id: parseInt(depId), temporada_id: parseInt(tid),
     lote_id: lid ? parseInt(lid) : null,
     tipo_egreso: _tipoEgreso === 'venta' ? 'egreso_venta' : 'egreso_descarte',
-    kilos: parseFloat(kilos), fecha: fecha || null, observacion: obs
+    kilos: kilosNum2, fecha: fecha || null, observacion: obs
   };
   if (_tipoEgreso === 'venta') {
     var precio = document.getElementById('egreso-precio').value;
-    payload.precio_kilo   = precio ? parseFloat(precio) : null;
+    payload.precio_kilo   = precio ? _parseVal(precio) : null;
     payload.comprador     = document.getElementById('egreso-comprador').value.trim();
     payload.destino_venta = document.getElementById('egreso-destino').value.trim();
   } else {

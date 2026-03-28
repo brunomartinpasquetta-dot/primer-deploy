@@ -165,7 +165,7 @@
       <label>Concepto</label>
       <input type="text" id="nuevo-concepto" placeholder="Descripción del movimiento">
       <label>Monto ($)</label>
-      <input type="number" id="nuevo-monto" placeholder="Ej: 50000" step="0.01" min="0" data-miles>
+      <input type="text" inputmode="decimal" id="nuevo-monto" placeholder="Ej: 50000" data-miles>
       <label>Forma de pago</label>
       <select id="nuevo-forma-pago">
         <option value="">Sin especificar</option>
@@ -333,9 +333,9 @@
 
     function guardar(btn) {
       var concepto = document.getElementById('nuevo-concepto').value.trim();
-      var monto = document.getElementById('nuevo-monto').value;
+      var monto = _parseEl('nuevo-monto');
       if (!concepto) { alert('Ingresá el concepto'); return; }
-      if (!monto || parseFloat(monto) <= 0) { alert('Ingresá un monto válido'); return; }
+      if (!monto || monto <= 0) { alert('Ingresá un monto válido'); return; }
       setLoading(btn, true);
       fetch('/api/caja', {
         method: 'POST',

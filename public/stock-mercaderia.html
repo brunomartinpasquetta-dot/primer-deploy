@@ -611,7 +611,7 @@
       </div>
       <div class="form-row">
         <label>Kilos descartados</label>
-        <input type="number" id="desc-kilos" placeholder="Ej: 50" step="0.01" min="0.01" data-miles>
+        <input type="text" inputmode="decimal" id="desc-kilos" placeholder="Ej: 50" data-miles>
       </div>
       <div class="form-row">
         <label>Motivo</label>
@@ -1103,7 +1103,7 @@ function toggleOrigenDescarte() {
 
 function registrarDescarte(btn) {
   var origen = document.getElementById('desc-origen').value;
-  var kg     = parseFloat(document.getElementById('desc-kilos').value);
+  var kg     = _parseEl('desc-kilos');
   var motivo = document.getElementById('desc-motivo').value;
   var obs    = document.getElementById('desc-obs').value;
   if (!kg) { mostrarMensaje('msg-descarte','error','Ingresá la cantidad de kilos'); return; }
@@ -1250,8 +1250,8 @@ function cargarHistorial() {
 function actualizarHelperPrecio() {
   var precioEl = document.getElementById('venta-precio');
   if (!precioEl) return;
-  var precio = parseFloat(precioEl.value) || 0;
-  var kilos  = parseFloat(document.getElementById('venta-kilos').value)  || 0;
+  var precio = _parseVal(precioEl.value);
+  var kilos  = _parseEl('venta-kilos');
   var el     = document.getElementById('helper-precio');
   if (!el) return;
   if (!precio) { el.textContent = ''; return; }

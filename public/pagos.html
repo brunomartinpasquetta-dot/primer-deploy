@@ -136,9 +136,9 @@
         </div>
       </div>
       <label>Precio por kilo ($)</label>
-      <input type="number" id="liq-precio" placeholder="Ej: 800" step="0.01" data-miles onchange="calcularLiquidacion()">
+      <input type="text" inputmode="decimal" id="liq-precio" placeholder="Ej: 800" data-miles onchange="calcularLiquidacion()">
       <label>Anticipos a descontar ($)</label>
-      <input type="number" id="liq-anticipos" placeholder="Ej: 5000" step="0.01" data-miles onchange="calcularLiquidacion()">
+      <input type="text" inputmode="decimal" id="liq-anticipos" placeholder="Ej: 5000" data-miles onchange="calcularLiquidacion()">
       <label>Observacion</label>
       <input type="text" id="liq-obs" placeholder="Opcional">
       <div class="resultado-liquidacion" id="resultado" style="display:none;">
@@ -329,8 +329,8 @@
     }
 
     function calcularLiquidacion() {
-      const precio = parseFloat(document.getElementById('liq-precio').value) || 0;
-      const anticipos = parseFloat(document.getElementById('liq-anticipos').value) || 0;
+      const precio = _parseEl('liq-precio');
+      const anticipos = _parseEl('liq-anticipos');
       if (precio > 0) {
         document.getElementById('resultado').style.display = 'block';
         document.getElementById('res-precio').textContent = '$' + precio.toLocaleString('es-AR');
@@ -342,7 +342,7 @@
       const juntador_id = document.getElementById('liq-juntador').value;
       const desde = document.getElementById('liq-desde').value;
       const hasta = document.getElementById('liq-hasta').value;
-      const precio_kilo = document.getElementById('liq-precio').value;
+      const precio_kilo = _parseEl('liq-precio');
       if (!juntador_id || !desde || !hasta || !precio_kilo) { alert('Completa todos los campos'); return; }
       setLoading(btn, true);
       fetch('/api/pagos/liquidacion', {
@@ -353,7 +353,7 @@
           periodo_desde: desde,
           periodo_hasta: hasta,
           precio_kilo: precio_kilo,
-          anticipos: document.getElementById('liq-anticipos').value || 0,
+          anticipos: _parseEl('liq-anticipos') || 0,
           observacion: document.getElementById('liq-obs').value
         })
       })

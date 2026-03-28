@@ -178,6 +178,21 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 
+// ── Parseo seguro de inputs numéricos con separador de miles (es-AR) ──────────
+// _parseVal(v)   → acepta string con puntos de miles y coma decimal → número
+// _parseEl(id)   → lee un input por id y parsea de forma segura
+function _parseVal(v) {
+  return parseFloat(String(v).replace(/\./g, '').replace(',', '.')) || 0;
+}
+function _parseEl(id) {
+  var el = document.getElementById(id);
+  if (!el) return 0;
+  var raw = (el.dataset.rawValue !== undefined && el.dataset.rawValue !== '')
+    ? el.dataset.rawValue
+    : el.value;
+  return _parseVal(raw);
+}
+
 function mostrarMensaje(containerId, tipo, texto, duracion) {
   var el = document.getElementById(containerId);
   if (!el) return;
