@@ -91,15 +91,18 @@ function _actualizarWidgets() {
       (ts ? '<div class="dolar-actualizado">' + ts + '</div>' : '');
   });
 
-  // Barra de cotizaciones en dashboard
+  // Actualizar todos los elementos de cotizaciones en la página
   function setEl(id, val) {
     var el = document.getElementById(id);
     if (el) el.textContent = val ? '$' + Math.round(val).toLocaleString('es-AR') : '—';
   }
-  setEl('bd-blue',    b.venta);
-  setEl('bd-oficial', o.venta);
-  setEl('bd-mep',     m.venta);
-  setEl('bd-ccl',     c.venta);
+  setEl('bd-blue',       b.venta);
+  setEl('bd-oficial',    o.venta);
+  setEl('bd-mep',        m.venta);
+  setEl('bd-ccl',        c.venta);
+  setEl('topbar-blue',   b.venta);
+  setEl('topbar-oficial',o.venta);
+  setEl('hero-blue',     b.venta);
   var bdAct = document.getElementById('bd-actualizado');
   if (bdAct && ts) bdAct.textContent = 'Actualizado ' + ts;
 }

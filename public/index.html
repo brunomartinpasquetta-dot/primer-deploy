@@ -133,16 +133,6 @@
     /* ── Flujo del día ── */
     #flujo-dia { padding: 12px 20px 4px; border-bottom: 1px solid #f0f0f0; display: none; }
 
-    /* ── Action cards ── */
-    .action-card {
-      background: #fff !important;
-      border: 1.5px solid var(--borde) !important;
-      border-radius: 12px !important;
-      color: var(--texto) !important;
-    }
-    .action-card:hover { border-color: #2D5016 !important; color: #2D5016 !important; transform: translateY(-2px); }
-    .action-card--primary { background: #2D5016 !important; border-color: #2D5016 !important; color: #fff !important; }
-    .action-card--primary:hover { background: #3a6b1e !important; border-color: #3a6b1e !important; color: #fff !important; }
   </style>
 </head>
 <body>
@@ -265,17 +255,6 @@
 
       </div>
 
-      <!-- Acceso rápido -->
-      <div class="section-label" style="margin-top:20px;">Acceso rápido</div>
-      <div class="action-grid">
-        <a href="juntada.html"        class="action-card action-card--primary"><span class="action-card-icon"><i data-lucide="wheat"></i></span><span class="action-card-label">Cosecha</span></a>
-        <a href="despalillado.html"   class="action-card"><span class="action-card-icon"><i data-lucide="scissors"></i></span><span class="action-card-label">Despalillado</span></a>
-        <a href="aplicaciones.html"   class="action-card"><span class="action-card-icon"><i data-lucide="droplets"></i></span><span class="action-card-label">Aplicaciones</span></a>
-        <a href="menu-stock.html"     class="action-card"><span class="action-card-icon"><i data-lucide="package"></i></span><span class="action-card-label">Stock</span></a>
-        <a href="menu-comercial.html" class="action-card"><span class="action-card-icon"><i data-lucide="users"></i></span><span class="action-card-label">Comercial</span></a>
-        <a href="menu-admin.html"     class="action-card"><span class="action-card-icon"><i data-lucide="landmark"></i></span><span class="action-card-label">Admin</span></a>
-      </div>
-
       <!-- Hidden compat elements -->
       <div style="display:none;">
         <strong id="bd-blue"></strong><strong id="bd-oficial"></strong>
@@ -385,8 +364,7 @@ function renderDashboard(d) {
           '</div>' +
         '</div>' +
       '</div>';
-    if (window._heroBlue) { var hb = document.getElementById('hero-blue'); if (hb) hb.textContent = window._heroBlue; }
-    if (window._heroFrutilla) { var hf = document.getElementById('hero-frutilla'); if (hf) hf.textContent = window._heroFrutilla; }
+    // cargarCotizacion() y cargarFrutilla() actualizan hero-blue y hero-frutilla cuando resuelven
   } else {
     banner.innerHTML =
       '<div class="no-temporada-banner">' +
@@ -548,22 +526,7 @@ function cargar() {
     });
 }
 
-// ── Mercado topbar + hero ──
-function actualizarMercadoDolar() {
-  fetch('/api/cotizaciones/dolar')
-    .then(function(r) { return r.json(); })
-    .then(function(d) {
-      if (d.error) return;
-      function p(v) { return v ? '$' + Math.round(v).toLocaleString('es-AR') : '$---'; }
-      var blueVal = p(d.blue && d.blue.venta);
-      var tb = document.getElementById('topbar-blue'); if (tb) tb.textContent = blueVal;
-      var to = document.getElementById('topbar-oficial'); if (to) to.textContent = p(d.oficial && d.oficial.venta);
-      window._heroBlue = blueVal;
-      var hb = document.getElementById('hero-blue');
-      if (hb) hb.textContent = blueVal;
-    })
-    .catch(function() {});
-}
+// cotizaciones.js ya define cargarCotizacion() que actualiza topbar, hero-blue y bd-*
 
 function cargarFrutilla() {
   fetch('/api/cotizaciones/locales?cultivo=frutilla')
@@ -613,8 +576,8 @@ function cargarDepositos() {
 
 cargar();
 setInterval(cargar, 60000);
-actualizarMercadoDolar();
-setInterval(actualizarMercadoDolar, 30 * 60 * 1000);
+cargarCotizacion();
+setInterval(cargarCotizacion, 30 * 60 * 1000);
 cargarDepositos();
 setInterval(cargarDepositos, 60000);
 cargarFrutilla();
