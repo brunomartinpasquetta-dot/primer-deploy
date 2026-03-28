@@ -119,14 +119,16 @@ router.post('/', async (req, res) => {
       }
 
     } else {
-      // Flujo normal (fruta fresca): solo registra el despalillado, sin afectar stock
+      // Flujo fruta fresca: registra despalillado con depósito opcional
+      const { deposito_id: dep_fresca } = req.body;
       await pool.request()
-        .input('lote_id',          sql.Int,          lote_id)
-        .input('despalillador_id', sql.Int,           despalillador_id)
-        .input('kilos',            sql.Decimal(8,2),  kilos)
-        .input('operador',         sql.NVarChar,      operador || '')
-        .query(`INSERT INTO Despalillado (lote_id, despalillador_id, kilos, operador)
-                VALUES (@lote_id, @despalillador_id, @kilos, @operador)`);
+        .input('lote_id',          sql.Int,           lote_id)
+        .input('despalillador_id', sql.Int,            despalillador_id)
+        .input('kilos',            sql.Decimal(8,2),   kilos)
+        .input('operador',         sql.NVarChar,       operador || '')
+        .input('deposito_id',      sql.Int,            dep_fresca || null)
+        .query(`INSERT INTO Despalillado (lote_id, despalillador_id, kilos, operador, deposito_id)
+                VALUES (@lote_id, @despalillador_id, @kilos, @operador, @deposito_id)`);
       res.json({ ok: true });
     }
 

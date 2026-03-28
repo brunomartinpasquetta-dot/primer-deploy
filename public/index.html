@@ -49,12 +49,15 @@
 
     /* ── KPI rows ── */
     .kpi-row-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px; }
+    .kpi-row-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 12px; }
     .kpi-row-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
     @media (max-width: 900px) {
+      .kpi-row-4 { grid-template-columns: 1fr 1fr; }
       .kpi-row-3 { grid-template-columns: 1fr 1fr; }
       .kpi-row-2 { grid-template-columns: 1fr 1fr; }
     }
     @media (max-width: 480px) {
+      .kpi-row-4 { grid-template-columns: 1fr 1fr; gap: 8px; }
       .kpi-row-3 { grid-template-columns: 1fr; gap: 8px; }
       .kpi-row-2 { grid-template-columns: 1fr; gap: 8px; }
     }
@@ -192,12 +195,13 @@
       <!-- Hero: temporada + cotizaciones -->
       <div id="temporada-banner"></div>
 
-      <!-- KPIs hoy (3 cards) -->
+      <!-- KPIs hoy (4 cards) -->
       <div class="section-label">Hoy</div>
-      <div class="kpi-row-3" id="kpis-hoy">
-        <div class="kpi"><div class="kpi-label">Cosecha hoy</div><div class="kpi-value">—</div><div class="kpi-sub">kg</div></div>
-        <div class="kpi"><div class="kpi-label">En cámara</div><div class="kpi-value">—</div><div class="kpi-sub">kg disponibles</div></div>
-        <div class="kpi kpi--acento"><div class="kpi-label">Saldo caja</div><div class="kpi-value">—</div></div>
+      <div class="kpi-row-4" id="kpis-hoy">
+        <div class="kpi"><div class="kpi-label">Cosecha hoy</div><div class="kpi-value" id="kpi-cosecha-hoy">—</div><div class="kpi-sub" id="kpi-cosecha-sub">kg</div></div>
+        <div class="kpi"><div class="kpi-label">En cámara</div><div class="kpi-value" id="kpi-camara-hoy">—</div><div class="kpi-sub">kg disponibles</div></div>
+        <div class="kpi kpi--acento"><div class="kpi-label">Saldo caja</div><div class="kpi-value" id="kpi-caja-hoy">—</div></div>
+        <div class="kpi" id="kpi-merma-card" style="display:none;"><div class="kpi-label">Merma hoy</div><div class="kpi-value red" id="kpi-merma-val">—</div><div class="kpi-sub" id="kpi-merma-sub">— %</div></div>
       </div>
 
       <!-- KPIs temporada (2 cards) -->
@@ -373,7 +377,7 @@ function renderDashboard(d) {
       '</div>';
   }
 
-  // ── KPIs hoy — 3 cards ──
+  // ── KPIs hoy — 4 cards ──
   var kh = d.hoy;
   var ts = d.temporada_stats;
   var saldoColor = parseFloat(ts.saldo_caja) >= 0 ? 'green' : 'red';
@@ -388,7 +392,17 @@ function renderDashboard(d) {
       '</div>' +
       '<div class="kpi-value ' + saldoColor + '" style="font-size:22px;">' + fmtPeso(ts.saldo_caja) + '</div>' +
       '<div class="kpi-sub" style="font-family:\'JetBrains Mono\',monospace;">' + formatDolares(ts.saldo_caja) + '</div>' +
+    '</div>' +
+    '<div class="kpi" id="kpi-merma-card" style="display:none;">' +
+      '<div class="kpi-top">' +
+        '<div class="kpi-label">Merma hoy</div>' +
+        '<div class="kpi-icon kpi-icon--alerta"><i data-lucide="trending-down"></i></div>' +
+      '</div>' +
+      '<div class="kpi-value red" id="kpi-merma-val">—</div>' +
+      '<div class="kpi-sub" id="kpi-merma-sub">kg · —%</div>' +
     '</div>';
+  // Cargar merma del día desde despalillado
+  cargarMermaHoy();
 
   // ── KPIs temporada — 2 cards ──
   var labelTemp = document.getElementById('label-temporada-stats');
@@ -538,6 +552,23 @@ function cargarFrutilla() {
       if (hf) hf.textContent = val;
     })
     .catch(function() {});
+}
+
+function cargarMermaHoy() {
+  fetch('/api/despalillado/hoy')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var conMerma = data.filter(function(r) { return r.merma_kg != null; });
+      if (!conMerma.length) return;
+      var totalKg  = conMerma.reduce(function(s, r) { return s + parseFloat(r.merma_kg || 0); }, 0);
+      var avgPct   = conMerma.reduce(function(s, r) { return s + parseFloat(r.merma_pct || 0); }, 0) / conMerma.length;
+      var card = document.getElementById('kpi-merma-card');
+      if (!card) return;
+      card.style.display = '';
+      document.getElementById('kpi-merma-val').textContent = fmt(totalKg) + ' kg';
+      document.getElementById('kpi-merma-sub').textContent = avgPct.toFixed(1) + '% promedio · ' + conMerma.length + ' desp.';
+      lucide.createIcons();
+    }).catch(function() {});
 }
 
 function cargarDepositos() {

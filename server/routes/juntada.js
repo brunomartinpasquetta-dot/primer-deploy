@@ -322,4 +322,22 @@ router.get('/hoy', async (req, res) => {
   }
 });
 
+// GET /api/juntada/pendientes-stock — total de kg en cámara fría esperando despalillado
+// Query param: temporada_id (opcional)
+router.get('/pendientes-stock', async (req, res) => {
+  try {
+    const { temporada_id } = req.query;
+    const pool = await getPool();
+    let q = `SELECT COUNT(*) AS cantidad, ISNULL(SUM(j.kilos), 0) AS total_kg
+             FROM Juntada j
+             JOIN Lotes l ON j.lote_id = l.id
+             WHERE j.stock_pendiente = 1`;
+    if (temporada_id) q += ` AND l.temporada_id = ${parseInt(temporada_id)}`;
+    const result = await pool.request().query(q);
+    res.json(result.recordset[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

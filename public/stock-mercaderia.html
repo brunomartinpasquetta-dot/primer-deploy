@@ -48,6 +48,7 @@
     .merc-kpi-icon.deposito   { background: #eef7ee; color: #2d6a4f; }
     .merc-kpi-icon.vendidos   { background: #e8f5e2; color: #2d6a4f; }
     .merc-kpi-icon.descartados{ background: #fde8e8; color: #c0392b; }
+    .merc-kpi-icon.transito   { background: #fff3cd; color: #856404; }
     .merc-kpi-valor {
       font-size: 22px; font-weight: 700;
       font-family: 'JetBrains Mono', monospace; line-height: 1;
@@ -305,6 +306,11 @@
           <div class="merc-kpi-icon descartados"><i data-lucide="trash-2"></i></div>
           <div class="merc-kpi-valor rojo" id="kpi-descartados">—</div>
           <div class="merc-kpi-label">KG Descartados</div>
+        </div>
+        <div class="merc-kpi" id="kpi-transito-card" style="display:none;">
+          <div class="merc-kpi-icon transito"><i data-lucide="clock"></i></div>
+          <div class="merc-kpi-valor" style="color:#856404;" id="kpi-transito">—</div>
+          <div class="merc-kpi-label">❄️ En tránsito</div>
         </div>
       </div>
 
@@ -869,6 +875,15 @@ function cargarStock() {
     document.getElementById('kpi-vendidos').textContent    = fmt(k.kg_vendidos);
     document.getElementById('kpi-descartados').textContent = fmt(k.kg_descartados);
   });
+  // KG en tránsito — juntadas cámara fría esperando despalillado
+  var transitoUrl = '/api/juntada/pendientes-stock' + (tid ? '?temporada_id='+tid : '');
+  fetch(transitoUrl).then(function(r){ return r.json(); }).then(function(data){
+    var card = document.getElementById('kpi-transito-card');
+    if (!data || !data.total_kg) { card.style.display = 'none'; return; }
+    card.style.display = '';
+    document.getElementById('kpi-transito').textContent = fmt(data.total_kg);
+    lucide.createIcons();
+  }).catch(function(){ document.getElementById('kpi-transito-card').style.display = 'none'; });
 }
 
 /* ── Egreso de depósito ── */

@@ -208,12 +208,18 @@
         <!-- ── FORMULARIO REGISTRO ── -->
         <div id="sec-form" style="display:none;">
 
-          <!-- Lote (solo modo fresca) -->
+          <!-- Lote + Depósito (solo modo fresca) -->
           <div class="card-form" id="card-lote-fresca">
             <div class="form-row">
               <label>Lote</label>
               <select id="lote" onchange="checkReady()" data-tooltip="Lote de la campaña activa">
                 <option value="">Cargando lotes...</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label>Depósito destino</label>
+              <select id="deposito-fresca" onchange="checkReady()" data-tooltip="Depósito donde se almacenará la fruta fresca">
+                <option value="">Sin asignar (opcional)</option>
               </select>
             </div>
           </div>
@@ -465,6 +471,21 @@
     checkReady();
   }
 
+  // ── DEPÓSITOS FRUTA FRESCA ────────────────────────────────────────
+  function cargarDepositosFresca() {
+    fetch('/api/depositos?tipo_stock=mercaderia')
+      .then(function(r) { return r.json(); })
+      .then(function(deps) {
+        var sel = document.getElementById('deposito-fresca');
+        // Solo galpones (no cámara fría) para fruta fresca
+        var frescos = deps.filter(function(d) { return d.tipo !== 'camara_fria' && d.activo !== false; });
+        frescos.forEach(function(d) {
+          sel.innerHTML += '<option value="' + d.id + '">' + d.nombre + '</option>';
+        });
+      });
+  }
+  cargarDepositosFresca();
+
   // ── LOTES ─────────────────────────────────────────────────────────
   function cargarLotes() {
     fetch('/api/temporadas/activa').then(r => r.json()).then(function(t) {
@@ -568,7 +589,13 @@
     } else {
       var lote_id = document.getElementById('lote').value;
       if (!lote_id) { alert('Seleccioná un lote'); return; }
-      body = { lote_id: parseInt(lote_id), despalillador_id: trabajadorId, kilos: kilos };
+      var dep_fresca = document.getElementById('deposito-fresca').value;
+      body = {
+        lote_id: parseInt(lote_id),
+        despalillador_id: trabajadorId,
+        kilos: kilos,
+        deposito_id: dep_fresca ? parseInt(dep_fresca) : null
+      };
     }
 
     var btn = document.getElementById('btn-confirmar');
