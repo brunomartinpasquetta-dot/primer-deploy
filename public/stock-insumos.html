@@ -364,10 +364,10 @@
                 <th><input type="checkbox" class="row-check" id="chk-all" onchange="toggleTodos(this)"></th>
                 <th>PRODUCTO</th>
                 <th>CATEGORÍA</th>
+                <th style="text-align:right;">KG / LITROS</th>
+                <th style="text-align:right;">PRESENTACIÓN</th>
                 <th>PROVEEDOR</th>
                 <th>DEPÓSITO</th>
-                <th style="text-align:right;">CANTIDAD DISPONIBLE</th>
-                <th>UNIDAD</th>
               </tr>
             </thead>
             <tbody id="tbody-stock">
@@ -699,22 +699,31 @@
       tbody.innerHTML = '<tr><td colspan="7" class="activity-empty">Sin productos para los filtros seleccionados</td></tr>';
       return;
     }
+    var mono = "font-family:'JetBrains Mono',monospace;";
     tbody.innerHTML = data.map(function(p) {
       var cant = parseFloat(p.cantidad_disponible) || 0;
+      var contenido = parseFloat(p.contenido_litros) || 0;
       var bajo = cant <= 2;
+      var unidad = p.unidad || '—';
+      // Cantidad en kg/litros
+      var cantLabel = cant.toLocaleString('es-AR', {minimumFractionDigits:0,maximumFractionDigits:2}) + ' ' + unidad;
+      // Cantidad en presentación (bidones, barriles, botellas)
+      var presLabel = '—';
+      if (contenido > 0) {
+        var unidades = cant / contenido;
+        presLabel = unidades.toLocaleString('es-AR', {minimumFractionDigits:0,maximumFractionDigits:1}) +
+          ' u. (' + contenido.toLocaleString('es-AR') + ' ' + unidad + '/u.)';
+      }
       return '<tr>' +
         '<td><input type="checkbox" class="row-check"></td>' +
         '<td><strong>' + (p.producto || '—') + '</strong></td>' +
         '<td style="font-size:12px;color:var(--texto-suave);">' + (p.categoria || '—') + '</td>' +
+        '<td class="' + (bajo ? 'stock-bajo' : 'stock-ok') + '" style="text-align:right;'+mono+'">' +
+          cantLabel + (bajo ? ' ⚠️' : '') +
+        '</td>' +
+        '<td style="text-align:right;font-size:12px;'+mono+'">' + presLabel + '</td>' +
         '<td style="font-size:12px;">' + (p.proveedor || 'Sin proveedor') + '</td>' +
         '<td style="font-size:12px;color:var(--texto-suave);">' + (p.deposito || '—') + '</td>' +
-        '<td class="' + (bajo ? 'stock-bajo' : 'stock-ok') + '" style="text-align:right;">' +
-          cant.toLocaleString('es-AR', {minimumFractionDigits:0,maximumFractionDigits:2}) +
-          (bajo ? ' ⚠️' : '') +
-        '</td>' +
-        '<td style="font-size:12px;color:var(--texto-suave);">' +
-          (p.contenido_litros ? parseFloat(p.contenido_litros).toLocaleString('es-AR') + ' ' : '') +
-          (p.unidad || '—') + '</td>' +
         '</tr>';
     }).join('');
     lucide.createIcons();

@@ -58,8 +58,8 @@
       <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
       <div class="nav-section">Sistema</div>
       <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
-      <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
-      <a href="menu-admin.html" class="nav-item active"><span class="nav-icon"><i data-lucide="landmark"></i></span> Administración</a>
+      <a href="menu-comercial.html" class="nav-item active"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
+      <a href="menu-admin.html" class="nav-item"><span class="nav-icon"><i data-lucide="landmark"></i></span> Administración</a>
       <a href="mercado.html" class="nav-item"><span class="nav-icon"><i data-lucide="trending-up"></i></span> Mercado</a>
       <a href="menu-config.html" class="nav-item"><span class="nav-icon"><i data-lucide="settings"></i></span> Configuración</a>
     </nav>
@@ -78,7 +78,7 @@
     </header>
 
     <div class="content">
-      <a href="menu-admin.html" class="btn-volver">← Volver</a>
+      <a href="menu-comercial.html" class="btn-volver">← Volver</a>
       <div class="content-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
         <div>
           <div class="content-title">Ventas</div>
@@ -127,11 +127,11 @@
           <div class="three-col" style="margin-top:12px;">
             <div class="form-row" style="margin-bottom:0;">
               <label>Kilos *</label>
-              <input type="number" id="kilos" placeholder="Ej: 1000" step="0.01" min="0.01" data-miles oninput="calcularTotal()">
+              <input type="text" inputmode="decimal" id="kilos" placeholder="Ej: 1000" data-miles oninput="calcularTotal()">
             </div>
             <div class="form-row" style="margin-bottom:0;">
               <label>Precio x Kg</label>
-              <input type="number" id="precio_kilo" placeholder="Ej: 450" step="0.01" min="0" data-miles oninput="calcularTotal()">
+              <input type="text" inputmode="decimal" id="precio_kilo" placeholder="Ej: 450" data-miles oninput="calcularTotal()">
             </div>
             <div class="form-row" style="margin-bottom:0;">
               <label>Total estimado</label>
@@ -176,10 +176,10 @@
       <div class="card">
         <table>
           <thead>
-            <tr><th>Fecha</th><th>Depósito</th><th>Comprador</th><th>Destino</th><th>Kg</th><th>Precio/Kg</th><th>Total</th></tr>
+            <tr><th>#</th><th>Fecha</th><th>Depósito</th><th>Lote</th><th>Comprador</th><th>Destino</th><th>Kg</th><th>Precio/Kg</th><th>Total</th><th>Usuario</th></tr>
           </thead>
           <tbody id="tbody-historial">
-            <tr><td colspan="7" class="empty">Cargando...</td></tr>
+            <tr><td colspan="10" class="empty">Cargando...</td></tr>
           </tbody>
           <tfoot id="tfoot-historial"></tfoot>
         </table>
@@ -223,9 +223,17 @@
     cargarHistorial();
   }
 
+  function _parseInput(id) {
+    var el = document.getElementById(id);
+    var raw = el.dataset.rawValue !== undefined
+      ? el.dataset.rawValue
+      : String(el.value).replace(/\./g, '').replace(',', '.');
+    return parseFloat(raw) || 0;
+  }
+
   function calcularTotal() {
-    var kilos = parseFloat(document.getElementById('kilos').value) || 0;
-    var precio = parseFloat(document.getElementById('precio_kilo').value) || 0;
+    var kilos = _parseInput('kilos');
+    var precio = _parseInput('precio_kilo');
     document.getElementById('total-display').textContent = (kilos * precio).toLocaleString('es-AR', { minimumFractionDigits: 2 });
   }
 
@@ -309,12 +317,13 @@
   }
 
   function guardarVenta() {
-    var deposito_id = document.getElementById('deposito').value;
+    var deposito_id  = document.getElementById('deposito').value;
     var temporada_id = document.getElementById('temporada').value;
-    var kilos = document.getElementById('kilos').value;
-    if (!deposito_id) { mostrarMensaje('mensaje', 'error', 'Seleccioná un depósito'); return; }
-    if (!temporada_id) { mostrarMensaje('mensaje', 'error', 'Seleccioná una temporada'); return; }
-    if (!kilos || parseFloat(kilos) <= 0) { mostrarMensaje('mensaje', 'error', 'Ingresá los kilos'); return; }
+    var kilos        = _parseInput('kilos');
+    var precio_kilo  = _parseInput('precio_kilo');
+    if (!deposito_id)    { mostrarMensaje('mensaje', 'error', 'Seleccioná un depósito'); return; }
+    if (!temporada_id)   { mostrarMensaje('mensaje', 'error', 'Seleccioná una temporada'); return; }
+    if (!kilos || kilos <= 0) { mostrarMensaje('mensaje', 'error', 'Ingresá los kilos'); return; }
 
     var btn = document.getElementById('btn-guardar');
     setLoading(btn, true);
@@ -328,7 +337,7 @@
         lote_id:       document.getElementById('lote').value || null,
         tipo_egreso:   'egreso_venta',
         kilos:         kilos,
-        precio_kilo:   document.getElementById('precio_kilo').value || null,
+        precio_kilo:   precio_kilo || null,
         comprador:     document.getElementById('comprador').value,
         destino_venta: document.getElementById('destino_venta').value,
         fecha:         document.getElementById('fecha').value || null,
@@ -339,11 +348,13 @@
     .then(function(data) {
       setLoading(btn, false);
       if (data.ok) {
+        var msg = 'Venta registrada';
+        if (data.id) msg += ' — Mov. #' + data.id;
+        mostrarMensaje('mensaje', 'success', msg, 4000);
         limpiarFormulario();
         document.getElementById('form-nuevo').classList.remove('visible');
         cargarHistorial();
         actualizarKPIs();
-        // Actualizar stock depósitos
         fetch('/api/depositos').then(function(r) { return r.json(); }).then(function(deps) {
           _depositos = deps;
           document.getElementById('deposito').innerHTML = '<option value="">Seleccionar depósito...</option>' +
@@ -381,11 +392,12 @@
         var tbody = document.getElementById('tbody-historial');
         var tfoot = document.getElementById('tfoot-historial');
         if (!data.length) {
-          tbody.innerHTML = '<tr><td colspan="7" class="empty">Sin ventas registradas</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="10" class="empty">Sin ventas registradas</td></tr>';
           tfoot.innerHTML = '';
           return;
         }
         var totalKg = 0, totalPesos = 0;
+        var mono = "font-family:'JetBrains Mono',monospace;";
         tbody.innerHTML = data.map(function(v) {
           var kg = parseFloat(v.kilos) || 0;
           var precio = parseFloat(v.precio_kilo) || 0;
@@ -393,20 +405,24 @@
           totalKg += kg;
           totalPesos += total;
           return '<tr>' +
+            '<td style="'+mono+'color:var(--texto-suave);font-size:11px;">#' + (v.id || '-') + '</td>' +
             '<td>' + formatFechaHora(v.fecha) + (v.temporada ? '<br><small style="color:var(--texto-suave)">' + v.temporada + '</small>' : '') + '</td>' +
             '<td>' + (v.deposito || '<em style="color:var(--texto-suave)">Directa</em>') + '</td>' +
+            '<td>' + (v.lote || '-') + '</td>' +
             '<td>' + (v.comprador || '-') + '</td>' +
             '<td>' + (v.destino_venta || '-') + '</td>' +
-            '<td style="font-family:\'JetBrains Mono\',monospace;">' + kg.toLocaleString('es-AR', { minimumFractionDigits: 2 }) + ' kg</td>' +
-            '<td style="font-family:\'JetBrains Mono\',monospace;">' + (precio > 0 ? '$' + precio.toLocaleString('es-AR', { minimumFractionDigits: 2 }) : '-') + '</td>' +
-            '<td style="font-family:\'JetBrains Mono\',monospace;font-weight:700;">' + (total > 0 ? '$' + total.toLocaleString('es-AR', { minimumFractionDigits: 2 }) : '-') + '</td>' +
+            '<td style="'+mono+'">' + kg.toLocaleString('es-AR', { minimumFractionDigits: 2 }) + ' kg</td>' +
+            '<td style="'+mono+'">' + (precio > 0 ? '$' + precio.toLocaleString('es-AR', { minimumFractionDigits: 2 }) : '-') + '</td>' +
+            '<td style="'+mono+'font-weight:700;">' + (total > 0 ? '$' + total.toLocaleString('es-AR', { minimumFractionDigits: 2 }) : '-') + '</td>' +
+            '<td style="font-size:12px;color:var(--texto-suave);">' + (v.usuario || '-') + '</td>' +
             '</tr>';
         }).join('');
         tfoot.innerHTML = '<tr style="background:var(--fondo-dark);font-weight:700;">' +
-          '<td colspan="4" style="padding:10px 12px;">TOTALES</td>' +
+          '<td colspan="6" style="padding:10px 12px;">TOTALES</td>' +
           '<td style="padding:10px 12px;font-family:\'JetBrains Mono\',monospace;">' + totalKg.toLocaleString('es-AR', { minimumFractionDigits: 2 }) + ' kg</td>' +
           '<td></td>' +
           '<td style="padding:10px 12px;font-family:\'JetBrains Mono\',monospace;">$' + totalPesos.toLocaleString('es-AR', { minimumFractionDigits: 2 }) + '</td>' +
+          '<td></td>' +
           '</tr>';
       });
   }

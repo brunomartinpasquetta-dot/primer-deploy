@@ -227,8 +227,10 @@ router.post('/egreso', async (req, res) => {
     const kilosNum = parseFloat(kilos);
     const precioNum = precio_kilo ? parseFloat(precio_kilo) : null;
 
+    const uid = req.user ? req.user.id : null;
+
     // 1. MovimientosDeposito
-    await new sql.Request(transaction)
+    const movResult = await new sql.Request(transaction)
       .input('deposito_id',  sql.Int,           deposito_id)
       .input('temporada_id', sql.Int,           temporada_id)
       .input('lote_id',      sql.Int,           lote_id       || null)
@@ -239,11 +241,13 @@ router.post('/egreso', async (req, res) => {
       .input('destino_venta',sql.NVarChar,      destino_venta || '')
       .input('fecha',        sql.DateTime,      fechaDate)
       .input('observacion',  sql.NVarChar,      observacion   || '')
+      .input('usuario_id',   sql.Int,           uid)
       .query(`INSERT INTO MovimientosDeposito
               (deposito_id, temporada_id, lote_id, tipo, kilos, precio_kilo,
-               comprador, destino_venta, fecha, observacion)
+               comprador, destino_venta, fecha, observacion, usuario_id)
+              OUTPUT INSERTED.id
               VALUES (@deposito_id, @temporada_id, @lote_id, @tipo, @kilos, @precio_kilo,
-                      @comprador, @destino_venta, @fecha, @observacion)`);
+                      @comprador, @destino_venta, @fecha, @observacion, @usuario_id)`);
 
     // 2. StockMercaderia — egreso de kg
     await new sql.Request(transaction)
@@ -271,7 +275,8 @@ router.post('/egreso', async (req, res) => {
     }
 
     await transaction.commit();
-    res.json({ ok: true });
+    const movId = movResult.recordset[0] ? movResult.recordset[0].id : null;
+    res.json({ ok: true, id: movId });
   } catch (err) {
     await transaction.rollback();
     res.status(500).json({ error: err.message });
