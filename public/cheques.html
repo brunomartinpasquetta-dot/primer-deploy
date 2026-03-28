@@ -73,14 +73,6 @@
     <div class="filtros-barra">
       <input type="search" class="fb-buscar" id="buscar-recibidos" placeholder="Filtrar por..." list="cheq-rec-opciones" oninput="filtrarCheques('recibido')">
       <datalist id="cheq-rec-opciones"></datalist>
-      <div class="fb-sep"></div>
-      <select id="filtro-estado-recibido" onchange="filtrarCheques('recibido')" title="Estado">
-        <option value="">Estado: Todos</option>
-        <option value="en_cartera">En cartera</option>
-        <option value="depositado">Depositado</option>
-        <option value="rechazado">Rechazado</option>
-        <option value="endosado">Endosado</option>
-      </select>
       <input type="date" id="filtro-desde-recibido" onchange="filtrarCheques('recibido')" title="Vencimiento desde">
       <input type="date" id="filtro-hasta-recibido" onchange="filtrarCheques('recibido')" title="Vencimiento hasta">
       <button class="fb-limpiar" onclick="limpiarCheques('recibido')">✕ Limpiar</button>
@@ -111,13 +103,6 @@
     <div class="filtros-barra">
       <input type="search" class="fb-buscar" id="buscar-emitidos" placeholder="Filtrar por..." list="cheq-emi-opciones" oninput="filtrarCheques('emitido')">
       <datalist id="cheq-emi-opciones"></datalist>
-      <div class="fb-sep"></div>
-      <select id="filtro-estado-emitido" onchange="filtrarCheques('emitido')" title="Estado">
-        <option value="">Estado: Todos</option>
-        <option value="pendiente">Pendiente</option>
-        <option value="cobrado">Cobrado</option>
-        <option value="anulado">Anulado</option>
-      </select>
       <input type="date" id="filtro-desde-emitido" onchange="filtrarCheques('emitido')" title="Vencimiento desde">
       <input type="date" id="filtro-hasta-emitido" onchange="filtrarCheques('emitido')" title="Vencimiento hasta">
       <button class="fb-limpiar" onclick="limpiarCheques('emitido')">✕ Limpiar</button>
@@ -280,16 +265,14 @@
       var sfx     = tipo === 'recibido' ? '-recibido' : '-emitido';
       var cols    = tipo === 'recibido' ? _cheqRecCols : _cheqEmiCols;
       var q       = (document.getElementById('buscar-' + (tipo==='recibido'?'recibidos':'emitidos')).value || '').trim();
-      var estado  = document.getElementById('filtro-estado' + sfx).value;
       var desde   = document.getElementById('filtro-desde' + sfx).value;
       var hasta   = document.getElementById('filtro-hasta' + sfx).value;
       var data    = _chequesData[tipo].filter(function(c) {
         var matchQ = matchFiltro(c, q, cols);
-        var matchE = !estado || c.estado === estado;
         var venc   = parseFechaLocal(c.fecha_vencimiento);
         var matchD = !desde || !venc || venc >= new Date(desde);
         var matchH = !hasta || !venc || venc <= new Date(hasta);
-        return matchQ && matchE && matchD && matchH;
+        return matchQ && matchD && matchH;
       });
       var tbodyId = tipo === 'recibido' ? 'tbody-recibidos' : 'tbody-emitidos';
       renderCheques(data, tipo, tbodyId, tipo === 'recibido' ? 6 : 7);
@@ -298,7 +281,6 @@
     function limpiarCheques(tipo) {
       var sfx = tipo === 'recibido' ? '-recibido' : '-emitido';
       document.getElementById('buscar-' + (tipo==='recibido'?'recibidos':'emitidos')).value = '';
-      document.getElementById('filtro-estado' + sfx).value = '';
       document.getElementById('filtro-desde' + sfx).value = '';
       document.getElementById('filtro-hasta' + sfx).value = '';
       filtrarCheques(tipo);

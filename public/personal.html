@@ -169,12 +169,6 @@
             <option value="1">Activos</option>
             <option value="0">Inactivos</option>
           </select>
-          <select id="filtro-contrato" onchange="filtrarTabla()">
-            <option value="">Todos los contratos</option>
-            <option value="temporario">Temporario</option>
-            <option value="permanente">Permanente</option>
-            <option value="jornal">Jornal</option>
-          </select>
           <button class="fb-limpiar" onclick="limpiarFiltrosPersonal()">✕ Limpiar</button>
         </div>
         <table>
@@ -288,18 +282,14 @@
   // ── Filtrado en tiempo real ──────────────────────────────────────
   function filtrarTabla() {
     var q = document.getElementById('filtro-buscar').value.trim();
-    var contrato = document.getElementById('filtro-contrato').value;
     var filtrados = _datos.filter(function(e) {
-      var matchQ = matchFiltro(e, q, _personalCols);
-      var matchC = !contrato || (e.tipo_contrato || '').toLowerCase() === contrato;
-      return matchQ && matchC;
+      return matchFiltro(e, q, _personalCols);
     });
     renderTabla(filtrados);
   }
 
   function limpiarFiltrosPersonal() {
     document.getElementById('filtro-buscar').value = '';
-    document.getElementById('filtro-contrato').value = '';
     document.getElementById('filtro-estado').value = '';
     cargar();
   }

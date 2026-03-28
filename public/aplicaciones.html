@@ -332,18 +332,6 @@
             <input type="search" class="fb-buscar" id="aplic-buscar" placeholder="Filtrar por..." list="aplic-opciones" oninput="buscarHistorial()">
             <datalist id="aplic-opciones"></datalist>
             <div class="fb-sep"></div>
-            <select id="hist-producto" onchange="cargarHistorial()" title="Producto">
-              <option value="">Producto: Todos</option>
-            </select>
-            <select id="hist-lote" onchange="cargarHistorial()" title="Lote">
-              <option value="">Lote: Todos</option>
-            </select>
-            <select id="hist-tipo" onchange="cargarHistorial()" title="Movimiento">
-              <option value="">Movimiento: Todos</option>
-              <option value="ingreso">Ingreso</option>
-              <option value="egreso">Egreso</option>
-            </select>
-            <div class="fb-sep"></div>
             <input type="date" id="hist-desde" onchange="cargarHistorial()" title="Desde">
             <input type="date" id="hist-hasta" onchange="cargarHistorial()" title="Hasta">
             <div class="fb-sep"></div>
@@ -521,10 +509,6 @@
         data.map(t => '<option value="' + t.id + '"' + (t.activa ? ' selected' : '') + '>' + t.nombre + '</option>').join('');
       if (activa) cargarKpisCampana(activa.id);
     });
-    fetch('/api/lotes').then(r => r.json()).then(function(data) {
-      document.getElementById('hist-lote').innerHTML = '<option value="">Todos</option>' +
-        data.map(l => '<option value="' + l.id + '">' + l.nombre + '</option>').join('');
-    });
     cargarLotesForm();
     fetch('/api/juntadores').then(r => r.json()).then(function(data) {
       document.getElementById('lista-empleados').innerHTML = '<option value="">— seleccionar empleado —</option>' +
@@ -537,8 +521,6 @@
       productos = data;
       document.getElementById('producto').innerHTML = '<option value="">Seleccionar producto...</option>' +
         data.map(p => '<option value="' + p.id + '">' + p.nombre + ' (' + (p.tipo || '') + ')</option>').join('');
-      document.getElementById('hist-producto').innerHTML = '<option value="">Todos</option>' +
-        data.map(p => '<option value="' + p.id + '">' + p.nombre + '</option>').join('');
     });
   }
 
@@ -742,9 +724,6 @@
 
   function limpiarFiltrosHistorial() {
     document.getElementById('aplic-buscar').value = '';
-    document.getElementById('hist-producto').value = '';
-    document.getElementById('hist-lote').value = '';
-    document.getElementById('hist-tipo').value = '';
     document.getElementById('hist-desde').value = '';
     document.getElementById('hist-hasta').value = '';
     cargarHistorial();
@@ -807,14 +786,8 @@
 
   function cargarHistorial() {
     var params = new URLSearchParams();
-    var pid   = document.getElementById('hist-producto').value;
-    var lid   = document.getElementById('hist-lote').value;
-    var tipo  = document.getElementById('hist-tipo').value;
     var desde = document.getElementById('hist-desde').value;
     var hasta = document.getElementById('hist-hasta').value;
-    if (pid)   params.set('producto_id', pid);
-    if (lid)   params.set('lote_id', lid);
-    if (tipo === 'ingreso') params.set('tipo', 'compra');
     if (desde) params.set('desde', desde);
     if (hasta) params.set('hasta', hasta);
 
@@ -822,19 +795,15 @@
     var tfoot = document.getElementById('tfoot-historial');
     tbody.innerHTML = '<tr><td colspan="9" class="activity-empty" style="color:var(--verde);">Cargando...</td></tr>';
     tfoot.innerHTML = '';
-    document.getElementById('aplic-buscar').value = '';
 
     fetch('/api/stock-insumos/historial?' + params.toString())
       .then(function(r) { return r.json(); })
       .then(function(data) {
-        if (tipo === 'egreso') {
-          data = data.filter(function(m){ return m.tipo !== 'compra'; });
-        }
         _historialData = data;
         _movimientoMap = {};
         data.forEach(function(m){ _movimientoMap[m.id] = m; });
         poblarDatalist('aplic-opciones', data, _aplicCols);
-        renderHistorialTabla(data);
+        buscarHistorial();
       })
       .catch(function() {
         tbody.innerHTML = '<tr><td colspan="9" class="activity-empty" style="color:#c0392b;">Error al cargar historial</td></tr>';

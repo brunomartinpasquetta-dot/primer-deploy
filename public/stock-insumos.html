@@ -341,20 +341,6 @@
         <input type="search" class="fb-buscar" id="search-stock" placeholder="Filtrar por..." list="si-stock-opciones" oninput="filtrarStock()">
         <datalist id="si-stock-opciones"></datalist>
         <div class="fb-sep"></div>
-        <select id="filter-cat" onchange="filtrarStock()" title="Categoría">
-          <option value="">Categoría: Todas</option>
-        </select>
-        <select id="filter-prov" onchange="filtrarStock()" title="Proveedor">
-          <option value="">Proveedor: Todos</option>
-        </select>
-        <select id="filter-dep" onchange="filtrarStock()" title="Depósito">
-          <option value="">Depósito: Todos</option>
-        </select>
-        <select id="filter-stock" onchange="filtrarStock()" title="Alerta">
-          <option value="">Alerta: Todas</option>
-          <option value="__alerta__">Solo stock bajo</option>
-        </select>
-        <div class="fb-sep"></div>
         <button class="aplic-btn-export" onclick="exportarCSV()" title="Exportar CSV"><i data-lucide="download"></i></button>
         <button class="aplic-btn-export" onclick="imprimirVista()" title="Imprimir"><i data-lucide="printer"></i></button>
         <button class="fb-limpiar" onclick="limpiarFiltrosStock()">✕ Limpiar</button>
@@ -397,17 +383,8 @@
         </div>
         <!-- Barra de filtros historial -->
         <div class="filtros-barra" style="margin-bottom:8px;">
-          <select id="hist-producto" onchange="cargarHistorial()" title="Producto">
-            <option value="">Producto: Todos</option>
-          </select>
-          <select id="hist-lote" onchange="cargarHistorial()" title="Lote">
-            <option value="">Lote: Todos</option>
-          </select>
-          <select id="hist-tipo" onchange="cargarHistorial()" title="Movimiento">
-            <option value="">Movimiento: Todos</option>
-            <option value="ingreso">Ingreso</option>
-            <option value="egreso">Egreso</option>
-          </select>
+          <input type="search" class="fb-buscar" id="hist-buscar" placeholder="Filtrar por..." list="si-hist-opciones" oninput="filtrarHistorialLocal()">
+          <datalist id="si-hist-opciones"></datalist>
           <div class="fb-sep"></div>
           <input type="date" id="hist-desde" onchange="cargarHistorial()" title="Desde">
           <input type="date" id="hist-hasta" onchange="cargarHistorial()" title="Hasta">
@@ -659,17 +636,8 @@
 
   function filtrarStock() {
     var search = (document.getElementById('search-stock').value || '').trim();
-    var cat    = document.getElementById('filter-cat').value;
-    var prov   = document.getElementById('filter-prov').value;
-    var dep    = document.getElementById('filter-dep').value;
-    var alerta = document.getElementById('filter-stock').value;
     var filtered = _stockData.filter(function(p) {
-      var matchSearch = matchFiltro(p, search, _siStockCols);
-      var matchCat  = !cat  || (p.categoria || '') === cat;
-      var matchProv = !prov || (p.proveedor || '') === prov;
-      var matchDep  = !dep  || (p.deposito  || '') === dep;
-      var matchAlt  = alerta !== '__alerta__' || parseFloat(p.cantidad_disponible) <= 2;
-      return matchSearch && matchCat && matchProv && matchDep && matchAlt;
+      return matchFiltro(p, search, _siStockCols);
     });
     renderStockTabla(filtered);
     document.getElementById('chk-all').checked = false;
@@ -677,10 +645,6 @@
 
   function limpiarFiltrosStock() {
     document.getElementById('search-stock').value = '';
-    document.getElementById('filter-cat').value = '';
-    document.getElementById('filter-prov').value = '';
-    document.getElementById('filter-dep').value = '';
-    document.getElementById('filter-stock').value = '';
     filtrarStock();
   }
 
@@ -738,19 +702,6 @@
       document.getElementById('kpi-bajo').textContent = bajosCount;
       document.getElementById('kpi-valor').textContent = data.length + ' líneas';
 
-      /* Poblar filtros dinámicos */
-      var cats = [], provs = [], deps = [];
-      data.forEach(function(p) {
-        if (p.categoria && cats.indexOf(p.categoria) === -1) cats.push(p.categoria);
-        if (p.proveedor && provs.indexOf(p.proveedor) === -1) provs.push(p.proveedor);
-        if (p.deposito  && deps.indexOf(p.deposito)   === -1) deps.push(p.deposito);
-      });
-      document.getElementById('filter-cat').innerHTML = '<option value="">Categoría: Todas</option>' +
-        cats.sort().map(function(t) { return '<option value="'+t+'">'+t+'</option>'; }).join('');
-      document.getElementById('filter-prov').innerHTML = '<option value="">Proveedor: Todos</option>' +
-        provs.sort().map(function(t) { return '<option value="'+t+'">'+t+'</option>'; }).join('');
-      document.getElementById('filter-dep').innerHTML = '<option value="">Depósito: Todos</option>' +
-        deps.sort().map(function(t) { return '<option value="'+t+'">'+t+'</option>'; }).join('');
 
       /* Renderizar tabla */
       renderStockTabla(data);
@@ -819,18 +770,16 @@
   /* ── Imprimir grilla de stock actual ── */
   function imprimirVista() {
     var buscar = document.getElementById('search-stock').value || '';
-    var filtro = document.getElementById('filter-stock').value || '';
-    var filtros = (buscar ? 'Búsqueda: ' + buscar + ' | ' : '') + (filtro ? 'Filtro: ' + filtro : 'Sin filtros');
+    var filtros = buscar ? 'Búsqueda: ' + buscar : 'Sin filtros';
     var tabla = document.getElementById('tabla-stock').outerHTML;
     _abrirVentanaImpresion('Stock Insumos', filtros, tabla);
   }
 
   /* ── Imprimir historial ── */
   function imprimirHistorial() {
-    var producto = (document.getElementById('hist-producto').options[document.getElementById('hist-producto').selectedIndex] || {}).text || 'Todos';
-    var tipo     = document.getElementById('hist-tipo').value || 'Todos';
-    var filtros  = 'Producto: ' + producto + ' | Tipo: ' + (tipo || 'Todos');
-    var tabla    = document.querySelector('#section-historial table').outerHTML;
+    var buscar  = document.getElementById('hist-buscar').value || '';
+    var filtros = buscar ? 'Búsqueda: ' + buscar : 'Sin filtros';
+    var tabla   = document.querySelector('#section-historial table').outerHTML;
     _abrirVentanaImpresion('Stock Insumos — Historial', filtros, tabla);
   }
 
@@ -868,14 +817,11 @@
         return '<option value="' + p.id + '" data-stock="' + (parseFloat(p.stock_actual)||0) + '">' + p.nombre + '</option>';
       }).join('');
       document.getElementById('egr-producto').innerHTML = '<option value="">Seleccionar producto...</option>' + opts;
-      document.getElementById('hist-producto').innerHTML = '<option value="">Todos</option>' +
-        data.map(function(p){ return '<option value="'+p.id+'">'+p.nombre+'</option>'; }).join('');
     });
     fetch('/api/lotes').then(function(r) { return r.json(); }).then(function(data) {
       _lotesTodos = data;
       var optsLotes = data.map(function(l){ return '<option value="'+l.id+'">'+l.nombre+'</option>'; }).join('');
       document.getElementById('egr-lote').innerHTML = '<option value="">Sin lote específico</option>' + optsLotes;
-      document.getElementById('hist-lote').innerHTML = '<option value="">Todos</option>' + optsLotes;
     });
     fetch('/api/depositos?tipo_stock=insumos').then(function(r) { return r.json(); }).then(function(data) {
       _depositosInsumos = data;
@@ -963,9 +909,7 @@
 
   /* ── Historial ── */
   function limpiarFiltrosHistorial() {
-    document.getElementById('hist-producto').value = '';
-    document.getElementById('hist-lote').value = '';
-    document.getElementById('hist-tipo').value = '';
+    document.getElementById('hist-buscar').value = '';
     document.getElementById('hist-desde').value = '';
     document.getElementById('hist-hasta').value = '';
     cargarHistorial();
@@ -981,16 +925,23 @@
            String(d.getMinutes()).padStart(2,'0');
   }
 
+  var _historialInsumosDataFull = [];
+
+  function filtrarHistorialLocal() {
+    var q = (document.getElementById('hist-buscar').value || '').trim();
+    var _histCols = [
+      {label:'Producto',campo:'producto'},{label:'Tipo',campo:'tipo'},
+      {label:'Lote',campo:'lote'},{label:'Depósito',campo:'deposito'},
+      {label:'Usuario',campo:'usuario'}
+    ];
+    var filtered = _historialInsumosDataFull.filter(function(m) { return matchFiltro(m, q, _histCols); });
+    _renderHistorial(filtered);
+  }
+
   function cargarHistorial() {
     var params = new URLSearchParams();
-    var pid   = document.getElementById('hist-producto').value;
-    var lid   = document.getElementById('hist-lote').value;
-    var tipo  = document.getElementById('hist-tipo').value;
     var desde = document.getElementById('hist-desde').value;
     var hasta = document.getElementById('hist-hasta').value;
-    if (pid)   params.set('producto_id', pid);
-    if (lid)   params.set('lote_id', lid);
-    if (tipo === 'ingreso') params.set('tipo', 'compra');
     if (desde) params.set('desde', desde);
     if (hasta) params.set('hasta', hasta);
 
@@ -1002,10 +953,24 @@
     fetch('/api/stock-insumos/historial?' + params.toString())
       .then(function(r) { return r.json(); })
       .then(function(data) {
-        if (tipo === 'egreso') {
-          data = data.filter(function(m){ return m.tipo !== 'compra'; });
-        }
+        _historialInsumosDataFull = data;
         _historialInsumosData = data;
+        var _histCols = [
+          {label:'Producto',campo:'producto'},{label:'Tipo',campo:'tipo'},
+          {label:'Lote',campo:'lote'},{label:'Depósito',campo:'deposito_nombre'},
+          {label:'Usuario',campo:'usuario'}
+        ];
+        poblarDatalist('si-hist-opciones', data, _histCols);
+        filtrarHistorialLocal();
+      })
+      .catch(function() {
+        tbody.innerHTML = '<tr><td colspan="10" class="activity-empty" style="color:#c0392b;">Error al cargar historial</td></tr>';
+      });
+  }
+
+  function _renderHistorial(data) {
+    var tbody = document.getElementById('tbody-historial');
+    var tfoot = document.getElementById('tfoot-historial');
         if (!data.length) {
           tbody.innerHTML = '<tr><td colspan="10" class="activity-empty">Sin movimientos para los filtros seleccionados</td></tr>';
           return;
@@ -1057,10 +1022,7 @@
             (totEgreso  ? '<span style="color:#c0392b;">−' + totEgreso.toLocaleString('es-AR',{maximumFractionDigits:2}) + '</span>' : '') +
           '</td>' +
           '<td colspan="5"></td></tr>';
-      })
-      .catch(function() {
-        tbody.innerHTML = '<tr><td colspan="10" class="activity-empty" style="color:#c0392b;">Error al cargar historial</td></tr>';
-      });
+    lucide.createIcons();
   }
 
   cargarStock();

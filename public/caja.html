@@ -100,11 +100,6 @@
       <select id="filtro-temporada" onchange="cargarMovimientos()" title="Temporada">
         <option value="">Temporada: Todas</option>
       </select>
-      <select id="filtro-tipo" onchange="aplicarFiltroTipo()" title="Tipo">
-        <option value="">Tipo: Todos</option>
-        <option value="ingreso">Ingreso</option>
-        <option value="egreso">Egreso</option>
-      </select>
       <div class="fb-sep"></div>
       <input type="date" id="filtro-desde" onchange="cargarMovimientos()" title="Desde">
       <input type="date" id="filtro-hasta" onchange="cargarMovimientos()" title="Hasta">
@@ -198,7 +193,6 @@
     function limpiarFiltrosCaja() {
       document.getElementById('filtro-buscar').value = '';
       document.getElementById('filtro-temporada').value = '';
-      document.getElementById('filtro-tipo').value = '';
       document.getElementById('filtro-desde').value = '';
       document.getElementById('filtro-hasta').value = '';
       cargarMovimientos();
@@ -290,12 +284,10 @@
     ];
 
     function aplicarFiltroTipo() {
-      var tipo   = document.getElementById('filtro-tipo').value;
       var q      = (document.getElementById('filtro-buscar').value || '').trim();
       var filtrados = movimientosCargados.filter(function(m) {
-        var matchTipo = !tipo || m.tipo === tipo;
         var matchQ    = matchFiltro(m, q, _cajaCols);
-        return matchTipo && matchQ;
+        return matchQ;
       });
       actualizarResumen(filtrados);
       renderMovimientos(filtrados);

@@ -355,17 +355,6 @@
         <select id="filtro-temporada" onchange="cargarStock()" title="Temporada">
           <option value="">Temporada: Todas</option>
         </select>
-        <select id="filter-lote" onchange="filtrarStockGrid()" title="Lote">
-          <option value="">Lote: Todos</option>
-        </select>
-        <select id="filter-dep" onchange="filtrarStockGrid()" title="Depósito">
-          <option value="">Depósito: Todos</option>
-        </select>
-        <select id="filter-merc-tipo" onchange="filtrarStockGrid()" title="Tipo">
-          <option value="">Tipo: Todos</option>
-          <option value="ingreso">Ingreso</option>
-          <option value="egreso">Egreso</option>
-        </select>
         <div class="fb-sep"></div>
         <button class="aplic-btn-export" onclick="exportarCSV()" title="Exportar CSV"><i data-lucide="download"></i></button>
         <button class="aplic-btn-export" onclick="imprimirVista()" title="Imprimir"><i data-lucide="printer"></i></button>
@@ -409,16 +398,11 @@
         </div>
         <!-- Barra de filtros historial -->
         <div class="filtros-barra" style="margin-bottom:8px;">
-          <select id="hist-temporada" onchange="poblarLotesHistorial();cargarHistorial()" title="Temporada">
+          <input type="search" class="fb-buscar" id="hist-buscar" placeholder="Filtrar por..." list="sm-hist-opciones" oninput="filtrarHistorialMerc()">
+          <datalist id="sm-hist-opciones"></datalist>
+          <div class="fb-sep"></div>
+          <select id="hist-temporada" onchange="cargarHistorial()" title="Temporada">
             <option value="">Temporada: Todas</option>
-          </select>
-          <select id="hist-lote" onchange="cargarHistorial()" title="Lote">
-            <option value="">Lote: Todos</option>
-          </select>
-          <select id="hist-tipo" onchange="cargarHistorial()" title="Tipo">
-            <option value="">Tipo: Todos</option>
-            <option value="ingreso">Ingreso</option>
-            <option value="egreso">Egreso</option>
           </select>
           <div class="fb-sep"></div>
           <input type="date" id="hist-desde" onchange="cargarHistorial()" title="Desde">
@@ -749,6 +733,7 @@ function actualizarStockInfo(prefix) {
 
 /* ── Stock actual ── */
 var _stockGridData = [];
+var _historialMercData = [];
 
 function toggleTodosMerc(chk) {
   document.querySelectorAll('#tbody-stock-grid .row-check').forEach(function(c){ c.checked = chk.checked; });
@@ -809,24 +794,14 @@ var _smStockCols = [
 
 function filtrarStockGrid() {
   var q    = (document.getElementById('stock-buscar').value || '').trim();
-  var tipo = document.getElementById('filter-merc-tipo').value;
-  var lote = document.getElementById('filter-lote').value;
-  var dep  = document.getElementById('filter-dep').value;
   var datos = _stockGridData.filter(function(m) {
-    var matchQ = matchFiltro(m, q, _smStockCols);
-    var matchTipo = !tipo || m.tipo === tipo;
-    var matchLote = !lote || (m.lote || '') === lote;
-    var matchDep  = !dep  || (m.deposito || m.destino_venta || '') === dep;
-    return matchQ && matchTipo && matchLote && matchDep;
+    return matchFiltro(m, q, _smStockCols);
   });
   renderStockGrid(datos);
 }
 
 function limpiarFiltrosGrid() {
   document.getElementById('stock-buscar').value = '';
-  document.getElementById('filter-merc-tipo').value = '';
-  document.getElementById('filter-lote').value = '';
-  document.getElementById('filter-dep').value = '';
   renderStockGrid(_stockGridData);
 }
 
@@ -905,8 +880,7 @@ function imprimirVista() {
 /* ── Imprimir historial ── */
 function imprimirHistorial() {
   var temporada = (document.getElementById('hist-temporada').options[document.getElementById('hist-temporada').selectedIndex] || {}).text || 'Todas';
-  var tipo      = document.getElementById('hist-tipo').value || 'Todos';
-  var filtros = 'Temporada: ' + temporada + ' | Tipo: ' + (tipo || 'Todos');
+  var filtros = 'Temporada: ' + temporada;
   var tabla = document.querySelector('#section-historial table').outerHTML;
   _abrirVentanaImpresion('Stock Mercadería — Historial', filtros, tabla);
 }
@@ -1021,18 +995,6 @@ function cargarStock() {
       _stockGridData = data;
       poblarDatalist('sm-stock-opciones', data, _smStockCols);
       document.getElementById('stock-buscar').value = '';
-      document.getElementById('filter-merc-tipo').value = '';
-      // Poblar filtros dinámicos
-      var lotes = [], deps = [];
-      data.forEach(function(m) {
-        if (m.lote && lotes.indexOf(m.lote) < 0) lotes.push(m.lote);
-        var d = m.deposito || m.destino_venta || '';
-        if (d && deps.indexOf(d) < 0) deps.push(d);
-      });
-      document.getElementById('filter-lote').innerHTML = '<option value="">Lote: Todos</option>' +
-        lotes.sort().map(function(l){ return '<option value="'+l+'">'+l+'</option>'; }).join('');
-      document.getElementById('filter-dep').innerHTML = '<option value="">Depósito: Todos</option>' +
-        deps.sort().map(function(d){ return '<option value="'+d+'">'+d+'</option>'; }).join('');
       renderStockGrid(data);
     })
     .catch(function(){
@@ -1153,18 +1115,65 @@ function registrarDescarte(btn) {
 }
 
 /* ── Historial ── */
-function poblarLotesHistorial() {
-  var tid = document.getElementById('hist-temporada').value;
-  var filtrados = tid ? _lotes.filter(function(l){ return String(l.temporada_id) === String(tid); }) : _lotes;
-  var sel = document.getElementById('hist-lote');
-  sel.innerHTML = '<option value="">Todos los lotes</option>' +
-    filtrados.map(function(l){ return '<option value="'+l.id+'">'+l.nombre+'</option>'; }).join('');
+function filtrarHistorialMerc() {
+  var q = (document.getElementById('hist-buscar').value || '').trim();
+  var cols = [
+    {label:'Cosechero',campo:'cosechero'},{label:'Tipo',campo:'tipo'},
+    {label:'Lote',campo:'lote'},{label:'Depósito',campo:'deposito'},
+    {label:'Destino',campo:'destino_venta'},{label:'Comprador',campo:'comprador'},
+    {label:'Usuario',campo:'usuario'}
+  ];
+  var filtered = _historialMercData.filter(function(m) { return matchFiltro(m, q, cols); });
+  var tbody = document.getElementById('tbody-historial');
+  var tfoot = document.getElementById('tfoot-historial');
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="11" class="empty">Sin movimientos para el filtro</td></tr>';
+    tfoot.innerHTML = '';
+    return;
+  }
+  var totalKilosIngreso = 0, totalKilosEgreso = 0, totalPesos = 0;
+  tbody.innerHTML = filtered.map(function(m){
+    var esIngreso = m.tipo === 'ingreso';
+    var bg = esIngreso ? 'background:#f0faf0;' : 'background:#fff5f5;';
+    var signo = esIngreso ? '+' : '-';
+    var colorKilos = esIngreso ? 'color:#2d6a4f;' : 'color:#c0392b;';
+    var total = m.total ? '$' + parseFloat(m.total).toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0}) : '—';
+    var precioKg = m.precio_kilo ? '$' + parseFloat(m.precio_kilo).toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2}) : '—';
+    var jid     = m.juntada_id  ? '<span style="font-family:\'JetBrains Mono\',monospace;font-size:11px;background:var(--fondo-dark);border:1px solid var(--borde);border-radius:4px;padding:1px 5px;">#'+m.juntada_id+'</span>' : '—';
+    var cosChip = m.juntador_id ? ' <span style="font-family:\'JetBrains Mono\',monospace;font-size:10px;background:var(--fondo-dark);border:1px solid var(--borde);border-radius:4px;padding:1px 4px;opacity:.75;">#'+m.juntador_id+'</span>' : '';
+    var usuChip = m.usuario_id  ? ' <span style="font-family:\'JetBrains Mono\',monospace;font-size:10px;background:var(--fondo-dark);border:1px solid var(--borde);border-radius:4px;padding:1px 4px;opacity:.75;">#'+m.usuario_id+'</span>'  : '';
+    if (esIngreso) totalKilosIngreso += parseFloat(m.kilos)||0;
+    else { totalKilosEgreso += parseFloat(m.kilos)||0; totalPesos += parseFloat(m.total)||0; }
+    return '<tr style="'+bg+'">'+
+      '<td style="text-align:center;">'+jid+'</td>'+
+      '<td style="font-size:12px;">'+(m.cosechero||'—')+cosChip+'</td>'+
+      '<td style="font-size:12px;white-space:nowrap;">'+fmtFecha(m.fecha)+'</td>'+
+      '<td><span class="badge badge-'+(esIngreso?'positivo':'negativo')+'">'+
+        (esIngreso?'Ingreso':'Egreso')+'</span></td>'+
+      '<td>'+(m.lote||'—')+'</td>'+
+      '<td style="font-size:12px;color:var(--texto-suave);">'+(m.destino_venta||m.deposito||'—')+'</td>'+
+      '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;font-weight:700;'+colorKilos+'">'+
+        signo+fmt(m.kilos)+' kg</td>'+
+      '<td style="text-align:right;font-size:12px;">'+precioKg+'</td>'+
+      '<td style="text-align:right;font-size:12px;font-weight:600;">'+total+'</td>'+
+      '<td style="font-size:12px;color:var(--texto-suave);">'+(m.comprador||'—')+'</td>'+
+      '<td style="font-size:12px;">'+(m.usuario||'—')+usuChip+'</td>'+
+    '</tr>';
+  }).join('');
+  tfoot.innerHTML = '<tr style="background:var(--fondo-dark);font-weight:700;border-top:2px solid var(--borde);">'+
+    '<td colspan="6" style="text-align:right;padding:10px 8px;">TOTALES</td>'+
+    '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;padding:10px 8px;">'+
+      '<span style="color:#2d6a4f;">+'+fmt(totalKilosIngreso)+'</span> / '+
+      '<span style="color:#c0392b;">-'+fmt(totalKilosEgreso)+'</span> kg</td>'+
+    '<td></td>'+
+    '<td style="text-align:right;padding:10px 8px;">'+(totalPesos>0?'$'+Math.round(totalPesos).toLocaleString('es-AR'):'—')+'</td>'+
+    '<td></td><td></td>'+
+  '</tr>';
 }
 
 function limpiarFiltrosHistorial() {
+  document.getElementById('hist-buscar').value = '';
   document.getElementById('hist-temporada').value = '';
-  document.getElementById('hist-lote').value = '';
-  document.getElementById('hist-tipo').value = '';
   document.getElementById('hist-desde').value = '';
   document.getElementById('hist-hasta').value = '';
   document.getElementById('tbody-historial').innerHTML = '<tr><td colspan="11" class="empty">Seleccioná filtros para ver movimientos</td></tr>';
@@ -1174,13 +1183,9 @@ function limpiarFiltrosHistorial() {
 function cargarHistorial() {
   var params = new URLSearchParams();
   var tid    = document.getElementById('hist-temporada').value;
-  var lid    = document.getElementById('hist-lote').value;
-  var tipo   = document.getElementById('hist-tipo').value;
   var desde  = document.getElementById('hist-desde').value;
   var hasta  = document.getElementById('hist-hasta').value;
   if (tid)    params.set('temporada_id', tid);
-  if (lid)    params.set('lote_id', lid);
-  if (tipo)   params.set('tipo', tipo);
   if (desde)  params.set('desde', desde);
   if (hasta)  params.set('hasta', hasta);
 
@@ -1197,6 +1202,14 @@ function cargarHistorial() {
         tbody.innerHTML = '<tr><td colspan="11" class="empty">Sin movimientos para los filtros seleccionados</td></tr>';
         return;
       }
+      var _smHistCols = [
+        {label:'Cosechero',campo:'cosechero'},{label:'Tipo',campo:'tipo'},
+        {label:'Lote',campo:'lote'},{label:'Depósito',campo:'deposito'},
+        {label:'Destino',campo:'destino_venta'},{label:'Comprador',campo:'comprador'},
+        {label:'Usuario',campo:'usuario'}
+      ];
+      _historialMercData = data;
+      poblarDatalist('sm-hist-opciones', data, _smHistCols);
       var totalKilosIngreso = 0, totalKilosEgreso = 0, totalPesos = 0;
       tbody.innerHTML = data.map(function(m){
         var esIngreso = m.tipo === 'ingreso';

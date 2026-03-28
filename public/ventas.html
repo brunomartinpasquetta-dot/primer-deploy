@@ -156,9 +156,6 @@
         <select id="filtro-temporada" onchange="cargarHistorial()" title="Temporada">
           <option value="">Temporada: Todas</option>
         </select>
-        <select id="filtro-deposito" onchange="buscarHistorial()" title="Depósito">
-          <option value="">Depósito: Todos</option>
-        </select>
         <div class="fb-sep"></div>
         <input type="date" id="filtro-desde" onchange="cargarHistorial()" title="Desde">
         <input type="date" id="filtro-hasta" onchange="cargarHistorial()" title="Hasta">
@@ -216,11 +213,8 @@
 
   function buscarHistorial() {
     var q   = (document.getElementById('filtro-buscar').value || '').trim();
-    var dep = document.getElementById('filtro-deposito').value;
     var data = _historialVentas.filter(function(v) {
-      var matchQ = matchFiltro(v, q, _ventasCols);
-      var matchDep = !dep || (v.deposito || '') === dep;
-      return matchQ && matchDep;
+      return matchFiltro(v, q, _ventasCols);
     });
     renderHistorial(data);
   }
@@ -228,7 +222,6 @@
   function limpiarFiltrosVentas() {
     document.getElementById('filtro-buscar').value = '';
     document.getElementById('filtro-temporada').value = '';
-    document.getElementById('filtro-deposito').value = '';
     document.getElementById('filtro-desde').value = '';
     document.getElementById('filtro-hasta').value = '';
     cargarHistorial();
@@ -440,11 +433,6 @@
       .then(function(data) {
         _historialVentas = data;
         poblarDatalist('ventas-opciones', data, _ventasCols);
-        // Poblar filtro depósito
-        var deps = [];
-        data.forEach(function(v) { if (v.deposito && deps.indexOf(v.deposito) < 0) deps.push(v.deposito); });
-        document.getElementById('filtro-deposito').innerHTML = '<option value="">Depósito: Todos</option>' +
-          deps.sort().map(function(d){ return '<option value="'+d+'">'+d+'</option>'; }).join('');
         buscarHistorial();
       });
   }
