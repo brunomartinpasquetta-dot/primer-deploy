@@ -339,18 +339,18 @@ function renderTabla(cols, rows, totalCols) {
 // ── estado global ────────────────────────────────────────────────────────────
 
 let reporteActual = null;
-let lotesCache = [];
+let parcelasCache = [];
 let juntadoresCache = [];
 let proveedoresCache = [];
 
 async function cargarSelects() {
   try {
-    const [rLotes, rJunt, rProv] = await Promise.all([
-      fetch('/api/lotes').then(r => r.json()),
+    const [rParcelas, rJunt, rProv] = await Promise.all([
+      fetch('/api/parcelas').then(r => r.json()),
       fetch('/api/juntadores').then(r => r.json()),
       fetch('/api/proveedores').then(r => r.json())
     ]);
-    lotesCache = Array.isArray(rLotes) ? rLotes : [];
+    parcelasCache = Array.isArray(rParcelas) ? rParcelas : [];
     juntadoresCache = Array.isArray(rJunt) ? rJunt : [];
     proveedoresCache = Array.isArray(rProv) ? rProv : [];
   } catch (e) {
@@ -358,9 +358,9 @@ async function cargarSelects() {
   }
 }
 
-function opcionesLotes() {
-  return '<option value="">Todos los lotes</option>' +
-    lotesCache.map(l => `<option value="${l.id}">${l.nombre}</option>`).join('');
+function opcionesParcelas() {
+  return '<option value="">Todos los parcelas</option>' +
+    parcelasCache.map(l => `<option value="${l.id}">${l.nombre}</option>`).join('');
 }
 
 function opcionesJuntadores() {
@@ -382,20 +382,20 @@ const REPORTES = {
     filtros: () => `
       <div class="filtro-grupo"><label>Desde</label><input type="date" id="f-desde" value="${hoy}"></div>
       <div class="filtro-grupo"><label>Hasta</label><input type="date" id="f-hasta" value="${hoy}"></div>
-      <div class="filtro-grupo"><label>Lote</label><select id="f-lote">${opcionesLotes()}</select></div>
+      <div class="filtro-grupo"><label>Parcela</label><select id="f-parcela">${opcionesParcelas()}</select></div>
       <div class="filtro-grupo"><label>Cosechador</label><select id="f-juntador">${opcionesJuntadores()}</select></div>
     `,
     params: () => ({
       desde: document.getElementById('f-desde').value,
       hasta: document.getElementById('f-hasta').value,
-      lote_id: document.getElementById('f-lote').value,
+      parcela_id: document.getElementById('f-parcela').value,
       juntador_id: document.getElementById('f-juntador').value
     }),
     endpoint: 'cosecha',
     cols: [
       { key: 'fecha',      label: 'Fecha' },
       { key: 'cosechador', label: 'Cosechador' },
-      { key: 'lote',       label: 'Lote' },
+      { key: 'parcela',       label: 'Parcela' },
       { key: 'kilos',      label: 'Kilos', kilos: true },
       { key: 'destino',    label: 'Destino' }
     ],
@@ -416,7 +416,7 @@ const REPORTES = {
     cols: [
       { key: 'fecha',      label: 'Fecha' },
       { key: 'trabajador', label: 'Trabajador' },
-      { key: 'lote',       label: 'Lote' },
+      { key: 'parcela',       label: 'Parcela' },
       { key: 'kilos',      label: 'Kilos', kilos: true }
     ],
     totalCols: ['kilos']

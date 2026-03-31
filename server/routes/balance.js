@@ -28,7 +28,7 @@ router.get('/temporada/:id', async (req, res) => {
               WHERE p.tipo = 'liquidacion'
               AND EXISTS (
                 SELECT 1 FROM Juntada j
-                JOIN Lotes l ON j.lote_id = l.id
+                JOIN Parcelas l ON j.parcela_id = l.id
                 WHERE j.juntador_id = p.juntador_id
                 AND l.temporada_id = @id
               )`);
@@ -53,7 +53,7 @@ router.get('/temporada/:id', async (req, res) => {
       .input('id', sql.Int, temporada_id)
       .query(`SELECT ISNULL(SUM(j.kilos), 0) AS total
               FROM Juntada j
-              JOIN Lotes l ON j.lote_id = l.id
+              JOIN Parcelas l ON j.parcela_id = l.id
               WHERE l.temporada_id = @id`);
 
     // Kilos en depósito y descartados
@@ -119,38 +119,38 @@ router.get('/temporada/:id', async (req, res) => {
   }
 });
 
-// Balance por lote
-router.get('/lote/:id', async (req, res) => {
+// Balance por parcela
+router.get('/parcela/:id', async (req, res) => {
   try {
     const pool = await getPool();
-    const lote_id = parseInt(req.params.id);
+    const parcela_id = parseInt(req.params.id);
 
     const ventas = await pool.request()
-      .input('id', sql.Int, lote_id)
+      .input('id', sql.Int, parcela_id)
       .query(`SELECT ISNULL(SUM(kilos * precio_kilo), 0) AS total
               FROM StockMercaderia
-              WHERE lote_id = @id AND tipo LIKE 'egreso%' AND precio_kilo IS NOT NULL`);
+              WHERE parcela_id = @id AND tipo LIKE 'egreso%' AND precio_kilo IS NOT NULL`);
 
     const insumos = await pool.request()
-      .input('id', sql.Int, lote_id)
-      .query(`SELECT ISNULL(SUM(costo_total), 0) AS total FROM Aplicaciones WHERE lote_id = @id`);
+      .input('id', sql.Int, parcela_id)
+      .query(`SELECT ISNULL(SUM(costo_total), 0) AS total FROM Aplicaciones WHERE parcela_id = @id`);
 
     const gastos = await pool.request()
-      .input('id', sql.Int, lote_id)
+      .input('id', sql.Int, parcela_id)
       .query(`SELECT cg.nombre AS categoria, SUM(g.monto) AS total
               FROM Gastos g
               JOIN CategoriasGasto cg ON g.categoria_id = cg.id
-              WHERE g.lote_id = @id
+              WHERE g.parcela_id = @id
               GROUP BY cg.nombre
               ORDER BY total DESC`);
 
     const totalGastos = await pool.request()
-      .input('id', sql.Int, lote_id)
-      .query(`SELECT ISNULL(SUM(monto), 0) AS total FROM Gastos WHERE lote_id = @id`);
+      .input('id', sql.Int, parcela_id)
+      .query(`SELECT ISNULL(SUM(monto), 0) AS total FROM Gastos WHERE parcela_id = @id`);
 
     const kilos = await pool.request()
-      .input('id', sql.Int, lote_id)
-      .query(`SELECT ISNULL(SUM(kilos), 0) AS total FROM Juntada WHERE lote_id = @id`);
+      .input('id', sql.Int, parcela_id)
+      .query(`SELECT ISNULL(SUM(kilos), 0) AS total FROM Juntada WHERE parcela_id = @id`);
 
     const ingresos = parseFloat(ventas.recordset[0].total);
     const costoInsumos = parseFloat(insumos.recordset[0].total);

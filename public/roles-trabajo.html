@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1A2E0A">
+  <title>Roles de Trabajo — Cosecha</title>
+  <link rel="icon" href="img/logo.png">
+  <script src="js/utils.js"></script>
+  <link rel="stylesheet" href="cosecha.css">
+  <style>
+    .rol-badge {
+      display:inline-flex; align-items:center; gap:4px;
+      padding:3px 10px; border-radius:20px; font-size:12px; font-weight:700;
+      border:1px solid transparent; cursor:pointer; transition:.15s;
+    }
+    .rol-badge.cosechero        { background:var(--sem-verde-bg); color:var(--sem-verde); border-color:var(--sem-verde-borde); }
+    .rol-badge.despalillador    { background:var(--sem-azul-bg,#EFF6FF); color:#1D4ED8; border-color:#BFDBFE; }
+    .rol-badge.aplicador        { background:var(--sem-amarillo-bg); color:var(--sem-amarillo); border-color:var(--sem-amarillo-borde); }
+    .rol-badge.inactivo         { background:var(--fondo); color:var(--texto-secundario); border-color:var(--borde); opacity:.6; }
+    .rol-badge.agregar          { background:var(--fondo); color:var(--texto-secundario); border-color:var(--borde); }
+    .rol-badge.agregar:hover    { border-color:var(--verde); color:var(--verde); }
+    .rol-badge .x               { font-size:14px; line-height:1; margin-left:2px; }
+    .empleado-row {
+      display:flex; align-items:center; gap:12px; padding:12px 14px;
+      border:1px solid var(--borde); border-radius:10px; background:var(--superficie);
+      margin-bottom:8px; flex-wrap:wrap;
+    }
+    .empleado-nombre { font-weight:700; font-size:15px; min-width:160px; flex:1; }
+    .empleado-roles  { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+    .qr-badge {
+      font-size:11px; color:var(--texto-secundario);
+      background:var(--fondo); padding:2px 8px; border-radius:6px;
+      border:1px solid var(--borde); font-family:monospace;
+    }
+    .sin-empleados { text-align:center; color:var(--texto-secundario); padding:30px; font-size:14px; }
+    .filtro-row { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+    .filtro-row input { flex:1; min-width:180px; }
+    .filtro-row select { width:auto; min-width:160px; }
+    .kpi-roles { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; }
+    .kpi-roles-card {
+      flex:1; min-width:120px; background:var(--superficie);
+      border:1px solid var(--borde); border-radius:12px; padding:10px 14px;
+    }
+    .kpi-roles-label { font-size:11px; color:var(--texto-secundario); font-weight:600; text-transform:uppercase; letter-spacing:.4px; }
+    .kpi-roles-val   { font-size:22px; font-weight:800; color:var(--texto); margin-top:2px; }
+  </style>
+  <script src="js/auth-check.js"></script>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-item"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard</a>
+      <div class="nav-section">Campo</div>
+      <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
+      <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
+      <div class="nav-section">Sistema</div>
+      <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
+      <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
+      <a href="menu-admin.html" class="nav-item"><span class="nav-icon"><i data-lucide="landmark"></i></span> Administración</a>
+      <a href="mercado.html" class="nav-item"><span class="nav-icon"><i data-lucide="trending-up"></i></span> Mercado</a>
+      <a href="menu-config.html" class="nav-item active"><span class="nav-icon"><i data-lucide="settings"></i></span> Configuración</a>
+    </nav>
+    <div class="sidebar-footer">Sistema Agrícola v2</div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
+        <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div><span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-date" id="topbar-date"></span>
+      </div>
+    </header>
+
+    <div class="content">
+      <a href="menu-config.html" class="btn-volver">← Volver</a>
+      <div class="content-header">
+        <div class="content-title">Roles de Trabajo</div>
+        <div class="content-sub">Asigná roles operativos al personal activo</div>
+      </div>
+
+      <!-- KPIs -->
+      <div class="kpi-roles" id="kpi-wrap">
+        <div class="kpi-roles-card">
+          <div class="kpi-roles-label">Cosecheros</div>
+          <div class="kpi-roles-val" id="kpi-cosechero">—</div>
+        </div>
+        <div class="kpi-roles-card">
+          <div class="kpi-roles-label">Despalilladores</div>
+          <div class="kpi-roles-val" id="kpi-despalillador">—</div>
+        </div>
+        <div class="kpi-roles-card">
+          <div class="kpi-roles-label">Aplicadores</div>
+          <div class="kpi-roles-val" id="kpi-aplicador">—</div>
+        </div>
+        <div class="kpi-roles-card">
+          <div class="kpi-roles-label">Sin rol asignado</div>
+          <div class="kpi-roles-val" id="kpi-sin-rol">—</div>
+        </div>
+      </div>
+
+      <!-- Filtros -->
+      <div class="filtro-row">
+        <input type="text" id="filtro-nombre" placeholder="Buscar por nombre..." oninput="renderLista()">
+        <select id="filtro-rol" onchange="renderLista()">
+          <option value="">Todos los roles</option>
+          <option value="cosechero">Cosechero</option>
+          <option value="despalillador">Despalillador</option>
+          <option value="aplicador">Aplicador</option>
+          <option value="sin-rol">Sin rol</option>
+        </select>
+      </div>
+
+      <!-- Leyenda -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;font-size:12px;color:var(--texto-secundario);">
+        <span>Hacé click en <strong>+ Agregar</strong> para asignar un rol · Hacé click en el rol para quitarlo</span>
+      </div>
+
+      <!-- Lista empleados -->
+      <div id="lista-empleados">
+        <div class="sin-empleados">Cargando personal...</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── BOTTOM NAV ── -->
+  <nav class="bottom-nav">
+    <a href="index.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="home"></i></span><span>Inicio</span></a>
+    <a href="juntada.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="wheat"></i></span><span>Cosecha</span></a>
+    <a href="despalillado.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="scissors"></i></span><span>Despalillado</span></a>
+    <a href="aplicaciones.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="droplets"></i></span><span>Aplicaciones</span></a>
+    <a href="menu-config.html" class="bottom-nav-item active"><span class="bottom-nav-icon"><i data-lucide="menu"></i></span><span>Menú</span></a>
+  </nav>
+
+</div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+  lucide.createIcons();
+  document.getElementById('topbar-date').textContent =
+    new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
+
+  var _personal = [];
+  var ROLES = ['cosechero', 'despalillador', 'aplicador'];
+  var ROLES_LABEL = { cosechero: '🌾 Cosechero', despalillador: '✂️ Despalillador', aplicador: '💧 Aplicador' };
+
+  function cargar() {
+    fetch('/api/roles-trabajo')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        _personal = data;
+        renderKpis();
+        renderLista();
+      })
+      .catch(function() {
+        document.getElementById('lista-empleados').innerHTML =
+          '<div class="sin-empleados">Error al cargar personal</div>';
+      });
+  }
+
+  function renderKpis() {
+    var counts = { cosechero:0, despalillador:0, aplicador:0, sinRol:0 };
+    _personal.forEach(function(p) {
+      if (!p.roles.length) { counts.sinRol++; return; }
+      p.roles.forEach(function(r) { if (counts[r] !== undefined) counts[r]++; });
+    });
+    document.getElementById('kpi-cosechero').textContent    = counts.cosechero;
+    document.getElementById('kpi-despalillador').textContent = counts.despalillador;
+    document.getElementById('kpi-aplicador').textContent    = counts.aplicador;
+    document.getElementById('kpi-sin-rol').textContent      = counts.sinRol;
+  }
+
+  function renderLista() {
+    var filtroNombre = document.getElementById('filtro-nombre').value.toLowerCase();
+    var filtroRol    = document.getElementById('filtro-rol').value;
+
+    var lista = _personal.filter(function(p) {
+      var nombreMatch = (p.apellido + ' ' + p.nombre).toLowerCase().includes(filtroNombre);
+      var rolMatch = !filtroRol
+        || (filtroRol === 'sin-rol' && !p.roles.length)
+        || p.roles.includes(filtroRol);
+      return nombreMatch && rolMatch;
+    });
+
+    var cont = document.getElementById('lista-empleados');
+    if (!lista.length) {
+      cont.innerHTML = '<div class="sin-empleados">Sin resultados</div>';
+      return;
+    }
+
+    cont.innerHTML = lista.map(function(p) {
+      var rolesHTML = p.roles.map(function(r) {
+        return '<span class="rol-badge ' + r + '" onclick="quitarRol(' + p.id + ',\'' + r + '\')" title="Click para quitar">' +
+          ROLES_LABEL[r] + ' <span class="x">×</span></span>';
+      }).join('');
+
+      // Botones para agregar roles que no tiene
+      var rolesAgregar = ROLES.filter(function(r) { return !p.roles.includes(r); });
+      var agregarHTML = rolesAgregar.map(function(r) {
+        return '<span class="rol-badge agregar" onclick="asignarRol(' + p.id + ',\'' + r + '\')" title="Asignar ' + r + '">+ ' + r + '</span>';
+      }).join('');
+
+      return '<div class="empleado-row" id="emp-' + p.id + '">' +
+        '<div class="empleado-nombre">' + p.apellido + ', ' + p.nombre + '</div>' +
+        '<div class="empleado-roles">' + (rolesHTML || '') + agregarHTML + '</div>' +
+        (p.qr_codigo ? '<span class="qr-badge" title="Código QR">QR: ' + p.qr_codigo + '</span>' : '') +
+        '</div>';
+    }).join('');
+
+    lucide.createIcons();
+  }
+
+  function asignarRol(personal_id, rol) {
+    fetch('/api/roles-trabajo/asignar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ personal_id: personal_id, rol: rol })
+    }).then(function(r) { return r.json(); }).then(function(data) {
+      if (data.ok) { cargar(); }
+      else { alert(data.error || 'Error al asignar rol'); }
+    });
+  }
+
+  function quitarRol(personal_id, rol) {
+    var p = _personal.find(function(x) { return x.id === personal_id; });
+    var nombre = p ? p.apellido + ', ' + p.nombre : 'este empleado';
+    if (!confirm('¿Quitar rol "' + rol + '" a ' + nombre + '?')) return;
+    fetch('/api/roles-trabajo/quitar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ personal_id: personal_id, rol: rol })
+    }).then(function(r) { return r.json(); }).then(function(data) {
+      if (data.ok) { cargar(); }
+      else { alert(data.error || 'Error al quitar rol'); }
+    });
+  }
+
+  cargar();
+  cargarTemporadaActiva();
+</script>
+</body>
+</html>

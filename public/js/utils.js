@@ -9,11 +9,45 @@ function setLoading(btn, loading) {
   }
 }
 
-// ── Formato de números con punto como separador de miles ─────────
+// ── Parseo inteligente: acepta tanto punto como coma como separador decimal ──
+// Detecta el separador según la estructura del número:
+//   "1.500"   → 1500  (punto = miles, sin coma)  … ambiguo, se trata como miles
+//   "1,500"   → 1.5   (coma = decimal)
+//   "1.5"     → 1.5   (punto = decimal cuando hay 1 cifra tras él o más de 3)
+//   "1500"    → 1500
+//   "12,500"  → 12.5  (coma = decimal)
+//   "12.500"  → 12.5  (punto seguido de exactamente 3 dígitos es ambiguo → decimal)
+// Regla simple y robusta:
+//   - Si hay COMA: coma = decimal, puntos = miles → quitar puntos, reemplazar coma por punto
+//   - Si hay PUNTO sin coma:
+//       · Si los dígitos tras el punto son != 3 → punto = decimal
+//       · Si los dígitos tras el punto son exactamente 3 Y hay dígitos antes → ambiguo,
+//         tratar como decimal (más seguro para pesos/kilos reales)
+function _parseNumero(v) {
+  var s = String(v).trim();
+  if (!s) return NaN;
+
+  var tieneComa  = s.indexOf(',') !== -1;
+  var tienePunto = s.indexOf('.') !== -1;
+
+  if (tieneComa && tienePunto) {
+    // Ej: "1.234,56" → coma decimal, punto miles
+    s = s.replace(/\./g, '').replace(',', '.');
+  } else if (tieneComa) {
+    // Ej: "1234,56" o "12,5" → coma es decimal
+    s = s.replace(',', '.');
+  } else if (tienePunto) {
+    // Ej: "1234.56" o "12.5" → punto es decimal (no quitamos nada)
+    // No hace falta tocar s
+  }
+  return parseFloat(s);
+}
+
 function formatearNumero(valor) {
-  var n = parseFloat(String(valor).replace(/\./g, '').replace(',', '.'));
+  var n = _parseNumero(valor);
   if (isNaN(n)) return valor;
-  return n.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  // Mostrar sin trailing zeros innecesarios, hasta 3 decimales
+  return n.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 3 });
 }
 
 // Aplicar en un input específico: formato automático con debounce + blur
@@ -21,10 +55,10 @@ function formatearMiles(input) {
   var _timer = null;
 
   function _aplicar(el) {
-    var raw = parseFloat(String(el.value).replace(/\./g, '').replace(',', '.'));
+    var raw = _parseNumero(el.value);
     if (!isNaN(raw)) {
       el.dataset.rawValue = raw;
-      var formatted = raw.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+      var formatted = raw.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 3 });
       if (el.value !== formatted) el.value = formatted;
     }
   }
@@ -37,19 +71,23 @@ function formatearMiles(input) {
   input.addEventListener('input', function () {
     var el = this;
     var v = el.value;
-    // No formatear mientras el usuario escribe decimales
+    // No formatear mientras el usuario está escribiendo decimales
     if (v.endsWith(',') || v.endsWith('.')) return;
+    // No formatear si hay pocos dígitos decimales aún (puede estar escribiendo)
+    var m = v.match(/[,.](\d*)$/);
+    if (m && m[1].length < 1) return;
     clearTimeout(_timer);
-    _timer = setTimeout(function () { _aplicar(el); }, 600);
+    _timer = setTimeout(function () { _aplicar(el); }, 800);
   });
 
   input.addEventListener('focus', function () {
     clearTimeout(_timer);
-    var raw = this.dataset.rawValue !== undefined
+    // Al enfocar, mostrar el valor crudo sin formato de miles
+    var raw = (this.dataset.rawValue !== undefined && this.dataset.rawValue !== '')
       ? this.dataset.rawValue
-      : String(this.value).replace(/\./g, '').replace(',', '.');
-    this.value = raw;
-    this.dataset.rawValue = raw;
+      : _parseNumero(this.value);
+    if (!isNaN(raw) && raw !== '') this.value = String(raw).replace('.', ',');
+    this.dataset.rawValue = isNaN(raw) ? '' : raw;
   });
 }
 
@@ -178,11 +216,12 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 
-// ── Parseo seguro de inputs numéricos con separador de miles (es-AR) ──────────
-// _parseVal(v)   → acepta string con puntos de miles y coma decimal → número
-// _parseEl(id)   → lee un input por id y parsea de forma segura
+// ── Parseo seguro de inputs numéricos ────────────────────────────────────────
+// _parseVal(v)  → acepta punto o coma como decimal → número (0 si inválido)
+// _parseEl(id)  → lee un input por id y parsea de forma segura
 function _parseVal(v) {
-  return parseFloat(String(v).replace(/\./g, '').replace(',', '.')) || 0;
+  var n = _parseNumero(v);
+  return isNaN(n) ? 0 : n;
 }
 function _parseEl(id) {
   var el = document.getElementById(id);

@@ -18,7 +18,7 @@ const PERMISOS = [
   { key: 'gastos',              label: 'Gastos',                      grupo: 'Administración' },
   { key: 'cheques',             label: 'Cheques',                     grupo: 'Administración' },
   { key: 'pagos',               label: 'Pagos a proveedores',         grupo: 'Administración' },
-  { key: 'lotes',               label: 'Lotes',                       grupo: 'Configuración' },
+  { key: 'parcelas',           label: 'Parcelas',                       grupo: 'Configuración' },
   { key: 'personal',            label: 'Personal / Juntadores',       grupo: 'Configuración' },
   { key: 'depositos',           label: 'Depósitos',                   grupo: 'Configuración' },
   { key: 'productos',           label: 'Productos',                   grupo: 'Configuración' },
@@ -34,10 +34,10 @@ const ROLES = ['administrador', 'ingeniero', 'encargado', 'usuario'];
 const DEFAULTS = {
   administrador: PERMISOS.map(p => p.key),
   ingeniero:  ['cosecha','despalillado','aplicaciones','stock_insumos','stock_mercaderia',
-               'compras','proveedores','lotes','personal','depositos','productos','temporadas',
+               'compras','proveedores','parcelas','personal','depositos','productos','temporadas',
                'reportes','mercado','editar_movimientos'],
   encargado:  ['cosecha','despalillado','aplicaciones','stock_mercaderia','stock_insumos',
-               'compras','proveedores','lotes','personal','productos'],
+               'compras','proveedores','parcelas','personal','productos'],
   usuario:    ['cosecha','despalillado'],
 };
 

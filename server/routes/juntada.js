@@ -2,149 +2,170 @@ const express = require('express');
 const router = express.Router();
 const { getPool, sql } = require('../db');
 
-// Registrar juntada en un solo paso — acepta destinos opcionales en el mismo llamado
-// Body: { lote_id, juntador_id, kilos, operador?, observacion?,
+// POST /api/juntada
+// Body: { parcela_id, juntador_id, kilos, operador?, observacion?,
 //         destinos?: [{ tipo, kilos, deposito_id?, precio_kilo?, comprador?, motivo? }] }
+// Crea la Juntada + inserta JuntadaDestino por cada tramo de distribución.
+// Destinos fresco → MovimientosDeposito + StockMercaderia inmediato.
+// Destinos cámara (requiere_despalillado=1) → stock_pendiente=1, procesado al despalillar.
 router.post('/', async (req, res) => {
   try {
-    const { lote_id, juntador_id, kilos, operador, observacion, destinos } = req.body;
+    const { parcela_id, juntador_id, kilos, operador, observacion, destinos } = req.body;
     const pool = await getPool();
 
-    // 1. Obtener temporada_id del lote
-    const loteResult = await pool.request()
-      .input('lote_id', sql.Int, lote_id)
-      .query('SELECT temporada_id FROM Lotes WHERE id = @lote_id');
-    const temporada_id = loteResult.recordset.length ? loteResult.recordset[0].temporada_id : null;
+    const parcelaResult = await pool.request()
+      .input('parcela_id', sql.Int, parcela_id)
+      .query('SELECT temporada_id FROM Parcelas WHERE id = @parcela_id');
+    const temporada_id = parcelaResult.recordset.length ? parcelaResult.recordset[0].temporada_id : null;
 
-    // 2. Transacción
     const transaction = new sql.Transaction(pool);
     await transaction.begin();
 
     try {
-      // a. INSERT juntada
+      // 1. Insertar juntada
+      const uid = req.user ? req.user.id : null;
       const insertResult = await transaction.request()
-        .input('lote_id',     sql.Int,           lote_id)
-        .input('juntador_id', sql.Int,            juntador_id)
-        .input('kilos',       sql.Decimal(8, 2),  kilos)
-        .input('operador',    sql.NVarChar,       operador || '')
-        .input('observacion', sql.NVarChar,       observacion || '')
-        .query(`INSERT INTO Juntada (lote_id, juntador_id, kilos, operador, observacion)
+        .input('parcela_id',  sql.Int,          parcela_id)
+        .input('juntador_id', sql.Int,          juntador_id)
+        .input('kilos',       sql.Decimal(8, 2),kilos)
+        .input('operador',    sql.NVarChar,     operador || '')
+        .input('observacion', sql.NVarChar,     observacion || '')
+        .input('usuario_id',  sql.Int,          uid)
+        .query(`INSERT INTO Juntada (parcela_id, juntador_id, kilos, operador, observacion, usuario_id)
                 OUTPUT INSERTED.id
-                VALUES (@lote_id, @juntador_id, @kilos, @operador, @observacion)`);
+                VALUES (@parcela_id, @juntador_id, @kilos, @operador, @observacion, @usuario_id)`);
 
       const newId = insertResult.recordset[0].id;
 
-      // b. Procesar destinos si vienen informados
+      // 2. Procesar destinos
       if (destinos && destinos.length > 0) {
+        // Obtener info de depósitos involucrados
+        let depositoInfo = {};
+        const depIds = [...new Set(destinos.filter(d => d.tipo === 'deposito' && d.deposito_id).map(d => d.deposito_id))];
+        if (depIds.length > 0) {
+          const depRes = await transaction.request()
+            .query(`SELECT id, tipo, requiere_despalillado FROM Depositos WHERE id IN (${depIds.join(',')})`);
+          depRes.recordset.forEach(r => { depositoInfo[r.id] = r; });
+        }
+
+        // Resumen para Juntada: destino y deposito_id de referencia
         const tipos = [...new Set(destinos.map(d => d.tipo))];
         const destinoResumen = tipos.length === 1 ? tipos[0] : 'mixto';
         const ventaDirecta = destinos.find(d => d.tipo === 'venta_directa');
-        const depItem = destinos.find(d => d.tipo === 'deposito');
-
-        // Obtener tipo de depósitos involucrados para detectar cámara fría
-        let depositoTipos = {};
-        const depIds = destinos.filter(d => d.tipo === 'deposito' && d.deposito_id).map(d => d.deposito_id);
-        if (depIds.length > 0) {
-          const depRes = await transaction.request()
-            .query(`SELECT id, tipo FROM Depositos WHERE id IN (${depIds.join(',')})`);
-          depRes.recordset.forEach(r => { depositoTipos[r.id] = r.tipo; });
-        }
-
-        const esCamaraFria = depItem && depositoTipos[depItem.deposito_id] === 'camara_fria';
+        // Para stock_pendiente en Juntada: basta con que haya AL MENOS UN destino pendiente
+        const hayPendiente = destinos.some(d => d.tipo === 'deposito' && depositoInfo[d.deposito_id]?.requiere_despalillado);
+        // deposito_id de referencia: preferir el pendiente si existe
+        const depRef = destinos.find(d => d.tipo === 'deposito' && depositoInfo[d.deposito_id]?.requiere_despalillado)
+                    || destinos.find(d => d.tipo === 'deposito');
 
         await transaction.request()
-          .input('id',                   sql.Int,           newId)
-          .input('destino',              sql.NVarChar,      destinoResumen)
-          .input('deposito_id',          sql.Int,           depItem ? depItem.deposito_id : null)
-          .input('precio_venta_directa', sql.Decimal(10,2), ventaDirecta ? ventaDirecta.precio_kilo || null : null)
-          .input('comprador_directo',    sql.NVarChar,      ventaDirecta ? ventaDirecta.comprador || '' : '')
-          .input('stock_pendiente',      sql.Bit,           esCamaraFria ? 1 : 0)
+          .input('id',                   sql.Int,          newId)
+          .input('destino',              sql.NVarChar,     destinoResumen)
+          .input('deposito_id',          sql.Int,          depRef ? depRef.deposito_id : null)
+          .input('precio_venta_directa', sql.Decimal(10,3),ventaDirecta ? ventaDirecta.precio_kilo || null : null)
+          .input('comprador_directo',    sql.NVarChar,     ventaDirecta ? ventaDirecta.comprador || '' : '')
+          .input('stock_pendiente',      sql.Bit,          hayPendiente ? 1 : 0)
           .query(`UPDATE Juntada SET destino=@destino, deposito_id=@deposito_id,
                   precio_venta_directa=@precio_venta_directa, comprador_directo=@comprador_directo,
                   stock_pendiente=@stock_pendiente
                   WHERE id=@id`);
 
+        const now = new Date();
+
         for (const d of destinos) {
           if (!d.kilos || parseFloat(d.kilos) <= 0) continue;
 
-          const now = new Date();
-          const uid = req.user ? req.user.id : null;
+          const esPendiente = d.tipo === 'deposito' && !!depositoInfo[d.deposito_id]?.requiere_despalillado;
 
+          // 2a. Registrar en JuntadaDestino (fuente de verdad de distribución)
+          await transaction.request()
+            .input('jd_juntada_id',      sql.Int,          newId)
+            .input('jd_tipo',            sql.NVarChar,     d.tipo)
+            .input('jd_deposito_id',     sql.Int,          d.deposito_id || null)
+            .input('jd_kilos',           sql.Decimal(10,3),d.kilos)
+            .input('jd_stock_pendiente', sql.Bit,          esPendiente ? 1 : 0)
+            .input('jd_precio_kilo',     sql.Decimal(10,3),d.precio_kilo || null)
+            .input('jd_comprador',       sql.NVarChar,     d.comprador || null)
+            .input('jd_motivo',          sql.NVarChar,     d.motivo || null)
+            .query(`INSERT INTO JuntadaDestino
+                    (juntada_id, tipo, deposito_id, kilos, stock_pendiente, precio_kilo, comprador, motivo)
+                    VALUES (@jd_juntada_id, @jd_tipo, @jd_deposito_id, @jd_kilos,
+                            @jd_stock_pendiente, @jd_precio_kilo, @jd_comprador, @jd_motivo)`);
+
+          // 2b. Movimientos según tipo
           if (d.tipo === 'deposito') {
-            // Cámara fría: NO insertar MovimientosDeposito ni StockMercaderia todavía
-            // El stock se registrará cuando se complete el despalillado
-            if (depositoTipos[d.deposito_id] === 'camara_fria') continue;
+            // Cámara fría (requiere_despalillado): stock se registra al despalillar
+            if (esPendiente) continue;
 
             await transaction.request()
-              .input('deposito_id',  sql.Int,           d.deposito_id)
-              .input('temporada_id', sql.Int,           temporada_id)
-              .input('lote_id',      sql.Int,           lote_id)
-              .input('tipo',         sql.NVarChar,      'ingreso')
-              .input('kilos',        sql.Decimal(10,2), d.kilos)
-              .input('fecha',        sql.DateTime,      now)
-              .input('observacion',  sql.NVarChar,      `Juntada #${newId}`)
-              .input('juntada_id',   sql.Int,           newId)
-              .input('juntador_id',  sql.Int,           juntador_id)
-              .input('usuario_id',   sql.Int,           uid)
+              .input('deposito_id',  sql.Int,          d.deposito_id)
+              .input('temporada_id', sql.Int,          temporada_id)
+              .input('parcela_id',      sql.Int,          parcela_id)
+              .input('kilos',        sql.Decimal(10,3),d.kilos)
+              .input('fecha',        sql.DateTime,     now)
+              .input('observacion',  sql.NVarChar,     `Juntada #${newId}`)
+              .input('juntada_id',   sql.Int,          newId)
+              .input('juntador_id',  sql.Int,          juntador_id)
+              .input('usuario_id',   sql.Int,          uid)
               .query(`INSERT INTO MovimientosDeposito
-                      (deposito_id, temporada_id, lote_id, tipo, kilos, fecha, observacion, juntada_id, juntador_id, usuario_id)
-                      VALUES (@deposito_id, @temporada_id, @lote_id, @tipo, @kilos, @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id)`);
+                      (deposito_id, temporada_id, parcela_id, tipo, kilos, fecha, observacion, juntada_id, juntador_id, usuario_id)
+                      VALUES (@deposito_id, @temporada_id, @parcela_id, 'ingreso', @kilos, @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id)`);
 
             await transaction.request()
-              .input('sm_temporada_id', sql.Int,           temporada_id)
-              .input('sm_lote_id',      sql.Int,           lote_id)
-              .input('sm_kilos',        sql.Decimal(10,2), d.kilos)
-              .input('sm_fecha',        sql.DateTime,      now)
-              .input('sm_observacion',  sql.NVarChar,      `Juntada #${newId}`)
-              .input('sm_juntada_id',   sql.Int,           newId)
-              .input('sm_juntador_id',  sql.Int,           juntador_id)
-              .input('sm_usuario_id',   sql.Int,           uid)
+              .input('temporada_id', sql.Int,          temporada_id)
+              .input('parcela_id',      sql.Int,          parcela_id)
+              .input('kilos',        sql.Decimal(10,3),d.kilos)
+              .input('fecha',        sql.DateTime,     now)
+              .input('observacion',  sql.NVarChar,     `Juntada #${newId}`)
+              .input('juntada_id',   sql.Int,          newId)
+              .input('juntador_id',  sql.Int,          juntador_id)
+              .input('usuario_id',   sql.Int,          uid)
               .query(`INSERT INTO StockMercaderia
-                      (temporada_id, lote_id, tipo, kilos, destino, fecha, observacion, juntada_id, juntador_id, usuario_id)
-                      VALUES (@sm_temporada_id, @sm_lote_id, 'ingreso', @sm_kilos, 'deposito', @sm_fecha, @sm_observacion, @sm_juntada_id, @sm_juntador_id, @sm_usuario_id)`);
+                      (temporada_id, parcela_id, tipo, kilos, destino, fecha, observacion, juntada_id, juntador_id, usuario_id)
+                      VALUES (@temporada_id, @parcela_id, 'ingreso', @kilos, 'deposito', @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id)`);
 
           } else if (d.tipo === 'venta_directa') {
             await transaction.request()
-              .input('temporada_id', sql.Int,           temporada_id)
-              .input('lote_id',      sql.Int,           lote_id)
-              .input('kilos',        sql.Decimal(10,2), d.kilos)
-              .input('precio_kilo',  sql.Decimal(10,2), d.precio_kilo || null)
-              .input('comprador',    sql.NVarChar,      d.comprador || '')
-              .input('fecha',        sql.DateTime,      now)
-              .input('observacion',  sql.NVarChar,      `Venta directa juntada #${newId}`)
-              .input('juntada_id',   sql.Int,           newId)
-              .input('juntador_id',  sql.Int,           juntador_id)
-              .input('usuario_id',   sql.Int,           uid)
+              .input('temporada_id', sql.Int,          temporada_id)
+              .input('parcela_id',      sql.Int,          parcela_id)
+              .input('kilos',        sql.Decimal(10,3),d.kilos)
+              .input('precio_kilo',  sql.Decimal(10,3),d.precio_kilo || null)
+              .input('comprador',    sql.NVarChar,     d.comprador || '')
+              .input('fecha',        sql.DateTime,     now)
+              .input('observacion',  sql.NVarChar,     `Venta directa juntada #${newId}`)
+              .input('juntada_id',   sql.Int,          newId)
+              .input('juntador_id',  sql.Int,          juntador_id)
+              .input('usuario_id',   sql.Int,          uid)
               .query(`INSERT INTO StockMercaderia
-                      (temporada_id, lote_id, tipo, kilos, destino, precio_kilo, comprador, fecha, observacion, juntada_id, juntador_id, usuario_id)
-                      VALUES (@temporada_id, @lote_id, 'ingreso', @kilos, 'venta_directa', @precio_kilo, @comprador, @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id);
+                      (temporada_id, parcela_id, tipo, kilos, destino, precio_kilo, comprador, fecha, observacion, juntada_id, juntador_id, usuario_id)
+                      VALUES (@temporada_id, @parcela_id, 'ingreso', @kilos, 'venta_directa', @precio_kilo, @comprador, @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id);
                       INSERT INTO StockMercaderia
-                      (temporada_id, lote_id, tipo, kilos, destino, precio_kilo, comprador, fecha, observacion, juntada_id, juntador_id, usuario_id)
-                      VALUES (@temporada_id, @lote_id, 'egreso_venta', @kilos, 'venta_directa', @precio_kilo, @comprador, @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id)`);
+                      (temporada_id, parcela_id, tipo, kilos, destino, precio_kilo, comprador, fecha, observacion, juntada_id, juntador_id, usuario_id)
+                      VALUES (@temporada_id, @parcela_id, 'egreso_venta', @kilos, 'venta_directa', @precio_kilo, @comprador, @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id)`);
 
             if (d.precio_kilo && parseFloat(d.precio_kilo) > 0) {
               const total = parseFloat(d.kilos) * parseFloat(d.precio_kilo);
               await transaction.request()
-                .input('vd_concepto',     sql.NVarChar,      `Venta directa juntada #${newId}${d.comprador ? ' a ' + d.comprador : ''}`)
-                .input('vd_monto',        sql.Decimal(12,2), total)
-                .input('vd_temporada_id', sql.Int,           temporada_id)
+                .input('concepto',     sql.NVarChar,     `Venta directa juntada #${newId}${d.comprador ? ' a ' + d.comprador : ''}`)
+                .input('monto',        sql.Decimal(12,2),total)
+                .input('temporada_id', sql.Int,          temporada_id)
                 .query(`INSERT INTO Caja (tipo, concepto, monto, temporada_id)
-                        VALUES ('ingreso', @vd_concepto, @vd_monto, @vd_temporada_id)`);
+                        VALUES ('ingreso', @concepto, @monto, @temporada_id)`);
             }
 
           } else if (d.tipo === 'descarte') {
             await transaction.request()
-              .input('temporada_id', sql.Int,           temporada_id)
-              .input('lote_id',      sql.Int,           lote_id)
-              .input('kilos',        sql.Decimal(10,2), d.kilos)
-              .input('fecha',        sql.DateTime,      now)
-              .input('observacion',  sql.NVarChar,      `Descarte juntada #${newId}: ${d.motivo || ''}`)
-              .input('juntada_id',   sql.Int,           newId)
-              .input('juntador_id',  sql.Int,           juntador_id)
-              .input('usuario_id',   sql.Int,           uid)
+              .input('temporada_id', sql.Int,          temporada_id)
+              .input('parcela_id',      sql.Int,          parcela_id)
+              .input('kilos',        sql.Decimal(10,3),d.kilos)
+              .input('fecha',        sql.DateTime,     now)
+              .input('observacion',  sql.NVarChar,     `Descarte juntada #${newId}: ${d.motivo || ''}`)
+              .input('juntada_id',   sql.Int,          newId)
+              .input('juntador_id',  sql.Int,          juntador_id)
+              .input('usuario_id',   sql.Int,          uid)
               .query(`INSERT INTO StockMercaderia
-                      (temporada_id, lote_id, tipo, kilos, destino, precio_kilo, fecha, observacion, juntada_id, juntador_id, usuario_id)
-                      VALUES (@temporada_id, @lote_id, 'egreso_descarte', @kilos, 'descarte', 0, @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id)`);
+                      (temporada_id, parcela_id, tipo, kilos, destino, precio_kilo, fecha, observacion, juntada_id, juntador_id, usuario_id)
+                      VALUES (@temporada_id, @parcela_id, 'egreso_descarte', @kilos, 'descarte', 0, @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id)`);
           }
         }
       }
@@ -162,12 +183,8 @@ router.post('/', async (req, res) => {
   }
 });
 
-const DESTINOS_VALIDOS = ['deposito', 'descarte'];
-
-// Asignar destino a una juntada ya registrada
+// POST /api/juntada/:id/destino  — asignar destinos a una juntada ya registrada
 // Body: { destinos: [{ tipo, kilos, deposito_id?, motivo? }] }
-// Destinos válidos: 'deposito', 'descarte'
-// NOTA: 'venta_directa' no es válido aquí — se registra únicamente en POST /
 router.post('/:id/destino', async (req, res) => {
   const juntadaId = parseInt(req.params.id);
   const { destinos } = req.body;
@@ -176,119 +193,114 @@ router.post('/:id/destino', async (req, res) => {
     return res.status(400).json({ error: 'Destinos requeridos' });
   }
 
-  // Validar tipos
-  const tiposInvalidos = destinos.map(d => d.tipo).filter(t => !DESTINOS_VALIDOS.includes(t));
-  if (tiposInvalidos.length > 0) {
-    return res.status(400).json({
-      error: 'Destino inválido: ' + tiposInvalidos.join(', ') + '. Válidos: ' + DESTINOS_VALIDOS.join(', ')
-    });
+  const VALIDOS = ['deposito', 'descarte'];
+  const invalidos = destinos.map(d => d.tipo).filter(t => !VALIDOS.includes(t));
+  if (invalidos.length) {
+    return res.status(400).json({ error: 'Destino inválido: ' + invalidos.join(', ') });
   }
 
   const pool = await getPool();
 
-  // Obtener datos de la juntada para validar
   const jRes = await pool.request()
     .input('id', sql.Int, juntadaId)
-    .query(`SELECT j.id, j.juntador_id, j.kilos, j.lote_id, l.temporada_id
-            FROM Juntada j JOIN Lotes l ON j.lote_id = l.id
-            WHERE j.id = @id`);
+    .query(`SELECT j.id, j.juntador_id, j.kilos, j.parcela_id, l.temporada_id
+            FROM Juntada j JOIN Parcelas l ON j.parcela_id = l.id WHERE j.id = @id`);
 
-  if (!jRes.recordset.length) {
-    return res.status(404).json({ error: 'Juntada no encontrada' });
-  }
+  if (!jRes.recordset.length) return res.status(404).json({ error: 'Juntada no encontrada' });
   const juntada = jRes.recordset[0];
 
-  if (!juntada.juntador_id) {
-    return res.status(400).json({ error: 'Debe seleccionar un cosechero' });
-  }
-
   const sumaDestinos = destinos.reduce((s, d) => s + (parseFloat(d.kilos) || 0), 0);
-  const diff = Math.abs(sumaDestinos - parseFloat(juntada.kilos));
-  if (diff > 0.01) {
-    const restantes = (parseFloat(juntada.kilos) - sumaDestinos).toFixed(2);
+  if (Math.abs(sumaDestinos - parseFloat(juntada.kilos)) > 0.01) {
     return res.status(400).json({
-      error: `Quedan ${restantes} kg sin destino asignado (total juntada: ${juntada.kilos} kg, asignado: ${sumaDestinos.toFixed(2)} kg)`
+      error: `Quedan ${(parseFloat(juntada.kilos) - sumaDestinos).toFixed(2)} kg sin asignar`
     });
   }
 
-  const { lote_id, temporada_id } = juntada;
   const transaction = new sql.Transaction(pool);
   try {
     await transaction.begin();
 
-    const tipos = [...new Set(destinos.map(d => d.tipo))];
-    const destinoResumen = tipos.length === 1 ? tipos[0] : 'mixto';
-    const depItem = destinos.find(d => d.tipo === 'deposito');
-
-    // Obtener tipo de depósitos involucrados para detectar cámara fría
-    let depositoTipos2 = {};
-    const depIds2 = destinos.filter(d => d.tipo === 'deposito' && d.deposito_id).map(d => d.deposito_id);
-    if (depIds2.length > 0) {
-      const depRes2 = await pool.request()
-        .query(`SELECT id, tipo FROM Depositos WHERE id IN (${depIds2.join(',')})`);
-      depRes2.recordset.forEach(r => { depositoTipos2[r.id] = r.tipo; });
+    // Info depósitos
+    let depositoInfo = {};
+    const depIds = [...new Set(destinos.filter(d => d.tipo === 'deposito' && d.deposito_id).map(d => d.deposito_id))];
+    if (depIds.length > 0) {
+      const depRes = await transaction.request()
+        .query(`SELECT id, tipo, requiere_despalillado FROM Depositos WHERE id IN (${depIds.join(',')})`);
+      depRes.recordset.forEach(r => { depositoInfo[r.id] = r; });
     }
 
-    const esCamaraFria2 = depItem && depositoTipos2[depItem.deposito_id] === 'camara_fria';
+    const tipos = [...new Set(destinos.map(d => d.tipo))];
+    const destinoResumen = tipos.length === 1 ? tipos[0] : 'mixto';
+    const hayPendiente = destinos.some(d => d.tipo === 'deposito' && depositoInfo[d.deposito_id]?.requiere_despalillado);
+    const depRef = destinos.find(d => d.tipo === 'deposito' && depositoInfo[d.deposito_id]?.requiere_despalillado)
+                || destinos.find(d => d.tipo === 'deposito');
 
-    await new sql.Request(transaction)
+    await transaction.request()
       .input('id',              sql.Int,      juntadaId)
       .input('destino',         sql.NVarChar, destinoResumen)
-      .input('deposito_id',     sql.Int,      depItem ? depItem.deposito_id : null)
-      .input('stock_pendiente', sql.Bit,      esCamaraFria2 ? 1 : 0)
+      .input('deposito_id',     sql.Int,      depRef ? depRef.deposito_id : null)
+      .input('stock_pendiente', sql.Bit,      hayPendiente ? 1 : 0)
       .query(`UPDATE Juntada SET destino=@destino, deposito_id=@deposito_id, stock_pendiente=@stock_pendiente WHERE id=@id`);
+
+    const now = new Date();
+    const uid = req.user ? req.user.id : null;
+    const { parcela_id, temporada_id, juntador_id } = juntada;
 
     for (const d of destinos) {
       if (!d.kilos || parseFloat(d.kilos) <= 0) continue;
+      const esPendiente = d.tipo === 'deposito' && !!depositoInfo[d.deposito_id]?.requiere_despalillado;
 
-      const now2 = new Date();
-      const uid2 = req.user ? req.user.id : null;
+      await transaction.request()
+        .input('jd_juntada_id',      sql.Int,          juntadaId)
+        .input('jd_tipo',            sql.NVarChar,     d.tipo)
+        .input('jd_deposito_id',     sql.Int,          d.deposito_id || null)
+        .input('jd_kilos',           sql.Decimal(10,3),d.kilos)
+        .input('jd_stock_pendiente', sql.Bit,          esPendiente ? 1 : 0)
+        .input('jd_motivo',          sql.NVarChar,     d.motivo || null)
+        .query(`INSERT INTO JuntadaDestino (juntada_id, tipo, deposito_id, kilos, stock_pendiente, motivo)
+                VALUES (@jd_juntada_id, @jd_tipo, @jd_deposito_id, @jd_kilos, @jd_stock_pendiente, @jd_motivo)`);
 
       if (d.tipo === 'deposito') {
-        // Cámara fría: NO insertar stock todavía — se registra al despalillar
-        if (depositoTipos2[d.deposito_id] === 'camara_fria') continue;
-
-        await new sql.Request(transaction)
-          .input('deposito_id',  sql.Int,           d.deposito_id)
-          .input('temporada_id', sql.Int,           temporada_id)
-          .input('lote_id',      sql.Int,           lote_id)
-          .input('tipo',         sql.NVarChar,      'ingreso')
-          .input('kilos',        sql.Decimal(10,2), d.kilos)
-          .input('fecha',        sql.DateTime,      now2)
-          .input('observacion',  sql.NVarChar,      `Juntada #${juntadaId}`)
-          .input('juntada_id',   sql.Int,           juntadaId)
-          .input('juntador_id',  sql.Int,           juntada.juntador_id)
-          .input('usuario_id',   sql.Int,           uid2)
+        if (esPendiente) continue;
+        await transaction.request()
+          .input('deposito_id',  sql.Int,          d.deposito_id)
+          .input('temporada_id', sql.Int,          temporada_id)
+          .input('parcela_id',      sql.Int,          parcela_id)
+          .input('kilos',        sql.Decimal(10,3),d.kilos)
+          .input('fecha',        sql.DateTime,     now)
+          .input('observacion',  sql.NVarChar,     `Juntada #${juntadaId}`)
+          .input('juntada_id',   sql.Int,          juntadaId)
+          .input('juntador_id',  sql.Int,          juntador_id)
+          .input('usuario_id',   sql.Int,          uid)
           .query(`INSERT INTO MovimientosDeposito
-                  (deposito_id, temporada_id, lote_id, tipo, kilos, fecha, observacion, juntada_id, juntador_id, usuario_id)
-                  VALUES (@deposito_id, @temporada_id, @lote_id, @tipo, @kilos, @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id)`);
-
-        await new sql.Request(transaction)
-          .input('temporada_id', sql.Int,           temporada_id)
-          .input('lote_id',      sql.Int,           lote_id)
-          .input('kilos',        sql.Decimal(10,2), d.kilos)
-          .input('fecha',        sql.DateTime,      now2)
-          .input('observacion',  sql.NVarChar,      `Juntada #${juntadaId}`)
-          .input('juntada_id',   sql.Int,           juntadaId)
-          .input('juntador_id',  sql.Int,           juntada.juntador_id)
-          .input('usuario_id',   sql.Int,           uid2)
+                  (deposito_id, temporada_id, parcela_id, tipo, kilos, fecha, observacion, juntada_id, juntador_id, usuario_id)
+                  VALUES (@deposito_id, @temporada_id, @parcela_id, 'ingreso', @kilos, @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id)`);
+        await transaction.request()
+          .input('temporada_id', sql.Int,          temporada_id)
+          .input('parcela_id',      sql.Int,          parcela_id)
+          .input('kilos',        sql.Decimal(10,3),d.kilos)
+          .input('fecha',        sql.DateTime,     now)
+          .input('observacion',  sql.NVarChar,     `Juntada #${juntadaId}`)
+          .input('juntada_id',   sql.Int,          juntadaId)
+          .input('juntador_id',  sql.Int,          juntador_id)
+          .input('usuario_id',   sql.Int,          uid)
           .query(`INSERT INTO StockMercaderia
-                  (temporada_id, lote_id, tipo, kilos, destino, fecha, observacion, juntada_id, juntador_id, usuario_id)
-                  VALUES (@temporada_id, @lote_id, 'ingreso', @kilos, 'deposito', @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id)`);
+                  (temporada_id, parcela_id, tipo, kilos, destino, fecha, observacion, juntada_id, juntador_id, usuario_id)
+                  VALUES (@temporada_id, @parcela_id, 'ingreso', @kilos, 'deposito', @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id)`);
 
       } else if (d.tipo === 'descarte') {
-        await new sql.Request(transaction)
-          .input('temporada_id', sql.Int,           temporada_id)
-          .input('lote_id',      sql.Int,           lote_id)
-          .input('kilos',        sql.Decimal(10,2), d.kilos)
-          .input('fecha',        sql.DateTime,      now2)
-          .input('observacion',  sql.NVarChar,      `Descarte juntada #${juntadaId}: ${d.motivo || ''}`)
-          .input('juntada_id',   sql.Int,           juntadaId)
-          .input('juntador_id',  sql.Int,           juntada.juntador_id)
-          .input('usuario_id',   sql.Int,           uid2)
+        await transaction.request()
+          .input('temporada_id', sql.Int,          temporada_id)
+          .input('parcela_id',      sql.Int,          parcela_id)
+          .input('kilos',        sql.Decimal(10,3),d.kilos)
+          .input('fecha',        sql.DateTime,     now)
+          .input('observacion',  sql.NVarChar,     `Descarte juntada #${juntadaId}: ${d.motivo || ''}`)
+          .input('juntada_id',   sql.Int,          juntadaId)
+          .input('juntador_id',  sql.Int,          juntador_id)
+          .input('usuario_id',   sql.Int,          uid)
           .query(`INSERT INTO StockMercaderia
-                  (temporada_id, lote_id, tipo, kilos, destino, precio_kilo, fecha, observacion, juntada_id, juntador_id, usuario_id)
-                  VALUES (@temporada_id, @lote_id, 'egreso_descarte', @kilos, 'descarte', 0, @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id)`);
+                  (temporada_id, parcela_id, tipo, kilos, destino, precio_kilo, fecha, observacion, juntada_id, juntador_id, usuario_id)
+                  VALUES (@temporada_id, @parcela_id, 'egreso_descarte', @kilos, 'descarte', 0, @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id)`);
       }
     }
 
@@ -300,20 +312,17 @@ router.post('/:id/destino', async (req, res) => {
   }
 });
 
-// Obtener juntadas del día
+// GET /api/juntada/hoy  — juntadas del día con sus destinos
 router.get('/hoy', async (req, res) => {
   try {
     const pool = await getPool();
     const result = await pool.request()
-      .query(`SELECT j.id, l.nombre AS lote,
+      .query(`SELECT j.id, l.nombre AS parcela,
               ju.apellido + ', ' + ju.nombre AS juntador,
-              j.kilos, j.fecha_hora,
-              j.destino, j.deposito_id, d.nombre AS deposito_nombre, d.tipo AS deposito_tipo,
-              j.precio_venta_directa, j.comprador_directo, j.stock_pendiente
+              j.kilos, j.fecha_hora, j.destino, j.stock_pendiente
               FROM Juntada j
-              JOIN Lotes l ON j.lote_id = l.id
+              JOIN Parcelas l ON j.parcela_id = l.id
               JOIN Juntadores ju ON j.juntador_id = ju.id
-              LEFT JOIN Depositos d ON j.deposito_id = d.id
               WHERE CAST(j.fecha_hora AS DATE) = CAST(GETDATE() AS DATE)
               ORDER BY j.fecha_hora DESC`);
     res.json(result.recordset);
@@ -322,16 +331,52 @@ router.get('/hoy', async (req, res) => {
   }
 });
 
-// GET /api/juntada/pendientes-stock — total de kg en cámara fría esperando despalillado
-// Query param: temporada_id (opcional)
+// GET /api/juntada/destinos-hoy
+// Devuelve filas de JuntadaDestino para las juntadas de HOY.
+// Incluye destinos fresco (ya en stock) y pendientes (esperando despalillado).
+router.get('/destinos-hoy', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const result = await pool.request()
+      .query(`SELECT
+                jd.id          AS destino_id,
+                jd.juntada_id,
+                jd.tipo,
+                jd.kilos,
+                jd.stock_pendiente,
+                jd.deposito_id,
+                d.nombre       AS deposito,
+                j.fecha_hora   AS fecha,
+                j.parcela_id,
+                l.nombre AS parcela,
+                j.juntador_id,
+                ju.apellido + ', ' + ju.nombre AS cosechero,
+                j.usuario_id,
+                u.nombre AS usuario
+              FROM JuntadaDestino jd
+              JOIN Juntada    j  ON jd.juntada_id = j.id
+              JOIN Parcelas   l  ON j.parcela_id  = l.id
+              JOIN Juntadores ju ON j.juntador_id = ju.id
+              LEFT JOIN Depositos d  ON jd.deposito_id = d.id
+              LEFT JOIN Usuarios  u  ON j.usuario_id   = u.id
+              WHERE CAST(j.fecha_hora AS DATE) = CAST(GETDATE() AS DATE)
+              ORDER BY j.fecha_hora DESC`);
+    res.json(result.recordset);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/juntada/pendientes-stock
 router.get('/pendientes-stock', async (req, res) => {
   try {
     const { temporada_id } = req.query;
     const pool = await getPool();
-    let q = `SELECT COUNT(*) AS cantidad, ISNULL(SUM(j.kilos), 0) AS total_kg
-             FROM Juntada j
-             JOIN Lotes l ON j.lote_id = l.id
-             WHERE j.stock_pendiente = 1`;
+    let q = `SELECT COUNT(*) AS cantidad, ISNULL(SUM(jd.kilos), 0) AS total_kg
+             FROM JuntadaDestino jd
+             JOIN Juntada j ON jd.juntada_id = j.id
+             JOIN Parcelas l ON j.parcela_id = l.id
+             WHERE jd.stock_pendiente = 1`;
     if (temporada_id) q += ` AND l.temporada_id = ${parseInt(temporada_id)}`;
     const result = await pool.request().query(q);
     res.json(result.recordset[0]);

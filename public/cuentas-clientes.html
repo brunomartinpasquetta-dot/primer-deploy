@@ -315,7 +315,7 @@ function cargarMovimientos(cliente_id) {
         if (m.kilos && m.precio_kilo) {
           extra = '<br><span style="font-size:10px;color:var(--texto-suave);">' +
             parseFloat(m.kilos).toLocaleString('es-AR', {maximumFractionDigits:1}) + ' kg · ' +
-            fmtPeso(m.precio_kilo) + '/kg' + (m.lote ? ' · Lote ' + m.lote : '') + '</span>';
+            fmtPeso(m.precio_kilo) + '/kg' + (m.parcela ? ' · Parcela ' + m.parcela : '') + '</span>';
         }
         if (m.temporada) extra += '<br><span style="font-size:10px;color:var(--texto-suave);">' + m.temporada + '</span>';
         var sAcum  = parseFloat(m.saldo_acumulado) || 0;

@@ -8,7 +8,7 @@ router.get('/', async (req, res) => {
     const temporada_id = req.query.temporada_id;
     const pool = await getPool();
     const dbReq = pool.request();
-    let query = `SELECT l.nombre AS lote,
+    let query = `SELECT l.nombre AS parcela,
                  sm.destino,
                  SUM(CASE WHEN sm.tipo = 'ingreso'       THEN sm.kilos ELSE 0 END) AS kilos_ingresados,
                  SUM(CASE WHEN sm.tipo LIKE 'egreso%'   THEN sm.kilos ELSE 0 END) AS kilos_egresados,
@@ -16,7 +16,7 @@ router.get('/', async (req, res) => {
                  SUM(CASE WHEN sm.tipo LIKE 'egreso%'   THEN sm.kilos ELSE 0 END) AS stock_actual,
                  SUM(CASE WHEN sm.tipo LIKE 'egreso%'   THEN sm.kilos * sm.precio_kilo ELSE 0 END) AS total_vendido
                  FROM StockMercaderia sm
-                 JOIN Lotes l ON sm.lote_id = l.id`;
+                 JOIN Parcelas l ON sm.parcela_id = l.id`;
     if (temporada_id) {
       query += ' WHERE sm.temporada_id = @temporada_id';
       dbReq.input('temporada_id', sql.Int, parseInt(temporada_id));
@@ -32,16 +32,16 @@ router.get('/', async (req, res) => {
 // Registrar ingreso de mercaderia (desde juntada)
 router.post('/ingreso', async (req, res) => {
   try {
-    const { temporada_id, lote_id, kilos, destino, observacion } = req.body;
+    const { temporada_id, parcela_id, kilos, destino, observacion } = req.body;
     const pool = await getPool();
     await pool.request()
       .input('temporada_id', sql.Int, temporada_id)
-      .input('lote_id', sql.Int, lote_id)
+      .input('parcela_id', sql.Int, parcela_id)
       .input('kilos', sql.Decimal(10,2), kilos)
       .input('destino', sql.NVarChar, destino || 'fresco')
       .input('observacion', sql.NVarChar, observacion || '')
-      .query(`INSERT INTO StockMercaderia (temporada_id, lote_id, tipo, kilos, destino, observacion)
-              VALUES (@temporada_id, @lote_id, 'ingreso', @kilos, @destino, @observacion)`);
+      .query(`INSERT INTO StockMercaderia (temporada_id, parcela_id, tipo, kilos, destino, observacion)
+              VALUES (@temporada_id, @parcela_id, 'ingreso', @kilos, @destino, @observacion)`);
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -50,7 +50,7 @@ router.post('/ingreso', async (req, res) => {
 
 // Registrar egreso / venta de mercaderia
 router.post('/egreso', async (req, res) => {
-  const { temporada_id, lote_id, kilos, destino, precio_kilo,
+  const { temporada_id, parcela_id, kilos, destino, precio_kilo,
           comprador, cliente_id, forma_pago_id, observacion } = req.body;
   const pool = await getPool();
   const transaction = new sql.Transaction(pool);
@@ -82,7 +82,7 @@ router.post('/egreso', async (req, res) => {
     // 1. StockMercaderia — egreso
     const smResult = await new sql.Request(transaction)
       .input('temporada_id',  sql.Int,           temporada_id)
-      .input('lote_id',       sql.Int,           lote_id)
+      .input('parcela_id',       sql.Int,           parcela_id)
       .input('kilos',         sql.Decimal(10,2), kilosNum)
       .input('destino',       sql.NVarChar,      destino || 'fresco')
       .input('precio_kilo',   sql.Decimal(10,2), precioNum)
@@ -92,10 +92,10 @@ router.post('/egreso', async (req, res) => {
       .input('usuario_id',    sql.Int,           uid)
       .input('observacion',   sql.NVarChar,      observacion || '')
       .query(`INSERT INTO StockMercaderia
-                (temporada_id, lote_id, tipo, kilos, destino, precio_kilo,
+                (temporada_id, parcela_id, tipo, kilos, destino, precio_kilo,
                  comprador, cliente_id, forma_pago_id, usuario_id, observacion)
               OUTPUT INSERTED.id
-              VALUES (@temporada_id, @lote_id, 'egreso_venta', @kilos, @destino, @precio_kilo,
+              VALUES (@temporada_id, @parcela_id, 'egreso_venta', @kilos, @destino, @precio_kilo,
                       @comprador, @cliente_id, @forma_pago_id, @usuario_id, @observacion)`);
     const sm_id = smResult.recordset[0].id;
 
@@ -156,11 +156,11 @@ router.get('/actual', async (req, res) => {
           ISNULL(l.variedad, l.nombre) AS variedad,
           d.nombre AS deposito,
           d.tipo   AS deposito_tipo,
-          COUNT(DISTINCT m.lote_id) AS lotes_involucrados,
-          CASE WHEN COUNT(DISTINCT m.lote_id) = 1 THEN MIN(l.nombre) ELSE NULL END AS lote_nombre,
+          COUNT(DISTINCT m.parcela_id) AS parcelas_involucradas,
+          CASE WHEN COUNT(DISTINCT m.parcela_id) = 1 THEN MIN(l.nombre) ELSE NULL END AS parcela_nombre,
           SUM(CASE WHEN m.tipo = 'ingreso' THEN m.kilos ELSE -m.kilos END) AS kg_disponibles
         FROM MovimientosDeposito m
-        JOIN Lotes      l ON m.lote_id      = l.id
+        JOIN Parcelas      l ON m.parcela_id      = l.id
         JOIN Depositos  d ON m.deposito_id  = d.id
         WHERE m.temporada_id = @temporada_id
         GROUP BY ISNULL(l.variedad, l.nombre), d.nombre, d.tipo
@@ -183,7 +183,7 @@ router.get('/kpis', async (req, res) => {
     // KG cosechados desde Juntada
     const dbJ = pool.request();
     let qJuntada = `SELECT ISNULL(SUM(j.kilos), 0) AS kg_cosechados
-                    FROM Juntada j JOIN Lotes l ON j.lote_id = l.id`;
+                    FROM Juntada j JOIN Parcelas l ON j.parcela_id = l.id`;
     if (temporada_id) {
       qJuntada += ' WHERE l.temporada_id = @temporada_id';
       dbJ.input('temporada_id', sql.Int, parseInt(temporada_id));
@@ -228,7 +228,7 @@ router.get('/kpis', async (req, res) => {
 // Historial de movimientos: MovimientosDeposito + ventas directas de StockMercaderia
 router.get('/historial', async (req, res) => {
   try {
-    const { temporada_id, desde, hasta, lote_id, tipo } = req.query;
+    const { temporada_id, desde, hasta, parcela_id, tipo } = req.query;
     const pool = await getPool();
     const dbReq = pool.request();
 
@@ -251,10 +251,10 @@ router.get('/historial', async (req, res) => {
       wMov += ' AND CAST(m.fecha AS DATE) <= @hasta';
       wSm  += ' AND CAST(sm.fecha AS DATE) <= @hasta';
     }
-    if (lote_id) {
-      dbReq.input('lote_id', sql.Int, parseInt(lote_id));
-      wMov += ' AND m.lote_id = @lote_id';
-      wSm  += ' AND sm.lote_id = @lote_id';
+    if (parcela_id) {
+      dbReq.input('parcela_id', sql.Int, parseInt(parcela_id));
+      wMov += ' AND m.parcela_id = @parcela_id';
+      wSm  += ' AND sm.parcela_id = @parcela_id';
     }
 
     // Filtro de tipo
@@ -276,6 +276,7 @@ router.get('/historial', async (req, res) => {
       UNION ALL
       SELECT
         sm.id,
+        NULL                        AS movimiento_id,
         'egreso_venta'              AS tipo,
         sm.kilos,
         sm.precio_kilo,
@@ -284,9 +285,11 @@ router.get('/historial', async (req, res) => {
         'venta_directa'             AS destino_venta,
         sm.observacion,
         sm.fecha,
+        NULL                        AS variedad,
+        NULL                        AS cliente_id,
         NULL                        AS deposito,
-        sm.lote_id,
-        l2.nombre                   AS lote,
+        sm.parcela_id,
+        l2.nombre                   AS parcela,
         t2.nombre                   AS temporada,
         ju2.apellido + ', ' + ju2.nombre AS cosechero,
         sm.juntada_id,
@@ -294,7 +297,7 @@ router.get('/historial', async (req, res) => {
         sm.usuario_id,
         u2.nombre                   AS usuario
       FROM StockMercaderia sm
-      LEFT JOIN Lotes       l2    ON sm.lote_id      = l2.id
+      LEFT JOIN Parcelas       l2    ON sm.parcela_id      = l2.id
       LEFT JOIN Temporadas  t2    ON sm.temporada_id = t2.id
       LEFT JOIN Juntada     jref2 ON sm.juntada_id   = jref2.id AND sm.juntador_id IS NULL
       LEFT JOIN Juntadores  ju2   ON COALESCE(sm.juntador_id, jref2.juntador_id) = ju2.id
@@ -302,12 +305,14 @@ router.get('/historial', async (req, res) => {
       WHERE ${wSm}` : '';
 
     const query = `
-      SELECT m.id, m.tipo, m.kilos, m.precio_kilo,
+      SELECT m.id, m.id AS movimiento_id, m.tipo, m.kilos, m.precio_kilo,
              CASE WHEN m.precio_kilo IS NOT NULL THEN m.kilos * m.precio_kilo ELSE NULL END AS total,
              m.comprador, m.destino_venta, m.observacion, m.fecha,
+             m.variedad,
+             m.cliente_id,
              d.nombre  AS deposito,
-             m.lote_id,
-             l.nombre  AS lote,
+             m.parcela_id,
+             l.nombre AS parcela,
              t.nombre  AS temporada,
              ju.apellido + ', ' + ju.nombre AS cosechero,
              m.juntada_id,
@@ -316,7 +321,7 @@ router.get('/historial', async (req, res) => {
              u.nombre  AS usuario
       FROM MovimientosDeposito m
       LEFT JOIN Depositos  d    ON m.deposito_id  = d.id
-      LEFT JOIN Lotes      l    ON m.lote_id      = l.id
+      LEFT JOIN Parcelas      l    ON m.parcela_id      = l.id
       LEFT JOIN Temporadas t    ON m.temporada_id = t.id
       LEFT JOIN Juntada    jref ON m.juntada_id   = jref.id AND m.juntador_id IS NULL
       LEFT JOIN Juntadores ju   ON COALESCE(m.juntador_id, jref.juntador_id) = ju.id
@@ -326,6 +331,78 @@ router.get('/historial', async (req, res) => {
       ORDER BY fecha DESC`;
 
     const result = await dbReq.query(query);
+    res.json(result.recordset);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Etapa actual de cada juntada
+// Lógica:
+//   stock_pendiente=1                              → 'pendiente_despalillado'
+//   stock_pendiente=0 + sin Despalillado           → 'fresco'
+//   stock_pendiente=0 + con Despalillado           → 'despalillado'
+//   kilos_egresados >= kilos_ingresados (y > 0)   → 'vendida'
+//   kilos_egresados > 0 pero < kilos_ingresados   → 'vendida_parcial'
+router.get('/etapas', async (req, res) => {
+  try {
+    const { temporada_id } = req.query;
+    const pool = await getPool();
+    const dbReq = pool.request();
+    let where = '1=1';
+    if (temporada_id) {
+      where += ' AND l.temporada_id = @temporada_id';
+      dbReq.input('temporada_id', sql.Int, parseInt(temporada_id));
+    }
+    const result = await dbReq.query(`
+      SELECT
+        j.id          AS juntada_id,
+        j.kilos       AS kilos_juntada,
+        j.stock_pendiente,
+        j.deposito_id,
+        j.destino,
+        l.nombre AS parcela,
+        l.variedad,
+        ju.nombre + ' ' + ju.apellido AS juntador,
+        j.fecha_hora,
+        d.nombre      AS deposito_nombre,
+        d.tipo        AS deposito_tipo,
+        d.requiere_despalillado,
+        ISNULL(desp.kilos, 0)      AS kilos_despalillados,
+        CASE WHEN desp.id IS NOT NULL THEN 1 ELSE 0 END AS tiene_despalillado,
+        ISNULL(sm_ing.total_kg, 0)  AS kilos_en_stock,
+        ISNULL(sm_egr.total_kg, 0)  AS kilos_vendidos,
+        CASE
+          WHEN j.stock_pendiente = 1
+            THEN 'pendiente_despalillado'
+          WHEN ISNULL(sm_ing.total_kg,0) > 0
+           AND ISNULL(sm_egr.total_kg,0) >= ISNULL(sm_ing.total_kg,0)
+            THEN 'vendida'
+          WHEN ISNULL(sm_egr.total_kg,0) > 0
+            THEN 'vendida_parcial'
+          WHEN desp.id IS NOT NULL
+            THEN 'despalillado'
+          ELSE 'fresco'
+        END AS etapa
+      FROM Juntada j
+      JOIN Parcelas l       ON j.parcela_id     = l.id
+      JOIN Juntadores ju ON j.juntador_id = ju.id
+      LEFT JOIN Depositos d    ON j.deposito_id = d.id
+      LEFT JOIN Despalillado desp ON desp.juntada_id = j.id
+      LEFT JOIN (
+        SELECT juntada_id, SUM(kilos) AS total_kg
+        FROM StockMercaderia WHERE tipo = 'ingreso'
+        GROUP BY juntada_id
+      ) sm_ing ON sm_ing.juntada_id = j.id
+      LEFT JOIN (
+        SELECT juntada_id, SUM(kilos) AS total_kg
+        FROM StockMercaderia WHERE tipo LIKE 'egreso%'
+        GROUP BY juntada_id
+      ) sm_egr ON sm_egr.juntada_id = j.id
+      WHERE ${where}
+        AND j.destino NOT IN ('venta_directa','descarte')
+      ORDER BY j.fecha_hora DESC
+    `);
     res.json(result.recordset);
   } catch (err) {
     res.status(500).json({ error: err.message });

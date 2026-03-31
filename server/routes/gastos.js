@@ -17,24 +17,24 @@ router.get('/categorias', async (req, res) => {
 // Obtener gastos
 router.get('/', async (req, res) => {
   try {
-    const { temporada_id, lote_id, desde, hasta } = req.query;
+    const { temporada_id, parcela_id, desde, hasta } = req.query;
     const pool = await getPool();
     const dbReq = pool.request();
     let query = `SELECT g.id, g.concepto, g.monto, g.fecha, g.observacion,
                  cg.nombre AS categoria,
-                 l.nombre AS lote,
+                 l.nombre AS parcela,
                  t.nombre AS temporada,
                  fp.nombre AS forma_pago,
                  p.nombre AS proveedor
                  FROM Gastos g
                  JOIN CategoriasGasto cg ON g.categoria_id = cg.id
                  JOIN Temporadas t ON g.temporada_id = t.id
-                 LEFT JOIN Lotes l ON g.lote_id = l.id
+                 LEFT JOIN Parcelas l ON g.parcela_id = l.id
                  LEFT JOIN FormasPago fp ON g.forma_pago_id = fp.id
                  LEFT JOIN Proveedores p ON g.proveedor_id = p.id
                  WHERE 1=1`;
     if (temporada_id) { query += ' AND g.temporada_id = @temporada_id'; dbReq.input('temporada_id', sql.Int, parseInt(temporada_id)); }
-    if (lote_id)      { query += ' AND g.lote_id = @lote_id';           dbReq.input('lote_id', sql.Int, parseInt(lote_id)); }
+    if (parcela_id)      { query += ' AND g.parcela_id = @parcela_id';           dbReq.input('parcela_id', sql.Int, parseInt(parcela_id)); }
     if (desde)        { query += ' AND g.fecha >= @desde';              dbReq.input('desde', sql.Date, desde); }
     if (hasta)        { query += ' AND g.fecha <= @hasta';              dbReq.input('hasta', sql.Date, hasta); }
     query += ' ORDER BY g.fecha DESC';
@@ -47,7 +47,7 @@ router.get('/', async (req, res) => {
 
 // Registrar gasto
 router.post('/', async (req, res) => {
-  const { temporada_id, lote_id, categoria_id, concepto, monto,
+  const { temporada_id, parcela_id, categoria_id, concepto, monto,
           fecha, forma_pago_id, proveedor_id, observacion } = req.body;
   const pool = await getPool();
   const transaction = new sql.Transaction(pool);
@@ -58,7 +58,7 @@ router.post('/', async (req, res) => {
     const req1 = new sql.Request(transaction);
     await req1
       .input('temporada_id', sql.Int, temporada_id)
-      .input('lote_id', sql.Int, lote_id || null)
+      .input('parcela_id', sql.Int, parcela_id || null)
       .input('categoria_id', sql.Int, categoria_id)
       .input('concepto', sql.NVarChar, concepto)
       .input('monto', sql.Decimal(12,2), monto)
@@ -66,8 +66,8 @@ router.post('/', async (req, res) => {
       .input('forma_pago_id', sql.Int, forma_pago_id || null)
       .input('proveedor_id', sql.Int, proveedor_id || null)
       .input('observacion', sql.NVarChar, observacion || '')
-      .query(`INSERT INTO Gastos (temporada_id, lote_id, categoria_id, concepto, monto, fecha, forma_pago_id, proveedor_id, observacion)
-              VALUES (@temporada_id, @lote_id, @categoria_id, @concepto, @monto, @fecha, @forma_pago_id, @proveedor_id, @observacion)`);
+      .query(`INSERT INTO Gastos (temporada_id, parcela_id, categoria_id, concepto, monto, fecha, forma_pago_id, proveedor_id, observacion)
+              VALUES (@temporada_id, @parcela_id, @categoria_id, @concepto, @monto, @fecha, @forma_pago_id, @proveedor_id, @observacion)`);
 
     if (forma_pago_id) {
       const req2 = new sql.Request(transaction);

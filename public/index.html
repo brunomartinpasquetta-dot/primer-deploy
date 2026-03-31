@@ -204,6 +204,10 @@
         <div class="kpi" id="kpi-merma-card" style="display:none;"><div class="kpi-label">Merma hoy</div><div class="kpi-value red" id="kpi-merma-val">—</div><div class="kpi-sub" id="kpi-merma-sub">— %</div></div>
       </div>
 
+      <!-- Estado del stock: etapas + cajones -->
+      <div class="section-label">Estado del stock</div>
+      <div class="kpi-row-4" id="kpis-etapas" style="display:none;"></div>
+
       <!-- KPIs temporada (2 cards) -->
       <div class="section-label" id="label-temporada-stats">Temporada</div>
       <div class="kpi-row-2" id="kpis-temporada">
@@ -227,7 +231,7 @@
             <table id="tabla-registros-dia">
               <thead>
                 <tr>
-                  <th>Hora</th><th>Cosechador</th><th>Lote</th>
+                  <th>Hora</th><th>Cosechador</th><th>Parcela</th>
                   <th style="text-align:right;">Kilos</th><th>Destino</th>
                 </tr>
               </thead>
@@ -403,6 +407,7 @@ function renderDashboard(d) {
     '</div>';
   // Cargar merma del día desde despalillado
   cargarMermaHoy();
+  cargarEtapasDashboard();
 
   // ── KPIs temporada — 2 cards ──
   var labelTemp = document.getElementById('label-temporada-stats');
@@ -457,7 +462,7 @@ function renderDashboard(d) {
       return '<tr>' +
         '<td style="color:var(--texto-suave);font-size:12px;">' + fmtHora(r.fecha_hora) + '</td>' +
         '<td style="font-weight:600;">' + r.juntador + '</td>' +
-        '<td>' + r.lote + '</td>' +
+        '<td>' + r.parcela + '</td>' +
         '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;font-weight:600;">' + fmt(r.kilos) + ' kg</td>' +
         '<td style="font-size:12px;">' + dest + '</td>' +
         '</tr>';
@@ -481,7 +486,7 @@ function renderDashboard(d) {
   a.carencia.forEach(function(c) {
     html += '<div class="alerta-v2">' +
       '<div class="alerta-bar alerta-bar--red"></div>' +
-      '<div><div class="alerta-title">Carencia &middot; ' + c.lote + '</div>' +
+      '<div><div class="alerta-title">Carencia &middot; ' + c.parcela + '</div>' +
       '<div class="alerta-desc">' + c.producto + ' — libre: ' + fmtFecha(c.fecha_libre) + '</div></div>' +
       '</div>';
   });
@@ -552,6 +557,67 @@ function cargarFrutilla() {
       if (hf) hf.textContent = val;
     })
     .catch(function() {});
+}
+
+function cargarEtapasDashboard() {
+  // Obtener temporada activa
+  fetch('/api/temporadas').then(function(r){ return r.json(); }).then(function(temps){
+    var activa = temps.find(function(t){ return t.activa; });
+    var tid = activa ? activa.id : '';
+    return fetch('/api/stock-mercaderia/etapas' + (tid ? '?temporada_id=' + tid : ''));
+  }).then(function(r){ return r.json(); }).then(function(data){
+    if (!data.length) return;
+
+    // Contar por etapa
+    var conteo = { pendiente_despalillado:0, fresco:0, despalillado:0, vendida_parcial:0, vendida:0 };
+    var kgPorEtapa = { pendiente_despalillado:0, fresco:0, despalillado:0, vendida_parcial:0, vendida:0 };
+    data.forEach(function(r){
+      var e = r.etapa || 'fresco';
+      conteo[e] = (conteo[e]||0) + 1;
+      kgPorEtapa[e] = (kgPorEtapa[e]||0) + parseFloat(r.kilos_juntada||0);
+    });
+
+    var etapas = [
+      { key:'pendiente_despalillado', label:'Pendiente desp.', icon:'clock',     color:'#856404', bg:'#fff3cd' },
+      { key:'fresco',                 label:'Fresco',          icon:'leaf',      color:'#2d6a4f', bg:'#e8f5e2' },
+      { key:'despalillado',           label:'Despalillado',    icon:'layers',    color:'#1565c0', bg:'#e8f0fe' },
+      { key:'vendida_parcial',        label:'Vendida parcial', icon:'shopping-cart', color:'#c0392b', bg:'#fde8e8' },
+      { key:'vendida',                label:'Vendida',         icon:'check-circle',  color:'#7c3aed', bg:'#f3e8ff' }
+    ];
+
+    var visibles = etapas.filter(function(e){ return conteo[e.key] > 0; });
+    if (!visibles.length) return;
+
+    var row = document.getElementById('kpis-etapas');
+    row.style.display = '';
+    row.innerHTML = visibles.map(function(e){
+      var kg = kgPorEtapa[e.key];
+      var kgStr = kg >= 1000
+        ? (kg/1000).toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1}) + ' t'
+        : kg.toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:0}) + ' kg';
+      return '<div class="kpi" style="border-top:3px solid '+e.color+';">' +
+        '<div class="kpi-label">'+e.label+'</div>' +
+        '<div class="kpi-value" style="color:'+e.color+';font-size:22px;">'+conteo[e.key]+' <span style="font-size:13px;font-weight:400;">lot.</span></div>' +
+        '<div class="kpi-sub" style="font-family:\'JetBrains Mono\',monospace;">'+kgStr+'</div>' +
+      '</div>';
+    }).join('');
+
+    lucide.createIcons();
+  }).catch(function(){});
+
+  // Cajones en circulación
+  fetch('/api/depositos/cajones-circulacion').then(function(r){ return r.json(); }).then(function(data){
+    if (!data.length) return;
+    var total = data.reduce(function(s,r){ return s + parseFloat(r.en_circulacion||0); }, 0);
+    if (!total) return;
+    var row = document.getElementById('kpis-etapas');
+    row.style.display = '';
+    row.innerHTML += '<div class="kpi" style="border-top:3px solid #7c3aed;">' +
+      '<div class="kpi-label">Cajones en calle</div>' +
+      '<div class="kpi-value" style="color:#7c3aed;font-size:22px;">'+Math.round(total).toLocaleString('es-AR')+'</div>' +
+      '<div class="kpi-sub">retornables</div>' +
+    '</div>';
+  }).catch(function(){});
 }
 
 function cargarMermaHoy() {

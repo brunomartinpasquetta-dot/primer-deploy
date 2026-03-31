@@ -103,16 +103,16 @@ function enviarPDF(res, rows, titulo) {
 
 router.get('/cosecha', async (req, res) => {
   try {
-    const { desde, hasta, lote_id, juntador_id, formato } = req.query;
+    const { desde, hasta, parcela_id, juntador_id, formato } = req.query;
     const pool = await getPool();
     const dbReq = pool.request()
       .input('desde', sql.DateTime, defaultDesde(desde))
       .input('hasta', sql.DateTime, defaultHasta(hasta));
 
     let where = 'j.fecha_hora BETWEEN @desde AND @hasta';
-    if (lote_id) {
-      dbReq.input('lote_id', sql.Int, parseInt(lote_id));
-      where += ' AND j.lote_id = @lote_id';
+    if (parcela_id) {
+      dbReq.input('parcela_id', sql.Int, parseInt(parcela_id));
+      where += ' AND j.parcela_id = @parcela_id';
     }
     if (juntador_id) {
       dbReq.input('juntador_id', sql.Int, parseInt(juntador_id));
@@ -123,11 +123,11 @@ router.get('/cosecha', async (req, res) => {
       SELECT
         CONVERT(varchar, j.fecha_hora, 103) AS fecha,
         jt.nombre + ' ' + jt.apellido AS cosechador,
-        l.nombre AS lote,
+        l.nombre AS parcela,
         j.kilos,
         j.destino
       FROM Juntadas j
-      LEFT JOIN Lotes l ON j.lote_id = l.id
+      LEFT JOIN Parcelas l ON j.parcela_id = l.id
       LEFT JOIN Juntadores jt ON j.juntador_id = jt.id
       WHERE ${where}
       ORDER BY j.fecha_hora DESC
@@ -155,10 +155,10 @@ router.get('/despalillado', async (req, res) => {
         SELECT
           CONVERT(varchar, d.fecha_hora, 103) AS fecha,
           jt.nombre + ' ' + jt.apellido AS trabajador,
-          l.nombre AS lote,
+          l.nombre AS parcela,
           d.kilos
         FROM Despalillados d
-        LEFT JOIN Lotes l ON d.lote_id = l.id
+        LEFT JOIN Parcelas l ON d.parcela_id = l.id
         LEFT JOIN Juntadores jt ON d.juntador_id = jt.id
         WHERE d.fecha_hora BETWEEN @desde AND @hasta
         ORDER BY d.fecha_hora DESC

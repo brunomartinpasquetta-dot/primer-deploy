@@ -51,7 +51,7 @@ router.get('/', async (req, res) => {
     const ultimos10 = await pool.request().query(`
       SELECT TOP 10
         ju.apellido + ', ' + ju.nombre AS juntador,
-        l.nombre   AS lote,
+        l.nombre   AS parcela,
         j.kilos,
         j.fecha_hora,
         j.destino,
@@ -59,7 +59,7 @@ router.get('/', async (req, res) => {
         j.precio_venta_directa,
         j.comprador_directo
       FROM Juntada j
-      JOIN Lotes       l  ON j.lote_id      = l.id
+      JOIN Parcelas       l  ON j.parcela_id      = l.id
       JOIN Juntadores  ju ON j.juntador_id  = ju.id
       LEFT JOIN Depositos d ON j.deposito_id = d.id
       WHERE CAST(j.fecha_hora AS DATE) = CAST(GETDATE() AS DATE)
@@ -90,7 +90,7 @@ router.get('/', async (req, res) => {
           .input('tid', sql.Int, tid)
           .query(`SELECT ISNULL(SUM(j.kilos), 0) AS total
                   FROM Juntada j
-                  JOIN Lotes l ON j.lote_id = l.id
+                  JOIN Parcelas l ON j.parcela_id = l.id
                   WHERE l.temporada_id = @tid`),
 
         pool.request()
@@ -123,7 +123,7 @@ router.get('/', async (req, res) => {
     // ── Alertas ─────────────────────────────────────────────────
     const [alertasCarencia, stockBajo, chequesVencer] = await Promise.all([
       pool.request().query(`
-        SELECT TOP 10 lote, producto, fecha_libre
+        SELECT TOP 10 parcela, producto, fecha_libre
         FROM VistaCariencia
         WHERE estado = 'EN CARENCIA'
         ORDER BY fecha_libre ASC`),

@@ -160,8 +160,57 @@
     .stock-bajo { color: #c0392b; font-weight: 700; }
     .stock-ok   { color: #2d6a4f; font-weight: 700; }
 
-    /* ── Historial section ── */
-    #section-historial { margin-top: 16px; }
+    /* ── Layout 2 columnas stock + historial ── */
+    .ins-split {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 16px;
+      align-items: start;
+    }
+    @media (max-width: 1024px) { .ins-split { grid-template-columns: 1fr; } }
+
+    /* ── Historial panel lateral ── */
+    .hist-panel {
+      background: var(--superficie);
+      border: 1px solid var(--borde);
+      border-radius: 12px;
+      overflow: hidden;
+      position: sticky;
+      top: 16px;
+    }
+    .hist-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--borde);
+      background: var(--fondo);
+    }
+    .hist-panel-title { font-weight: 700; font-size: 13px; color: var(--texto); }
+    .hist-panel-body { max-height: 600px; overflow-y: auto; }
+    .hist-item {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--borde);
+      font-size: 13px;
+    }
+    .hist-item:last-child { border-bottom: none; }
+    .hist-item-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .hist-item-prod { font-weight: 700; color: var(--texto); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .hist-item-cant { font-family: 'JetBrains Mono', monospace; font-weight: 700; white-space: nowrap; }
+    .hist-item-cant.ingreso { color: var(--sem-verde); }
+    .hist-item-cant.egreso  { color: var(--sem-rojo); }
+    .hist-item-meta { font-size: 11px; color: var(--texto-secundario); margin-top: 2px; }
+    .hist-tipo-badge {
+      display: inline-block; padding: 1px 6px; border-radius: 4px;
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+    }
+    .hist-tipo-badge.compra         { background: var(--sem-azul-bg);    color: var(--sem-azul); }
+    .hist-tipo-badge.aplicacion     { background: var(--sem-rojo-bg);    color: var(--sem-rojo); }
+    .hist-tipo-badge.ingreso_manual { background: var(--sem-verde-bg);   color: var(--sem-verde); }
+    .hist-tipo-badge.ajuste         { background: var(--sem-amarillo-bg);color: var(--sem-amarillo); }
+
+    /* ── Historial section (colapsable legacy — ocultar) ── */
+    #section-historial { display: none !important; }
     .hist-header {
       display: flex;
       align-items: center;
@@ -336,37 +385,58 @@
         <div id="ins-almacenes-list"></div>
       </div>
 
-      <!-- ── Barra de filtros Stock ── -->
-      <div class="filtros-barra">
-        <input type="search" class="fb-buscar" id="search-stock" placeholder="Filtrar por..." list="si-stock-opciones" oninput="filtrarStock()">
-        <datalist id="si-stock-opciones"></datalist>
-        <div class="fb-sep"></div>
-        <button class="aplic-btn-export" onclick="exportarCSV()" title="Exportar CSV"><i data-lucide="download"></i></button>
-        <button class="aplic-btn-export" onclick="imprimirVista()" title="Imprimir"><i data-lucide="printer"></i></button>
-        <button class="fb-limpiar" onclick="limpiarFiltrosStock()">✕ Limpiar</button>
-      </div>
+      <!-- ── Split layout: stock + historial lateral ── -->
+      <div class="ins-split">
+        <!-- columna izquierda -->
+        <div>
+          <!-- ── Barra de filtros Stock ── -->
+          <div class="filtros-barra">
+            <input type="search" class="fb-buscar" id="search-stock" placeholder="Filtrar por..." list="si-stock-opciones" oninput="filtrarStock()">
+            <datalist id="si-stock-opciones"></datalist>
+            <div class="fb-sep"></div>
+            <button class="aplic-btn-export" onclick="exportarCSV()" title="Exportar CSV"><i data-lucide="download"></i></button>
+            <button class="aplic-btn-export" onclick="imprimirVista()" title="Imprimir"><i data-lucide="printer"></i></button>
+            <button class="fb-limpiar" onclick="limpiarFiltrosStock()">✕ Limpiar</button>
+          </div>
 
-      <!-- ── Tabla Stock Actual ── -->
-      <div class="card">
-        <div class="table-wrap">
-          <table id="tabla-stock">
-            <thead>
-              <tr>
-                <th><input type="checkbox" class="row-check" id="chk-all" onchange="toggleTodos(this)"></th>
-                <th>PRODUCTO</th>
-                <th>CATEGORÍA</th>
-                <th style="text-align:right;">KG / LITROS</th>
-                <th style="text-align:right;">PRESENTACIÓN</th>
-                <th>PROVEEDOR</th>
-                <th>DEPÓSITO</th>
-              </tr>
-            </thead>
-            <tbody id="tbody-stock">
-              <tr><td colspan="7" class="activity-empty">Cargando...</td></tr>
-            </tbody>
-          </table>
+          <!-- ── Tabla Stock Actual ── -->
+          <div class="card">
+            <div class="table-wrap">
+              <table id="tabla-stock">
+                <thead>
+                  <tr>
+                    <th><input type="checkbox" class="row-check" id="chk-all" onchange="toggleTodos(this)"></th>
+                    <th>PRODUCTO</th>
+                    <th>CATEGORÍA</th>
+                    <th>ENVASE</th>
+                    <th style="text-align:right;">KG / LITROS</th>
+                    <th style="text-align:right;">PRESENTACIÓN</th>
+                    <th>PROVEEDOR</th>
+                    <th>DEPÓSITO</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-stock">
+                  <tr><td colspan="8" class="activity-empty">Cargando...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
-      </div>
+
+        <!-- columna derecha: historial lateral -->
+        <div class="hist-panel">
+          <div class="hist-panel-header">
+            <span class="hist-panel-title"><i data-lucide="clock" style="width:13px;height:13px;vertical-align:middle;margin-right:4px;"></i> Últimos movimientos</span>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <input type="date" id="hist-desde" onchange="cargarHistorialPanel()" title="Desde" style="font-size:11px;padding:3px 6px;border:1px solid var(--borde);border-radius:5px;background:#fff;">
+              <input type="date" id="hist-hasta" onchange="cargarHistorialPanel()" title="Hasta" style="font-size:11px;padding:3px 6px;border:1px solid var(--borde);border-radius:5px;background:#fff;">
+            </div>
+          </div>
+          <div class="hist-panel-body" id="hist-panel-body">
+            <div class="activity-empty" style="padding:20px;text-align:center;color:var(--texto-suave);">Cargando...</div>
+          </div>
+        </div>
+      </div><!-- /ins-split -->
 
       <!-- ── Sección Historial (colapsable) ── -->
       <div id="section-historial" style="display:none;">
@@ -403,7 +473,7 @@
                   <th>Movimiento</th>
                   <th style="text-align:right;">Cantidad</th>
                   <th>Aplica</th>
-                  <th>Lote</th>
+                  <th>Parcela</th>
                   <th>Depósito</th>
                   <th>Usuario</th>
                   <th style="width:36px;"></th>
@@ -461,9 +531,9 @@
         </select>
       </div>
       <div class="form-row">
-        <label>Lote destino <span style="font-weight:normal;color:var(--texto-suave);">(opcional)</span></label>
-        <select id="egr-lote">
-          <option value="">Sin lote específico</option>
+        <label>Parcela destino <span style="font-weight:normal;color:var(--texto-suave);">(opcional)</span></label>
+        <select id="egr-parcela">
+          <option value="">Sin parcela específica</option>
         </select>
       </div>
       <div class="form-row">
@@ -529,7 +599,7 @@
     return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
   }
 
-  var _lotesTodos = [];
+  var _parcelasTodos = [];
   var _stockData  = [];
   var _stockDataVisible    = []; // datos filtrados visibles en la grilla
   var _historialInsumosData = []; // datos del historial cargados
@@ -584,6 +654,7 @@
         closeIngresoManualModal();
         cargarStock();
         cargarAlmacenesInsumos();
+        cargarHistorialPanel();
       } else {
         document.getElementById('msg-ingreso-manual').innerHTML = '<p style="color:var(--sem-rojo);font-size:13px;margin-top:8px;">' + (data.error || 'Error') + '</p>';
       }
@@ -648,12 +719,29 @@
     filtrarStock();
   }
 
+  var _tipoLabels = {
+    plantines:'Plantines',mulching:'Mulching',manta_termica:'Manta térmica',
+    arcos_microtunnel:'Arcos microtúnel',polietileno_microtunnel:'Polietileno microtúnel',
+    sustratos:'Sustratos',fumigantes:'Fumigantes',fungicidas:'Fungicidas',
+    insecticidas:'Insecticidas',acaricidas:'Acaricidas',herbicidas:'Herbicidas',
+    coadyuvantes:'Coadyuvantes',fert_nitrogenados:'Fert. Nitrogenados',
+    fert_potasicos:'Fert. Potásicos',fert_fosforados:'Fert. Fosforados',
+    micronutrientes:'Micronutrientes',bioestimulantes:'Bioestimulantes',
+    acidos_humicos:'Ác. Húmicos',cinta_goteo:'Cinta goteo',
+    tuberias_riego:'Tuberías riego',filtros_riego:'Filtros riego',
+    cajones_cosecheros:'Cajones',cajas_carton:'Cajas cartón',
+    cubetas_clamshells:'Clamshells',pads_absorbentes:'Pads',
+    film_stretch:'Film stretch',etiquetas:'Etiquetas',
+    bandas_elasticas:'Bandas',epp:'EPP',carros_cosecheros:'Carros',
+    herramientas:'Herramientas',otro:'Otros'
+  };
+
   /* ── Renderizar tabla stock ── */
   function renderStockTabla(data) {
     _stockDataVisible = data || [];
     var tbody = document.getElementById('tbody-stock');
     if (!data.length) {
-      tbody.innerHTML = '<tr><td colspan="7" class="activity-empty">Sin productos para los filtros seleccionados</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" class="activity-empty">Sin productos para los filtros seleccionados</td></tr>';
       return;
     }
     var mono = "font-family:'JetBrains Mono',monospace;";
@@ -674,7 +762,8 @@
       return '<tr>' +
         '<td><input type="checkbox" class="row-check"></td>' +
         '<td><strong>' + (p.producto || '—') + '</strong></td>' +
-        '<td style="font-size:12px;color:var(--texto-suave);">' + (p.categoria || '—') + '</td>' +
+        '<td style="font-size:12px;color:var(--texto-suave);">' + (_tipoLabels[p.categoria] || p.categoria || '—') + '</td>' +
+        '<td style="font-size:12px;">' + (p.envase || '—') + '</td>' +
         '<td class="' + (bajo ? 'stock-bajo' : 'stock-ok') + '" style="text-align:right;'+mono+'">' +
           cantLabel + (bajo ? ' ⚠️' : '') +
         '</td>' +
@@ -749,7 +838,7 @@
   function exportarCSVHistorial() {
     var datos = _historialInsumosData;
     if (!datos.length) { alert('Sin datos en el historial para exportar.'); return; }
-    var cabecera = ['#','Fecha','Producto','Movimiento','Cantidad','Aplica','Lote','Depósito','Usuario'];
+    var cabecera = ['#','Fecha','Producto','Movimiento','Cantidad','Aplica','Parcela','Depósito','Usuario'];
     var filas = [cabecera].concat(datos.map(function(m) {
       var esIngreso = m.tipo === 'compra';
       return [
@@ -759,7 +848,7 @@
         esIngreso ? 'Ingreso' : 'Egreso',
         parseFloat(m.cantidad||0).toFixed(2) + ' ' + (m.presentacion || ''),
         m.empleado || (esIngreso ? m.proveedor || '' : '') || '',
-        m.lote || '',
+        m.parcela || '',
         m.deposito_nombre || '',
         m.usuario || ''
       ];
@@ -818,10 +907,10 @@
       }).join('');
       document.getElementById('egr-producto').innerHTML = '<option value="">Seleccionar producto...</option>' + opts;
     });
-    fetch('/api/lotes').then(function(r) { return r.json(); }).then(function(data) {
-      _lotesTodos = data;
-      var optsLotes = data.map(function(l){ return '<option value="'+l.id+'">'+l.nombre+'</option>'; }).join('');
-      document.getElementById('egr-lote').innerHTML = '<option value="">Sin lote específico</option>' + optsLotes;
+    fetch('/api/parcelas').then(function(r) { return r.json(); }).then(function(data) {
+      _parcelasTodos = data;
+      var optsParcelas = data.map(function(l){ return '<option value="'+l.id+'">'+l.nombre+'</option>'; }).join('');
+      document.getElementById('egr-parcela').innerHTML = '<option value="">Sin parcela específica</option>' + optsParcelas;
     });
     fetch('/api/depositos?tipo_stock=insumos').then(function(r) { return r.json(); }).then(function(data) {
       _depositosInsumos = data;
@@ -878,24 +967,25 @@
     var producto_id = document.getElementById('egr-producto').value;
     var cantidad    = _parseEl('egr-cantidad');
     var motivo      = document.getElementById('egr-motivo').value;
-    var lote_id     = document.getElementById('egr-lote').value || null;
+    var parcela_id     = document.getElementById('egr-parcela').value || null;
     var observacion = document.getElementById('egr-obs').value;
     var msgEl       = document.getElementById('msg-egreso');
     btn.disabled = true;
     fetch('/api/stock-insumos/egreso', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ producto_id: parseInt(producto_id), cantidad: cantidad, motivo: motivo, lote_id: lote_id ? parseInt(lote_id) : null, observacion: observacion })
+      body: JSON.stringify({ producto_id: parseInt(producto_id), cantidad: cantidad, motivo: motivo, parcela_id: parcela_id ? parseInt(parcela_id) : null, observacion: observacion })
     }).then(function(r) { return r.json(); }).then(function(data) {
       if (data.ok) {
         mostrarMensaje('msg-egreso', 'success', 'Egreso registrado correctamente');
-        ['egr-producto','egr-cantidad','egr-motivo','egr-lote','egr-obs'].forEach(function(id) {
+        ['egr-producto','egr-cantidad','egr-motivo','egr-parcela','egr-obs'].forEach(function(id) {
           document.getElementById(id).value = '';
         });
         document.getElementById('egr-stock-info').textContent = '';
         btn.disabled = true;
         cargarStock();
         cargarEgresoInit();
+        cargarHistorialPanel();
         setTimeout(closeEgresoModal, 1200);
       } else {
         mostrarMensaje('msg-egreso', 'error', data.error || 'Error al registrar egreso');
@@ -913,6 +1003,7 @@
     document.getElementById('hist-desde').value = '';
     document.getElementById('hist-hasta').value = '';
     cargarHistorial();
+    cargarHistorialPanel();
   }
 
   function fmtFechaHora(iso) {
@@ -931,7 +1022,7 @@
     var q = (document.getElementById('hist-buscar').value || '').trim();
     var _histCols = [
       {label:'Producto',campo:'producto'},{label:'Tipo',campo:'tipo'},
-      {label:'Lote',campo:'lote'},{label:'Depósito',campo:'deposito'},
+      {label:'Parcela',campo:'parcela'},{label:'Depósito',campo:'deposito'},
       {label:'Usuario',campo:'usuario'}
     ];
     var filtered = _historialInsumosDataFull.filter(function(m) { return matchFiltro(m, q, _histCols); });
@@ -957,7 +1048,7 @@
         _historialInsumosData = data;
         var _histCols = [
           {label:'Producto',campo:'producto'},{label:'Tipo',campo:'tipo'},
-          {label:'Lote',campo:'lote'},{label:'Depósito',campo:'deposito_nombre'},
+          {label:'Parcela',campo:'parcela'},{label:'Depósito',campo:'deposito_nombre'},
           {label:'Usuario',campo:'usuario'}
         ];
         poblarDatalist('si-hist-opciones', data, _histCols);
@@ -1007,7 +1098,7 @@
             '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;' + kgColor + '">' +
               signo + cant.toLocaleString('es-AR', {minimumFractionDigits:0,maximumFractionDigits:2}) + ' ' + (m.presentacion || '') + '</td>' +
             '<td style="font-size:12px;">' + aplica + '</td>' +
-            '<td style="font-size:12px;">' + (m.lote || '—') + '</td>' +
+            '<td style="font-size:12px;">' + (m.parcela || '—') + '</td>' +
             '<td style="font-size:12px;">' + (m.deposito_nombre || '—') + '</td>' +
             '<td style="font-size:12px;color:var(--texto-suave);">' + (m.usuario || '—') + '</td>' +
             '<td style="text-align:center;">' + (_puedeEditarMov
@@ -1028,6 +1119,58 @@
   cargarStock();
   cargarEgresoInit();
   cargarTemporadaActiva();
+  cargarHistorialPanel();
+
+  function cargarHistorialPanel() {
+    var body = document.getElementById('hist-panel-body');
+    if (!body) return;
+    body.innerHTML = '<div class="activity-empty" style="padding:20px;text-align:center;color:var(--texto-suave);">Cargando...</div>';
+    var params = new URLSearchParams();
+    var desde = document.getElementById('hist-desde').value;
+    var hasta = document.getElementById('hist-hasta').value;
+    if (desde) params.set('desde', desde);
+    if (hasta) params.set('hasta', hasta);
+    fetch('/api/stock-insumos/historial?' + params.toString())
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (!data.length) {
+          body.innerHTML = '<div class="activity-empty" style="padding:20px;text-align:center;">Sin movimientos</div>';
+          return;
+        }
+        body.innerHTML = data.slice(0, 50).map(function(m) {
+          var esIngreso = m.tipo === 'compra' || m.tipo === 'ingreso_manual';
+          var signo = esIngreso ? '+' : '−';
+          var cant  = parseFloat(m.cantidad || 0);
+          var cantStr = signo + cant.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:2}) + ' ' + (m.presentacion || '');
+          var tipoLabel = m.tipo === 'compra' ? 'Compra'
+            : m.tipo === 'aplicacion'         ? 'Aplicación'
+            : m.tipo === 'ingreso_manual'      ? 'Ing. manual'
+            : m.tipo === 'ajuste'              ? 'Ajuste'
+            : m.tipo === 'merma'               ? 'Merma'
+            : m.tipo;
+          var badgeClass = m.tipo === 'compra' ? 'compra'
+            : m.tipo === 'aplicacion'          ? 'aplicacion'
+            : m.tipo === 'ingreso_manual'       ? 'ingreso_manual'
+            : 'ajuste';
+          var meta = fmtFechaHora(m.fecha_hora);
+          if (m.parcela) meta += ' · ' + m.parcela;
+          return '<div class="hist-item">' +
+            '<div class="hist-item-top">' +
+              '<span class="hist-item-prod">' + (m.producto || '—') + '</span>' +
+              '<span class="hist-item-cant ' + (esIngreso ? 'ingreso' : 'egreso') + '">' + cantStr + '</span>' +
+            '</div>' +
+            '<div class="hist-item-meta">' +
+              '<span class="hist-tipo-badge ' + badgeClass + '">' + tipoLabel + '</span>' +
+              ' ' + meta +
+            '</div>' +
+          '</div>';
+        }).join('');
+        lucide.createIcons();
+      })
+      .catch(function() {
+        body.innerHTML = '<div class="activity-empty" style="padding:20px;text-align:center;color:#c0392b;">Error al cargar</div>';
+      });
+  }
 
   /* ── Editar movimiento ── */
   function abrirEditarMov(id, obs) {
@@ -1049,7 +1192,7 @@
       body: JSON.stringify({ observacion: obs })
     }).then(function(r){ return r.json(); }).then(function(data){
       setLoading(btn, false);
-      if (data.ok) { cerrarEditarMov(); cargarHistorial(); }
+      if (data.ok) { cerrarEditarMov(); cargarHistorial(); cargarHistorialPanel(); }
       else document.getElementById('edit-mov-msg').innerHTML = '<span style="color:#EF4444;">' + (data.error || 'Error') + '</span>';
     }).catch(function(){
       setLoading(btn, false);

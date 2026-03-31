@@ -349,7 +349,7 @@
       <a href="menu-campo.html" class="btn-volver">← Volver</a>
       <div class="content-header">
         <div class="content-title">Registrar juntada</div>
-        <div class="content-sub">Seleccioná el lote, escaneá el cosechador y confirmá el peso</div>
+        <div class="content-sub">Seleccioná el parcela, escaneá el cosechador y confirmá el peso</div>
       </div>
 
       <!-- ── KPI Cards ── -->
@@ -359,8 +359,8 @@
           <div class="juntada-kpi-valor" id="kpi-total-hoy">— kg</div>
         </div>
         <div class="juntada-kpi">
-          <div class="juntada-kpi-label">Lote actual hoy</div>
-          <div class="juntada-kpi-valor" id="kpi-lote-hoy">— kg</div>
+          <div class="juntada-kpi-label">Parcela actual hoy</div>
+          <div class="juntada-kpi-valor" id="kpi-parcela-hoy">— kg</div>
         </div>
         <div class="juntada-kpi">
           <div class="juntada-kpi-label">Campaña actual</div>
@@ -371,12 +371,12 @@
       <div class="juntada-layout">
       <div class="juntada-form">
 
-        <!-- ── Lote ── -->
+        <!-- ── Parcela ── -->
         <div class="card-form">
           <div class="form-row">
-            <label>Lote</label>
-            <select id="lote" onchange="checkReady(); cargarKpisJuntada();" data-tooltip="Seleccioná el lote que se está cosechando hoy">
-              <option value="">Cargando lotes...</option>
+            <label>Parcela</label>
+            <select id="parcela" onchange="checkReady(); cargarKpisJuntada();" data-tooltip="Seleccioná el parcela que se está cosechando hoy">
+              <option value="">Cargando parcelas...</option>
             </select>
           </div>
         </div>
@@ -456,7 +456,7 @@
         </button>
         <button class="btn btn-secondary" id="btn-repetir" onclick="repetirUltimaJuntada()"
           style="margin-top:6px; width:100%; display:none;"
-          data-tooltip="Carga el mismo lote y cosechador del último registro">
+          data-tooltip="Carga el mismo parcela y cosechador del último registro">
           ↩ Repetir última juntada
         </button>
 
@@ -482,7 +482,7 @@
                 <th>Fecha</th>
                 <th>Tipo</th>
                 <th style="text-align:right;">Kg</th>
-                <th>Lote</th>
+                <th>Parcela</th>
                 <th>Depósito</th>
                 <th>Usuario</th>
               </tr>
@@ -532,27 +532,27 @@
   var juntadorId = null, pesoActual = null, scanning = false, stream = null;
   var modoActual = 'lista';
   var tipoDestinoPrincipal = null, tipoDestinoSecundario = null;
-  var lotesData = [], depositos = [];
+  var parcelasData = [], depositos = [];
   var _ultimaJuntada = null;
 
-  // ── Cargar lotes ───────────────────────────────────────────────
-  function cargarLotes() {
+  // ── Cargar parcelas ───────────────────────────────────────────────
+  function cargarParcelas() {
     fetch('/api/temporadas/activa').then(r => r.json()).then(function(t) {
-      var sel = document.getElementById('lote');
-      if (!t) { sel.innerHTML = '<option value="">No hay campaña activa</option>'; lotesData = []; return; }
-      fetch('/api/lotes?temporada_id=' + t.id).then(r => r.json()).then(function(lotes) {
-        lotesData = lotes;
-        if (!lotes.length) { sel.innerHTML = '<option value="">Sin lotes en esta campaña</option>'; return; }
-        sel.innerHTML = '<option value="">Seleccionar lote...</option>';
-        lotes.forEach(function(l) {
+      var sel = document.getElementById('parcela');
+      if (!t) { sel.innerHTML = '<option value="">No hay campaña activa</option>'; parcelasData = []; return; }
+      fetch('/api/parcelas?temporada_id=' + t.id).then(r => r.json()).then(function(parcelas) {
+        parcelasData = parcelas;
+        if (!parcelas.length) { sel.innerHTML = '<option value="">Sin parcelas en esta campaña</option>'; return; }
+        sel.innerHTML = '<option value="">Seleccionar parcela...</option>';
+        parcelas.forEach(function(l) {
           sel.innerHTML += '<option value="' + l.id + '">' + l.nombre + '</option>';
         });
-        recordarSeleccion('lote', 'ultimo_lote');
+        recordarSeleccion('parcela', 'ultimo_parcela');
       });
     });
   }
-  cargarLotes();
-  window.addEventListener('campanaChange', cargarLotes);
+  cargarParcelas();
+  window.addEventListener('campanaChange', cargarParcelas);
 
   // ── Cargar cosechadores en lista ───────────────────────────────
   fetch('/api/juntadores').then(r => r.json()).then(function(data) {
@@ -566,7 +566,7 @@
   });
 
   // ── Cargar depósitos ───────────────────────────────────────────
-  fetch('/api/depositos').then(r => r.json()).then(function(deps) {
+  fetch('/api/depositos?tipo_stock=mercaderia').then(r => r.json()).then(function(deps) {
     depositos = deps;
   });
 
@@ -678,7 +678,7 @@
 
   // ── Destino ────────────────────────────────────────────────────
   function renderDestinoForm(tipo, kilos, prefix) {
-    var k = (parseFloat(kilos) || 0).toFixed(2);
+    var k = (parseFloat(kilos) || 0).toFixed(3);
     var depOpts = depositos.map(function(d) {
       return '<option value="' + d.id + '" data-tipo="' + (d.tipo || '') + '">' + d.nombre + '</option>';
     }).join('');
@@ -686,7 +686,7 @@
     if (tipo === 'deposito') {
       return '<div class="destino-form-inner">' +
         '<div class="form-row"><label>Kilos a depositar</label>' +
-        '<input type="number" id="' + prefix + '-kilos-deposito" value="' + k + '" step="0.01" min="0" ' +
+        '<input type="number" id="' + prefix + '-kilos-deposito" value="' + k + '" step="0.001" min="0" ' +
         'style="-moz-appearance:textfield;appearance:textfield;" oninput="actualizarRestantes()"></div>' +
         '<div class="form-row"><label>Depósito</label>' +
         '<select id="' + prefix + '-select-deposito" onchange="checkDepositoCamaraFria(this)">' +
@@ -698,7 +698,7 @@
     if (tipo === 'descarte') {
       return '<div class="destino-form-inner">' +
         '<div class="form-row"><label>Kilos a descartar</label>' +
-        '<input type="number" id="' + prefix + '-kilos-descarte" value="' + k + '" step="0.01" min="0" ' +
+        '<input type="number" id="' + prefix + '-kilos-descarte" value="' + k + '" step="0.001" min="0" ' +
         'style="-moz-appearance:textfield;appearance:textfield;" oninput="actualizarRestantes()"></div>' +
         '<div class="form-row"><label>Motivo</label>' +
         '<select id="' + prefix + '-motivo-descarte">' +
@@ -794,7 +794,7 @@
   // ── Validación y registro ──────────────────────────────────────
   function checkReady() {
     var kilos = pesoActual || 0;
-    var loteOk = !!document.getElementById('lote').value;
+    var parcelaOk = !!document.getElementById('parcela').value;
     var juntadorOk = !!juntadorId;
     var kilosOk = kilos > 0;
     var destinoOk = false;
@@ -804,7 +804,7 @@
       destinoOk = Math.abs(totalAsignado - kilos) < 0.01 && totalAsignado > 0;
     }
 
-    document.getElementById('btn-registrar').disabled = !(loteOk && juntadorOk && kilosOk && destinoOk);
+    document.getElementById('btn-registrar').disabled = !(parcelaOk && juntadorOk && kilosOk && destinoOk);
   }
 
   function _recopilarDestinos() {
@@ -840,10 +840,10 @@
   }
 
   function registrar() {
-    var lote_id = document.getElementById('lote').value;
+    var parcela_id = document.getElementById('parcela').value;
     var kilos = pesoActual || _parseEl('peso-manual');
-    if (!lote_id || !juntadorId || !kilos) {
-      mostrarMensaje('mensaje', 'error', 'Completá lote, cosechador y peso'); return;
+    if (!parcela_id || !juntadorId || !kilos) {
+      mostrarMensaje('mensaje', 'error', 'Completá parcela, cosechador y peso'); return;
     }
     if (!tipoDestinoPrincipal) {
       mostrarMensaje('mensaje', 'error', 'Seleccioná un destino para la cosecha'); return;
@@ -856,16 +856,16 @@
     if (Math.abs(suma - kilos) > 0.01) {
       mostrarMensaje('mensaje', 'error', 'Los kilos asignados (' + suma.toFixed(2) + ') no coinciden con el total (' + kilos + ' kg)'); return;
     }
-    _enviarRegistro(lote_id, kilos, destinos);
+    _enviarRegistro(parcela_id, kilos, destinos);
   }
 
-  function _enviarRegistro(lote_id, kilos, destinos) {
+  function _enviarRegistro(parcela_id, kilos, destinos) {
     var btn = document.getElementById('btn-registrar');
     setLoading(btn, true);
     fetch('/api/juntada', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ lote_id: parseInt(lote_id), juntador_id: juntadorId, kilos: kilos, destinos: destinos })
+      body: JSON.stringify({ parcela_id: parseInt(parcela_id), juntador_id: juntadorId, kilos: kilos, destinos: destinos })
     }).then(function(r) { return r.json(); }).then(function(data) {
       setLoading(btn, false);
       if (data.ok) {
@@ -930,10 +930,26 @@
 
   function cargarHistorial() {
     var f = _fechasHoy();
-    fetch('/api/stock-mercaderia/historial?desde=' + f.hoy + '&hasta=' + f.manana)
+    // destinos-hoy devuelve TODOS los tramos del día: fresco (ya en stock) y pendientes (cámara)
+    fetch('/api/juntada/destinos-hoy')
       .then(function(r){ return r.json(); })
-      .then(function(todos) {
-        var data = todos.filter(function(m){ return _esHoy(m, f.d); });
+      .then(function(destinos) {
+        // Mapear cada JuntadaDestino a formato compatible con movimientos-grid
+        var data = destinos.map(function(d) {
+          return {
+            juntada_id:  d.juntada_id,
+            cosechero:   d.cosechero,
+            fecha:       d.fecha,
+            tipo:        d.stock_pendiente ? 'pendiente_despalillado' : 'ingreso',
+            kilos:       d.kilos,
+            parcela: d.parcela,
+            deposito:    d.deposito,
+            parcela_id:  d.parcela_id,
+            juntador_id: d.juntador_id,
+            usuario:     d.usuario,
+            usuario_id:  d.usuario_id
+          };
+        });
         var totalKg = data.reduce(function(s, m) {
           return s + (m.tipo === 'ingreso' ? parseFloat(m.kilos || 0) : 0);
         }, 0);
@@ -946,7 +962,7 @@
         _juntadaData = data;
         var _juntadaCols = [
           {label:'Cosechero',campo:'cosechero'},
-          {label:'Lote',campo:'lote'},
+          {label:'Parcela',campo:'parcela'},
           {label:'Depósito',campo:'deposito'},
           {label:'Tipo',campo:'tipo'}
         ];
@@ -963,7 +979,7 @@
 
   function cargarKpisJuntada() {
     var f = _fechasHoy();
-    var loteId = document.getElementById('lote').value;
+    var parcelaId = document.getElementById('parcela').value;
 
     fetch('/api/stock-mercaderia/historial?desde=' + f.hoy + '&hasta=' + f.manana)
       .then(function(r){ return r.json(); }).then(function(todos) {
@@ -974,17 +990,17 @@
           total.toLocaleString('es-AR', {maximumFractionDigits:1}) + ' kg';
       });
 
-    if (loteId) {
-      fetch('/api/stock-mercaderia/historial?desde=' + f.hoy + '&hasta=' + f.manana + '&lote_id=' + loteId)
+    if (parcelaId) {
+      fetch('/api/stock-mercaderia/historial?desde=' + f.hoy + '&hasta=' + f.manana + '&parcela_id=' + parcelaId)
         .then(function(r){ return r.json(); }).then(function(todos) {
           var data = todos.filter(function(m){ return _esHoy(m, f.d); });
           var total = data.filter(function(m){ return m.tipo === 'ingreso'; })
                           .reduce(function(s, m){ return s + parseFloat(m.kilos || 0); }, 0);
-          document.getElementById('kpi-lote-hoy').textContent =
+          document.getElementById('kpi-parcela-hoy').textContent =
             total.toLocaleString('es-AR', {maximumFractionDigits:1}) + ' kg';
         });
     } else {
-      document.getElementById('kpi-lote-hoy').textContent = '— kg';
+      document.getElementById('kpi-parcela-hoy').textContent = '— kg';
     }
 
     fetch('/api/stock-mercaderia/kpis')
@@ -1004,10 +1020,10 @@
 
   function repetirUltimaJuntada() {
     if (!_ultimaJuntada) return;
-    if (_ultimaJuntada.lote_id) {
-      var selLote = document.getElementById('lote');
-      selLote.value = _ultimaJuntada.lote_id;
-      selLote.dispatchEvent(new Event('change'));
+    if (_ultimaJuntada.parcela_id) {
+      var selParcela = document.getElementById('parcela');
+      selParcela.value = _ultimaJuntada.parcela_id;
+      selParcela.dispatchEvent(new Event('change'));
     }
     if (_ultimaJuntada.juntador_id) {
       juntadorId = _ultimaJuntada.juntador_id;

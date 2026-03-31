@@ -190,8 +190,8 @@
         <select id="ingreso-temporada"></select>
       </div>
       <div class="form-row">
-        <label>Lote <span style="font-weight:400;color:#888;">(opcional)</span></label>
-        <select id="ingreso-lote"><option value="">— Sin lote —</option></select>
+        <label>Parcela <span style="font-weight:400;color:#888;">(opcional)</span></label>
+        <select id="ingreso-parcela"><option value="">— Sin parcela —</option></select>
       </div>
       <div class="form-row">
         <label>Kilos</label>
@@ -232,8 +232,8 @@
         <select id="egreso-temporada"></select>
       </div>
       <div class="form-row">
-        <label>Lote <span style="font-weight:400;color:#888;">(opcional)</span></label>
-        <select id="egreso-lote"><option value="">— Sin lote —</option></select>
+        <label>Parcela <span style="font-weight:400;color:#888;">(opcional)</span></label>
+        <select id="egreso-parcela"><option value="">— Sin parcela —</option></select>
       </div>
       <div class="form-row">
         <label>Kilos</label>
@@ -318,7 +318,7 @@
       </div>
       <div class="form-row">
         <label>Ubicación</label>
-        <input type="text" id="dep-ubicacion" placeholder="Ej: Lote norte, km 3" data-tooltip="Ubicación física del depósito dentro del establecimiento">
+        <input type="text" id="dep-ubicacion" placeholder="Ej: Parcela norte, km 3" data-tooltip="Ubicación física del depósito dentro del establecimiento">
       </div>
       <div class="form-row">
         <label>Observación</label>
@@ -423,7 +423,7 @@ function verHistorial(id) {
         return '<div class="mov-item">' +
           '<div class="mov-dot ' + dotClass + '"></div>' +
           '<div><div class="mov-title">' + label + ' — ' + fmtFecha(m.fecha) + '</div>' +
-          '<div class="mov-desc">' + desc + (m.lote ? ' · Lote: ' + m.lote : '') + '</div></div>' +
+          '<div class="mov-desc">' + desc + (m.parcela ? ' · Parcela: ' + m.parcela : '') + '</div></div>' +
         '</div>';
       }).join('');
       document.getElementById('hist-body').innerHTML = html;
@@ -530,7 +530,7 @@ function cargarResumen() {
 
 // ── Ingreso ────────────────────────────────────────────────────
 var _temporadasCache = [];
-var _lotesCache      = [];
+var _parcelasCache      = [];
 
 function cargarTemporadasModal(selId, savedId) {
   if (_temporadasCache.length) { llenarSelTemporada(selId, savedId); return; }
@@ -550,17 +550,17 @@ function llenarSelTemporada(selId, savedId) {
       return '<option value="' + t.id + '"' + (String(t.id) === String(pick) ? ' selected' : '') + '>' + t.nombre + '</option>';
     }).join('');
 }
-function cargarLotesModal(selId) {
-  if (_lotesCache.length) { llenarSelLote(selId); return; }
-  fetch('/api/lotes').then(function(r){ return r.json(); }).then(function(data){
-    _lotesCache = data.filter(function(l){ return l.activo; });
-    llenarSelLote(selId);
+function cargarParcelasModal(selId) {
+  if (_parcelasCache.length) { llenarSelParcela(selId); return; }
+  fetch('/api/parcelas').then(function(r){ return r.json(); }).then(function(data){
+    _parcelasCache = data.filter(function(l){ return l.activo; });
+    llenarSelParcela(selId);
   });
 }
-function llenarSelLote(selId) {
+function llenarSelParcela(selId) {
   var sel = document.getElementById(selId);
-  sel.innerHTML = '<option value="">— Sin lote —</option>' +
-    _lotesCache.map(function(l){
+  sel.innerHTML = '<option value="">— Sin parcela —</option>' +
+    _parcelasCache.map(function(l){
       return '<option value="' + l.id + '">' + l.nombre + '</option>';
     }).join('');
 }
@@ -575,7 +575,7 @@ function abrirIngreso(id) {
   document.getElementById('ingreso-obs').value   = '';
   document.getElementById('msg-ingreso').innerHTML = '';
   cargarTemporadasModal('ingreso-temporada');
-  cargarLotesModal('ingreso-lote');
+  cargarParcelasModal('ingreso-parcela');
   document.getElementById('modal-ingreso').classList.add('open');
 }
 function cerrarIngreso() {
@@ -584,7 +584,7 @@ function cerrarIngreso() {
 function confirmarIngreso(btn) {
   var depId = document.getElementById('ingreso-dep-id').value;
   var tid   = document.getElementById('ingreso-temporada').value;
-  var lid   = document.getElementById('ingreso-lote').value;
+  var lid   = document.getElementById('ingreso-parcela').value;
   var kilos = document.getElementById('ingreso-kilos').value;
   var fecha = document.getElementById('ingreso-fecha').value;
   var obs   = document.getElementById('ingreso-obs').value.trim();
@@ -597,7 +597,7 @@ function confirmarIngreso(btn) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ deposito_id: parseInt(depId), temporada_id: parseInt(tid),
-      lote_id: lid ? parseInt(lid) : null, kilos: kilosNum,
+      parcela_id: lid ? parseInt(lid) : null, kilos: kilosNum,
       fecha: fecha || null, observacion: obs })
   }).then(function(r){ return r.json(); }).then(function(data){
     setLoading(btn, false);
@@ -633,7 +633,7 @@ function abrirEgreso(id) {
   document.getElementById('fields-venta').classList.remove('visible');
   document.getElementById('fields-descarte').classList.remove('visible');
   cargarTemporadasModal('egreso-temporada');
-  cargarLotesModal('egreso-lote');
+  cargarParcelasModal('egreso-parcela');
   document.getElementById('modal-egreso').classList.add('open');
 }
 function cerrarEgreso() {
@@ -649,7 +649,7 @@ function selTipoEgreso(tipo) {
 function confirmarEgreso(btn) {
   var depId  = document.getElementById('egreso-dep-id').value;
   var tid    = document.getElementById('egreso-temporada').value;
-  var lid    = document.getElementById('egreso-lote').value;
+  var lid    = document.getElementById('egreso-parcela').value;
   var kilos  = document.getElementById('egreso-kilos').value;
   var fecha  = document.getElementById('egreso-fecha').value;
   var obs    = document.getElementById('egreso-obs').value.trim();
@@ -660,7 +660,7 @@ function confirmarEgreso(btn) {
   if (!kilosNum2 || kilosNum2 <= 0) { msgEl.innerHTML = '<div class="msg-error">Ingresá los kilos</div>'; return; }
   var payload = {
     deposito_id: parseInt(depId), temporada_id: parseInt(tid),
-    lote_id: lid ? parseInt(lid) : null,
+    parcela_id: lid ? parseInt(lid) : null,
     tipo_egreso: _tipoEgreso === 'venta' ? 'egreso_venta' : 'egreso_descarte',
     kilos: kilosNum2, fecha: fecha || null, observacion: obs
   };

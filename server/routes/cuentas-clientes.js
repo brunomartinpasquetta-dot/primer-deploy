@@ -53,7 +53,7 @@ router.get('/:cliente_id', async (req, res) => {
           t.nombre   AS temporada,
           -- Detalle de venta vinculada
           sm.kilos, sm.precio_kilo, sm.destino,
-          l.nombre   AS lote,
+          l.nombre   AS parcela,
           -- Saldo acumulado (running total)
           SUM(CASE WHEN cc2.tipo = 'debito' THEN cc2.monto ELSE -cc2.monto END)
             OVER (PARTITION BY cc.cliente_id ORDER BY cc.fecha_hora, cc.id
@@ -62,7 +62,7 @@ router.get('/:cliente_id', async (req, res) => {
         LEFT JOIN FormasPago             fp ON cc.forma_pago_id      = fp.id
         LEFT JOIN Temporadas             t  ON cc.temporada_id        = t.id
         LEFT JOIN StockMercaderia        sm ON cc.stock_mercaderia_id = sm.id
-        LEFT JOIN Lotes                  l  ON sm.lote_id             = l.id
+        LEFT JOIN Parcelas                  l  ON sm.parcela_id             = l.id
         LEFT JOIN CuentaCorrienteClientes cc2 ON cc2.cliente_id = cc.cliente_id
         WHERE cc.cliente_id = @cliente_id
         GROUP BY cc.id, cc.tipo, cc.monto, cc.fecha, cc.fecha_hora,

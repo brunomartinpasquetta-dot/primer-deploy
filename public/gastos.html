@@ -71,7 +71,7 @@
       <div class="form-colapsable" id="form-nuevo">
         <div class="card-form" style="margin-bottom:12px;">
           <div class="form-row"><label>Temporada</label><select id="temporada"></select></div>
-          <div class="form-row"><label>Lote (opcional)</label><select id="lote"></select></div>
+          <div class="form-row"><label>Parcela (opcional)</label><select id="parcela"></select></div>
           <div class="form-row"><label>Categoria</label><select id="categoria"></select></div>
           <div class="form-row"><label>Concepto</label><input type="text" id="concepto" placeholder="Descripcion del gasto"></div>
           <div class="form-row"><label>Monto ($)</label>
@@ -94,12 +94,12 @@
       <div class="two-col">
         <div>
           <label>Temporada</label>
-          <select id="filtro-temporada" onchange="cargarLotesPorTemporada();cargarHistorial()"></select>
+          <select id="filtro-temporada" onchange="cargarParcelasPorTemporada();cargarHistorial()"></select>
         </div>
         <div>
-          <label>Lote</label>
-          <select id="filtro-lote" onchange="cargarHistorial()">
-            <option value="">Todos los lotes</option>
+          <label>Parcela</label>
+          <select id="filtro-parcela" onchange="cargarHistorial()">
+            <option value="">Todos los parcelas</option>
           </select>
         </div>
       </div>
@@ -128,7 +128,7 @@
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>Fecha</th><th>Categoría</th><th>Concepto</th><th>Lote</th><th>Monto</th><th></th></tr>
+            <tr><th>Fecha</th><th>Categoría</th><th>Concepto</th><th>Parcela</th><th>Monto</th><th></th></tr>
           </thead>
           <tbody id="tbody-historial">
             <tr><td colspan="6" class="empty">Selecciona una temporada</td></tr>
@@ -163,15 +163,15 @@
     f.classList.toggle('visible');
     if (f.classList.contains('visible')) cargarHistorial();
   }
-  function cargarLotesPorTemporada() {
+  function cargarParcelasPorTemporada() {
     var tid = document.getElementById('filtro-temporada').value ||
               (window.temporadaActiva ? window.temporadaActiva.id : '');
-    var url = tid ? '/api/lotes?temporada_id=' + tid : '/api/lotes';
+    var url = tid ? '/api/parcelas?temporada_id=' + tid : '/api/parcelas';
     fetch(url).then(function(r){ return r.json(); }).then(function(data) {
       var opts = data.map(function(l){ return '<option value="' + l.id + '">' + l.nombre + '</option>'; }).join('');
-      document.getElementById('lote').innerHTML = '<option value="">Sin lote especifico</option>' + opts;
-      recordarSeleccion('lote', 'gasto_lote');
-      document.getElementById('filtro-lote').innerHTML = '<option value="">Todos los lotes</option>' + opts;
+      document.getElementById('parcela').innerHTML = '<option value="">Sin parcela especifico</option>' + opts;
+      recordarSeleccion('parcela', 'gasto_parcela');
+      document.getElementById('filtro-parcela').innerHTML = '<option value="">Todos los parcelas</option>' + opts;
     });
   }
 
@@ -198,11 +198,11 @@
             data.map(function(t) { return '<option value="' + t.id + '">' + t.nombre + '</option>'; }).join('');
           var activa = data.find(function(t){ return t.activa; });
           if (activa) document.getElementById('filtro-temporada').value = activa.id;
-          cargarLotesPorTemporada();
+          cargarParcelasPorTemporada();
           cargarHistorial();
         });
 
-      cargarLotesPorTemporada();
+      cargarParcelasPorTemporada();
 
       fetch('/api/gastos/categorias')
         .then(function(r) { return r.json(); })
@@ -240,7 +240,7 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           temporada_id: temporada_id,
-          lote_id: document.getElementById('lote').value || null,
+          parcela_id: document.getElementById('parcela').value || null,
           categoria_id: categoria_id,
           concepto: concepto,
           monto: monto,
@@ -286,7 +286,7 @@
           '<td>' + fecha + '</td>' +
           '<td>' + g.categoria + '</td>' +
           '<td>' + g.concepto + (g.proveedor ? '<br><small style="color:var(--texto-suave)">' + g.proveedor + '</small>' : '') + '</td>' +
-          '<td>' + (g.lote || '-') + '</td>' +
+          '<td>' + (g.parcela || '-') + '</td>' +
           '<td><strong>$' + parseFloat(g.monto).toLocaleString('es-AR') + '</strong></td>' +
           '<td><button class="btn-icon-danger" title="Eliminar" onclick="eliminar(' + g.id + ')"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button></td>' +
           '</tr>';
@@ -302,16 +302,16 @@
       renderGastos(_gastosData.filter(function(g) {
         return (g.concepto && g.concepto.toLowerCase().includes(q)) ||
                (g.categoria && g.categoria.toLowerCase().includes(q)) ||
-               (g.lote && g.lote.toLowerCase().includes(q));
+               (g.parcela && g.parcela.toLowerCase().includes(q));
       }));
     }
 
     function exportarGastosCSV() {
       if (!_gastosData.length) return;
-      var csv = 'Fecha,Categoria,Concepto,Lote,Monto\n';
+      var csv = 'Fecha,Categoria,Concepto,Parcela,Monto\n';
       csv += _gastosData.map(function(g) {
         var fecha = g.fecha ? g.fecha.toString().split('T')[0] : '';
-        return [fecha, g.categoria, '"' + g.concepto + '"', g.lote || '', g.monto].join(',');
+        return [fecha, g.categoria, '"' + g.concepto + '"', g.parcela || '', g.monto].join(',');
       }).join('\n');
       var a = document.createElement('a');
       a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
@@ -321,12 +321,12 @@
 
     function cargarHistorial() {
       const temporada_id = document.getElementById('filtro-temporada').value;
-      const lote_id = document.getElementById('filtro-lote').value;
+      const parcela_id = document.getElementById('filtro-parcela').value;
       const desde = document.getElementById('filtro-desde').value;
       const hasta = document.getElementById('filtro-hasta').value;
       var url = '/api/gastos?';
       if (temporada_id) url += 'temporada_id=' + temporada_id + '&';
-      if (lote_id) url += 'lote_id=' + lote_id + '&';
+      if (parcela_id) url += 'parcela_id=' + parcela_id + '&';
       if (desde) url += 'desde=' + desde + '&';
       if (hasta) url += 'hasta=' + hasta;
       fetch(url)

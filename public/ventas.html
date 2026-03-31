@@ -16,6 +16,22 @@
     .form-colapsable.visible { display:block; }
     .total-venta { font-size:20px; font-weight:700; color:var(--verde); text-align:right; padding:12px 0; }
     .stock-deposito-info { font-size:12px; color:var(--texto-suave); margin-top:4px; }
+    .stock-deposito-info.ok   { color:#2d6a4f; font-weight:600; }
+    .stock-deposito-info.warn { color:#c0392b; font-weight:600; }
+    /* Embalaje */
+    .emb-section { border:1px solid var(--borde); border-radius:10px; padding:14px 16px; margin-top:14px; background:var(--fondo); }
+    .emb-title { font-weight:700; font-size:13px; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+    .emb-lista { display:flex; flex-direction:column; gap:8px; margin-bottom:10px; }
+    .emb-item { display:grid; grid-template-columns:1fr 90px 110px 90px auto; gap:8px; align-items:center; background:#fff; border:1px solid var(--borde); border-radius:8px; padding:8px 10px; }
+    .emb-item select, .emb-item input { font-size:12px; padding:5px 8px; border:1px solid var(--borde); border-radius:6px; background:#fff; }
+    .emb-item select { width:100%; }
+    .emb-retornable-label { display:flex; align-items:center; gap:4px; font-size:12px; white-space:nowrap; }
+    .emb-btn-add { display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:600; padding:6px 12px; border-radius:6px; border:1.5px dashed var(--borde); background:#fff; cursor:pointer; color:var(--verde); }
+    .emb-btn-add:hover { border-color:var(--verde); background:var(--fondo); }
+    .emb-btn-del { background:none; border:none; cursor:pointer; color:#c0392b; font-size:16px; padding:0 4px; line-height:1; }
+    .emb-resumen { font-size:12px; color:var(--texto-suave); margin-top:6px; }
+    /* Cajones en circulación badge */
+    .badge-circulacion { display:inline-block; padding:2px 8px; border-radius:12px; font-size:11px; font-weight:700; background:#fff3cd; color:#856404; }
     /* KPI */
     .vta-kpis { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:16px; }
     .vta-kpi { background:#fff; border-radius:10px; padding:16px 18px; box-shadow:0 2px 10px rgba(0,0,0,.08); }
@@ -32,11 +48,27 @@
     /* Modal detalle */
     .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100; align-items:center; justify-content:center; }
     .modal-overlay.open { display:flex; }
-    .modal-box { background:white; border-radius:14px; padding:24px; width:90%; max-width:480px; max-height:82vh; overflow-y:auto; box-shadow:0 8px 32px rgba(0,0,0,0.15); }
+    .modal-box { background:white; border-radius:14px; padding:24px; width:90%; max-width:520px; max-height:86vh; overflow-y:auto; box-shadow:0 8px 32px rgba(0,0,0,0.15); }
     .modal-box h3 { color:var(--verde); margin-bottom:4px; font-size:17px; font-weight:700; }
     .modal-info { font-size:13px; color:var(--texto-suave); margin-bottom:16px; display:flex; flex-wrap:wrap; gap:8px; }
     .modal-info span { background:var(--fondo); border:1px solid var(--borde); border-radius:20px; padding:3px 10px; }
     .btn-cerrar { background:var(--fondo-dark); color:var(--texto-2); border:1.5px solid var(--borde); border-radius:8px; padding:10px 20px; font-size:13px; font-weight:700; cursor:pointer; margin-top:16px; width:100%; }
+    /* Embalaje modal */
+    .emb-modal-item { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--borde); }
+    .emb-modal-item:last-child { border-bottom:none; }
+    .emb-modal-nombre { flex:1; font-size:13px; font-weight:600; }
+    .emb-modal-cant { font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--texto-suave); white-space:nowrap; }
+    .emb-modal-ret { font-size:11px; padding:2px 7px; border-radius:10px; background:#f3e8ff; color:#7c3aed; font-weight:700; white-space:nowrap; }
+    .emb-modal-dev { font-size:11px; padding:2px 7px; border-radius:10px; background:#e8f5e2; color:#2d6a4f; font-weight:700; white-space:nowrap; }
+    .emb-modal-pend { font-size:11px; padding:2px 7px; border-radius:10px; background:#fff3cd; color:#856404; font-weight:700; white-space:nowrap; }
+    .emb-dev-form { display:flex; gap:6px; align-items:center; margin-top:4px; }
+    .emb-dev-form input { width:70px; padding:4px 8px; border:1px solid var(--borde); border-radius:6px; font-size:12px; }
+    .emb-dev-form button { padding:4px 10px; border-radius:6px; border:none; background:#2D5016; color:#fff; font-size:12px; font-weight:600; cursor:pointer; }
+    .emb-dev-form button:disabled { opacity:.5; cursor:default; }
+    /* btn embalaje en tabla */
+    .btn-emb { display:inline-flex; align-items:center; gap:3px; padding:3px 8px; border-radius:6px; border:1px solid var(--borde); background:#fff; font-size:11px; cursor:pointer; color:var(--texto-suave); }
+    .btn-emb:hover { background:var(--fondo-dark); color:var(--texto); }
+    .btn-emb.tiene-ret { border-color:#7c3aed; color:#7c3aed; background:#f9f5ff; }
     @media (max-width:600px) { .vta-kpis { grid-template-columns:1fr 1fr; } .three-col { grid-template-columns:1fr 1fr; } }
     @media (max-width:400px) { .vta-kpis { grid-template-columns:1fr; } }
   </style>
@@ -104,46 +136,118 @@
           <div class="vta-kpi-valor naranja" id="kpi-precio-prom">$0</div>
           <div class="vta-kpi-label">Precio Promedio / Kg</div>
         </div>
+        <div class="vta-kpi" id="kpi-cajones-card" style="display:none;">
+          <div class="vta-kpi-icon" style="background:#f3e8ff;color:#7c3aed;"><i data-lucide="package"></i></div>
+          <div class="vta-kpi-valor" style="color:#7c3aed;" id="kpi-cajones-val">0</div>
+          <div class="vta-kpi-label">Cajones en circulación</div>
+        </div>
       </div>
 
       <!-- ── FORMULARIO COLAPSABLE ── -->
       <div class="form-colapsable" id="form-nuevo">
         <div class="card-form" style="margin-bottom:12px;">
+
+          <!-- Bloque 1: Origen -->
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--texto-suave);margin-bottom:10px;">Origen de la mercadería</div>
           <div class="two-col">
             <div class="form-row" style="margin-bottom:0;"><label>Temporada *</label><select id="temporada" onchange="actualizarKPIs()"></select></div>
             <div class="form-row" style="margin-bottom:0;"><label>Fecha</label><input type="date" id="fecha"></div>
           </div>
-          <div class="form-row">
+          <div class="form-row" style="margin-top:10px;">
             <label>Depósito de origen *</label>
-            <select id="deposito" onchange="mostrarStockDeposito()">
+            <select id="deposito" onchange="cargarStockDisponible()">
               <option value="">Seleccionar depósito...</option>
             </select>
-            <div class="stock-deposito-info" id="deposito-stock-info"></div>
           </div>
           <div class="two-col">
-            <div class="form-row" style="margin-bottom:0;"><label>Lote <span style="font-weight:normal;color:var(--texto-suave);">(opcional)</span></label><select id="lote"><option value="">Sin lote específico</option></select></div>
-            <div class="form-row" style="margin-bottom:0;"><label>Forma de pago</label><select id="forma_pago"></select></div>
-          </div>
-          <div class="three-col" style="margin-top:12px;">
             <div class="form-row" style="margin-bottom:0;">
-              <label>Kilos *</label>
-              <input type="text" inputmode="decimal" id="kilos" placeholder="Ej: 1000" data-miles oninput="calcularTotal()">
+              <label>Variedad *</label>
+              <select id="variedad" onchange="filtrarParcelasPorVariedad()">
+                <option value="">— Seleccioná depósito primero —</option>
+              </select>
+              <div class="stock-deposito-info" id="variedad-stock-info"></div>
+            </div>
+            <div class="form-row" style="margin-bottom:0;">
+              <label>Parcela <span style="font-weight:normal;color:var(--texto-suave);">(opcional)</span></label>
+              <select id="parcela" onchange="actualizarKgDisponibles()">
+                <option value="">Todas las parcelas de la variedad</option>
+              </select>
+              <div class="stock-deposito-info" id="parcela-stock-info"></div>
+            </div>
+          </div>
+
+          <!-- Bloque 2: Destino -->
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--texto-suave);margin:16px 0 10px;">Destino y condiciones</div>
+          <div class="two-col">
+            <div class="form-row" style="margin-bottom:0;">
+              <label>Cliente *</label>
+              <select id="cliente_id" onchange="onClienteChange()">
+                <option value="">Seleccionar cliente...</option>
+              </select>
+            </div>
+            <div class="form-row" style="margin-bottom:0;"><label>Destino / Dirección</label><input type="text" id="destino_venta" placeholder="Ej: Mercado Central"></div>
+          </div>
+          <div class="two-col" style="margin-top:10px;">
+            <div class="form-row" style="margin-bottom:0;"><label>Forma de pago</label><select id="forma_pago"></select></div>
+            <div class="form-row" style="margin-bottom:0;"><label>Observación</label><input type="text" id="observacion" placeholder="Opcional"></div>
+          </div>
+
+          <!-- Bloque 3: Cantidades y precio -->
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--texto-suave);margin:16px 0 10px;">Cantidades y precio</div>
+          <div class="three-col">
+            <div class="form-row" style="margin-bottom:0;">
+              <label>Kilos a vender *</label>
+              <input type="text" inputmode="decimal" id="kilos" placeholder="Ej: 1000" data-miles oninput="calcularResumen()">
+              <div class="stock-deposito-info" id="kg-disponibles-info"></div>
             </div>
             <div class="form-row" style="margin-bottom:0;">
               <label>Precio x Kg</label>
-              <input type="text" inputmode="decimal" id="precio_kilo" placeholder="Ej: 450" data-miles oninput="calcularTotal()">
+              <input type="text" inputmode="decimal" id="precio_kilo" placeholder="Ej: 450" data-miles oninput="calcularResumen()">
             </div>
             <div class="form-row" style="margin-bottom:0;">
-              <label>Total</label>
-              <div class="total-venta" style="padding:6px 0;">$<span id="total-display">0</span></div>
+              <label>Subtotal fruta</label>
+              <div class="total-venta" style="padding:6px 0;font-size:18px;">$<span id="subtotal-fruta">0</span></div>
             </div>
           </div>
-          <div class="two-col" style="margin-top:12px;">
-            <div class="form-row" style="margin-bottom:0;"><label>Comprador</label><input type="text" id="comprador" placeholder="Nombre del comprador"></div>
-            <div class="form-row" style="margin-bottom:0;"><label>Destino</label><input type="text" id="destino_venta" placeholder="Ej: Mercado Central"></div>
+
+          <!-- Bloque 4: Embalaje -->
+          <div class="emb-section">
+            <div class="emb-title">
+              <i data-lucide="package" style="width:14px;height:14px;"></i>
+              Embalaje utilizado
+            </div>
+            <div style="font-size:11px;color:var(--texto-suave);margin-bottom:8px;">Seleccioná los insumos de embalaje. Se descontará automáticamente del stock de insumos.</div>
+            <div class="emb-lista" id="emb-lista"></div>
+            <button type="button" class="emb-btn-add" onclick="agregarEmbalaje()">
+              <i data-lucide="plus" style="width:13px;height:13px;"></i> Agregar embalaje
+            </button>
+            <div class="emb-resumen" id="emb-resumen"></div>
           </div>
-          <div class="form-row"><label>Observación</label><input type="text" id="observacion" placeholder="Opcional"></div>
-          <button class="btn btn-primary" id="btn-guardar" onclick="guardarVenta()" style="width:auto;">Registrar venta</button>
+
+          <!-- Bloque 5: Resumen de costos -->
+          <div id="resumen-costos" style="display:none;border:1px solid var(--borde);border-radius:10px;padding:14px 16px;margin-top:14px;background:#f8fff8;">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--texto-suave);margin-bottom:10px;">Resumen de la venta</div>
+            <div style="display:flex;flex-direction:column;gap:6px;font-size:13px;">
+              <div style="display:flex;justify-content:space-between;">
+                <span>Subtotal fruta</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-weight:600;" id="rc-fruta">$0</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;">
+                <span>Costo embalaje</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-weight:600;color:#c0392b;" id="rc-embalaje">$0</span>
+              </div>
+              <div style="border-top:1px solid var(--borde);padding-top:6px;display:flex;justify-content:space-between;font-weight:700;font-size:15px;">
+                <span>Total cobrado</span>
+                <span style="font-family:'JetBrains Mono',monospace;color:#2d6a4f;" id="rc-total">$0</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--texto-suave);">
+                <span>Costo embalaje por kg</span>
+                <span style="font-family:'JetBrains Mono',monospace;" id="rc-emb-kg">$0/kg</span>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn btn-primary" id="btn-guardar" onclick="guardarVenta()" style="width:auto;margin-top:16px;">Registrar venta</button>
           <div id="mensaje"></div>
         </div>
       </div>
@@ -166,15 +270,28 @@
       <div class="card">
         <table>
           <thead>
-            <tr><th>#</th><th>Fecha</th><th>Depósito</th><th>Lote</th><th>Comprador</th><th>Destino</th><th>Kg</th><th>Precio/Kg</th><th>Total</th><th>Usuario</th></tr>
+            <tr><th>#</th><th>Fecha</th><th>Depósito</th><th>Variedad</th><th>Parcela</th><th>Cliente</th><th>Kg</th><th>Precio/Kg</th><th>Total</th><th>Embalaje</th><th>Usuario</th></tr>
           </thead>
           <tbody id="tbody-historial">
-            <tr><td colspan="10" class="empty">Cargando...</td></tr>
+            <tr><td colspan="11" class="empty">Cargando...</td></tr>
           </tbody>
           <tfoot id="tfoot-historial"></tfoot>
         </table>
       </div>
 
+    </div>
+  </div>
+
+  <!-- ── Modal Embalaje / Devolución ── -->
+  <div class="modal-overlay" id="modal-embalaje">
+    <div class="modal-box">
+      <h3><i data-lucide="package" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i>Embalaje de la venta</h3>
+      <div class="modal-info" id="modal-emb-info"></div>
+      <div id="modal-emb-body">
+        <div class="empty">Cargando...</div>
+      </div>
+      <div id="modal-emb-msg" style="margin-top:8px;font-size:13px;"></div>
+      <button class="btn-cerrar" onclick="cerrarModalEmbalaje()">Cerrar</button>
     </div>
   </div>
 
@@ -197,6 +314,7 @@
 
   var hoy = new Date().toISOString().split('T')[0];
   var _depositos = [];
+  var _clientes  = [];
   var _temporadaActivaId = null;
 
   function toggleForm() {
@@ -205,7 +323,7 @@
 
   var _historialVentas = [];
   var _ventasCols = [
-    {label:'Lote',campo:'lote'},
+    {label:'Parcela',campo:'parcela'},
     {label:'Comprador',campo:'comprador'},
     {label:'Destino',campo:'destino_venta'},
     {label:'Usuario',campo:'usuario'}
@@ -235,27 +353,121 @@
     return parseFloat(raw) || 0;
   }
 
-  function calcularTotal() {
-    var kilosEl  = document.getElementById('kilos');
-    var precioEl = document.getElementById('precio_kilo');
-    var kilos  = parseFloat(String(kilosEl.value).replace(/\./g, '').replace(',', '.'))  || 0;
-    var precio = parseFloat(String(precioEl.value).replace(/\./g, '').replace(',', '.')) || 0;
-    document.getElementById('total-display').textContent = (kilos * precio).toLocaleString('es-AR', { minimumFractionDigits: 2 });
+  /* Stock disponible por depósito: [{parcela_id, parcela, variedad, kg_disponibles}] */
+  var _stockDisponible = [];
+
+  function cargarStockDisponible() {
+    var depId = document.getElementById('deposito').value;
+    var tid   = document.getElementById('temporada').value;
+    // Resetear selects dependientes
+    document.getElementById('variedad').innerHTML = '<option value="">Cargando...</option>';
+    document.getElementById('parcela').innerHTML = '<option value="">Todas las parcelas</option>';
+    document.getElementById('variedad-stock-info').textContent = '';
+    document.getElementById('parcela-stock-info').textContent = '';
+    document.getElementById('kg-disponibles-info').textContent = '';
+    _stockDisponible = [];
+    if (!depId) {
+      document.getElementById('variedad').innerHTML = '<option value="">— Seleccioná depósito —</option>';
+      return;
+    }
+    var url = '/api/depositos/stock-disponible?deposito_id=' + depId + (tid ? '&temporada_id=' + tid : '');
+    fetch(url).then(function(r){ return r.json(); }).then(function(data){
+      _stockDisponible = data;
+      // Armar opciones de variedad únicas
+      var variedades = [];
+      data.forEach(function(r){
+        if (variedades.indexOf(r.variedad) === -1) variedades.push(r.variedad);
+      });
+      document.getElementById('variedad').innerHTML =
+        '<option value="">Seleccionar variedad...</option>' +
+        variedades.map(function(v){
+          var kgTot = data.filter(function(r){ return r.variedad === v; })
+                         .reduce(function(s,r){ return s + parseFloat(r.kg_disponibles||0); }, 0);
+          return '<option value="'+v+'">'+v+' ('+kgTot.toLocaleString('es-AR',{maximumFractionDigits:0})+' kg disp.)</option>';
+        }).join('');
+      if (variedades.length === 1) {
+        document.getElementById('variedad').value = variedades[0];
+        filtrarParcelasPorVariedad();
+      }
+    }).catch(function(){
+      document.getElementById('variedad').innerHTML = '<option value="">Error al cargar</option>';
+    });
   }
 
-  function mostrarStockDeposito() {
-    var id = document.getElementById('deposito').value;
-    var dep = _depositos.find(function(d) { return d.id == id; });
-    var info = document.getElementById('deposito-stock-info');
-    if (dep) {
-      info.textContent = 'Stock disponible: ' + parseFloat(dep.stock_actual || 0).toLocaleString('es-AR') + ' kg';
+  function filtrarParcelasPorVariedad() {
+    var variedad = document.getElementById('variedad').value;
+    var parcelas    = _stockDisponible.filter(function(r){ return !variedad || r.variedad === variedad; });
+    var kgTotal  = parcelas.reduce(function(s,r){ return s + parseFloat(r.kg_disponibles||0); }, 0);
+    document.getElementById('variedad-stock-info').textContent =
+      variedad ? kgTotal.toLocaleString('es-AR', {maximumFractionDigits:0}) + ' kg disponibles en esta variedad' : '';
+    document.getElementById('parcela').innerHTML =
+      '<option value="">Todas las parcelas (' + kgTotal.toLocaleString('es-AR',{maximumFractionDigits:0}) + ' kg)</option>' +
+      parcelas.map(function(l){
+        return '<option value="'+l.parcela_id+'">'+l.parcela+' — '+parseFloat(l.kg_disponibles).toLocaleString('es-AR',{maximumFractionDigits:0})+' kg</option>';
+      }).join('');
+    actualizarKgDisponibles();
+  }
+
+  function actualizarKgDisponibles() {
+    var parcelaId   = document.getElementById('parcela').value;
+    var variedad = document.getElementById('variedad').value;
+    var parcelas    = _stockDisponible.filter(function(r){
+      if (parcelaId)   return r.parcela_id == parcelaId;
+      if (variedad) return r.variedad === variedad;
+      return true;
+    });
+    var kgDisp = parcelas.reduce(function(s,r){ return s + parseFloat(r.kg_disponibles||0); }, 0);
+    var info = document.getElementById('kg-disponibles-info');
+    var kilos = _parseInput('kilos') || 0;
+    if (kgDisp > 0) {
+      info.className = 'stock-deposito-info ' + (kilos > kgDisp ? 'warn' : 'ok');
+      info.textContent = 'Disponible: ' + kgDisp.toLocaleString('es-AR', {maximumFractionDigits:0}) + ' kg';
     } else {
       info.textContent = '';
     }
+    calcularResumen();
+  }
+
+  function calcularResumen() {
+    var kilos  = _parseInput('kilos')      || 0;
+    var precio = _parseInput('precio_kilo') || 0;
+    var subtotalFruta = kilos * precio;
+
+    // Costo embalaje
+    var costoEmbalaje = 0;
+    document.querySelectorAll('#emb-lista .emb-item').forEach(function(row){
+      var idx   = row.id.replace('emb-row-','');
+      var cant  = parseFloat(document.getElementById('emb-cant-'+idx).value) || 0;
+      var costo = parseFloat(document.getElementById('emb-costo-'+idx).value) || 0;
+      costoEmbalaje += cant * costo;
+    });
+
+    var fmt2 = function(v){ return v.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2}); };
+
+    document.getElementById('subtotal-fruta').textContent = fmt2(subtotalFruta);
+
+    var rc = document.getElementById('resumen-costos');
+    if (subtotalFruta > 0 || costoEmbalaje > 0) {
+      rc.style.display = '';
+      document.getElementById('rc-fruta').textContent    = '$' + fmt2(subtotalFruta);
+      document.getElementById('rc-embalaje').textContent = '$' + fmt2(costoEmbalaje);
+      document.getElementById('rc-total').textContent    = '$' + fmt2(subtotalFruta);
+      document.getElementById('rc-emb-kg').textContent   = kilos > 0
+        ? '$' + fmt2(costoEmbalaje / kilos) + '/kg'
+        : '—';
+    } else {
+      rc.style.display = 'none';
+    }
+
+    // Validar kg vs disponible
+    actualizarKgDisponibles();
+  }
+
+  function onClienteChange() {
+    // Podría pre-llenar destino si el cliente tiene dirección
   }
 
   function cargarDatos() {
-    // Temporadas
     fetch('/api/temporadas').then(function(r) { return r.json(); }).then(function(data) {
       var opts = data.map(function(t) { return '<option value="'+t.id+'">'+t.nombre+'</option>'; }).join('');
       document.getElementById('temporada').innerHTML = '<option value="">Sin temporada</option>' + opts;
@@ -270,26 +482,29 @@
       actualizarKPIs();
     });
 
-    // Depósitos con stock
     fetch('/api/depositos').then(function(r) { return r.json(); }).then(function(data) {
       _depositos = data;
       document.getElementById('deposito').innerHTML = '<option value="">Seleccionar depósito...</option>' +
         data.map(function(d) {
-          return '<option value="'+d.id+'">'+d.nombre+' ('+parseFloat(d.stock_actual||0).toLocaleString('es-AR')+' kg)</option>';
+          return '<option value="'+d.id+'">'+d.nombre+'</option>';
         }).join('');
     });
 
-    // Lotes
-    fetch('/api/lotes').then(function(r) { return r.json(); }).then(function(data) {
-      document.getElementById('lote').innerHTML = '<option value="">Sin lote específico</option>' +
-        data.map(function(l) { return '<option value="'+l.id+'">'+l.nombre+'</option>'; }).join('');
+    fetch('/api/clientes').then(function(r) { return r.json(); }).then(function(data) {
+      _clientes = data;
+      document.getElementById('cliente_id').innerHTML =
+        '<option value="">Seleccionar cliente...</option>' +
+        data.map(function(c){ return '<option value="'+c.id+'">'+c.nombre+'</option>'; }).join('');
     });
 
-    // Formas de pago
     fetch('/api/caja/formas-pago').then(function(r) { return r.json(); }).then(function(data) {
       document.getElementById('forma_pago').innerHTML = '<option value="">Sin especificar</option>' +
         data.map(function(f) { return '<option value="'+f.id+'">'+f.nombre+'</option>'; }).join('');
     });
+
+    fetch('/api/stock-insumos').then(function(r) { return r.json(); }).then(function(data) {
+      _embalajeOpciones = data || [];
+    }).catch(function() { _embalajeOpciones = []; });
 
     document.getElementById('fecha').value = hoy;
   }
@@ -307,29 +522,125 @@
     });
   }
 
+  /* ── Embalaje ── */
+  var _embalajeOpciones = [];
+  var _embalajeContador = 0;
+
+  function agregarEmbalaje() {
+    _embalajeContador++;
+    var idx = _embalajeContador;
+    var opts = _embalajeOpciones.map(function(p) {
+      var pid = p.producto_id || p.id;
+      return '<option value="'+pid+'" data-costo="'+(p.costo_unitario||0)+'" data-ret="0">'+
+        (p.producto||p.nombre)+' (stock: '+parseFloat(p.stock_actual||0).toLocaleString('es-AR')+')</option>';
+    }).join('');
+    var row = document.createElement('div');
+    row.className = 'emb-item';
+    row.id = 'emb-row-' + idx;
+    row.innerHTML =
+      '<select onchange="embAutoFill('+idx+')">' +
+        '<option value="">Seleccionar insumo...</option>' + opts +
+      '</select>' +
+      '<input type="number" min="0" step="1" placeholder="Cant." id="emb-cant-'+idx+'" oninput="actualizarResumenEmbalaje()">' +
+      '<input type="number" min="0" step="0.01" placeholder="Costo unit." id="emb-costo-'+idx+'" oninput="actualizarResumenEmbalaje()">' +
+      '<label class="emb-retornable-label"><input type="checkbox" id="emb-ret-'+idx+'"> Retornable</label>' +
+      '<button type="button" class="emb-btn-del" onclick="quitarEmbalaje('+idx+')" title="Eliminar">×</button>';
+    document.getElementById('emb-lista').appendChild(row);
+    lucide.createIcons();
+  }
+
+  function embAutoFill(idx) {
+    var sel = document.querySelector('#emb-row-' + idx + ' select');
+    var opt = sel ? sel.options[sel.selectedIndex] : null;
+    if (!opt || !opt.value) return;
+    var costo = parseFloat(opt.getAttribute('data-costo')) || 0;
+    var ret   = opt.getAttribute('data-ret') === '1';
+    document.getElementById('emb-costo-' + idx).value = costo > 0 ? costo : '';
+    document.getElementById('emb-ret-' + idx).checked = ret;
+    actualizarResumenEmbalaje();
+  }
+
+  function quitarEmbalaje(idx) {
+    var row = document.getElementById('emb-row-' + idx);
+    if (row) row.remove();
+    actualizarResumenEmbalaje();
+  }
+
+  function actualizarResumenEmbalaje() {
+    var filas = document.querySelectorAll('#emb-lista .emb-item');
+    var totalCosto = 0, retornables = 0, items = 0;
+    filas.forEach(function(row) {
+      var idx = row.id.replace('emb-row-', '');
+      var cant  = parseFloat(document.getElementById('emb-cant-' + idx).value) || 0;
+      var costo = parseFloat(document.getElementById('emb-costo-' + idx).value) || 0;
+      var ret   = document.getElementById('emb-ret-' + idx).checked;
+      if (cant > 0) { items++; totalCosto += cant * costo; if (ret) retornables++; }
+    });
+    var res = document.getElementById('emb-resumen');
+    if (!items) { res.textContent = ''; } else {
+      res.innerHTML = items + ' tipo(s) de embalaje · Costo: <strong>$' +
+        totalCosto.toLocaleString('es-AR', {minimumFractionDigits:2}) + '</strong>' +
+        (retornables ? ' · <span class="badge-circulacion">' + retornables + ' retornables</span>' : '');
+    }
+    calcularResumen();
+  }
+
+  function leerEmbalaje() {
+    var filas = document.querySelectorAll('#emb-lista .emb-item');
+    var resultado = [];
+    filas.forEach(function(row) {
+      var idx = row.id.replace('emb-row-', '');
+      var sel   = row.querySelector('select');
+      var pid   = sel ? parseInt(sel.value) : 0;
+      var cant  = parseFloat(document.getElementById('emb-cant-' + idx).value) || 0;
+      var costo = parseFloat(document.getElementById('emb-costo-' + idx).value) || 0;
+      var ret   = document.getElementById('emb-ret-' + idx).checked;
+      if (pid && cant > 0) resultado.push({ producto_id: pid, cantidad: cant, costo_unitario: costo, retornable: ret });
+    });
+    return resultado;
+  }
+
+  function limpiarEmbalaje() {
+    document.getElementById('emb-lista').innerHTML = '';
+    document.getElementById('emb-resumen').textContent = '';
+    _embalajeContador = 0;
+  }
+
   function limpiarFormulario() {
     document.getElementById('deposito').value = '';
-    document.getElementById('deposito-stock-info').textContent = '';
-    document.getElementById('lote').value = '';
+    document.getElementById('variedad').innerHTML = '<option value="">— Seleccioná depósito —</option>';
+    document.getElementById('parcela').innerHTML = '<option value="">Todas las parcelas</option>';
+    document.getElementById('variedad-stock-info').textContent = '';
+    document.getElementById('parcela-stock-info').textContent = '';
+    document.getElementById('kg-disponibles-info').textContent = '';
+    document.getElementById('cliente_id').value = '';
     document.getElementById('kilos').value = '';
     document.getElementById('precio_kilo').value = '';
-    document.getElementById('comprador').value = '';
     document.getElementById('destino_venta').value = '';
     document.getElementById('observacion').value = '';
-    document.getElementById('total-display').textContent = '0';
+    document.getElementById('subtotal-fruta').textContent = '0';
+    document.getElementById('resumen-costos').style.display = 'none';
     document.getElementById('mensaje').innerHTML = '';
     document.getElementById('fecha').value = hoy;
+    limpiarEmbalaje();
+    _stockDisponible = [];
     if (_temporadaActivaId) document.getElementById('temporada').value = _temporadaActivaId;
   }
 
   function guardarVenta() {
     var deposito_id  = document.getElementById('deposito').value;
     var temporada_id = document.getElementById('temporada').value;
+    var variedad     = document.getElementById('variedad').value;
+    var cliente_id   = document.getElementById('cliente_id').value;
     var kilos        = _parseInput('kilos');
     var precio_kilo  = _parseInput('precio_kilo');
-    if (!deposito_id)    { mostrarMensaje('mensaje', 'error', 'Seleccioná un depósito'); return; }
-    if (!temporada_id)   { mostrarMensaje('mensaje', 'error', 'Seleccioná una temporada'); return; }
+    if (!deposito_id)         { mostrarMensaje('mensaje', 'error', 'Seleccioná un depósito'); return; }
+    if (!temporada_id)        { mostrarMensaje('mensaje', 'error', 'Seleccioná una temporada'); return; }
+    if (!variedad)            { mostrarMensaje('mensaje', 'error', 'Seleccioná la variedad'); return; }
+    if (!cliente_id)          { mostrarMensaje('mensaje', 'error', 'Seleccioná el cliente'); return; }
     if (!kilos || kilos <= 0) { mostrarMensaje('mensaje', 'error', 'Ingresá los kilos'); return; }
+
+    var embalajeItems = leerEmbalaje();
 
     var btn = document.getElementById('btn-guardar');
     setLoading(btn, true);
@@ -340,14 +651,16 @@
       body: JSON.stringify({
         deposito_id:   deposito_id,
         temporada_id:  temporada_id,
-        lote_id:       document.getElementById('lote').value || null,
+        parcela_id:       document.getElementById('parcela').value || null,
         tipo_egreso:   'egreso_venta',
         kilos:         kilos,
         precio_kilo:   precio_kilo || null,
-        comprador:     document.getElementById('comprador').value,
+        cliente_id:    cliente_id  || null,
+        variedad:      variedad    || '',
         destino_venta: document.getElementById('destino_venta').value,
         fecha:         document.getElementById('fecha').value || null,
-        observacion:   document.getElementById('observacion').value
+        observacion:   document.getElementById('observacion').value,
+        embalaje:      embalajeItems
       })
     })
     .then(function(r) { return r.json(); })
@@ -356,7 +669,8 @@
       if (data.ok) {
         var msg = 'Venta registrada';
         if (data.id) msg += ' — Mov. #' + data.id;
-        mostrarMensaje('mensaje', 'success', msg, 4000);
+        if (embalajeItems.length) msg += ' con ' + embalajeItems.length + ' tipo(s) de embalaje';
+        mostrarMensaje('mensaje', 'success', msg, 5000);
         limpiarFormulario();
         document.getElementById('form-nuevo').classList.remove('visible');
         cargarHistorial();
@@ -388,7 +702,7 @@
     var tbody = document.getElementById('tbody-historial');
     var tfoot = document.getElementById('tfoot-historial');
     if (!data.length) {
-      tbody.innerHTML = '<tr><td colspan="10" class="empty">Sin ventas registradas</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="11" class="empty">Sin ventas registradas</td></tr>';
       tfoot.innerHTML = ''; return;
     }
     var totalKg = 0, totalPesos = 0;
@@ -398,16 +712,23 @@
       var precio = parseFloat(v.precio_kilo) || 0;
       var total = parseFloat(v.total) || 0;
       totalKg += kg; totalPesos += total;
+      var movId = v.movimiento_id || v.id;
+      var btnEmb = movId
+        ? '<button class="btn-emb" onclick="abrirModalEmbalaje('+movId+',\''+
+            (v.comprador||'').replace(/'/g,"\\'")+'\')" title="Ver embalaje">' +
+            '<i data-lucide="package" style="width:12px;height:12px;"></i> Embalaje</button>'
+        : '—';
       return '<tr>' +
         '<td style="'+mono+'color:var(--texto-suave);font-size:11px;">#' + (v.id || '-') + '</td>' +
         '<td>' + formatFechaHora(v.fecha) + (v.temporada ? '<br><small style="color:var(--texto-suave)">' + v.temporada + '</small>' : '') + '</td>' +
         '<td>' + (v.deposito || '<em style="color:var(--texto-suave)">Directa</em>') + '</td>' +
-        '<td>' + (v.lote || '-') + '</td>' +
+        '<td style="font-size:12px;">' + (v.variedad || (v.parcela ? '—' : '-')) + '</td>' +
+        '<td style="font-size:12px;">' + (v.parcela || '-') + '</td>' +
         '<td>' + (v.comprador || '-') + '</td>' +
-        '<td>' + (v.destino_venta || '-') + '</td>' +
         '<td style="'+mono+'">' + kg.toLocaleString('es-AR', { minimumFractionDigits: 2 }) + ' kg</td>' +
         '<td style="'+mono+'">' + (precio > 0 ? '$' + precio.toLocaleString('es-AR', { minimumFractionDigits: 2 }) : '-') + '</td>' +
         '<td style="'+mono+'font-weight:700;">' + (total > 0 ? '$' + total.toLocaleString('es-AR', { minimumFractionDigits: 2 }) : '-') + '</td>' +
+        '<td>' + btnEmb + '</td>' +
         '<td style="font-size:12px;color:var(--texto-suave);">' + (v.usuario || '-') + '</td>' +
         '</tr>';
     }).join('');
@@ -416,8 +737,120 @@
       '<td style="padding:10px 12px;font-family:\'JetBrains Mono\',monospace;">' + totalKg.toLocaleString('es-AR', { minimumFractionDigits: 2 }) + ' kg</td>' +
       '<td></td>' +
       '<td style="padding:10px 12px;font-family:\'JetBrains Mono\',monospace;">$' + totalPesos.toLocaleString('es-AR', { minimumFractionDigits: 2 }) + '</td>' +
-      '<td></td>' +
+      '<td colspan="2"></td>' +
       '</tr>';
+    lucide.createIcons();
+  }
+
+  /* ── Modal embalaje / devolución ── */
+  var _modalEmbMovId = null;
+
+  function abrirModalEmbalaje(movId, comprador) {
+    _modalEmbMovId = movId;
+    document.getElementById('modal-emb-info').innerHTML =
+      '<span>Mov. #' + movId + '</span>' + (comprador ? '<span>' + comprador + '</span>' : '');
+    document.getElementById('modal-emb-msg').textContent = '';
+    document.getElementById('modal-emb-body').innerHTML = '<div class="empty">Cargando...</div>';
+    document.getElementById('modal-embalaje').classList.add('open');
+    lucide.createIcons();
+    fetch('/api/depositos/embalaje/' + movId)
+      .then(function(r){ return r.json(); })
+      .then(function(items){
+        renderModalEmbalaje(items);
+      })
+      .catch(function(){
+        document.getElementById('modal-emb-body').innerHTML = '<div class="empty" style="color:#c0392b;">Error al cargar</div>';
+      });
+  }
+
+  function renderModalEmbalaje(items) {
+    var body = document.getElementById('modal-emb-body');
+    if (!items.length) {
+      body.innerHTML = '<div class="empty">Esta venta no tiene embalaje registrado</div>';
+      return;
+    }
+    body.innerHTML = items.map(function(item) {
+      var pendiente = parseFloat(item.pendiente_devolucion || 0);
+      var retTag = item.retornable
+        ? '<span class="emb-modal-ret">Retornable</span>'
+        : '<span style="font-size:11px;padding:2px 7px;border-radius:10px;background:var(--fondo-dark);color:var(--texto-suave);font-weight:700;">Descartable</span>';
+      var devTag = parseFloat(item.cantidad_devuelta) > 0
+        ? '<span class="emb-modal-dev">Dev: ' + parseFloat(item.cantidad_devuelta).toLocaleString('es-AR') + '</span>'
+        : '';
+      var pendTag = (item.retornable && pendiente > 0)
+        ? '<span class="emb-modal-pend">Pend: ' + pendiente.toLocaleString('es-AR') + '</span>'
+        : '';
+      var devForm = (item.retornable && pendiente > 0)
+        ? '<div class="emb-dev-form">' +
+            '<input type="number" min="1" max="'+pendiente+'" step="1" placeholder="Cant." id="dev-cant-'+item.id+'">' +
+            '<button onclick="registrarDevolucion('+item.id+','+pendiente+')" id="dev-btn-'+item.id+'">Registrar devolución</button>' +
+          '</div>'
+        : (item.retornable ? '<div style="font-size:11px;color:#2d6a4f;margin-top:4px;">✓ Devuelto completo</div>' : '');
+      return '<div class="emb-modal-item">' +
+        '<div style="flex:1;">' +
+          '<div class="emb-modal-nombre">' + (item.producto||'—') + '<span style="font-size:11px;font-weight:400;color:var(--texto-suave);margin-left:6px;">' + (item.presentacion||'') + '</span></div>' +
+          '<div style="display:flex;gap:6px;align-items:center;margin-top:4px;flex-wrap:wrap;">' +
+            '<span class="emb-modal-cant">' + parseFloat(item.cantidad).toLocaleString('es-AR') + ' u.</span>' +
+            '<span style="font-size:11px;color:var(--texto-suave);">$' + parseFloat(item.costo_unitario||0).toLocaleString('es-AR',{minimumFractionDigits:2}) + ' c/u</span>' +
+            retTag + devTag + pendTag +
+          '</div>' +
+          devForm +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function registrarDevolucion(ventaEmbalajeId, pendiente) {
+    var cantEl = document.getElementById('dev-cant-' + ventaEmbalajeId);
+    var cant = parseFloat(cantEl ? cantEl.value : 0);
+    if (!cant || cant <= 0) { mostrarMsg('Ingresá la cantidad'); return; }
+    if (cant > pendiente) { mostrarMsg('Máximo ' + pendiente + ' unidades'); return; }
+    var btn = document.getElementById('dev-btn-' + ventaEmbalajeId);
+    if (btn) btn.disabled = true;
+    fetch('/api/depositos/devolucion-embalaje', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ venta_embalaje_id: ventaEmbalajeId, cantidad: cant })
+    }).then(function(r){ return r.json(); }).then(function(data){
+      if (data.ok) {
+        var msg = 'Devolución registrada.';
+        if (data.pendiente_restante > 0) msg += ' Pendiente restante: ' + data.pendiente_restante;
+        else msg += ' Devolución completa.';
+        document.getElementById('modal-emb-msg').innerHTML = '<span style="color:#2d6a4f;font-weight:600;">' + msg + '</span>';
+        // Recargar embalaje del modal
+        fetch('/api/depositos/embalaje/' + _modalEmbMovId)
+          .then(function(r){ return r.json(); }).then(renderModalEmbalaje);
+        cargarCajonesCirculacion();
+      } else {
+        mostrarMsg(data.error || 'Error');
+        if (btn) btn.disabled = false;
+      }
+    }).catch(function(){
+      mostrarMsg('Error de conexión');
+      if (btn) btn.disabled = false;
+    });
+  }
+
+  function mostrarMsg(txt) {
+    document.getElementById('modal-emb-msg').innerHTML = '<span style="color:#c0392b;">' + txt + '</span>';
+  }
+
+  function cerrarModalEmbalaje() {
+    document.getElementById('modal-embalaje').classList.remove('open');
+    _modalEmbMovId = null;
+  }
+
+  function cargarCajonesCirculacion() {
+    fetch('/api/depositos/cajones-circulacion')
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (!data.length) return;
+        var total = data.reduce(function(s,r){ return s + parseFloat(r.en_circulacion||0); }, 0);
+        var card = document.getElementById('kpi-cajones-card');
+        var val  = document.getElementById('kpi-cajones-val');
+        if (card) card.style.display = '';
+        if (val)  val.textContent = Math.round(total).toLocaleString('es-AR') + ' u.';
+      }).catch(function(){});
   }
 
   function cargarHistorial() {
@@ -439,6 +872,7 @@
 
   cargarDatos();
   cargarTemporadaActiva();
+  cargarCajonesCirculacion();
 </script>
 </body>
 </html>

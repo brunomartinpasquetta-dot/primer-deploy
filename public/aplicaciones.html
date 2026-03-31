@@ -22,7 +22,7 @@
     }
     .aplic-kpi-icon svg { width:18px; height:18px; }
     .aplic-kpi-icon.hoy     { background:#e8f5e2; color:#2d6a4f; }
-    .aplic-kpi-icon.lotes   { background:#eef7ee; color:#2D5016; }
+    .aplic-kpi-icon.parcelas   { background:#eef7ee; color:#2D5016; }
     .aplic-kpi-icon.campana { background:#e8f0fe; color:#1565c0; }
     .aplic-kpi .valor {
       font-size:26px; font-weight:700; font-family:'JetBrains Mono',monospace;
@@ -199,9 +199,9 @@
           <div class="label">Aplicaciones Hoy</div>
         </div>
         <div class="aplic-kpi">
-          <div class="aplic-kpi-icon lotes"><i data-lucide="map-pin"></i></div>
-          <div class="valor verde" id="kpi-lotes-hoy">—</div>
-          <div class="label">Lotes Hoy</div>
+          <div class="aplic-kpi-icon parcelas"><i data-lucide="map-pin"></i></div>
+          <div class="valor verde" id="kpi-parcelas-hoy">—</div>
+          <div class="label">Parcelas Hoy</div>
         </div>
         <div class="aplic-kpi">
           <div class="aplic-kpi-icon campana"><i data-lucide="calendar-days"></i></div>
@@ -258,8 +258,8 @@
               <select id="temporada"></select>
             </div>
             <div class="form-row">
-              <label>Lote</label>
-              <select id="lote"></select>
+              <label>Parcela</label>
+              <select id="parcela"></select>
             </div>
             <div class="form-row">
               <label>Producto</label>
@@ -268,7 +268,7 @@
             </div>
             <div class="form-row">
               <label>Cantidad aplicada</label>
-              <input type="number" id="cantidad" placeholder="0.00" step="0.01" min="0">
+              <input type="number" id="cantidad" placeholder="0.00" step="0.001" min="0">
             </div>
             <div class="form-row">
               <label>Unidad</label>
@@ -282,7 +282,7 @@
             </div>
             <div class="form-row">
               <label>Dosis / hectárea</label>
-              <input type="number" id="dosis" placeholder="Ej: 1.5" step="0.01">
+              <input type="number" id="dosis" placeholder="Ej: 1.5" step="0.001">
             </div>
             <div class="form-row">
               <label>Días de carencia</label>
@@ -353,7 +353,7 @@
                     <th>Movimiento</th>
                     <th style="text-align:right;">Cantidad</th>
                     <th>Aplica</th>
-                    <th>Lote</th>
+                    <th>Parcela</th>
                     <th>Usuario</th>
                   </tr>
                 </thead>
@@ -425,7 +425,7 @@
   /* ── Búsqueda en tiempo real ── */
   var _aplicCols = [
     {label:'Producto',campo:'producto'},
-    {label:'Lote',campo:'lote'},
+    {label:'Parcela',campo:'parcela'},
     {label:'Tipo',campo:'tipo'},
     {label:'Empleado',campo:'empleado'}
   ];
@@ -442,7 +442,7 @@
   /* ── Export CSV ── */
   function exportarAplicCSV() {
     if (!_historialData.length) { alert('Sin datos para exportar.'); return; }
-    var filas = [['#','Fecha y Hora','Producto','Movimiento','Cantidad','Aplica','Lote','Usuario']];
+    var filas = [['#','Fecha y Hora','Producto','Movimiento','Cantidad','Aplica','Parcela','Usuario']];
     _historialData.forEach(function(m) {
       filas.push([
         m.id || '',
@@ -451,7 +451,7 @@
         m.tipo || '',
         (parseFloat(m.cantidad||0).toFixed(2) + ' ' + (m.presentacion||'')).trim(),
         '"' + (m.empleado || m.proveedor || '') + '"',
-        '"' + (m.lote || '') + '"',
+        '"' + (m.parcela || '') + '"',
         '"' + (m.usuario || '') + '"'
       ]);
     });
@@ -486,20 +486,20 @@
            String(d.getMinutes()).padStart(2,'0');
   }
 
-  /* ── Cargar lotes del formulario (campaña activa) ── */
-  function cargarLotesForm() {
+  /* ── Cargar parcelas del formulario (campaña activa) ── */
+  function cargarParcelasForm() {
     fetch('/api/temporadas/activa').then(r => r.json()).then(function(t) {
-      var sel = document.getElementById('lote');
+      var sel = document.getElementById('parcela');
       if (!t) { sel.innerHTML = '<option value="">Sin campaña activa</option>'; return; }
-      fetch('/api/lotes?temporada_id=' + t.id).then(r => r.json()).then(function(lotes) {
-        if (!lotes.length) { sel.innerHTML = '<option value="">Sin lotes</option>'; return; }
-        sel.innerHTML = '<option value="">Seleccionar lote...</option>' +
-          lotes.map(l => '<option value="' + l.id + '">' + l.nombre + '</option>').join('');
-        recordarSeleccion('lote', 'ultimo_lote_aplic');
+      fetch('/api/parcelas?temporada_id=' + t.id).then(r => r.json()).then(function(parcelas) {
+        if (!parcelas.length) { sel.innerHTML = '<option value="">Sin parcelas</option>'; return; }
+        sel.innerHTML = '<option value="">Seleccionar parcela...</option>' +
+          parcelas.map(l => '<option value="' + l.id + '">' + l.nombre + '</option>').join('');
+        recordarSeleccion('parcela', 'ultimo_parcela_aplic');
       });
     });
   }
-  window.addEventListener('campanaChange', cargarLotesForm);
+  window.addEventListener('campanaChange', cargarParcelasForm);
 
   /* ── Cargar datos iniciales ── */
   function cargarDatos() {
@@ -509,7 +509,7 @@
         data.map(t => '<option value="' + t.id + '"' + (t.activa ? ' selected' : '') + '>' + t.nombre + '</option>').join('');
       if (activa) cargarKpisCampana(activa.id);
     });
-    cargarLotesForm();
+    cargarParcelasForm();
     fetch('/api/juntadores').then(r => r.json()).then(function(data) {
       document.getElementById('lista-empleados').innerHTML = '<option value="">— seleccionar empleado —</option>' +
         data.map(function(j) {
@@ -560,17 +560,17 @@
     fetch('/api/aplicaciones/carencia').then(r => r.json()).then(function(data) {
       var panel = document.getElementById('panel-carencia');
       if (!data.length) {
-        panel.innerHTML = '<div class="card-form" style="padding:10px 14px;color:var(--verde);font-size:13px;">Sin lotes en carencia actualmente.</div>';
+        panel.innerHTML = '<div class="card-form" style="padding:10px 14px;color:var(--verde);font-size:13px;">Sin parcelas en carencia actualmente.</div>';
         return;
       }
       var hoy = new Date().toISOString().split('T')[0];
       panel.innerHTML = '<div class="card" style="padding:10px 14px;">' +
-        '<div style="font-weight:700;font-size:13px;margin-bottom:8px;">Lotes en período de carencia</div>' +
+        '<div style="font-weight:700;font-size:13px;margin-bottom:8px;">Parcelas en período de carencia</div>' +
         '<div class="table-wrap"><table style="table-layout:auto;"><thead><tr>' +
-        '<th>Lote</th><th>Producto</th><th>Libre desde</th></tr></thead><tbody>' +
+        '<th>Parcela</th><th>Producto</th><th>Libre desde</th></tr></thead><tbody>' +
         data.map(function(a) {
           var libre = a.fecha_libre ? a.fecha_libre.toString().split('T')[0] : '-';
-          return '<tr><td><strong>' + (a.lote || '—') + '</strong></td><td>' + (a.producto || '—') + '</td>' +
+          return '<tr><td><strong>' + (a.parcela || '—') + '</strong></td><td>' + (a.producto || '—') + '</td>' +
             '<td style="color:#c0392b;font-weight:600;">' + libre + '</td></tr>';
         }).join('') +
         '</tbody></table></div></div>';
@@ -650,15 +650,15 @@
 
   /* ── Guardar aplicación ── */
   function guardar(btn) {
-    var lote_id     = document.getElementById('lote').value;
+    var parcela_id     = document.getElementById('parcela').value;
     var producto_id = document.getElementById('producto').value;
     var cantidad    = document.getElementById('cantidad').value;
-    if (!lote_id || !producto_id || !cantidad) { alert('Completá lote, producto y cantidad'); return; }
+    if (!parcela_id || !producto_id || !cantidad) { alert('Completá parcela, producto y cantidad'); return; }
     setLoading(btn, true);
     fetch('/api/aplicaciones', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        lote_id, producto_id,
+        parcela_id, producto_id,
         temporada_id:        document.getElementById('temporada').value || null,
         empleado_id:         empleadoId || null,
         cantidad_usada:      cantidad,
@@ -692,7 +692,7 @@
   }
   function repetirUltimaAplicacion() {
     if (!_ultimaAplicacion) return;
-    if (_ultimaAplicacion.lote_id)            document.getElementById('lote').value              = _ultimaAplicacion.lote_id;
+    if (_ultimaAplicacion.parcela_id)            document.getElementById('parcela').value              = _ultimaAplicacion.parcela_id;
     if (_ultimaAplicacion.producto_id)         document.getElementById('producto').value          = _ultimaAplicacion.producto_id;
     mostrarStock();
     if (_ultimaAplicacion.carencia_dias)       document.getElementById('carencia').value          = _ultimaAplicacion.carencia_dias;
@@ -709,9 +709,9 @@
     fetch('/api/aplicaciones?desde=' + f.hoy + '&hasta=' + f.manana).then(r => r.json()).then(function(data) {
       var hoyData = data.filter(function(a) { return _esHoy(a, f.d); });
       document.getElementById('kpi-aplic-hoy').textContent = hoyData.length || '0';
-      var loteIds = {};
-      hoyData.forEach(function(a) { if (a.lote_id) loteIds[a.lote_id] = 1; });
-      document.getElementById('kpi-lotes-hoy').textContent = Object.keys(loteIds).length || '0';
+      var parcelaIds = {};
+      hoyData.forEach(function(a) { if (a.parcela_id) parcelaIds[a.parcela_id] = 1; });
+      document.getElementById('kpi-parcelas-hoy').textContent = Object.keys(parcelaIds).length || '0';
       guardarUltimaAplicacion(hoyData);
     });
   }
@@ -771,7 +771,7 @@
         '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;' + kgColor + '">' +
           signo + cant.toLocaleString('es-AR', {minimumFractionDigits:0,maximumFractionDigits:2}) + ' ' + (m.presentacion || '') + '</td>' +
         '<td style="font-size:12px;">' + aplica + '</td>' +
-        '<td style="font-size:12px;">' + (m.lote || '—') + '</td>' +
+        '<td style="font-size:12px;">' + (m.parcela || '—') + '</td>' +
         '<td style="font-size:12px;color:var(--texto-suave);">' + (m.usuario || '—') + '</td>' +
         '</tr>';
     }).join('');
@@ -843,7 +843,7 @@
     html += fila('Producto', (m.producto || '—') + (m.presentacion ? ' · ' + m.presentacion : ''), true);
     html += fila('Cantidad', cant.toLocaleString('es-AR', {maximumFractionDigits:2}) + ' ' + (esAplic ? (m.aplic_unidad || m.presentacion || '') : (m.presentacion || '')));
     html += fila('Costo total', costo ? '$' + costo.toLocaleString('es-AR') : '—');
-    html += fila('Lote', m.lote);
+    html += fila('Parcela', m.parcela);
     html += fila('Empleado que aplica', m.empleado);
     html += fila('Usuario que registra', m.usuario);
     if (esIngreso) {

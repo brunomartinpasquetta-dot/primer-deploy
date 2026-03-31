@@ -49,6 +49,25 @@
     .merc-kpi-icon.vendidos   { background: #e8f5e2; color: #2d6a4f; }
     .merc-kpi-icon.descartados{ background: #fde8e8; color: #c0392b; }
     .merc-kpi-icon.transito   { background: #fff3cd; color: #856404; }
+    .merc-kpi-icon.cajones    { background: #f3e8ff; color: #7c3aed; }
+    /* Etapas */
+    .etapa-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 8px; border-radius: 12px;
+      font-size: 11px; font-weight: 700; white-space: nowrap;
+    }
+    .etapa-badge.pendiente_despalillado { background:#fff3cd; color:#856404; }
+    .etapa-badge.fresco                 { background:#e8f5e2; color:#2d6a4f; }
+    .etapa-badge.despalillado           { background:#e8f0fe; color:#1565c0; }
+    .etapa-badge.vendida                { background:#f3e8ff; color:#7c3aed; }
+    .etapa-badge.vendida_parcial        { background:#fde8e8; color:#c0392b; }
+    /* Tabla etapas */
+    #tabla-etapas thead th {
+      background:#2D5016; color:#fff; font-weight:700;
+      text-transform:uppercase; font-size:11px; letter-spacing:.5px; padding:10px 12px;
+    }
+    #tabla-etapas tbody td { padding:9px 12px; font-size:13px; }
+    #tabla-etapas tbody tr:hover { background:var(--fondo-dark); }
     .merc-kpi-valor {
       font-size: 22px; font-weight: 700;
       font-family: 'JetBrains Mono', monospace; line-height: 1;
@@ -312,6 +331,11 @@
           <div class="merc-kpi-valor" style="color:#856404;" id="kpi-transito">—</div>
           <div class="merc-kpi-label">❄️ En tránsito</div>
         </div>
+        <div class="merc-kpi" id="kpi-cajones-card" style="display:none;">
+          <div class="merc-kpi-icon cajones"><i data-lucide="package"></i></div>
+          <div class="merc-kpi-valor" style="color:#7c3aed;" id="kpi-cajones">—</div>
+          <div class="merc-kpi-label">Cajones en circulación</div>
+        </div>
       </div>
 
       <!-- Estado de almacenes -->
@@ -341,10 +365,10 @@
             <table id="tabla-stock-actual">
               <thead>
                 <tr>
-                  <th>VARIEDAD / LOTE</th>
+                  <th>VARIEDAD / PARCELA</th>
                   <th>DEPÓSITO</th>
                   <th>TIPO DEPÓSITO</th>
-                  <th title="Cantidad de lotes que aportaron a este stock">LOTES</th>
+                  <th title="Cantidad de parcelas que aportaron a este stock">PARCELAS</th>
                   <th style="text-align:right;">KG DISPONIBLES</th>
                 </tr>
               </thead>
@@ -353,6 +377,46 @@
               </tbody>
             </table>
           </div>
+        </div>
+      </div>
+
+      <!-- ── Etapas por juntada ── -->
+      <div class="card" style="margin-top:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+          <h3 style="margin:0;font-size:15px;"><i data-lucide="layers" style="width:15px;height:15px;vertical-align:middle;margin-right:6px;"></i>Estado de mercadería por juntada</h3>
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+            <select id="etapa-temporada" onchange="cargarEtapas()" style="height:30px;padding:3px 10px;font-size:13px;border:1px solid var(--borde);border-radius:6px;background:#fff;color:var(--texto);outline:none;">
+              <option value="">Todas las temporadas</option>
+            </select>
+            <select id="etapa-filtro" onchange="filtrarEtapas()" style="height:30px;padding:3px 10px;font-size:13px;border:1px solid var(--borde);border-radius:6px;background:#fff;color:var(--texto);outline:none;">
+              <option value="">Todas las etapas</option>
+              <option value="pendiente_despalillado">🟡 Pendiente despalillado</option>
+              <option value="fresco">🟢 Fresco (sin despalillar)</option>
+              <option value="despalillado">🔵 Despalillado en stock</option>
+              <option value="vendida_parcial">🔶 Vendida parcial</option>
+              <option value="vendida">✅ Vendida</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table id="tabla-etapas">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Fecha</th>
+                <th>Parcela</th>
+                <th>Juntador</th>
+                <th>Depósito</th>
+                <th style="text-align:right;">Kg juntada</th>
+                <th style="text-align:right;">Kg en stock</th>
+                <th style="text-align:right;">Kg vendidos</th>
+                <th>Etapa</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-etapas">
+              <tr><td colspan="9" class="empty">Cargando...</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -394,7 +458,7 @@
                   <th>Cosechero</th>
                   <th>Fecha</th>
                   <th>Tipo</th>
-                  <th>Lote</th>
+                  <th>Parcela</th>
                   <th>Destino</th>
                   <th style="text-align:right;">Kilos</th>
                   <th style="text-align:right;">Precio/kg</th>
@@ -435,13 +499,13 @@
     <div class="modal-body">
       <div class="form-row">
         <label>Temporada</label>
-        <select id="ing-temporada" onchange="filtrarLotesPorTemporada('ing-lote', this.value)">
+        <select id="ing-temporada" onchange="filtrarParcelasPorTemporada('ing-parcela', this.value)">
           <option value="">Seleccionar...</option>
         </select>
       </div>
       <div class="form-row">
-        <label>Lote</label>
-        <select id="ing-lote"><option value="">Seleccionar...</option></select>
+        <label>Parcela</label>
+        <select id="ing-parcela"><option value="">Seleccionar...</option></select>
       </div>
       <div class="form-row">
         <label>Depósito destino</label>
@@ -544,8 +608,8 @@
             <select id="desc-temporada"><option value="">Seleccionar...</option></select>
           </div>
           <div class="form-row">
-            <label>Lote</label>
-            <select id="desc-lote"><option value="">Seleccionar...</option></select>
+            <label>Parcela</label>
+            <select id="desc-parcela"><option value="">Seleccionar...</option></select>
           </div>
         </div>
       </div>
@@ -581,7 +645,7 @@ lucide.createIcons();
 document.getElementById('topbar-date').textContent =
   new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
 
-var _temporadas = [], _lotes = [], _depositos = [];
+var _temporadas = [], _parcelas = [], _depositos = [];
 var _historialVisible = false;
 var _historialMercData = [];  // datos del historial cargados
 var _stockActualData   = [];  // stock actual por variedad+depósito
@@ -640,34 +704,100 @@ function toggleHistorial() {
 function init() {
   Promise.all([
     fetch('/api/temporadas').then(function(r){ return r.json(); }),
-    fetch('/api/lotes').then(function(r){ return r.json(); }),
+    fetch('/api/parcelas').then(function(r){ return r.json(); }),
     fetch('/api/depositos').then(function(r){ return r.json(); })
   ]).then(function(results){
     _temporadas = results[0];
-    _lotes      = results[1];
+    _parcelas      = results[1];
     _depositos  = results[2];
     poblarTemporadas();
     poblarDepositos();
     cargarStock();
+    cargarEtapas();
+    cargarCajonesCirculacion();
   });
+}
+
+var _etapasData = [];
+
+function cargarEtapas() {
+  var tid = document.getElementById('etapa-temporada') ? document.getElementById('etapa-temporada').value : '';
+  var url = '/api/stock-mercaderia/etapas' + (tid ? '?temporada_id=' + tid : '');
+  document.getElementById('tbody-etapas').innerHTML = '<tr><td colspan="9" class="empty" style="color:var(--verde);">Cargando...</td></tr>';
+  fetch(url).then(function(r){ return r.json(); }).then(function(data){
+    _etapasData = data;
+    filtrarEtapas();
+  }).catch(function(){
+    document.getElementById('tbody-etapas').innerHTML = '<tr><td colspan="9" class="empty" style="color:#c0392b;">Error al cargar</td></tr>';
+  });
+}
+
+function filtrarEtapas() {
+  var filtro = document.getElementById('etapa-filtro') ? document.getElementById('etapa-filtro').value : '';
+  var data = filtro ? _etapasData.filter(function(r){ return r.etapa === filtro; }) : _etapasData;
+  var etapaLabel = {
+    pendiente_despalillado: '🟡 Pendiente despalillado',
+    fresco:                 '🟢 Fresco',
+    despalillado:           '🔵 Despalillado',
+    vendida_parcial:        '🔶 Vendida parcial',
+    vendida:                '✅ Vendida'
+  };
+  var tbody = document.getElementById('tbody-etapas');
+  if (!data.length) {
+    tbody.innerHTML = '<tr><td colspan="9" class="empty">Sin juntadas para los filtros seleccionados</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(function(r) {
+    var etiqueta = etapaLabel[r.etapa] || r.etapa;
+    var badgeClass = r.etapa || 'fresco';
+    var kgStock  = parseFloat(r.kilos_en_stock  || 0);
+    var kgVend   = parseFloat(r.kilos_vendidos  || 0);
+    var kgJunt   = parseFloat(r.kilos_juntada   || 0);
+    var fmtKg = function(v){ return v.toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:2})+' kg'; };
+    var mono = "font-family:'JetBrains Mono',monospace;font-weight:700;text-align:right;";
+    return '<tr>'+
+      '<td><span style="font-family:\'JetBrains Mono\',monospace;font-size:11px;background:var(--fondo-dark);border:1px solid var(--borde);border-radius:4px;padding:1px 5px;">#'+r.juntada_id+'</span></td>'+
+      '<td style="font-size:12px;white-space:nowrap;">'+(r.fecha_hora ? new Date(r.fecha_hora).toLocaleDateString('es-AR') : '—')+'</td>'+
+      '<td style="font-size:12px;">'+(r.parcela||'—')+'</td>'+
+      '<td style="font-size:12px;">'+(r.juntador||'—')+'</td>'+
+      '<td style="font-size:12px;">'+(r.deposito_nombre||'—')+'</td>'+
+      '<td style="'+mono+'color:var(--texto);">'+fmtKg(kgJunt)+'</td>'+
+      '<td style="'+mono+'color:#2d6a4f;">'+fmtKg(kgStock)+'</td>'+
+      '<td style="'+mono+'color:#7c3aed;">'+fmtKg(kgVend)+'</td>'+
+      '<td><span class="etapa-badge '+badgeClass+'">'+etiqueta+'</span></td>'+
+    '</tr>';
+  }).join('');
+}
+
+function cargarCajonesCirculacion() {
+  var tid = document.getElementById('filtro-temporada') ? document.getElementById('filtro-temporada').value : '';
+  var url = '/api/depositos/cajones-circulacion' + (tid ? '?temporada_id=' + tid : '');
+  fetch(url).then(function(r){ return r.json(); }).then(function(data){
+    if (!data.length) return;
+    var total = data.reduce(function(s, r){ return s + parseFloat(r.en_circulacion||0); }, 0);
+    var card = document.getElementById('kpi-cajones-card');
+    var val  = document.getElementById('kpi-cajones');
+    if (card) card.style.display = '';
+    if (val) val.textContent = Math.round(total).toLocaleString('es-AR') + ' u.';
+  }).catch(function(){});
 }
 
 function poblarTemporadas() {
   var opts = _temporadas.map(function(t){ return '<option value="'+t.id+'">'+t.nombre+'</option>'; }).join('');
   var base = '<option value="">Seleccionar...</option>';
-  ['filtro-temporada','ing-temporada','venta-temporada','desc-temporada','hist-temporada'].forEach(function(id){
+  ['filtro-temporada','ing-temporada','venta-temporada','desc-temporada','hist-temporada','etapa-temporada'].forEach(function(id){
     var el = document.getElementById(id);
-    if (el) el.innerHTML = (id==='filtro-temporada'||id==='hist-temporada' ? '<option value="">Todas</option>' : base) + opts;
+    if (el) el.innerHTML = (id==='filtro-temporada'||id==='hist-temporada'||id==='etapa-temporada' ? '<option value="">Todas</option>' : base) + opts;
   });
   var activa = _temporadas.find(function(t){ return t.activa; });
   if (activa) {
-    ['filtro-temporada','ing-temporada','venta-temporada','desc-temporada','hist-temporada'].forEach(function(id){
+    ['filtro-temporada','ing-temporada','venta-temporada','desc-temporada','hist-temporada','etapa-temporada'].forEach(function(id){
       var el = document.getElementById(id);
       if(el) el.value = activa.id;
     });
-    filtrarLotesPorTemporada('ing-lote', activa.id);
-    filtrarLotesPorTemporada('venta-lote', activa.id);
-    filtrarLotesPorTemporada('desc-lote', activa.id);
+    filtrarParcelasPorTemporada('ing-parcela', activa.id);
+    filtrarParcelasPorTemporada('venta-parcela', activa.id);
+    filtrarParcelasPorTemporada('desc-parcela', activa.id);
   }
 }
 
@@ -682,11 +812,11 @@ function poblarDepositos() {
   document.getElementById('desc-deposito').addEventListener('change', function(){ actualizarStockInfo('desc'); });
 }
 
-function filtrarLotesPorTemporada(selectId, temporadaId) {
+function filtrarParcelasPorTemporada(selectId, temporadaId) {
   var sel = document.getElementById(selectId);
   if(!sel) return;
-  var filtrados = temporadaId ? _lotes.filter(function(l){ return String(l.temporada_id) === String(temporadaId); }) : _lotes;
-  sel.innerHTML = '<option value="">Seleccionar lote...</option>' +
+  var filtrados = temporadaId ? _parcelas.filter(function(l){ return String(l.temporada_id) === String(temporadaId); }) : _parcelas;
+  sel.innerHTML = '<option value="">Seleccionar parcela...</option>' +
     filtrados.map(function(l){ return '<option value="'+l.id+'">'+l.nombre+'</option>'; }).join('');
 }
 
@@ -744,14 +874,14 @@ function _fechaHoy() {
 function exportarCSVHistorial() {
   var datos = _historialMercData;
   if (!datos.length) { alert('Sin datos en el historial para exportar.'); return; }
-  var cabecera = ['#','Cosechero','Fecha','Tipo','Lote','Destino','Kg','Precio/kg','Total','Comprador','Usuario'];
+  var cabecera = ['#','Cosechero','Fecha','Tipo','Parcela','Destino','Kg','Precio/kg','Total','Comprador','Usuario'];
   var filas = [cabecera].concat(datos.map(function(m) {
     return [
       m.juntada_id || '',
       m.cosechero  || '',
       m.fecha ? new Date(m.fecha).toLocaleDateString('es-AR') : '',
       m.tipo || '',
-      m.lote || '',
+      m.parcela || '',
       m.destino_venta || m.deposito || '',
       parseFloat(m.kilos||0).toFixed(1),
       m.precio_kilo ? parseFloat(m.precio_kilo).toFixed(2) : '',
@@ -811,15 +941,15 @@ function cargarStockActual() {
     }
     tbody.innerHTML = data.map(function(row){
       var tipoLabel = row.deposito_tipo ? row.deposito_tipo.replace(/_/g,' ') : '—';
-      var lotes = row.lotes_involucrados || 1;
-      var loteLabel = lotes === 1 && row.lote_nombre
-        ? row.lote_nombre
-        : lotes + ' lote' + (lotes !== 1 ? 's' : '');
+      var parcelas = row.parcelas_involucradas || 1;
+      var parcelaLabel = parcelas === 1 && row.parcela_nombre
+        ? row.parcela_nombre
+        : parcelas + ' parcela' + (parcelas !== 1 ? 's' : '');
       return '<tr>' +
         '<td style="font-weight:600;">' + (row.variedad || '—') + '</td>' +
         '<td>' + (row.deposito || '—') + '</td>' +
         '<td><span class="badge badge-deposito">' + tipoLabel + '</span></td>' +
-        '<td style="font-size:12px;">' + loteLabel + '</td>' +
+        '<td style="font-size:12px;">' + parcelaLabel + '</td>' +
         '<td style="text-align:right;font-weight:700;color:var(--sem-verde);">' +
           fmt(row.kg_disponibles) + ' kg</td>' +
         '</tr>';
@@ -834,10 +964,10 @@ function exportarStockActual() {
   if (!_stockActualData.length) { alert('No hay datos para exportar'); return; }
   var filas = _stockActualData.map(function(r){
     return [r.variedad||'', r.deposito||'', r.deposito_tipo||'',
-            r.lotes_involucrados||1,
+            r.parcelas_involucradas||1,
             parseFloat(r.kg_disponibles||0).toFixed(1)];
   });
-  filas.unshift(['Variedad/Lote','Depósito','Tipo Depósito','Lotes','KG Disponibles']);
+  filas.unshift(['Variedad/Parcela','Depósito','Tipo Depósito','Parcelas','KG Disponibles']);
   _descargarCSV(filas, 'stock-mercaderia-actual-' + _fechaHoy() + '.csv');
 }
 
@@ -850,16 +980,16 @@ function imprimirStockActual() {
     return '<tr><td style="padding:7px 12px;font-weight:600;">' + (r.variedad||'—') + '</td>' +
            '<td style="padding:7px 12px;">' + (r.deposito||'—') + '</td>' +
            '<td style="padding:7px 12px;">' + (r.deposito_tipo||'—').replace(/_/g,' ') + '</td>' +
-           '<td style="padding:7px 12px;text-align:center;">' + (r.lotes_involucrados||1) + '</td>' +
+           '<td style="padding:7px 12px;text-align:center;">' + (r.parcelas_involucradas||1) + '</td>' +
            '<td style="padding:7px 12px;text-align:right;font-weight:700;">' +
              fmt(r.kg_disponibles) + ' kg</td></tr>';
   }).join('');
   var tabla = '<table style="width:100%;border-collapse:collapse;">' +
     '<thead><tr>' +
-      '<th style="' + thStyle + '">VARIEDAD / LOTE</th>' +
+      '<th style="' + thStyle + '">VARIEDAD / PARCELA</th>' +
       '<th style="' + thStyle + '">DEPÓSITO</th>' +
       '<th style="' + thStyle + '">TIPO DEPÓSITO</th>' +
-      '<th style="' + thStyle + 'text-align:center;">LOTES</th>' +
+      '<th style="' + thStyle + 'text-align:center;">PARCELAS</th>' +
       '<th style="' + thStyle + 'text-align:right;">KG DISPONIBLES</th>' +
     '</tr></thead><tbody>' + filas + '</tbody></table>';
   _abrirVentanaImpresion('Stock Actual — Mercadería', filtros, tabla);
@@ -923,7 +1053,7 @@ function registrarEgreso(btn) {
 function registrarIngreso(btn) {
   var dep  = document.getElementById('ing-deposito').value;
   var tid  = document.getElementById('ing-temporada').value;
-  var lid  = document.getElementById('ing-lote').value;
+  var lid  = document.getElementById('ing-parcela').value;
   var kg   = document.getElementById('ing-kilos').value;
   var fec  = document.getElementById('ing-fecha').value;
   var obs  = document.getElementById('ing-obs').value;
@@ -932,7 +1062,7 @@ function registrarIngreso(btn) {
   fetch('/api/depositos/ingreso', {
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ deposito_id:parseInt(dep), temporada_id:parseInt(tid),
-      lote_id: lid ? parseInt(lid) : null, kilos:parseFloat(kg), fecha:fec||null, observacion:obs })
+      parcela_id: lid ? parseInt(lid) : null, kilos:parseFloat(kg), fecha:fec||null, observacion:obs })
   }).then(function(r){ return r.json(); }).then(function(data){
     setLoading(btn, false);
     if (data.ok) {
@@ -976,11 +1106,11 @@ function registrarDescarte(btn) {
     });
   } else {
     var tempId = document.getElementById('desc-temporada').value;
-    var loteId = document.getElementById('desc-lote').value;
-    if (!tempId || !loteId) { setLoading(btn,false); mostrarMensaje('msg-descarte','error','Seleccioná temporada y lote'); return; }
+    var parcelaId = document.getElementById('desc-parcela').value;
+    if (!tempId || !parcelaId) { setLoading(btn,false); mostrarMensaje('msg-descarte','error','Seleccioná temporada y parcela'); return; }
     p = fetch('/api/stock-mercaderia/egreso', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ temporada_id:parseInt(tempId), lote_id:parseInt(loteId),
+      body: JSON.stringify({ temporada_id:parseInt(tempId), parcela_id:parseInt(parcelaId),
         kilos:kg, destino:'descarte', precio_kilo:0, observacion:obsCompleto })
     });
   }
@@ -1003,7 +1133,7 @@ function filtrarHistorialMerc() {
   var q = (document.getElementById('hist-buscar').value || '').trim();
   var cols = [
     {label:'Cosechero',campo:'cosechero'},{label:'Tipo',campo:'tipo'},
-    {label:'Lote',campo:'lote'},{label:'Depósito',campo:'deposito'},
+    {label:'Parcela',campo:'parcela'},{label:'Depósito',campo:'deposito'},
     {label:'Destino',campo:'destino_venta'},{label:'Comprador',campo:'comprador'},
     {label:'Usuario',campo:'usuario'}
   ];
@@ -1034,7 +1164,7 @@ function filtrarHistorialMerc() {
       '<td style="font-size:12px;white-space:nowrap;">'+fmtFecha(m.fecha)+'</td>'+
       '<td><span class="badge badge-'+(esIngreso?'positivo':'negativo')+'">'+
         (esIngreso?'Ingreso':'Egreso')+'</span></td>'+
-      '<td>'+(m.lote||'—')+'</td>'+
+      '<td>'+(m.parcela||'—')+'</td>'+
       '<td style="font-size:12px;color:var(--texto-suave);">'+(m.destino_venta||m.deposito||'—')+'</td>'+
       '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;font-weight:700;'+colorKilos+'">'+
         signo+fmt(m.kilos)+' kg</td>'+
@@ -1088,7 +1218,7 @@ function cargarHistorial() {
       }
       var _smHistCols = [
         {label:'Cosechero',campo:'cosechero'},{label:'Tipo',campo:'tipo'},
-        {label:'Lote',campo:'lote'},{label:'Depósito',campo:'deposito'},
+        {label:'Parcela',campo:'parcela'},{label:'Depósito',campo:'deposito'},
         {label:'Destino',campo:'destino_venta'},{label:'Comprador',campo:'comprador'},
         {label:'Usuario',campo:'usuario'}
       ];
@@ -1113,7 +1243,7 @@ function cargarHistorial() {
           '<td style="font-size:12px;white-space:nowrap;">'+fmtFecha(m.fecha)+'</td>'+
           '<td><span class="badge badge-'+(esIngreso?'positivo':'negativo')+'">'+
             (esIngreso?'Ingreso':'Egreso')+'</span></td>'+
-          '<td>'+(m.lote||'—')+'</td>'+
+          '<td>'+(m.parcela||'—')+'</td>'+
           '<td style="font-size:12px;color:var(--texto-suave);">'+(m.destino_venta||m.deposito||'—')+'</td>'+
           '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;font-weight:700;'+colorKilos+'">'+
             signo+fmt(m.kilos)+' kg</td>'+

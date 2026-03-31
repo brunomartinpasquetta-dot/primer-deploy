@@ -92,7 +92,7 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
 
       <div class="tabs">
     <button class="tab active" onclick="showTab('temporada', this)">Por temporada</button>
-    <button class="tab" onclick="showTab('lote', this)">Por lote</button>
+    <button class="tab" onclick="showTab('parcela', this)">Por parcela</button>
     <button class="tab" onclick="showTab('periodo', this)">Por periodo</button>
   </div>
 
@@ -105,13 +105,13 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
     <div id="balance-temporada"><div class="empty">Selecciona una temporada</div></div>
   </div>
 
-  <!-- POR LOTE -->
-  <div id="tab-lote" class="tab-content">
+  <!-- POR PARCELA -->
+  <div id="tab-parcela" class="tab-content">
     <div class="card" style="margin-bottom:12px;">
-      <label>Lote</label>
-      <select id="sel-lote" onchange="cargarBalanceLote()"></select>
+      <label>Parcela</label>
+      <select id="sel-parcela" onchange="cargarBalanceParcela()"></select>
     </div>
-    <div id="balance-lote"><div class="empty">Selecciona un lote</div></div>
+    <div id="balance-parcela"><div class="empty">Selecciona un parcela</div></div>
   </div>
 
   <!-- POR PERIODO -->
@@ -223,7 +223,7 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
           html += '<div class="fila costo-item"><span>Almacenamiento</span><span>$' + parseFloat(data.costos.almacenamiento).toLocaleString('es-AR') + '</span></div>';
         }
         if (data.costos.gastos_especificos !== undefined) {
-          html += '<div class="fila costo-item"><span>Gastos especificos del lote</span><span>$' + parseFloat(data.costos.gastos_especificos).toLocaleString('es-AR') + '</span></div>';
+          html += '<div class="fila costo-item"><span>Gastos especificos del parcela</span><span>$' + parseFloat(data.costos.gastos_especificos).toLocaleString('es-AR') + '</span></div>';
         }
 
         if (data.costos.detalle_gastos && data.costos.detalle_gastos.length > 0) {
@@ -264,12 +264,12 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
         .then(function(data) { renderBalance(data, 'balance-temporada'); });
     }
 
-    function cargarBalanceLote() {
-      const id = document.getElementById('sel-lote').value;
+    function cargarBalanceParcela() {
+      const id = document.getElementById('sel-parcela').value;
       if (!id) return;
-      fetch('/api/balance/lote/' + id)
+      fetch('/api/balance/parcela/' + id)
         .then(function(r) { return r.json(); })
-        .then(function(data) { renderBalance(data, 'balance-lote'); });
+        .then(function(data) { renderBalance(data, 'balance-parcela'); });
     }
 
     function cargarBalancePeriodo() {
@@ -307,10 +307,10 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
           if (activa) cargarBalanceTemporada();
         });
 
-      fetch('/api/lotes')
+      fetch('/api/parcelas')
         .then(function(r) { return r.json(); })
         .then(function(data) {
-          document.getElementById('sel-lote').innerHTML = '<option value="">Seleccionar lote...</option>' +
+          document.getElementById('sel-parcela').innerHTML = '<option value="">Seleccionar parcela...</option>' +
             data.map(function(l) { return '<option value="' + l.id + '">' + l.nombre + '</option>'; }).join('');
         });
     }

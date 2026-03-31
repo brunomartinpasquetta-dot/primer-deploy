@@ -88,9 +88,9 @@
       <option value="otro">Otro</option>
     </select>
     <div class="two-col">
-      <div><label>Hectáreas</label><input type="number" id="hectareas" placeholder="Ej: 2.5" step="0.01" min="0" style="-moz-appearance:textfield;appearance:textfield;" data-miles data-tooltip="Superficie de la parcela en hectáreas"></div>
+      <div><label>Hectáreas</label><input type="number" id="hectareas" placeholder="Ej: 2.5" step="0.001" min="0" style="-moz-appearance:textfield;appearance:textfield;" data-miles data-tooltip="Superficie de la parcela en hectáreas"></div>
       <div id="grupo-plantines"><label id="lbl-plantines">Plantines</label><input type="number" id="plantines" placeholder="Ej: 50000" min="0" style="-moz-appearance:textfield;appearance:textfield;" data-miles data-tooltip="Cantidad de plantines implantados"></div>
-      <div id="grupo-densidad" style="display:none"><label>Densidad de siembra</label><input type="number" id="densidad_siembra" placeholder="Ej: 80 kg/ha" step="0.01" min="0" style="-moz-appearance:textfield;appearance:textfield;" data-tooltip="Densidad de siembra (kg/ha o semillas/ha)"></div>
+      <div id="grupo-densidad" style="display:none"><label>Densidad de siembra</label><input type="number" id="densidad_siembra" placeholder="Ej: 80 kg/ha" step="0.001" min="0" style="-moz-appearance:textfield;appearance:textfield;" data-tooltip="Densidad de siembra (kg/ha o semillas/ha)"></div>
     </div>
     <div id="grupo-distancia" style="display:none">
       <label>Distancia entre plantas (cm) <span style="font-weight:400;color:#888;">opcional</span></label>
@@ -147,7 +147,7 @@
       </div>
       <input type="hidden" id="edit-id">
       <label>Nombre *</label><input type="text" id="edit-nombre" style="width:100%;margin-bottom:8px;">
-      <label>Hectáreas</label><input type="number" id="edit-hectareas" step="0.01" min="0" style="width:100%;margin-bottom:8px;-moz-appearance:textfield;appearance:textfield;">
+      <label>Hectáreas</label><input type="number" id="edit-hectareas" step="0.001" min="0" style="width:100%;margin-bottom:8px;-moz-appearance:textfield;appearance:textfield;">
       <label>Variedad</label><input type="text" id="edit-variedad" style="width:100%;margin-bottom:8px;">
       <label>Plantines</label><input type="number" id="edit-plantines" min="0" style="width:100%;margin-bottom:8px;-moz-appearance:textfield;appearance:textfield;">
       <div id="msg-edit" style="margin-top:8px;"></div>

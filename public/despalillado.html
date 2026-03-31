@@ -7,6 +7,7 @@
   <title>Despalillado — Campo</title>
   <link rel="icon" href="img/logo.png">
   <script src="js/utils.js"></script>
+  <script src="js/movimientos-grid.js"></script>
   <link rel="stylesheet" href="cosecha.css">
   <style>
     .peso { color: #C0392B; }
@@ -39,7 +40,7 @@
     .pendiente-item:hover { border-color:var(--verde); background:var(--verde-suave); }
     .pendiente-item.seleccionado { border-color:var(--verde); background:var(--verde-suave); }
     .pendiente-info { flex:1; }
-    .pendiente-lote { font-weight:700; font-size:14px; color:var(--texto); }
+    .pendiente-parcela { font-weight:700; font-size:14px; color:var(--texto); }
     .pendiente-meta { font-size:12px; color:var(--texto-secundario); margin-top:2px; }
     .pendiente-kilos { font-size:15px; font-weight:700; color:var(--verde); white-space:nowrap; }
 
@@ -75,6 +76,44 @@
     .kpi-merma-val.rojo { color:var(--sem-rojo); }
     .kpi-merma-val.verde { color:var(--sem-verde); }
 
+    /* Formulario dos columnas fresca */
+    .desp-dos-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 520px) {
+      .desp-dos-col { grid-template-columns: 1fr; }
+    }
+    .desp-col-title {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .6px; color: var(--texto-secundario);
+      margin-bottom: 10px; padding-bottom: 6px;
+      border-bottom: 1px solid var(--borde);
+    }
+    .desp-col { display: flex; flex-direction: column; gap: 0; }
+    .stock-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: var(--sem-verde-bg); color: var(--sem-verde);
+      border: 1px solid var(--sem-verde-borde); border-radius: 6px;
+      padding: 3px 8px; font-size: 12px; font-weight: 700; margin-top: 4px;
+    }
+    .stock-badge.vacio { background: var(--sem-rojo-bg); color: var(--sem-rojo); border-color: var(--sem-rojo-borde); }
+    .kg-display {
+      font-size: 28px; font-weight: 800; color: var(--verde);
+      font-family: 'JetBrains Mono', monospace; margin: 4px 0 6px;
+      line-height: 1;
+    }
+    .kg-display.sin-dato { color: var(--texto-secundario); font-size: 20px; }
+    .radio-group { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+    .radio-opt {
+      display: flex; align-items: center; gap: 8px;
+      font-weight: 400; cursor: pointer; font-size: 14px;
+    }
+    /* Layout dos columnas */
+    @media (max-width: 900px) {
+      #layout-desp { grid-template-columns: 1fr !important; }
+    }
     /* Historial merma */
     .hist-merma { margin-top:24px; }
     .hist-merma-title { font-size:13px; font-weight:700; color:var(--texto-secundario); text-transform:uppercase; letter-spacing:.5px; margin-bottom:10px; }
@@ -82,7 +121,7 @@
       display:flex; align-items:center; gap:10px; padding:10px 12px;
       border:1px solid var(--borde); border-radius:10px; background:var(--superficie); margin-bottom:8px;
     }
-    .hist-lote { font-weight:700; font-size:14px; flex:1; }
+    .hist-parcela { font-weight:700; font-size:14px; flex:1; }
     .hist-detail { font-size:12px; color:var(--texto-secundario); }
     .hist-merma-badge {
       padding:3px 8px; border-radius:6px; font-size:12px; font-weight:700; white-space:nowrap;
@@ -172,7 +211,9 @@
         </div>
       </div>
 
-      <div style="max-width:560px;">
+      <div style="display:grid;grid-template-columns:minmax(0,520px) 1fr;gap:24px;align-items:start;" id="layout-desp">
+
+      <div><!-- columna izquierda: formulario -->
 
         <!-- ── TABS MODO ── -->
         <div class="modo-tabs">
@@ -208,27 +249,79 @@
         <!-- ── FORMULARIO REGISTRO ── -->
         <div id="sec-form" style="display:none;">
 
-          <!-- Lote + Depósito (solo modo fresca) -->
-          <div class="card-form" id="card-lote-fresca">
-            <div class="form-row">
-              <label>Lote</label>
-              <select id="lote" onchange="checkReady()" data-tooltip="Lote de la campaña activa">
-                <option value="">Cargando lotes...</option>
-              </select>
-            </div>
-            <div class="form-row">
-              <label>Depósito destino</label>
-              <select id="deposito-fresca" onchange="checkReady()" data-tooltip="Depósito donde se almacenará la fruta fresca">
-                <option value="">Sin asignar (opcional)</option>
-              </select>
+          <!-- Origen + Salida fruta fresca (diseño dos columnas) -->
+          <div class="card-form" id="card-parcela-fresca">
+            <div class="desp-dos-col">
+
+              <!-- COLUMNA ENTRADA -->
+              <div class="desp-col">
+                <div class="desp-col-title">📥 Entrada</div>
+                <div class="form-row">
+                  <label>Depósito origen</label>
+                  <select id="deposito-fresca" onchange="onDepositoFrescaChange()">
+                    <option value="">Seleccionar...</option>
+                  </select>
+                  <div id="stock-fresca-indicator"></div>
+                </div>
+                <div class="form-row" style="margin-top:12px;">
+                  <label>Kg a despalillar</label>
+                  <input type="text" inputmode="decimal" id="kilos-origen" placeholder="0.00"
+                    data-miles oninput="checkReady();actualizarMermaPreview()">
+                </div>
+              </div>
+
+              <!-- COLUMNA SALIDA -->
+              <div class="desp-col">
+                <div class="desp-col-title">📤 Salida (repesaje)</div>
+                <div class="form-row">
+                  <label>Destino</label>
+                  <div class="radio-group">
+                    <label class="radio-opt">
+                      <input type="radio" name="fresca-destino" value="mismo" checked onchange="onDestinoFrescaChange()">
+                      Mismo depósito
+                    </label>
+                    <label class="radio-opt">
+                      <input type="radio" name="fresca-destino" value="camara" onchange="onDestinoFrescaChange()">
+                      Cámara fría
+                    </label>
+                  </div>
+                </div>
+                <div id="fresca-camara-wrap" style="display:none;margin-top:8px;">
+                  <select id="deposito-destino-camara" onchange="checkReady()">
+                    <option value="">Seleccionar cámara...</option>
+                  </select>
+                </div>
+                <div class="form-row" style="margin-top:12px;">
+                  <label>Kg repesados</label>
+                  <div class="peso" id="peso-display-fresca">— kg</div>
+                  <input type="text" inputmode="decimal" id="kilos-repesaje" placeholder="0.00"
+                    data-miles
+                    oninput="
+                      var v = _parseVal(this.value)||null;
+                      pesoActual = v;
+                      var d = document.getElementById('peso-display-fresca');
+                      d.textContent = v ? v + ' kg' : '— kg';
+                      checkReady(); actualizarMermaPreview();
+                    ">
+                </div>
+                <div class="merma-preview" id="merma-preview" style="display:none;margin-top:10px;">
+                  <div class="merma-preview-title">Merma estimada</div>
+                  <div class="merma-preview-vals">
+                    <span class="merma-kg" id="prev-merma-kg">0 kg</span>
+                    <span class="merma-pct" id="prev-merma-pct">0%</span>
+                    <span class="merma-base" id="prev-merma-base"></span>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
 
           <!-- Info juntada seleccionada (modo cámara) -->
           <div class="card-form" id="card-juntada-info" style="display:none;">
             <div class="form-row">
-              <label>Lote</label>
-              <div id="juntada-lote-label" style="font-weight:600;font-size:15px;padding:8px 0;color:var(--texto);">—</div>
+              <label>Parcela</label>
+              <div id="juntada-parcela-label" style="font-weight:600;font-size:15px;padding:8px 0;color:var(--texto);">—</div>
             </div>
             <div class="form-row">
               <label>Cosechero</label>
@@ -266,8 +359,8 @@
             </div>
           </div>
 
-          <!-- Peso -->
-          <div class="card-form">
+          <!-- Peso (solo modo cámara) -->
+          <div class="card-form" id="card-peso-camara">
             <div class="section-label" style="margin-top:0;">Peso despalillado</div>
             <div class="peso" id="peso-display">— kg</div>
             <div class="form-row" style="margin-top:8px;">
@@ -276,13 +369,12 @@
                 data-miles
                 oninput="pesoActual=_parseVal(this.value)||null;checkReady();actualizarMermaPreview()">
             </div>
-            <!-- Preview merma (solo modo cámara fría) -->
-            <div class="merma-preview" id="merma-preview">
+            <div class="merma-preview" id="merma-preview-camara">
               <div class="merma-preview-title">Merma estimada</div>
               <div class="merma-preview-vals">
-                <span class="merma-kg" id="prev-merma-kg">0 kg</span>
-                <span class="merma-pct" id="prev-merma-pct">0%</span>
-                <span class="merma-base" id="prev-merma-base"></span>
+                <span class="merma-kg" id="prev-merma-kg-camara">0 kg</span>
+                <span class="merma-pct" id="prev-merma-pct-camara">0%</span>
+                <span class="merma-base" id="prev-merma-base-camara"></span>
               </div>
             </div>
           </div>
@@ -298,13 +390,25 @@
           </div>
         </div>
 
-      </div>
+      </div><!-- /columna izquierda -->
 
-      <!-- ── HISTORIAL DEL DÍA ── -->
-      <div class="hist-merma" id="hist-merma-wrap" style="display:none;max-width:800px;">
-        <div class="hist-merma-title">Registros del día</div>
-        <div id="hist-merma-lista"></div>
-      </div>
+      <!-- columna derecha: grilla registros del día -->
+      <div id="hist-merma-wrap" style="display:none;">
+        <div style="font-size:13px;font-weight:700;color:var(--texto-secundario);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">Registros del día</div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>#</th><th>Despalillador</th><th>Fecha</th><th>Tipo</th>
+                <th style="text-align:right;">Kg</th><th>Parcela</th><th>Depósito</th><th>Usuario</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-desp-hoy"></tbody>
+          </table>
+        </div>
+      </div><!-- /columna derecha -->
+
+      </div><!-- /layout-desp -->
 
     </div>
   </div>
@@ -361,13 +465,11 @@
 
   function mostrarFormFresce() {
     document.getElementById('sec-form').style.display = '';
-    document.getElementById('card-lote-fresca').style.display = '';
+    document.getElementById('card-parcela-fresca').style.display = '';
     document.getElementById('card-juntada-info').style.display = 'none';
+    document.getElementById('card-peso-camara').style.display = 'none';
     document.getElementById('btn-cancelar').style.display = 'none';
-    var badge = document.getElementById('modo-activo-badge');
-    badge.className = 'modo-activo-badge fresca';
-    badge.style.display = '';
-    document.getElementById('modo-activo-texto').textContent = 'Fruta fresca — el despalillado no afecta el stock';
+    document.getElementById('modo-activo-badge').style.display = 'none';
     lucide.createIcons();
   }
 
@@ -394,7 +496,7 @@
         var fecha = new Date(p.fecha_hora).toLocaleString('es-AR', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
         return '<div class="pendiente-item" id="pend-' + p.id + '" onclick="seleccionarPendiente(' + JSON.stringify(p).replace(/"/g,'&quot;') + ')">' +
           '<div class="pendiente-info">' +
-          '<div class="pendiente-lote">' + p.lote + '</div>' +
+          '<div class="pendiente-parcela">' + p.parcela + '</div>' +
           '<div class="pendiente-meta">Cosechero: ' + p.juntador + ' · ' + fecha + '</div>' +
           '<div class="pendiente-meta">→ ' + p.deposito_nombre + '</div>' +
           '</div>' +
@@ -415,13 +517,14 @@
 
     // Mostrar info en el form
     document.getElementById('sec-form').style.display = '';
-    document.getElementById('card-lote-fresca').style.display = 'none';
+    document.getElementById('card-parcela-fresca').style.display = 'none';
     document.getElementById('card-juntada-info').style.display = '';
-    document.getElementById('juntada-lote-label').textContent = p.lote;
+    document.getElementById('juntada-parcela-label').textContent = p.parcela;
     document.getElementById('juntada-cosechero-label').textContent = p.juntador;
     document.getElementById('juntada-kilos-label').textContent = p.kilos + ' kg';
     document.getElementById('juntada-deposito-label').textContent = '❄️ ' + p.deposito_nombre;
     document.getElementById('btn-cancelar').style.display = '';
+    document.getElementById('card-peso-camara').style.display = '';
 
     var badge = document.getElementById('modo-activo-badge');
     badge.className = 'modo-activo-badge camara';
@@ -472,41 +575,86 @@
   }
 
   // ── DEPÓSITOS FRUTA FRESCA ────────────────────────────────────────
+  var _depositoFrescaStock = 0; // kg disponibles en el depósito seleccionado
+
   function cargarDepositosFresca() {
-    fetch('/api/depositos?tipo_stock=mercaderia')
+    fetch('/api/despalillado/depositos-fresco')
       .then(function(r) { return r.json(); })
       .then(function(deps) {
         var sel = document.getElementById('deposito-fresca');
-        // Solo galpones (no cámara fría) para fruta fresca
-        var frescos = deps.filter(function(d) { return d.tipo !== 'camara_fria' && d.activo !== false; });
-        frescos.forEach(function(d) {
-          sel.innerHTML += '<option value="' + d.id + '">' + d.nombre + '</option>';
+        if (!Array.isArray(deps) || !deps.length) {
+          sel.innerHTML = '<option value="">Sin stock fresco disponible</option>';
+          return;
+        }
+        sel.innerHTML = '<option value="">Seleccionar...</option>';
+        deps.forEach(function(d) {
+          sel.innerHTML += '<option value="' + d.id + '" data-kg="' + d.stock_kg + '">' +
+            d.nombre + '</option>';
         });
       });
   }
   cargarDepositosFresca();
 
-  // ── LOTES ─────────────────────────────────────────────────────────
-  function cargarLotes() {
-    fetch('/api/temporadas/activa').then(r => r.json()).then(function(t) {
-      var sel = document.getElementById('lote');
-      if (!t) { sel.innerHTML = '<option value="">No hay campaña activa</option>'; return; }
-      fetch('/api/lotes?temporada_id=' + t.id).then(r => r.json()).then(function(lotes) {
-        if (!lotes.length) { sel.innerHTML = '<option value="">Sin lotes en esta campaña</option>'; return; }
-        sel.innerHTML = '<option value="">Seleccionar lote...</option>';
-        lotes.forEach(function(l) { sel.innerHTML += '<option value="' + l.id + '">' + l.nombre + '</option>'; });
-        recordarSeleccion('lote', 'ultimo_lote');
-      });
-    });
+  function onDepositoFrescaChange() {
+    var sel = document.getElementById('deposito-fresca');
+    var opt = sel.options[sel.selectedIndex];
+    var indicator = document.getElementById('stock-fresca-indicator');
+    document.getElementById('kilos-origen').value = '';
+    _depositoFrescaStock = 0;
+    if (opt && opt.dataset.kg) {
+      _depositoFrescaStock = parseFloat(opt.dataset.kg) || 0;
+      indicator.className = 'stock-badge' + (_depositoFrescaStock > 0 ? '' : ' vacio');
+      indicator.textContent = _depositoFrescaStock.toLocaleString('es-AR', {maximumFractionDigits:1}) + ' kg disponibles';
+    } else {
+      indicator.className = '';
+      indicator.textContent = '';
+    }
+    checkReady();
+    actualizarMermaPreview();
   }
-  cargarLotes();
-  window.addEventListener('campanaChange', cargarLotes);
+
+  function onDestinoFrescaChange() {
+    var esCamara = document.querySelector('input[name="fresca-destino"]:checked').value === 'camara';
+    var wrap = document.getElementById('fresca-camara-wrap');
+    wrap.style.display = esCamara ? '' : 'none';
+    if (esCamara && !document.getElementById('deposito-destino-camara').options.length > 1) {
+      cargarCamarasDestino();
+    }
+    checkReady();
+  }
+
+  function cargarCamarasDestino() {
+    fetch('/api/depositos?tipo_stock=mercaderia')
+      .then(function(r) { return r.json(); })
+      .then(function(deps) {
+        var sel = document.getElementById('deposito-destino-camara');
+        var camaras = deps.filter(function(d) { return d.requiere_despalillado; });
+        if (!camaras.length) {
+          sel.innerHTML = '<option value="">Sin cámaras configuradas</option>';
+          return;
+        }
+        sel.innerHTML = '<option value="">Seleccionar cámara...</option>';
+        camaras.forEach(function(d) {
+          sel.innerHTML += '<option value="' + d.id + '">' + d.nombre + '</option>';
+        });
+      });
+  }
 
   // ── BALANZA ──────────────────────────────────────────────────────
   var ws = new WebSocket('ws://' + location.host);
   ws.onmessage = function(e) {
     var data = JSON.parse(e.data);
-    if (data.tipo === 'peso') { pesoActual = data.valor; document.getElementById('peso-display').textContent = data.valor + ' kg'; checkReady(); }
+    if (data.tipo === 'peso') {
+      pesoActual = data.valor;
+      document.getElementById('peso-display').textContent = data.valor + ' kg';
+      if (modoActual === 'fresca') {
+        var disp = document.getElementById('peso-display-fresca');
+        disp.textContent = data.valor + ' kg';
+        document.getElementById('kilos-repesaje').value = data.valor;
+      }
+      checkReady();
+      actualizarMermaPreview();
+    }
   };
 
   // ── CÁMARA QR ────────────────────────────────────────────────────
@@ -551,10 +699,18 @@
 
   // ── VALIDACIÓN Y RESET ────────────────────────────────────────────
   function checkReady() {
-    var loteOk = modoActual === 'camara'
-      ? (juntadaSeleccionada !== null)
-      : !!document.getElementById('lote').value;
-    document.getElementById('btn-confirmar').disabled = !(loteOk && trabajadorId && pesoActual);
+    var ok;
+    if (modoActual === 'camara') {
+      ok = juntadaSeleccionada !== null && trabajadorId && (pesoActual || _parseEl('peso-manual'));
+    } else {
+      var depOk    = !!document.getElementById('deposito-fresca').value;
+      var kgOk     = (_parseEl('kilos-origen') || 0) > 0;
+      var pesoOk   = !!(pesoActual || _parseEl('kilos-repesaje'));
+      var esCamara = document.querySelector('input[name="fresca-destino"]:checked').value === 'camara';
+      var destinoOk = !esCamara || !!document.getElementById('deposito-destino-camara').value;
+      ok = depOk && kgOk && trabajadorId && pesoOk && destinoOk;
+    }
+    document.getElementById('btn-confirmar').disabled = !ok;
   }
 
   function resetTrabajadorForm() {
@@ -571,6 +727,18 @@
   function resetForm() {
     resetTrabajadorForm();
     document.getElementById('mensaje').innerHTML = '';
+    // Reset fresca
+    document.getElementById('deposito-fresca').value = '';
+    document.getElementById('kilos-origen').value = '';
+    document.getElementById('kilos-repesaje').value = '';
+    document.getElementById('peso-display-fresca').textContent = '— kg';
+    document.getElementById('stock-fresca-indicator').textContent = '';
+    document.getElementById('stock-fresca-indicator').className = '';
+    document.querySelector('input[name="fresca-destino"][value="mismo"]').checked = true;
+    document.getElementById('fresca-camara-wrap').style.display = 'none';
+    document.getElementById('deposito-destino-camara').value = '';
+    document.getElementById('merma-preview').style.display = 'none';
+    _depositoFrescaStock = 0;
   }
 
   // ── CONFIRMAR ─────────────────────────────────────────────────────
@@ -581,20 +749,37 @@
     var body;
     if (modoActual === 'camara' && juntadaSeleccionada) {
       body = {
-        lote_id: juntadaSeleccionada.lote_id,
-        despalillador_id: trabajadorId,
-        kilos: kilos,
-        juntada_id: juntadaSeleccionada.id
+        parcela_id:            juntadaSeleccionada.parcela_id,
+        despalillador_id:   trabajadorId,
+        kilos:              kilos,
+        juntada_id:         juntadaSeleccionada.id,
+        juntada_destino_id: juntadaSeleccionada.destino_id
       };
     } else {
-      var lote_id = document.getElementById('lote').value;
-      if (!lote_id) { alert('Seleccioná un lote'); return; }
-      var dep_fresca = document.getElementById('deposito-fresca').value;
+      var dep_origen  = document.getElementById('deposito-fresca').value;
+      var kg_origen   = _parseEl('kilos-origen');
+      var kg_salida   = pesoActual || _parseEl('kilos-repesaje');
+      var esCamara    = document.querySelector('input[name="fresca-destino"]:checked').value === 'camara';
+      var dep_destino = esCamara
+        ? document.getElementById('deposito-destino-camara').value
+        : dep_origen;
+
+      if (!dep_origen || !kg_origen || !kg_salida) { alert('Completá todos los campos'); return; }
+      if (esCamara && !dep_destino) { alert('Seleccioná una cámara destino'); return; }
+      if (kg_origen > _depositoFrescaStock) {
+        alert('Los kg a despalillar (' + kg_origen + ') superan el stock disponible (' + _depositoFrescaStock.toFixed(1) + ' kg)');
+        return;
+      }
+      if (kg_salida > kg_origen) {
+        alert('El peso repesado no puede ser mayor al peso de entrada');
+        return;
+      }
       body = {
-        lote_id: parseInt(lote_id),
-        despalillador_id: trabajadorId,
-        kilos: kilos,
-        deposito_id: dep_fresca ? parseInt(dep_fresca) : null
+        despalillador_id:  trabajadorId,
+        kilos:             kg_salida,
+        deposito_id:       parseInt(dep_origen),
+        deposito_destino_id: parseInt(dep_destino),
+        kilos_origen:      kg_origen
       };
     }
 
@@ -613,11 +798,17 @@
         }
         mostrarMensaje('mensaje', 'success', msg);
         juntadaSeleccionada = null;
-        document.getElementById('sec-form').style.display = 'none';
-        document.getElementById('modo-activo-badge').style.display = 'none';
-        document.getElementById('merma-preview').style.display = 'none';
-        resetForm();
-        if (modoActual === 'camara') cargarPendientes();
+        if (modoActual === 'camara') {
+          document.getElementById('sec-form').style.display = 'none';
+          document.getElementById('modo-activo-badge').style.display = 'none';
+          document.getElementById('merma-preview-camara').style.display = 'none';
+          resetForm();
+          cargarPendientes();
+        } else {
+          resetForm();
+          cargarDepositosFresca();
+          mostrarFormFresce();
+        }
         cargarHistorial();
       } else {
         mostrarMensaje('mensaje', 'error', data.error || 'Error al guardar');
@@ -627,21 +818,29 @@
 
   // ── MERMA PREVIEW ─────────────────────────────────────────────────
   function actualizarMermaPreview() {
-    var preview = document.getElementById('merma-preview');
-    if (modoActual !== 'camara' || !juntadaSeleccionada) {
-      preview.style.display = 'none';
-      return;
+    var kilosBase = 0, kilosDesp = 0, baseLabel = '';
+    var isFresca = modoActual === 'fresca';
+    var preview = document.getElementById(isFresca ? 'merma-preview' : 'merma-preview-camara');
+    var sufijo  = isFresca ? '' : '-camara';
+
+    if (isFresca) {
+      kilosDesp = _parseEl('kilos-repesaje') || pesoActual || 0;
+      kilosBase = _parseEl('kilos-origen') || 0;
+      baseLabel = 'Entrada: ' + kilosBase.toFixed(2) + ' kg';
+    } else if (juntadaSeleccionada) {
+      kilosDesp = pesoActual || _parseEl('peso-manual') || 0;
+      kilosBase = parseFloat(juntadaSeleccionada.kilos) || 0;
+      baseLabel = 'Cosechado: ' + kilosBase.toFixed(2) + ' kg';
     }
-    var kilosDesp = pesoActual || _parseEl('peso-manual') || 0;
-    var kilosJunt = parseFloat(juntadaSeleccionada.kilos) || 0;
-    if (!kilosDesp || !kilosJunt) { preview.style.display = 'none'; return; }
 
-    var mermaKg  = Math.max(0, kilosJunt - kilosDesp);
-    var mermaPct = kilosJunt > 0 ? ((mermaKg / kilosJunt) * 100) : 0;
+    if (!kilosDesp || !kilosBase) { preview.style.display = 'none'; return; }
 
-    document.getElementById('prev-merma-kg').textContent  = mermaKg.toFixed(2) + ' kg';
-    document.getElementById('prev-merma-pct').textContent = mermaPct.toFixed(1) + '%';
-    document.getElementById('prev-merma-base').textContent = 'Cosechado: ' + kilosJunt.toFixed(2) + ' kg · Despalillado: ' + kilosDesp.toFixed(2) + ' kg';
+    var mermaKg  = Math.max(0, kilosBase - kilosDesp);
+    var mermaPct = kilosBase > 0 ? ((mermaKg / kilosBase) * 100) : 0;
+
+    document.getElementById('prev-merma-kg'   + sufijo).textContent = mermaKg.toFixed(2) + ' kg';
+    document.getElementById('prev-merma-pct'  + sufijo).textContent = mermaPct.toFixed(1) + '%';
+    document.getElementById('prev-merma-base' + sufijo).textContent = baseLabel + ' · Despalillado: ' + kilosDesp.toFixed(2) + ' kg';
 
     preview.style.display = 'block';
     preview.className = 'merma-preview' + (mermaPct <= 5 ? ' ok' : '');
@@ -652,47 +851,39 @@
     fetch('/api/despalillado/hoy')
       .then(function(r) { return r.json(); })
       .then(function(data) {
-        var wrap     = document.getElementById('hist-merma-wrap');
-        var kpiWrap  = document.getElementById('kpi-merma-wrap');
-        var lista    = document.getElementById('hist-merma-lista');
+        var wrap    = document.getElementById('hist-merma-wrap');
+        var kpiWrap = document.getElementById('kpi-merma-wrap');
 
         if (!data.length) { wrap.style.display = 'none'; kpiWrap.style.display = 'none'; return; }
 
         // KPIs
-        var conMerma  = data.filter(function(r) { return r.merma_kg != null; });
-        var totalMermaKg  = conMerma.reduce(function(s, r) { return s + parseFloat(r.merma_kg || 0); }, 0);
-        var avgMermaPct   = conMerma.length
+        var conMerma     = data.filter(function(r) { return r.merma_kg != null; });
+        var totalMermaKg = conMerma.reduce(function(s, r) { return s + parseFloat(r.merma_kg || 0); }, 0);
+        var avgMermaPct  = conMerma.length
           ? conMerma.reduce(function(s, r) { return s + parseFloat(r.merma_pct || 0); }, 0) / conMerma.length
           : null;
 
         document.getElementById('kpi-registros').textContent = data.length;
-        document.getElementById('kpi-merma-kg').textContent  = totalMermaKg.toFixed(2) + ' kg';
+        document.getElementById('kpi-merma-kg').textContent  = totalMermaKg.toFixed(3) + ' kg';
         document.getElementById('kpi-merma-pct').textContent = avgMermaPct != null ? avgMermaPct.toFixed(1) + '%' : '—';
         kpiWrap.style.display = '';
 
-        // Historial
-        lista.innerHTML = data.map(function(r) {
-          var hora = new Date(r.fecha_hora).toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' });
-          var mermaClass = 'sin', mermaText = 'Sin merma';
-          if (r.merma_pct != null) {
-            var pct = parseFloat(r.merma_pct);
-            mermaClass = pct > 10 ? 'alta' : pct > 5 ? 'media' : 'baja';
-            mermaText  = r.merma_kg.toFixed(2) + ' kg (' + pct.toFixed(1) + '%)';
-          }
-          var deposito = r.deposito_nombre ? ' → ' + r.deposito_nombre : '';
-          return '<div class="hist-row">' +
-            '<div style="flex:1">' +
-              '<div class="hist-lote">' + r.lote + (r.juntada_id ? ' <span style="font-size:11px;color:var(--texto-secundario);">❄️ #' + r.juntada_id + '</span>' : '') + '</div>' +
-              '<div class="hist-detail">' + r.despalillador + ' · ' + hora + deposito + '</div>' +
-            '</div>' +
-            '<div style="text-align:right">' +
-              '<div style="font-weight:700;font-size:15px;">' + parseFloat(r.kilos).toFixed(2) + ' kg</div>' +
-              (r.kilos_juntada ? '<div style="font-size:11px;color:var(--texto-secundario);">Cosechado: ' + parseFloat(r.kilos_juntada).toFixed(2) + ' kg</div>' : '') +
-            '</div>' +
-            '<div><span class="hist-merma-badge ' + mermaClass + '">' + mermaText + '</span></div>' +
-            '</div>';
-        }).join('');
-
+        // Grilla estándar — mapear al formato de movimientos-grid
+        var rows = data.map(function(r) {
+          return {
+            juntada_id:  r.juntada_id,
+            cosechero:   r.despalillador,
+            juntador_id: null,
+            fecha:       r.fecha,
+            tipo:        'ingreso',
+            kilos:       r.kilos,
+            lote:        r.parcela || 'Fresco s/parcela',
+            deposito:    r.deposito,
+            usuario:     r.usuario,
+            usuario_id:  r.usuario_id
+          };
+        });
+        renderMovimientosGrid('tbody-desp-hoy', rows);
         wrap.style.display = '';
       });
   }

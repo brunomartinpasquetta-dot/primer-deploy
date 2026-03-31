@@ -43,13 +43,16 @@
   }
 
   function _row(m) {
-    var esIngreso = m.tipo === 'ingreso';
-    var bg        = esIngreso ? 'background:#f0faf0;' : 'background:#fff5f5;';
-    var colorKg   = esIngreso ? 'color:#2d6a4f;font-weight:700;' : 'color:#c0392b;font-weight:700;';
-    var signo     = esIngreso ? '+' : '-';
-    var tipoBadge = esIngreso
-      ? '<span class="badge" style="background:var(--sem-verde-bg);color:var(--sem-verde);">Ingreso</span>'
-      : '<span class="badge" style="background:var(--sem-rojo-bg);color:var(--sem-rojo);">Egreso</span>';
+    var esIngreso  = m.tipo === 'ingreso';
+    var esPendiente = m.tipo === 'pendiente_despalillado';
+    var bg        = esPendiente ? 'background:#fffbeb;' : esIngreso ? 'background:#f0faf0;' : 'background:#fff5f5;';
+    var colorKg   = esPendiente ? 'color:#b45309;font-weight:700;' : esIngreso ? 'color:#2d6a4f;font-weight:700;' : 'color:#c0392b;font-weight:700;';
+    var signo     = esIngreso ? '+' : esPendiente ? '~' : '-';
+    var tipoBadge = esPendiente
+      ? '<span class="badge" style="background:#fef3c7;color:#92400e;">Pendiente</span>'
+      : esIngreso
+        ? '<span class="badge" style="background:var(--sem-verde-bg);color:var(--sem-verde);">Ingreso</span>'
+        : '<span class="badge" style="background:var(--sem-rojo-bg);color:var(--sem-rojo);">Egreso</span>';
 
     var cosecheroCell = (m.cosechero || '—') + _chip(m.juntador_id);
     var usuarioCell   = (m.usuario   || '—') + _chip(m.usuario_id);

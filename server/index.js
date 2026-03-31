@@ -36,7 +36,7 @@ app.use('/api/usuarios',          requireAuth, soloAdmin, require('./routes/usua
 
 // ── Rutas encargado y admin ─────────────────────────────────────
 app.use('/api/aplicaciones',      requireAuth, encargadoOAdmin, require('./routes/aplicaciones'));
-app.use('/api/lotes',             requireAuth, encargadoOAdmin, require('./routes/lotes'));
+app.use('/api/parcelas',          requireAuth, encargadoOAdmin, require('./routes/lotes'));
 app.use('/api/juntadores',        requireAuth, encargadoOAdmin, require('./routes/juntadores'));
 app.use('/api/juntada',           requireAuth, encargadoOAdmin, require('./routes/juntada'));
 app.use('/api/despalillado',      requireAuth, encargadoOAdmin, require('./routes/despalillado'));
@@ -49,6 +49,7 @@ app.use('/api/proveedores',       requireAuth, encargadoOAdmin, require('./route
 app.use('/api/compras',           requireAuth, encargadoOAdmin, require('./routes/compras'));
 app.use('/api/clientes',          requireAuth, encargadoOAdmin, require('./routes/clientes'));
 app.use('/api/personal',          requireAuth, encargadoOAdmin, require('./routes/personal'));
+app.use('/api/roles-trabajo',     requireAuth, encargadoOAdmin, require('./routes/roles-trabajo'));
 app.use('/api/permisos',          requireAuth, require('./routes/permisos'));
 
 // WebSocket para balanza
