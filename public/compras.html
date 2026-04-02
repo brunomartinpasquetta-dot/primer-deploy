@@ -256,17 +256,36 @@
 
 <!-- ── MODAL EDITAR COMPRA ── -->
 <div class="modal-overlay" id="modal-editar-compra">
-  <div class="modal-box" style="max-width:380px;">
+  <div class="modal-box" style="max-width:500px;">
     <h3 style="margin-bottom:14px;">Editar compra</h3>
     <input type="hidden" id="edit-compra-id">
-    <label style="font-size:11px;font-weight:600;color:#64748B;text-transform:uppercase;letter-spacing:.4px;">N° Remito</label>
-    <input type="text" id="edit-compra-rem" placeholder="Opcional" style="width:100%;margin-top:4px;margin-bottom:10px;padding:7px 9px;font-size:13px;border:1px solid #E2E8F0;border-radius:6px;box-sizing:border-box;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+      <div>
+        <label style="font-size:11px;font-weight:600;color:#64748B;text-transform:uppercase;letter-spacing:.4px;">Proveedor</label>
+        <select id="edit-compra-prov" style="width:100%;margin-top:4px;height:32px;padding:4px 8px;font-size:13px;border:1px solid #E2E8F0;border-radius:6px;box-sizing:border-box;"></select>
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:600;color:#64748B;text-transform:uppercase;letter-spacing:.4px;">Fecha</label>
+        <input type="date" id="edit-compra-fecha" style="width:100%;margin-top:4px;height:32px;padding:4px 8px;font-size:13px;border:1px solid #E2E8F0;border-radius:6px;box-sizing:border-box;">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+      <div>
+        <label style="font-size:11px;font-weight:600;color:#64748B;text-transform:uppercase;letter-spacing:.4px;">Forma de pago</label>
+        <select id="edit-compra-fp" style="width:100%;margin-top:4px;height:32px;padding:4px 8px;font-size:13px;border:1px solid #E2E8F0;border-radius:6px;box-sizing:border-box;"></select>
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:600;color:#64748B;text-transform:uppercase;letter-spacing:.4px;">N° Remito</label>
+        <input type="text" id="edit-compra-rem" placeholder="Opcional" style="width:100%;margin-top:4px;height:32px;padding:4px 8px;font-size:13px;border:1px solid #E2E8F0;border-radius:6px;box-sizing:border-box;">
+      </div>
+    </div>
     <label style="font-size:11px;font-weight:600;color:#64748B;text-transform:uppercase;letter-spacing:.4px;">Observación</label>
-    <textarea id="edit-compra-obs" rows="3" style="width:100%;margin-top:4px;padding:7px 9px;font-size:13px;border:1px solid #E2E8F0;border-radius:6px;resize:vertical;box-sizing:border-box;font-family:inherit;"></textarea>
+    <textarea id="edit-compra-obs" rows="2" style="width:100%;margin-top:4px;padding:7px 9px;font-size:13px;border:1px solid #E2E8F0;border-radius:6px;resize:vertical;box-sizing:border-box;font-family:inherit;"></textarea>
+    <div id="edit-compra-detalle" style="margin-top:12px;"></div>
     <div id="edit-compra-msg" style="font-size:12px;margin-top:6px;"></div>
     <div style="display:flex;gap:8px;margin-top:14px;">
       <button class="btn-cerrar" style="flex:1;" onclick="cerrarEditarCompra()">Cancelar</button>
-      <button class="btn-primary-flat" style="flex:1;" onclick="guardarEditarCompra(this)">Guardar</button>
+      <button class="btn-primary-flat" style="flex:1;" onclick="guardarEditarCompra(this)">Guardar cambios</button>
     </div>
   </div>
 </div>
@@ -659,10 +678,41 @@
   }
 
   function abrirEditarCompra(id, obs, rem) {
+    var compra = _historialData.find(function(c) { return c.id == id; });
     document.getElementById('edit-compra-id').value = id;
     document.getElementById('edit-compra-obs').value = obs || '';
     document.getElementById('edit-compra-rem').value = rem || '';
     document.getElementById('edit-compra-msg').textContent = '';
+
+    // Poblar selects de proveedor y forma de pago
+    var selProv = document.getElementById('edit-compra-prov');
+    selProv.innerHTML = document.getElementById('proveedor').innerHTML;
+    var selFP = document.getElementById('edit-compra-fp');
+    selFP.innerHTML = '<option value="">Sin especificar</option>' + document.getElementById('forma_pago').innerHTML;
+
+    if (compra) {
+      selProv.value = compra.proveedor_id || '';
+      document.getElementById('edit-compra-fecha').value = compra.fecha ? compra.fecha.split('T')[0] : '';
+      if (compra.forma_pago_id) selFP.value = compra.forma_pago_id;
+    }
+
+    // Cargar ítems de la compra (solo lectura)
+    var detDiv = document.getElementById('edit-compra-detalle');
+    detDiv.innerHTML = '<div style="color:var(--texto-suave);font-size:12px;padding:8px 0;">Cargando ítems...</div>';
+    fetch('/api/compras/' + id + '/detalle').then(function(r){return r.json();}).then(function(items){
+      if (!items.length) { detDiv.innerHTML = ''; return; }
+      detDiv.innerHTML = '<div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--texto-suave);letter-spacing:.4px;margin-bottom:6px;">Ítems de la compra</div>' +
+        '<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:var(--fondo-dark);">' +
+        '<th style="padding:5px 8px;text-align:left;">Producto</th><th style="padding:5px 8px;text-align:right;">Cant.</th>' +
+        '<th style="padding:5px 8px;text-align:right;">Precio u.</th><th style="padding:5px 8px;text-align:right;">Subtotal</th></tr></thead><tbody>' +
+        items.map(function(i){
+          return '<tr><td style="padding:4px 8px;border-bottom:1px solid var(--borde);">' + i.producto + '</td>' +
+            '<td style="padding:4px 8px;text-align:right;border-bottom:1px solid var(--borde);">' + parseFloat(i.cantidad).toLocaleString('es-AR') + '</td>' +
+            '<td style="padding:4px 8px;text-align:right;border-bottom:1px solid var(--borde);">$' + parseFloat(i.precio_unit).toLocaleString('es-AR') + '</td>' +
+            '<td style="padding:4px 8px;text-align:right;border-bottom:1px solid var(--borde);font-weight:600;">$' + parseFloat(i.subtotal).toLocaleString('es-AR') + '</td></tr>';
+        }).join('') + '</tbody></table>';
+    }).catch(function(){ detDiv.innerHTML = ''; });
+
     document.getElementById('modal-editar-compra').classList.add('open');
   }
 
@@ -671,17 +721,22 @@
   }
 
   function guardarEditarCompra(btn) {
-    var id  = document.getElementById('edit-compra-id').value;
-    var obs = document.getElementById('edit-compra-obs').value;
+    var id = document.getElementById('edit-compra-id').value;
     btn.disabled = true;
     btn.textContent = 'Guardando...';
     fetch('/api/compras/' + id, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ observacion: obs, numero_remito: document.getElementById('edit-compra-rem').value || null })
+      body: JSON.stringify({
+        proveedor_id: document.getElementById('edit-compra-prov').value || undefined,
+        fecha: document.getElementById('edit-compra-fecha').value || undefined,
+        forma_pago_id: document.getElementById('edit-compra-fp').value || undefined,
+        numero_remito: document.getElementById('edit-compra-rem').value || null,
+        observacion: document.getElementById('edit-compra-obs').value
+      })
     }).then(function(r){ return r.json(); }).then(function(data){
       btn.disabled = false;
-      btn.textContent = 'Guardar';
+      btn.textContent = 'Guardar cambios';
       if (data.ok) {
         cerrarEditarCompra();
         cargarHistorial();
@@ -690,7 +745,7 @@
       }
     }).catch(function(){
       btn.disabled = false;
-      btn.textContent = 'Guardar';
+      btn.textContent = 'Guardar cambios';
       document.getElementById('edit-compra-msg').innerHTML = '<span style="color:#EF4444;">Error de conexión</span>';
     });
   }

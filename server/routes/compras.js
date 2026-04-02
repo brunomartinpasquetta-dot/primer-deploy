@@ -9,7 +9,7 @@ router.get('/', async (req, res) => {
     const pool = await getPool();
     const dbReq = pool.request();
     let query = `SELECT c.id, c.fecha, c.total, c.observacion,
-              c.proveedor_id, c.numero_remito,
+              c.proveedor_id, c.numero_remito, c.forma_pago_id, c.temporada_id,
               p.nombre AS proveedor,
               t.nombre AS temporada,
               fp.nombre AS forma_pago,
@@ -204,13 +204,17 @@ router.post('/', async (req, res) => {
 
 // PATCH /:id — editar observación
 router.patch('/:id', async (req, res) => {
-  const { observacion, numero_remito } = req.body;
+  const { observacion, numero_remito, fecha, forma_pago_id, proveedor_id, temporada_id } = req.body;
   try {
     const pool = await getPool();
     const r = pool.request().input('id', sql.Int, req.params.id);
     const sets = [];
-    if (observacion !== undefined)  { sets.push('observacion = @obs');    r.input('obs', sql.NVarChar, observacion || ''); }
-    if (numero_remito !== undefined) { sets.push('numero_remito = @rem'); r.input('rem', sql.NVarChar, numero_remito || null); }
+    if (observacion !== undefined)   { sets.push('observacion = @obs');      r.input('obs',  sql.NVarChar,  observacion || ''); }
+    if (numero_remito !== undefined) { sets.push('numero_remito = @rem');    r.input('rem',  sql.NVarChar,  numero_remito || null); }
+    if (fecha !== undefined)         { sets.push('fecha = @fecha');          r.input('fecha', sql.Date,     fecha); }
+    if (forma_pago_id !== undefined) { sets.push('forma_pago_id = @fpid');  r.input('fpid', sql.Int,       forma_pago_id || null); }
+    if (proveedor_id !== undefined)  { sets.push('proveedor_id = @pid');    r.input('pid',  sql.Int,       proveedor_id); }
+    if (temporada_id !== undefined)  { sets.push('temporada_id = @tid');    r.input('tid',  sql.Int,       temporada_id || null); }
     if (!sets.length) return res.json({ ok: true });
     await r.query('UPDATE Compras SET ' + sets.join(', ') + ' WHERE id = @id');
     res.json({ ok: true });
