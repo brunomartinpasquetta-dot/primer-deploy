@@ -290,8 +290,6 @@
       .juntada-historial { order: 2; }
       .juntada-form { order: 1; }
     }
-    .modal-overlay { display:none; }
-    .modal-overlay.open { display:flex; }
   </style>
 </head>
 <body>
@@ -470,11 +468,11 @@
           <h3>Registros de hoy</h3>
           <small id="hist-contador"></small>
           <div style="margin-left:auto;display:flex;gap:8px;">
-            <button class="ins-btn ins-btn-gray" onclick="abrirHistorialJuntada()" style="font-size:11px;padding:5px 10px;">
+            <button class="ins-btn ins-btn-gray" onclick="mostrarTab('historial')" style="font-size:11px;padding:5px 10px;">
               <i data-lucide="list" style="width:12px;height:12px;"></i> Historial
             </button>
-            <button class="ins-btn ins-btn-primary" onclick="abrirTotalesJuntador()" style="font-size:11px;padding:5px 10px;">
-              <i data-lucide="bar-chart-2" style="width:12px;height:12px;"></i> Totales campaña
+            <button class="ins-btn ins-btn-primary" onclick="mostrarTab('totales')" style="font-size:11px;padding:5px 10px;">
+              <i data-lucide="bar-chart-2" style="width:12px;height:12px;"></i> Totales x Cosechero
             </button>
           </div>
         </div>
@@ -495,10 +493,11 @@
                 <th>Parcela</th>
                 <th>Depósito</th>
                 <th>Usuario</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody id="tbody-hist-hoy">
-              <tr><td colspan="8" class="empty">Cargando...</td></tr>
+              <tr><td colspan="9" class="empty">Cargando...</td></tr>
             </tbody>
           </table>
         </div>
@@ -508,6 +507,59 @@
       </div>
 
       </div><!-- /juntada-layout -->
+
+      <!-- ── Historial / Totales inline ── -->
+      <div id="sec-hist-totales" style="display:none;margin-top:16px;">
+        <div class="tabs">
+          <button class="tab active" id="tab-historial" onclick="mostrarTab('historial')">Historial</button>
+          <button class="tab" id="tab-totales" onclick="mostrarTab('totales')">Totales x Cosechero</button>
+        </div>
+
+        <!-- Tab: Historial -->
+        <div class="tab-content active" id="tc-historial">
+          <div class="card" style="margin-top:0;border-top-left-radius:0;border-top-right-radius:0;">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+              <input type="date" id="hist-j-desde" onchange="cargarHistorialInline()" style="height:32px;padding:0 8px;border:1px solid var(--borde);border-radius:6px;font-size:12px;">
+              <input type="date" id="hist-j-hasta" onchange="cargarHistorialInline()" style="height:32px;padding:0 8px;border:1px solid var(--borde);border-radius:6px;font-size:12px;">
+              <input type="search" id="hist-j-buscar" placeholder="Buscar..." oninput="filtrarHistorialInline()" style="height:32px;padding:0 8px;border:1px solid var(--borde);border-radius:6px;font-size:12px;flex:1;min-width:120px;">
+            </div>
+            <div class="table-wrap" style="overflow-x:auto;max-height:500px;overflow-y:auto;">
+              <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                <thead><tr style="background:var(--fondo-dark);">
+                  <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">#</th>
+                  <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Cosechero</th>
+                  <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Fecha/Hora</th>
+                  <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Parcela</th>
+                  <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:right;color:var(--texto-suave);">Kg</th>
+                  <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Usuario</th>
+                  <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Temporada</th>
+                  <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:center;color:var(--texto-suave);">Acciones</th>
+                </tr></thead>
+                <tbody id="tbody-hist-completo"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Totales x Cosechero -->
+        <div class="tab-content" id="tc-totales">
+          <div class="card" style="margin-top:0;border-top-left-radius:0;border-top-right-radius:0;">
+            <div class="table-wrap" style="overflow-x:auto;">
+              <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                <thead><tr style="background:var(--fondo-dark);">
+                  <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Cosechero</th>
+                  <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:center;color:var(--texto-suave);">Registros</th>
+                  <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:right;color:var(--texto-suave);">KG Total</th>
+                  <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">1er registro</th>
+                  <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Últ. registro</th>
+                </tr></thead>
+                <tbody id="tbody-totales-juntador"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -927,15 +979,80 @@
   }
 
   var _juntadaData = [];
+  var _juntadaCols = [
+    {label:'Cosechero',campo:'cosechero'},
+    {label:'Parcela',campo:'parcela'},
+    {label:'Depósito',campo:'deposito'},
+    {label:'Tipo',campo:'tipo'}
+  ];
+
+  function _renderHoyRow(m) {
+    var esIngreso  = m.tipo === 'ingreso';
+    var esPendiente = m.tipo === 'pendiente_despalillado';
+    var esAnulada = !!m.anulada;
+    var bg = esPendiente ? 'background:#fffbeb;' : esIngreso ? 'background:#f0faf0;' : 'background:#fff5f5;';
+    var colorKg = esPendiente ? 'color:#b45309;font-weight:700;' : esIngreso ? 'color:#2d6a4f;font-weight:700;' : 'color:#c0392b;font-weight:700;';
+    var signo = esIngreso ? '+' : esPendiente ? '~' : '-';
+    var tipoBadge = esPendiente
+      ? '<span class="badge" style="background:#fef3c7;color:#92400e;">Pendiente</span>'
+      : esIngreso
+        ? '<span class="badge" style="background:var(--sem-verde-bg);color:var(--sem-verde);">Ingreso</span>'
+        : '<span class="badge" style="background:var(--sem-rojo-bg);color:var(--sem-rojo);">Egreso</span>';
+    var _chip = function(id) { if (!id && id !== 0) return ''; return ' <span style="font-family:\'JetBrains Mono\',monospace;font-size:10px;background:var(--fondo-dark);border:1px solid var(--borde);border-radius:4px;padding:1px 4px;opacity:.75;">#' + id + '</span>'; };
+    var _jidBadge = function(jid) { if (!jid) return '—'; return '<span style="font-family:\'JetBrains Mono\',monospace;font-size:11px;background:var(--fondo-dark);border:1px solid var(--borde);border-radius:4px;padding:1px 5px;">#' + jid + '</span>'; };
+    var _fmt = function(n) { return parseFloat(n || 0).toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:1}); };
+    var _fmtFecha = function(iso) { if (!iso) return '—'; var d = new Date(iso); var dd=String(d.getDate()).padStart(2,'0'); var mm=String(d.getMonth()+1).padStart(2,'0'); var yy=d.getFullYear(); var hh=String(d.getHours()).padStart(2,'0'); var mn=String(d.getMinutes()).padStart(2,'0'); return dd+'/'+mm+'/'+yy+' '+hh+':'+mn; };
+
+    var acciones = esAnulada
+      ? '<span class="badge-anulada">Anulada</span>'
+      : '<button class="btn-icon" title="Editar" onclick="editarJuntada(' + m.juntada_id + ')"><i data-lucide="pencil"></i></button>' +
+        '<button class="btn-icon-danger" title="Anular" onclick="anularJuntada(' + m.juntada_id + ')"><i data-lucide="ban"></i></button>';
+
+    var trClass = esAnulada ? ' class="row-anulada"' : '';
+    return '<tr' + trClass + ' style="' + (esAnulada ? '' : bg) + '">' +
+      '<td style="text-align:center;">' + _jidBadge(m.juntada_id) + '</td>' +
+      '<td style="font-size:13px;">' + (m.cosechero || '—') + _chip(m.juntador_id) + '</td>' +
+      '<td style="font-size:12px;white-space:nowrap;">' + _fmtFecha(m.fecha) + '</td>' +
+      '<td>' + tipoBadge + '</td>' +
+      '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;' + colorKg + '">' + signo + _fmt(m.kilos) + ' kg</td>' +
+      '<td style="font-size:12px;">' + (m.parcela || '—') + '</td>' +
+      '<td style="font-size:12px;">' + (m.deposito || m.destino_venta || '—') + '</td>' +
+      '<td style="font-size:12px;">' + (m.usuario || '—') + _chip(m.usuario_id) + '</td>' +
+      '<td style="text-align:center;white-space:nowrap;">' + acciones + '</td>' +
+    '</tr>';
+  }
+
+  function _renderHoyGrid(tbodyId, data) {
+    var tbody = document.getElementById(tbodyId);
+    if (!tbody) return;
+    if (!data || !data.length) {
+      tbody.innerHTML = '<tr><td colspan="9" class="empty">Sin movimientos</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(_renderHoyRow).join('');
+    lucide.createIcons();
+  }
 
   function filtrarJuntada() {
     var q = (document.getElementById('juntada-buscar').value || '').trim();
-    filtrarMovimientosGrid('tbody-hist-hoy', _juntadaData, q);
+    if (!q) { _renderHoyGrid('tbody-hist-hoy', _juntadaData); return; }
+    var filtrado;
+    if (typeof matchFiltro === 'function') {
+      filtrado = _juntadaData.filter(function(m) { return matchFiltro(m, q, _juntadaCols); });
+    } else {
+      var ql = q.toLowerCase();
+      filtrado = _juntadaData.filter(function(m) {
+        return _juntadaCols.some(function(col) {
+          return (m[col.campo] || '').toString().toLowerCase().indexOf(ql) >= 0;
+        });
+      });
+    }
+    _renderHoyGrid('tbody-hist-hoy', filtrado);
   }
 
   function limpiarFiltrosJuntada() {
     document.getElementById('juntada-buscar').value = '';
-    renderMovimientosGrid('tbody-hist-hoy', _juntadaData);
+    _renderHoyGrid('tbody-hist-hoy', _juntadaData);
   }
 
   function cargarHistorial() {
@@ -957,7 +1074,8 @@
             parcela_id:  d.parcela_id,
             juntador_id: d.juntador_id,
             usuario:     d.usuario,
-            usuario_id:  d.usuario_id
+            usuario_id:  d.usuario_id,
+            anulada:     d.anulada || false
           };
         });
         var totalKg = data.reduce(function(s, m) {
@@ -970,12 +1088,6 @@
           ? totalKg.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:2}) + ' kg'
           : '—';
         _juntadaData = data;
-        var _juntadaCols = [
-          {label:'Cosechero',campo:'cosechero'},
-          {label:'Parcela',campo:'parcela'},
-          {label:'Depósito',campo:'deposito'},
-          {label:'Tipo',campo:'tipo'}
-        ];
         poblarDatalist('juntada-opciones', data, _juntadaCols);
         filtrarJuntada();
         guardarUltimaJuntada(data);
@@ -983,7 +1095,7 @@
       })
       .catch(function() {
         document.getElementById('tbody-hist-hoy').innerHTML =
-          '<tr><td colspan="8" class="empty">Error al cargar</td></tr>';
+          '<tr><td colspan="9" class="empty">Error al cargar</td></tr>';
       });
   }
 
@@ -1047,17 +1159,23 @@
     checkReady();
   }
 
-  // ── HISTORIAL COMPLETO ────────────────────────────────────────────
-  function abrirHistorialJuntada() {
-    document.getElementById('modal-hist-juntada').classList.add('open');
-    cargarHistorialJuntada();
+  // ── TABS: HISTORIAL / TOTALES ────────────────────────────────────
+  var _historialData = [];
+
+  function mostrarTab(tab) {
+    var sec = document.getElementById('sec-hist-totales');
+    sec.style.display = '';
+    document.getElementById('tab-historial').classList.toggle('active', tab === 'historial');
+    document.getElementById('tab-totales').classList.toggle('active', tab === 'totales');
+    document.getElementById('tc-historial').classList.toggle('active', tab === 'historial');
+    document.getElementById('tc-totales').classList.toggle('active', tab === 'totales');
+    if (tab === 'historial') cargarHistorialInline();
+    else cargarTotalesJuntador();
   }
-  function cerrarHistorialJuntada() {
-    document.getElementById('modal-hist-juntada').classList.remove('open');
-  }
-  function cargarHistorialJuntada() {
+
+  function cargarHistorialInline() {
     var tbody = document.getElementById('tbody-hist-completo');
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--texto-suave);">Cargando...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--texto-suave);">Cargando...</td></tr>';
     var tid = (window.temporadaActiva && window.temporadaActiva.id) || '';
     var desde = document.getElementById('hist-j-desde').value;
     var hasta = document.getElementById('hist-j-hasta').value;
@@ -1068,37 +1186,54 @@
     fetch('/api/juntada/historial' + (params.length ? '?' + params.join('&') : ''))
       .then(function(r) { return r.json(); })
       .then(function(data) {
-        if (!data.length) {
-          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--texto-suave);">Sin registros</td></tr>';
-          return;
-        }
-        var fmtFH = function(iso) { if (!iso) return '—'; var d = new Date(iso); return d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}); };
-        var mono = "font-family:'JetBrains Mono',monospace;";
-        tbody.innerHTML = data.map(function(r) {
-          return '<tr>' +
-            '<td style="' + mono + 'font-size:11px;color:var(--texto-suave);">#' + r.id + '</td>' +
-            '<td style="font-size:12px;font-weight:600;">' + (r.cosechero || '—') + '</td>' +
-            '<td style="font-size:12px;">' + fmtFH(r.fecha) + '</td>' +
-            '<td style="font-size:12px;">' + (r.parcela || '—') + '</td>' +
-            '<td style="' + mono + 'text-align:right;font-weight:700;color:var(--sem-verde);">' + parseFloat(r.kilos||0).toLocaleString('es-AR',{minimumFractionDigits:2}) + ' kg</td>' +
-            '<td style="font-size:11px;color:var(--texto-suave);">' + (r.usuario || '—') + '</td>' +
-            '<td style="font-size:11px;color:var(--texto-suave);">' + (r.temporada || '—') + '</td>' +
-          '</tr>';
-        }).join('');
+        _historialData = data;
+        filtrarHistorialInline();
       })
       .catch(function() {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:#c0392b;">Error al cargar</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:#c0392b;">Error al cargar</td></tr>';
       });
   }
 
-  // ── TOTALES POR JUNTADOR ─────────────────────────────────────────
-  function abrirTotalesJuntador() {
-    document.getElementById('modal-totales-juntador').classList.add('open');
-    cargarTotalesJuntador();
+  function filtrarHistorialInline() {
+    var tbody = document.getElementById('tbody-hist-completo');
+    var q = (document.getElementById('hist-j-buscar').value || '').trim().toLowerCase();
+    var data = _historialData;
+    if (q) {
+      data = data.filter(function(r) {
+        return (r.cosechero || '').toLowerCase().indexOf(q) >= 0 ||
+               (r.parcela || '').toLowerCase().indexOf(q) >= 0 ||
+               (r.usuario || '').toLowerCase().indexOf(q) >= 0 ||
+               (r.temporada || '').toLowerCase().indexOf(q) >= 0;
+      });
+    }
+    if (!data.length) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--texto-suave);">Sin registros</td></tr>';
+      return;
+    }
+    var fmtFH = function(iso) { if (!iso) return '—'; var d = new Date(iso); return d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}); };
+    var mono = "font-family:'JetBrains Mono',monospace;";
+    tbody.innerHTML = data.map(function(r) {
+      var esAnulada = !!r.anulada;
+      var trClass = esAnulada ? ' class="row-anulada"' : '';
+      var acciones = esAnulada
+        ? '<span class="badge-anulada">Anulada</span>'
+        : '<button class="btn-icon" title="Editar" onclick="editarJuntada(' + r.id + ')"><i data-lucide="pencil"></i></button>' +
+          '<button class="btn-icon-danger" title="Anular" onclick="anularJuntada(' + r.id + ')"><i data-lucide="ban"></i></button>';
+      return '<tr' + trClass + '>' +
+        '<td style="' + mono + 'font-size:11px;color:var(--texto-suave);">#' + r.id + '</td>' +
+        '<td style="font-size:12px;font-weight:600;">' + (r.cosechero || '—') + '</td>' +
+        '<td style="font-size:12px;">' + fmtFH(r.fecha) + '</td>' +
+        '<td style="font-size:12px;">' + (r.parcela || '—') + '</td>' +
+        '<td style="' + mono + 'text-align:right;font-weight:700;color:var(--sem-verde);">' + parseFloat(r.kilos||0).toLocaleString('es-AR',{minimumFractionDigits:2}) + ' kg</td>' +
+        '<td style="font-size:11px;color:var(--texto-suave);">' + (r.usuario || '—') + '</td>' +
+        '<td style="font-size:11px;color:var(--texto-suave);">' + (r.temporada || '—') + '</td>' +
+        '<td style="text-align:center;white-space:nowrap;">' + acciones + '</td>' +
+      '</tr>';
+    }).join('');
+    lucide.createIcons();
   }
-  function cerrarTotalesJuntador() {
-    document.getElementById('modal-totales-juntador').classList.remove('open');
-  }
+
+  // ── TOTALES POR COSECHERO ─────────────────────────────────────────
   function cargarTotalesJuntador() {
     var tbody = document.getElementById('tbody-totales-juntador');
     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--texto-suave);">Cargando...</td></tr>';
@@ -1132,59 +1267,30 @@
       });
   }
 
+  // ── ANULAR JUNTADA ───────────────────────────────────────────────
+  function anularJuntada(id) {
+    var motivo = prompt('Motivo de anulación:');
+    if (!motivo) return;
+    if (!confirm('¿Anular juntada #' + id + '? Se revertirán los movimientos de stock.')) return;
+    fetch('/api/juntada/' + id + '/anular', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ motivo: motivo })
+    }).then(function(r) { return r.json(); }).then(function(data) {
+      if (data.ok) { cargarHistorial(); cargarHistorialInline(); }
+      else { alert('Error: ' + (data.error || 'No se pudo anular')); }
+    }).catch(function() { alert('Error de conexión'); });
+  }
+
+  // ── EDITAR JUNTADA (placeholder) ─────────────────────────────────
+  function editarJuntada(id) {
+    alert('Editar juntada #' + id + ' — funcionalidad pendiente');
+  }
+
   cargarHistorial();
   cargarTemporadaActiva();
 </script>
 
-<!-- MODAL HISTORIAL COMPLETO JUNTADA -->
-<div class="modal-overlay" id="modal-hist-juntada">
-  <div class="modal-box" style="width:92%;max-width:860px;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
-      <h3 style="margin:0;">Historial completo de cosecha</h3>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <input type="date" id="hist-j-desde" onchange="cargarHistorialJuntada()" style="height:32px;padding:0 8px;border:1px solid var(--borde);border-radius:6px;font-size:12px;">
-        <input type="date" id="hist-j-hasta" onchange="cargarHistorialJuntada()" style="height:32px;padding:0 8px;border:1px solid var(--borde);border-radius:6px;font-size:12px;">
-        <button class="btn-cerrar" onclick="cerrarHistorialJuntada()">✕ Cerrar</button>
-      </div>
-    </div>
-    <div style="overflow-x:auto;">
-      <table style="width:100%;border-collapse:collapse;font-size:13px;">
-        <thead><tr style="background:var(--fondo-dark);">
-          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">#</th>
-          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Cosechero</th>
-          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Fecha/Hora</th>
-          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Parcela</th>
-          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:right;color:var(--texto-suave);">Kg</th>
-          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Usuario</th>
-          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Temporada</th>
-        </tr></thead>
-        <tbody id="tbody-hist-completo"></tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL TOTALES POR JUNTADOR -->
-<div class="modal-overlay" id="modal-totales-juntador">
-  <div class="modal-box" style="width:90%;max-width:640px;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-      <h3 style="margin:0;">Totales campaña — por cosechero</h3>
-      <button class="btn-cerrar" onclick="cerrarTotalesJuntador()">✕ Cerrar</button>
-    </div>
-    <div style="overflow-x:auto;">
-      <table style="width:100%;border-collapse:collapse;font-size:13px;">
-        <thead><tr style="background:var(--fondo-dark);">
-          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Cosechero</th>
-          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:center;color:var(--texto-suave);">Registros</th>
-          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:right;color:var(--texto-suave);">KG Total</th>
-          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">1er registro</th>
-          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Últ. registro</th>
-        </tr></thead>
-        <tbody id="tbody-totales-juntador"></tbody>
-      </table>
-    </div>
-  </div>
-</div>
 
 </body>
 </html>
