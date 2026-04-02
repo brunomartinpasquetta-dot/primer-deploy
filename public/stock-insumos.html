@@ -378,14 +378,14 @@
               <table id="tabla-stock">
                 <thead>
                   <tr>
-                    <th><input type="checkbox" class="row-check" id="chk-all" onchange="toggleTodos(this)"></th>
                     <th>PRODUCTO</th>
                     <th>CATEGORÍA</th>
                     <th>PRESENTACIÓN</th>
                     <th style="text-align:right;">STOCK ACTUAL</th>
-                    <th style="text-align:right;">UNIDAD DE MEDIDA</th>
+                    <th style="text-align:right;">UNIDAD</th>
                     <th>PROVEEDOR</th>
                     <th>DEPÓSITO</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody id="tbody-stock">
@@ -411,12 +411,12 @@
           <table style="width:100%;border-collapse:collapse;font-size:12px;">
             <thead>
               <tr style="background:var(--fondo);">
+                <th style="padding:8px 10px;text-align:left;border-bottom:1px solid var(--borde);">Remito</th>
                 <th style="padding:8px 10px;text-align:left;border-bottom:1px solid var(--borde);white-space:nowrap;">Fecha</th>
                 <th style="padding:8px 10px;text-align:left;border-bottom:1px solid var(--borde);">Producto</th>
                 <th style="padding:8px 10px;text-align:left;border-bottom:1px solid var(--borde);">Movimiento</th>
                 <th style="padding:8px 10px;text-align:right;border-bottom:1px solid var(--borde);">Cantidad</th>
                 <th style="padding:8px 10px;text-align:left;border-bottom:1px solid var(--borde);">Proveedor</th>
-                <th style="padding:8px 10px;text-align:left;border-bottom:1px solid var(--borde);">Parcela</th>
                 <th style="padding:8px 10px;text-align:left;border-bottom:1px solid var(--borde);">Depósito</th>
                 <th style="padding:8px 10px;text-align:left;border-bottom:1px solid var(--borde);">Usuario</th>
                 <th style="padding:8px 10px;text-align:left;border-bottom:1px solid var(--borde);">Observación</th>
@@ -752,7 +752,6 @@
           ' u. (' + contenido.toLocaleString('es-AR') + ' ' + unidad + '/u.)';
       }
       return '<tr>' +
-        '<td><input type="checkbox" class="row-check"></td>' +
         '<td><strong>' + (p.producto || '—') + '</strong></td>' +
         '<td style="font-size:12px;color:var(--texto-suave);">' + (_tipoLabels[p.categoria] || p.categoria || '—') + '</td>' +
         '<td style="font-size:12px;">' + (p.envase || '—') + '</td>' +
@@ -762,6 +761,11 @@
         '<td style="text-align:right;font-size:12px;'+mono+'">' + presLabel + '</td>' +
         '<td style="font-size:12px;">' + (p.proveedor || 'Sin proveedor') + '</td>' +
         '<td style="font-size:12px;color:var(--texto-suave);">' + (p.deposito || '—') + '</td>' +
+        '<td style="white-space:nowrap;">' +
+          '<button class="btn-icon-xs" onclick="verDetalleProducto('+p.producto_id+')" title="Ver detalles"><i data-lucide="eye" style="width:13px;height:13px;"></i></button> ' +
+          '<button class="btn-icon-xs" onclick="editarProducto('+p.producto_id+')" title="Editar"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button> ' +
+          '<button class="btn-icon-xs" style="border-color:#fecaca;color:#ef4444;" onclick="toggleActivoProducto('+p.producto_id+',\''+(p.producto||'').replace(/'/g,"\\'")+'\')" title="Activar/Desactivar"><i data-lucide="power" style="width:12px;height:12px;"></i></button>' +
+        '</td>' +
         '</tr>';
     }).join('');
     lucide.createIcons();
@@ -1123,6 +1127,18 @@
     lucide.createIcons();
   }
 
+  // Acciones de producto desde stock
+  function verDetalleProducto(id) {
+    location.href = 'productos.html?ver=' + id;
+  }
+  function editarProducto(id) {
+    location.href = 'productos.html?editar=' + id;
+  }
+  function toggleActivoProducto(id, nombre) {
+    if (!confirm('¿Desactivar el producto "' + nombre + '"? Solo se puede hacer desde Inventario.')) return;
+    location.href = 'productos.html';
+  }
+
   cargarStock();
   cargarEgresoInit();
   cargarTemporadaActiva();
@@ -1164,13 +1180,14 @@
           var bc = badgeColors[m.tipo] || '#eeeeee;color:#666';
           var fecha = fmtFechaHora(m.fecha_hora);
           var rowBg = esIngreso ? '' : 'background:#fff9f9;';
+          var remito = m.numero_remito || '—';
           return '<tr style="border-bottom:1px solid var(--borde);' + rowBg + '">' +
+            '<td style="padding:7px 10px;font-size:11px;font-weight:600;color:var(--verde);">' + remito + '</td>' +
             '<td style="padding:7px 10px;white-space:nowrap;font-size:11px;color:var(--texto-suave);">' + fecha + '</td>' +
             '<td style="padding:7px 10px;font-weight:600;">' + (m.producto || '—') + '</td>' +
             '<td style="padding:7px 10px;"><span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;background:' + bc + ';">' + label + '</span></td>' +
             '<td style="padding:7px 10px;text-align:right;font-family:monospace;font-weight:700;color:' + cantColor + ';">' + cantStr + '</td>' +
             '<td style="padding:7px 10px;font-size:11px;">' + (m.proveedor || '—') + '</td>' +
-            '<td style="padding:7px 10px;font-size:11px;">' + (m.parcela || '—') + '</td>' +
             '<td style="padding:7px 10px;font-size:11px;">' + (m.deposito_nombre || '—') + '</td>' +
             '<td style="padding:7px 10px;font-size:11px;">' + (m.usuario || '—') + '</td>' +
             '<td style="padding:7px 10px;font-size:11px;color:var(--texto-suave);">' + (m.observacion || '') + '</td>' +

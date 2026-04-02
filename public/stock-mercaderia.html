@@ -151,14 +151,15 @@
     /* ── Estado almacenes ── */
     .merc-almacenes { margin-bottom: 14px; }
     .merc-almacenes-title { font-size: 12px; font-weight: 600; color: var(--texto-suave); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
-    .merc-alm-row { display: flex; align-items: center; gap: 10px; padding: 8px 14px; background: #fff; border: 1px solid var(--borde); border-radius: 8px; margin-bottom: 6px; }
-    .merc-alm-nombre { min-width: 130px; font-size: 13px; font-weight: 600; }
-    .merc-alm-bar-wrap { flex: 1; }
+    #merc-almacenes-list { display: flex; flex-wrap: wrap; gap: 8px; }
+    .merc-alm-row { flex: 1 1 150px; display: flex; flex-direction: column; gap: 4px; padding: 8px 12px; background: #fff; border: 1px solid var(--borde); border-radius: 8px; min-width: 140px; }
+    .merc-alm-nombre { font-size: 13px; font-weight: 600; }
+    .merc-alm-bar-wrap { width: 100%; }
     .merc-alm-bar { height: 5px; background: var(--fondo-dark); border-radius: 4px; overflow: hidden; }
     .merc-alm-bar-fill { height: 100%; border-radius: 4px; background: #2d6a4f; transition: width .4s; }
     .merc-alm-bar-fill.warn { background: #f59e0b; }
     .merc-alm-bar-fill.full { background: #c0392b; }
-    .merc-alm-stat { font-size: 12px; font-family: 'JetBrains Mono', monospace; color: var(--texto-2); white-space: nowrap; }
+    .merc-alm-stat { font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--texto-2); white-space: nowrap; }
 
     /* ── Historial section (collapsible) ── */
     #section-historial { margin-top: 16px; }

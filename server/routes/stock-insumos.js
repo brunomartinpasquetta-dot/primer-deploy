@@ -27,6 +27,7 @@ router.get('/', async (req, res) => {
           ISNULL(si.proveedor, 'Sin proveedor') AS proveedor,
           ISNULL(d.nombre, '—') AS deposito,
           d.tipo AS deposito_tipo,
+          NULL AS numero_remito,
           SUM(CASE
             WHEN si.tipo IN ('compra', 'ingreso_manual') THEN si.cantidad
             WHEN si.tipo IN ('aplicacion', 'egreso', 'vencimiento', 'perdida', 'merma') THEN -si.cantidad
@@ -219,6 +220,7 @@ router.get('/historial', async (req, res) => {
              ISNULL(s.fecha_hora, CAST(s.fecha AS DATETIME)) AS fecha_hora,
              s.proveedor, s.observacion, s.aplicacion_id,
              s.fecha_vencimiento, s.compra_id,
+             c2.numero_remito,
              p.nombre AS producto, p.presentacion,
              l.nombre AS parcela,
              j.apellido + ', ' + j.nombre AS empleado,
@@ -237,6 +239,7 @@ router.get('/historial', async (req, res) => {
       LEFT JOIN Depositos    d ON s.deposito_id   = d.id
       LEFT JOIN Aplicaciones a ON s.aplicacion_id = a.id
       LEFT JOIN Temporadas   t ON a.temporada_id  = t.id
+      LEFT JOIN Compras      c2 ON s.compra_id    = c2.id
       WHERE ${where}
       ORDER BY ISNULL(s.fecha_hora, CAST(s.fecha AS DATETIME)) DESC`);
     res.json(result.recordset);
