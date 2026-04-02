@@ -382,14 +382,13 @@
                     <th>CATEGORÍA</th>
                     <th>PRESENTACIÓN</th>
                     <th style="text-align:right;">STOCK ACTUAL</th>
-                    <th style="text-align:right;">UNIDAD</th>
                     <th>PROVEEDOR</th>
                     <th>DEPÓSITO</th>
                     <th></th>
                   </tr>
                 </thead>
                 <tbody id="tbody-stock">
-                  <tr><td colspan="8" class="activity-empty">Cargando...</td></tr>
+                  <tr><td colspan="7" class="activity-empty">Cargando...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -420,10 +419,11 @@
                 <th style="padding:8px 10px;text-align:left;border-bottom:1px solid var(--borde);">Depósito</th>
                 <th style="padding:8px 10px;text-align:left;border-bottom:1px solid var(--borde);">Usuario</th>
                 <th style="padding:8px 10px;text-align:left;border-bottom:1px solid var(--borde);">Observación</th>
+                <th style="padding:8px 10px;border-bottom:1px solid var(--borde);"></th>
               </tr>
             </thead>
             <tbody id="hist-panel-tbody">
-              <tr><td colspan="9" style="padding:20px;text-align:center;color:var(--texto-suave);">Cargando...</td></tr>
+              <tr><td colspan="10" style="padding:20px;text-align:center;color:var(--texto-suave);">Cargando...</td></tr>
             </tbody>
           </table>
         </div>
@@ -732,39 +732,29 @@
     _stockDataVisible = data || [];
     var tbody = document.getElementById('tbody-stock');
     if (!data.length) {
-      tbody.innerHTML = '<tr><td colspan="8" class="activity-empty">Sin productos para los filtros seleccionados</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="activity-empty">Sin productos para los filtros seleccionados</td></tr>';
       return;
     }
     var mono = "font-family:'JetBrains Mono',monospace;";
     tbody.innerHTML = data.map(function(p) {
       var cant = parseFloat(p.cantidad_disponible) || 0;
-      var contenido = parseFloat(p.contenido_litros) || 0;
       var minimo = (p.stock_minimo !== null && p.stock_minimo !== undefined) ? parseFloat(p.stock_minimo) : null;
       var bajo = minimo !== null ? cant < minimo : cant <= 2;
-      var unidad = p.unidad || '—';
-      // Cantidad en kg/litros
+      var unidad = p.unidad || '';
       var cantLabel = cant.toLocaleString('es-AR', {minimumFractionDigits:0,maximumFractionDigits:2}) + ' ' + unidad;
-      // Cantidad en presentación (bidones, barriles, botellas)
-      var presLabel = '—';
-      if (contenido > 0) {
-        var unidades = cant / contenido;
-        presLabel = unidades.toLocaleString('es-AR', {minimumFractionDigits:0,maximumFractionDigits:1}) +
-          ' u. (' + contenido.toLocaleString('es-AR') + ' ' + unidad + '/u.)';
-      }
       return '<tr>' +
-        '<td><strong>' + (p.producto || '—') + '</strong></td>' +
-        '<td style="font-size:12px;color:var(--texto-suave);">' + (_tipoLabels[p.categoria] || p.categoria || '—') + '</td>' +
+        '<td style="white-space:nowrap;"><strong>' + (p.producto || '—') + '</strong></td>' +
+        '<td style="font-size:12px;color:var(--texto-suave);white-space:nowrap;">' + (_tipoLabels[p.categoria] || p.categoria || '—') + '</td>' +
         '<td style="font-size:12px;">' + (p.envase || '—') + '</td>' +
         '<td class="' + (bajo ? 'stock-bajo' : 'stock-ok') + '" style="text-align:right;'+mono+'">' +
           cantLabel + (bajo ? ' ⚠️' : '') +
         '</td>' +
-        '<td style="text-align:right;font-size:12px;'+mono+'">' + presLabel + '</td>' +
         '<td style="font-size:12px;">' + (p.proveedor || 'Sin proveedor') + '</td>' +
         '<td style="font-size:12px;color:var(--texto-suave);">' + (p.deposito || '—') + '</td>' +
         '<td style="white-space:nowrap;">' +
-          '<button class="btn-icon-xs" onclick="verDetalleProducto('+p.producto_id+')" title="Ver detalles"><i data-lucide="eye" style="width:13px;height:13px;"></i></button> ' +
-          '<button class="btn-icon-xs" onclick="editarProducto('+p.producto_id+')" title="Editar"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button> ' +
-          '<button class="btn-icon-xs" style="border-color:#fecaca;color:#ef4444;" onclick="toggleActivoProducto('+p.producto_id+',\''+(p.producto||'').replace(/'/g,"\\'")+'\')" title="Activar/Desactivar"><i data-lucide="power" style="width:12px;height:12px;"></i></button>' +
+          '<button class="btn-icon-xs" onclick="verDetalleProducto('+p.producto_id+')" title="Ver detalles del producto"><i data-lucide="eye" style="width:13px;height:13px;"></i></button> ' +
+          '<button class="btn-icon-xs" onclick="editarProducto('+p.producto_id+')" title="Editar producto"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button> ' +
+          '<button class="btn-icon-xs" style="border-color:#ccc;color:#aaa;cursor:not-allowed;opacity:.5;" title="Activar/Desactivar desde Inventario" disabled><i data-lucide="power" style="width:12px;height:12px;"></i></button>' +
         '</td>' +
         '</tr>';
     }).join('');
@@ -1134,10 +1124,6 @@
   function editarProducto(id) {
     location.href = 'productos.html?editar=' + id;
   }
-  function toggleActivoProducto(id, nombre) {
-    if (!confirm('¿Desactivar el producto "' + nombre + '"? Solo se puede hacer desde Inventario.')) return;
-    location.href = 'productos.html';
-  }
 
   cargarStock();
   cargarEgresoInit();
@@ -1147,7 +1133,7 @@
   function cargarHistorialPanel() {
     var tbody = document.getElementById('hist-panel-tbody');
     if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="9" style="padding:20px;text-align:center;color:var(--texto-suave);">Cargando...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" style="padding:20px;text-align:center;color:var(--texto-suave);">Cargando...</td></tr>';
     var params = new URLSearchParams();
     var desde = document.getElementById('hist-desde').value;
     var hasta = document.getElementById('hist-hasta').value;
@@ -1157,7 +1143,7 @@
       .then(function(r) { return r.json(); })
       .then(function(data) {
         if (!data.length) {
-          tbody.innerHTML = '<tr><td colspan="9" style="padding:20px;text-align:center;">Sin movimientos</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="10" style="padding:20px;text-align:center;">Sin movimientos</td></tr>';
           return;
         }
         var tipoLabels = {
@@ -1181,21 +1167,39 @@
           var fecha = fmtFechaHora(m.fecha_hora);
           var rowBg = esIngreso ? '' : 'background:#fff9f9;';
           var remito = m.numero_remito || '—';
+          // Botones según tipo de movimiento
+          var eyeClick = '', pencilClick = '';
+          if (m.tipo === 'compra' && m.compra_id) {
+            eyeClick = 'location.href="compras.html?ver='+m.compra_id+'"';
+            pencilClick = 'location.href="compras.html?editar='+m.compra_id+'"';
+          } else if (m.tipo === 'aplicacion' && m.aplicacion_id) {
+            eyeClick = 'location.href="aplicaciones.html?ver='+m.aplicacion_id+'"';
+            pencilClick = 'location.href="aplicaciones.html?editar='+m.aplicacion_id+'"';
+          } else {
+            var obsEsc = (m.observacion||'').replace(/'/g,"\\'");
+            eyeClick = 'alert("'+(label)+': '+(m.producto||'')+' — '+(m.observacion||'Sin observación').replace(/"/g,'')+'")';;
+            pencilClick = 'abrirEditarMov('+m.id+',\''+obsEsc+'\')';
+          }
           return '<tr style="border-bottom:1px solid var(--borde);' + rowBg + '">' +
             '<td style="padding:7px 10px;font-size:11px;font-weight:600;color:var(--verde);">' + remito + '</td>' +
             '<td style="padding:7px 10px;white-space:nowrap;font-size:11px;color:var(--texto-suave);">' + fecha + '</td>' +
-            '<td style="padding:7px 10px;font-weight:600;">' + (m.producto || '—') + '</td>' +
+            '<td style="padding:7px 10px;font-weight:600;white-space:nowrap;">' + (m.producto || '—') + '</td>' +
             '<td style="padding:7px 10px;"><span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;background:' + bc + ';">' + label + '</span></td>' +
             '<td style="padding:7px 10px;text-align:right;font-family:monospace;font-weight:700;color:' + cantColor + ';">' + cantStr + '</td>' +
             '<td style="padding:7px 10px;font-size:11px;">' + (m.proveedor || '—') + '</td>' +
             '<td style="padding:7px 10px;font-size:11px;">' + (m.deposito_nombre || '—') + '</td>' +
             '<td style="padding:7px 10px;font-size:11px;">' + (m.usuario || '—') + '</td>' +
-            '<td style="padding:7px 10px;font-size:11px;color:var(--texto-suave);">' + (m.observacion || '') + '</td>' +
+            '<td style="padding:7px 10px;font-size:11px;color:var(--texto-suave);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (m.observacion || '') + '</td>' +
+            '<td style="padding:7px 10px;white-space:nowrap;">' +
+              '<button class="btn-icon-xs" onclick="'+eyeClick+'" title="Ver detalles"><i data-lucide="eye" style="width:13px;height:13px;"></i></button> ' +
+              '<button class="btn-icon-xs" onclick="'+pencilClick+'" title="Editar"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button> ' +
+              '<button class="btn-icon-xs" style="border-color:#ccc;color:#aaa;cursor:not-allowed;opacity:.5;" title="Activar/Desactivar desde Inventario" disabled><i data-lucide="power" style="width:12px;height:12px;"></i></button>' +
+            '</td>' +
           '</tr>';
         }).join('');
       })
       .catch(function() {
-        tbody.innerHTML = '<tr><td colspan="9" style="padding:20px;text-align:center;color:#c0392b;">Error al cargar</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" style="padding:20px;text-align:center;color:#c0392b;">Error al cargar</td></tr>';
       });
   }
 
