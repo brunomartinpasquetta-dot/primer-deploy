@@ -129,6 +129,14 @@
     /* ── Flujo del día ── */
     #flujo-dia { padding: 12px 20px 4px; border-bottom: 1px solid #f0f0f0; display: none; }
 
+    /* ── Tabla aplicaciones ── */
+    #tabla-aplicaciones-dia thead th {
+      background: #2D5016; color: #fff;
+      font-weight: 700; text-transform: uppercase;
+      font-size: 11px; letter-spacing: .5px; padding: 11px 12px;
+    }
+    #tabla-aplicaciones-dia tbody td { padding: 10px 12px; }
+
   </style>
 </head>
 <body>
@@ -208,12 +216,33 @@
         <div class="kpi"><div class="kpi-label">Vendido total</div><div class="kpi-value">—</div><div class="kpi-sub">total temporada</div></div>
       </div>
 
-      <!-- Split 60/40: registros + depósitos -->
+      <!-- Split 60/40: depósitos + alertas -->
       <div class="dash-split">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Estado de depósitos</span>
+          </div>
+          <div class="card-body" style="padding:0 20px 12px;" id="depositos-panel">
+            <div class="no-dep">Cargando...</div>
+          </div>
+        </div>
 
         <div class="card">
           <div class="card-header">
-            <span class="card-title">Últimos registros del día</span>
+            <span class="card-title">Alertas</span>
+            <span id="alertas-count" style="font-size:12px;color:var(--texto-suave);"></span>
+          </div>
+          <div class="card-body" style="padding:0 20px 12px;" id="alertas-panel">
+            <div class="no-alertas">Sin alertas activas</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Split 60/40: registros cosecha + registros aplicaciones -->
+      <div class="dash-split" style="margin-top:16px;">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;background:var(--verde);color:#fff;padding:4px 12px;border-radius:4px;">Últimos registros de cosecha</span>
             <a href="juntada.html" style="font-size:12px;font-weight:600;color:var(--verde);text-decoration:none;">+ Nuevo registro</a>
           </div>
           <div id="flujo-dia">
@@ -237,23 +266,22 @@
 
         <div class="card">
           <div class="card-header">
-            <span class="card-title">Estado de depósitos</span>
+            <span class="card-title" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;background:var(--verde);color:#fff;padding:4px 12px;border-radius:4px;">Últimos registros de aplicaciones</span>
           </div>
-          <div class="card-body" style="padding:0 20px 12px;" id="depositos-panel">
-            <div class="no-dep">Cargando...</div>
-          </div>
-          <div id="alertas-section" style="display:none;">
-            <div style="border-top:1px solid var(--borde);margin:0 20px;"></div>
-            <div class="card-header" style="margin-top:4px;">
-              <span class="card-title">Alertas</span>
-              <span id="alertas-count" style="font-size:12px;color:var(--texto-suave);"></span>
-            </div>
-            <div class="card-body" style="padding:0 20px 12px;" id="alertas-panel">
-              <div class="no-alertas">Cargando...</div>
-            </div>
+          <div class="table-wrap">
+            <table id="tabla-aplicaciones-dia">
+              <thead>
+                <tr>
+                  <th>Fecha</th><th>Producto</th><th>Parcela</th>
+                  <th style="text-align:right;">Dosis</th><th>Usuario</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-aplicaciones">
+                <tr class="empty-row"><td colspan="5">Cargando...</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
-
       </div>
 
       <!-- Hidden compat elements -->
@@ -465,8 +493,6 @@ function renderDashboard(d) {
   // ── Panel alertas ──
   var a = d.alertas;
   var total = a.carencia.length + a.stock_bajo.length + a.cheques_vencer.length;
-  var alertasSection = document.getElementById('alertas-section');
-  if (alertasSection) alertasSection.style.display = total > 0 ? '' : 'none';
   var alertasCount = document.getElementById('alertas-count');
   if (alertasCount) alertasCount.textContent = total > 0 ? total + ' activa' + (total !== 1 ? 's' : '') : '';
 
@@ -680,7 +706,34 @@ function cargarDepositos() {
     });
 }
 
+function cargarAplicaciones() {
+  fetch('/api/aplicaciones?limit=10')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var tbody = document.getElementById('tbody-aplicaciones');
+      var arr = Array.isArray(data) ? data : [];
+      if (!arr.length) {
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="5">Sin aplicaciones recientes</td></tr>';
+        return;
+      }
+      tbody.innerHTML = arr.slice(0, 10).map(function(a) {
+        return '<tr>' +
+          '<td style="color:var(--texto-suave);font-size:12px;">' + fmtFecha(a.fecha || a.fecha_hora) + '</td>' +
+          '<td style="font-weight:600;font-size:12px;">' + (a.producto || a.nombre_producto || '—') + '</td>' +
+          '<td style="font-size:12px;">' + (a.parcela || a.nombre_parcela || '—') + '</td>' +
+          '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;font-size:12px;">' + (a.dosis || a.cantidad || '—') + '</td>' +
+          '<td style="font-size:12px;color:var(--texto-suave);">' + (a.usuario || '—') + '</td>' +
+          '</tr>';
+      }).join('');
+    })
+    .catch(function() {
+      var tbody = document.getElementById('tbody-aplicaciones');
+      if (tbody) tbody.innerHTML = '<tr class="empty-row"><td colspan="5">Error al cargar</td></tr>';
+    });
+}
+
 cargar();
+cargarAplicaciones();
 setInterval(cargar, 60000);
 cargarCotizacion();
 setInterval(cargarCotizacion, 30 * 60 * 1000);
