@@ -1137,14 +1137,14 @@
 </script>
 
 <!-- MODAL HISTORIAL COMPLETO JUNTADA -->
-<div class="modal-overlay" id="modal-hist-juntada" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;">
-  <div style="background:#fff;border-radius:14px;padding:24px;width:92%;max-width:860px;max-height:88vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.15);">
+<div class="modal-overlay" id="modal-hist-juntada">
+  <div class="modal-box" style="width:92%;max-width:860px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
-      <h3 style="color:var(--verde);margin:0;font-size:17px;font-weight:700;">Historial completo de cosecha</h3>
+      <h3 style="margin:0;">Historial completo de cosecha</h3>
       <div style="display:flex;gap:8px;align-items:center;">
         <input type="date" id="hist-j-desde" onchange="cargarHistorialJuntada()" style="height:32px;padding:0 8px;border:1px solid var(--borde);border-radius:6px;font-size:12px;">
         <input type="date" id="hist-j-hasta" onchange="cargarHistorialJuntada()" style="height:32px;padding:0 8px;border:1px solid var(--borde);border-radius:6px;font-size:12px;">
-        <button onclick="cerrarHistorialJuntada()" style="background:var(--fondo-dark);border:1.5px solid var(--borde);border-radius:8px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;">✕ Cerrar</button>
+        <button class="btn-cerrar" onclick="cerrarHistorialJuntada()">✕ Cerrar</button>
       </div>
     </div>
     <div style="overflow-x:auto;">
@@ -1165,11 +1165,11 @@
 </div>
 
 <!-- MODAL TOTALES POR JUNTADOR -->
-<div class="modal-overlay" id="modal-totales-juntador" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;">
-  <div style="background:#fff;border-radius:14px;padding:24px;width:90%;max-width:640px;max-height:80vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.15);">
+<div class="modal-overlay" id="modal-totales-juntador">
+  <div class="modal-box" style="width:90%;max-width:640px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-      <h3 style="color:var(--verde);margin:0;font-size:17px;font-weight:700;">Totales campaña — por cosechero</h3>
-      <button onclick="cerrarTotalesJuntador()" style="background:var(--fondo-dark);border:1.5px solid var(--borde);border-radius:8px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;">✕ Cerrar</button>
+      <h3 style="margin:0;">Totales campaña — por cosechero</h3>
+      <button class="btn-cerrar" onclick="cerrarTotalesJuntador()">✕ Cerrar</button>
     </div>
     <div style="overflow-x:auto;">
       <table style="width:100%;border-collapse:collapse;font-size:13px;">
