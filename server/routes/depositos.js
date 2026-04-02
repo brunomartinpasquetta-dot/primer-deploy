@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { getPool, sql } = require('../db');
+const { siguienteNumero: siguienteNumeroRemito } = require('./remitos');
 
 // ── Resumen general por temporada (antes que /:id para evitar conflicto de ruta)
 router.get('/resumen', async (req, res) => {
@@ -228,158 +229,276 @@ router.get('/stock-disponible', async (req, res) => {
   }
 });
 
-// ── Registrar egreso del depósito (venta o descarte) ───────────
-// Body: { deposito_id, temporada_id, parcela_id, tipo_egreso, kilos,
-//         precio_kilo, cliente_id, comprador, variedad, destino_venta,
-//         fecha, observacion,
-//         embalaje?: [{ producto_id, cantidad, costo_unitario, retornable }] }
+// ── Registrar venta (uno o varios items de mercadería) ──────────
+// Body: {
+//   cliente_id, temporada_id, forma_pago_id, fecha, destino_venta, observacion,
+//   numero_remito,   // opcional — se genera automáticamente si no se pasa
+//   items: [{ deposito_id, variedad, kilos, precio_kilo }],
+//   embalaje: [{ producto_id, cantidad, costo_unitario, retornable }]
+// }
 router.post('/egreso', async (req, res) => {
-  const { deposito_id, temporada_id, parcela_id, tipo_egreso, kilos,
-          precio_kilo, cliente_id, comprador, variedad,
-          destino_venta, fecha, observacion, embalaje } = req.body;
-  if (!deposito_id || !temporada_id || !kilos || !tipo_egreso) {
-    return res.status(400).json({ error: 'Depósito, temporada, tipo y kilos son obligatorios' });
+  const {
+    cliente_id, temporada_id, forma_pago_id, fecha, destino_venta, observacion,
+    numero_remito: nroPasado,
+    items,   // array de líneas de mercadería
+    embalaje
+  } = req.body;
+
+  // Compatibilidad con llamada de un solo item (legado)
+  const itemsArr = Array.isArray(items) && items.length > 0
+    ? items
+    : [{
+        deposito_id:  req.body.deposito_id,
+        variedad:     req.body.variedad  || '',
+        kilos:        req.body.kilos,
+        precio_kilo:  req.body.precio_kilo,
+        parcela_id:   req.body.parcela_id || null
+      }];
+
+  if (!temporada_id) return res.status(400).json({ error: 'Temporada es obligatoria' });
+  if (!forma_pago_id) return res.status(400).json({ error: 'Forma de pago es obligatoria' });
+  for (const it of itemsArr) {
+    if (!it.deposito_id || !it.kilos) return res.status(400).json({ error: 'Cada item requiere depósito y kilos' });
   }
-  const tiposValidos = ['egreso_venta', 'egreso_descarte'];
-  if (!tiposValidos.includes(tipo_egreso)) {
-    return res.status(400).json({ error: 'tipo_egreso debe ser egreso_venta o egreso_descarte' });
-  }
+
   const pool = await getPool();
 
-  // Verificar stock suficiente (fuera de transacción — lectura previa)
-  const stockRes = await pool.request()
-    .input('did', sql.Int, deposito_id)
-    .query(`SELECT
-              ISNULL(SUM(CASE WHEN tipo='ingreso' THEN kilos ELSE 0 END),0) -
-              ISNULL(SUM(CASE WHEN tipo LIKE 'egreso%' THEN kilos ELSE 0 END),0) AS disponible
-            FROM MovimientosDeposito WHERE deposito_id = @did`);
-  const disponible = parseFloat(stockRes.recordset[0].disponible);
-  if (disponible < parseFloat(kilos)) {
-    return res.status(400).json({ error: `Stock insuficiente. Disponible: ${disponible.toFixed(2)} kg` });
+  // Verificar stock por depósito
+  for (const it of itemsArr) {
+    const sr = await pool.request()
+      .input('did', sql.Int, it.deposito_id)
+      .query(`SELECT ISNULL(SUM(CASE WHEN tipo='ingreso' THEN kilos ELSE 0 END),0) -
+                     ISNULL(SUM(CASE WHEN tipo LIKE 'egreso%' THEN kilos ELSE 0 END),0) AS disponible
+              FROM MovimientosDeposito WHERE deposito_id = @did`);
+    const disp = parseFloat(sr.recordset[0].disponible);
+    if (disp < parseFloat(it.kilos))
+      return res.status(400).json({ error: `Stock insuficiente en depósito ${it.deposito_id}. Disponible: ${disp.toFixed(2)} kg` });
   }
 
-  // Verificar stock de insumos de embalaje (solo no retornables descuentan stock productivo,
-  // pero todos deben tener stock disponible para ser despachados)
+  // Verificar stock embalaje
   const embalajeItems = Array.isArray(embalaje) ? embalaje : [];
   for (const item of embalajeItems) {
     const eRes = await pool.request()
       .input('pid', sql.Int, item.producto_id)
       .query('SELECT stock_actual, nombre FROM Productos WHERE id = @pid');
-    if (!eRes.recordset.length) {
-      return res.status(400).json({ error: `Producto de embalaje id ${item.producto_id} no encontrado` });
-    }
+    if (!eRes.recordset.length) return res.status(400).json({ error: `Producto embalaje id ${item.producto_id} no encontrado` });
     const stockAct = parseFloat(eRes.recordset[0].stock_actual) || 0;
-    if (stockAct < parseFloat(item.cantidad)) {
-      return res.status(400).json({
-        error: `Stock insuficiente de embalaje "${eRes.recordset[0].nombre}". Disponible: ${stockAct}`
-      });
-    }
+    if (stockAct < parseFloat(item.cantidad))
+      return res.status(400).json({ error: `Stock insuficiente de embalaje "${eRes.recordset[0].nombre}". Disponible: ${stockAct}` });
   }
 
   const transaction = new sql.Transaction(pool);
   try {
     await transaction.begin();
     const fechaDate = fecha ? new Date(fecha) : new Date();
-    const kilosNum  = parseFloat(kilos);
-    const precioNum = precio_kilo ? parseFloat(precio_kilo) : null;
     const uid = req.user ? req.user.id : null;
+    const usuNombre = req.user ? req.user.nombre : null;
 
-    // Resolver nombre del cliente si viene cliente_id
-    let compradorNombre = comprador || '';
-    if (cliente_id && !compradorNombre) {
-      const cliRes = await pool.request()
-        .input('cid', sql.Int, parseInt(cliente_id))
+    // Resolver nombre del cliente
+    let compradorNombre = '';
+    if (cliente_id) {
+      const cliRes = await pool.request().input('cid', sql.Int, parseInt(cliente_id))
         .query('SELECT nombre FROM Clientes WHERE id = @cid');
       compradorNombre = cliRes.recordset[0]?.nombre || '';
     }
 
-    // 1. MovimientosDeposito
-    const movResult = await new sql.Request(transaction)
-      .input('deposito_id',  sql.Int,           deposito_id)
-      .input('temporada_id', sql.Int,           temporada_id)
-      .input('parcela_id',      sql.Int,           parcela_id       || null)
-      .input('tipo',         sql.NVarChar,      tipo_egreso)
-      .input('kilos',        sql.Decimal(10,2), kilosNum)
-      .input('precio_kilo',  sql.Decimal(10,2), precioNum)
-      .input('cliente_id',   sql.Int,           cliente_id    || null)
-      .input('comprador',    sql.NVarChar,      compradorNombre)
-      .input('variedad',     sql.NVarChar,      variedad      || '')
-      .input('destino_venta',sql.NVarChar,      destino_venta || '')
-      .input('fecha',        sql.DateTime,      fechaDate)
-      .input('observacion',  sql.NVarChar,      observacion   || '')
-      .input('usuario_id',   sql.Int,           uid)
-      .query(`INSERT INTO MovimientosDeposito
-              (deposito_id, temporada_id, parcela_id, tipo, kilos, precio_kilo,
-               cliente_id, comprador, variedad, destino_venta, fecha, observacion, usuario_id)
-              OUTPUT INSERTED.id
-              VALUES (@deposito_id, @temporada_id, @parcela_id, @tipo, @kilos, @precio_kilo,
-                      @cliente_id, @comprador, @variedad, @destino_venta, @fecha, @observacion, @usuario_id)`);
+    // Detectar si es CC
+    let esCC = false;
+    if (forma_pago_id) {
+      const fpRes = await new sql.Request(transaction)
+        .input('fpid', sql.Int, parseInt(forma_pago_id))
+        .query('SELECT es_cuenta_corriente FROM FormasPago WHERE id = @fpid');
+      esCC = fpRes.recordset[0]?.es_cuenta_corriente === true;
+    }
+    const estadoCobro = esCC ? 'pendiente_cc' : 'cobrado';
 
-    const movId = movResult.recordset[0].id;
+    // Número de remito
+    const nroRemito = nroPasado || await siguienteNumeroRemito(pool);
 
-    // 2. StockMercaderia — egreso de kg
-    await new sql.Request(transaction)
-      .input('temporada_id', sql.Int,           temporada_id)
-      .input('parcela_id',      sql.Int,           parcela_id || null)
-      .input('kilos',        sql.Decimal(10,2), kilosNum)
-      .input('precio_kilo',  sql.Decimal(10,2), precioNum)
-      .input('comprador',    sql.NVarChar,      comprador || '')
-      .input('tipo_sm',      sql.NVarChar,      tipo_egreso)
-      .input('destino',      sql.NVarChar,      tipo_egreso === 'egreso_venta' ? 'deposito' : 'descarte')
-      .input('observacion',  sql.NVarChar,      observacion || '')
-      .query(`INSERT INTO StockMercaderia (temporada_id, parcela_id, tipo, kilos, destino, precio_kilo, comprador, observacion)
-              VALUES (@temporada_id, @parcela_id, @tipo_sm, @kilos, @destino, @precio_kilo, @comprador, @observacion)`);
-
-    // 3. Embalaje — VentaEmbalaje + egreso StockInsumos por cada ítem
-    for (const item of embalajeItems) {
-      const cant        = parseFloat(item.cantidad);
-      const costoUnit   = parseFloat(item.costo_unitario || 0);
-      const costoTot    = parseFloat((cant * costoUnit).toFixed(2));
-      const retornable  = item.retornable ? 1 : 0;
-
-      await new sql.Request(transaction)
-        .input('movimiento_id',  sql.Int,           movId)
-        .input('producto_id',    sql.Int,           item.producto_id)
-        .input('cantidad',       sql.Decimal(10,2), cant)
-        .input('costo_unitario', sql.Decimal(10,2), costoUnit)
-        .input('costo_total',    sql.Decimal(10,2), costoTot)
-        .input('retornable',     sql.Bit,           retornable)
-        .query(`INSERT INTO VentaEmbalaje (movimiento_id, producto_id, cantidad, costo_unitario, costo_total, retornable)
-                VALUES (@movimiento_id, @producto_id, @cantidad, @costo_unitario, @costo_total, @retornable)`);
-
-      // Descontar stock de Productos siempre (retornables también salen del depósito)
-      await new sql.Request(transaction)
-        .input('pid',  sql.Int,           item.producto_id)
-        .input('cant', sql.Decimal(10,2), cant)
-        .query(`UPDATE Productos SET stock_actual = stock_actual - @cant WHERE id = @pid`);
-
-      // Registrar egreso en StockInsumos
-      await new sql.Request(transaction)
-        .input('producto_id', sql.Int,           item.producto_id)
-        .input('cantidad',    sql.Decimal(10,2), cant)
-        .input('costo_total', sql.Decimal(10,2), costoTot)
-        .input('usuario_id',  sql.Int,           uid)
-        .input('obs',         sql.NVarChar,      `Embalaje venta mov#${movId}${retornable ? ' (retornable)' : ''}`)
-        .query(`INSERT INTO StockInsumos (producto_id, tipo, cantidad, costo_total, usuario_id, observacion, fecha_hora)
-                VALUES (@producto_id, 'embalaje_venta', @cantidad, @costo_total, @usuario_id, @obs, GETDATE())`);
+    // Totales
+    let totalKilos = 0, totalMonto = 0;
+    for (const it of itemsArr) {
+      const kg = parseFloat(it.kilos) || 0;
+      const pr = parseFloat(it.precio_kilo) || 0;
+      totalKilos += kg;
+      totalMonto += kg * pr;
     }
 
-    // 4. Caja — solo si es venta y hay precio
-    if (tipo_egreso === 'egreso_venta' && precioNum && precioNum > 0) {
-      const total = kilosNum * precioNum;
+    // Crear Remito
+    const remitoRes = await new sql.Request(transaction)
+      .input('numero',        sql.NVarChar,    nroRemito)
+      .input('fecha',         sql.Date,        fechaDate)
+      .input('cliente_id',    sql.Int,         cliente_id   || null)
+      .input('temporada_id',  sql.Int,         temporada_id || null)
+      .input('forma_pago_id', sql.Int,         forma_pago_id || null)
+      .input('estado',        sql.NVarChar,    estadoCobro)
+      .input('total',         sql.Decimal(12,2), totalMonto)
+      .input('kilos_total',   sql.Decimal(10,2), totalKilos)
+      .input('destino',       sql.NVarChar,    destino_venta || '')
+      .input('observacion',   sql.NVarChar,    observacion  || '')
+      .input('usuario_nombre',sql.NVarChar,    usuNombre)
+      .query(`INSERT INTO Remitos (numero, fecha, cliente_id, temporada_id, forma_pago_id, estado, total, kilos_total, destino, observacion, usuario_nombre)
+              OUTPUT INSERTED.id
+              VALUES (@numero, @fecha, @cliente_id, @temporada_id, @forma_pago_id, @estado, @total, @kilos_total, @destino, @observacion, @usuario_nombre)`);
+    const remitoId = remitoRes.recordset[0].id;
+
+    const firstMovId = { id: null };
+
+    // Por cada item de mercadería
+    for (const it of itemsArr) {
+      const kilosNum = parseFloat(it.kilos);
+      const precioNum = it.precio_kilo ? parseFloat(it.precio_kilo) : null;
+
+      // MovimientosDeposito
+      const movResult = await new sql.Request(transaction)
+        .input('deposito_id',   sql.Int,           it.deposito_id)
+        .input('temporada_id',  sql.Int,           temporada_id)
+        .input('parcela_id',    sql.Int,           it.parcela_id   || null)
+        .input('tipo',          sql.NVarChar,      'egreso_venta')
+        .input('kilos',         sql.Decimal(10,2), kilosNum)
+        .input('precio_kilo',   sql.Decimal(10,2), precioNum)
+        .input('cliente_id',    sql.Int,           cliente_id      || null)
+        .input('comprador',     sql.NVarChar,      compradorNombre)
+        .input('variedad',      sql.NVarChar,      it.variedad     || '')
+        .input('destino_venta', sql.NVarChar,      destino_venta   || '')
+        .input('forma_pago_id', sql.Int,           forma_pago_id   || null)
+        .input('numero_remito', sql.NVarChar,      nroRemito)
+        .input('estado_cobro',  sql.NVarChar,      estadoCobro)
+        .input('remito_id',     sql.Int,           remitoId)
+        .input('fecha',         sql.DateTime,      fechaDate)
+        .input('observacion',   sql.NVarChar,      observacion     || '')
+        .input('usuario_id',    sql.Int,           uid)
+        .query(`INSERT INTO MovimientosDeposito
+                (deposito_id, temporada_id, parcela_id, tipo, kilos, precio_kilo,
+                 cliente_id, comprador, variedad, destino_venta,
+                 forma_pago_id, numero_remito, estado_cobro, remito_id, fecha, observacion, usuario_id)
+                OUTPUT INSERTED.id
+                VALUES (@deposito_id, @temporada_id, @parcela_id, @tipo, @kilos, @precio_kilo,
+                        @cliente_id, @comprador, @variedad, @destino_venta,
+                        @forma_pago_id, @numero_remito, @estado_cobro, @remito_id, @fecha, @observacion, @usuario_id)`);
+      const movId = movResult.recordset[0].id;
+      if (!firstMovId.id) firstMovId.id = movId;
+
+      // RemitoItems
       await new sql.Request(transaction)
-        .input('concepto',     sql.NVarChar,      `Venta mercadería${comprador ? ' a ' + comprador : ''}`)
-        .input('monto',        sql.Decimal(12,2), total)
+        .input('remito_id',    sql.Int,           remitoId)
+        .input('movimiento_id',sql.Int,           movId)
+        .input('deposito_id',  sql.Int,           it.deposito_id)
+        .input('variedad',     sql.NVarChar,      it.variedad    || '')
+        .input('kilos',        sql.Decimal(10,2), kilosNum)
+        .input('precio_kilo',  sql.Decimal(10,2), precioNum)
+        .input('subtotal',     sql.Decimal(12,2), precioNum ? kilosNum * precioNum : null)
+        .query(`INSERT INTO RemitoItems (remito_id, movimiento_id, deposito_id, variedad, kilos, precio_kilo, subtotal)
+                VALUES (@remito_id, @movimiento_id, @deposito_id, @variedad, @kilos, @precio_kilo, @subtotal)`);
+
+      // StockMercaderia
+      await new sql.Request(transaction)
         .input('temporada_id', sql.Int,           temporada_id)
+        .input('parcela_id',   sql.Int,           it.parcela_id  || null)
+        .input('kilos',        sql.Decimal(10,2), kilosNum)
+        .input('precio_kilo',  sql.Decimal(10,2), precioNum)
+        .input('comprador',    sql.NVarChar,      compradorNombre)
         .input('observacion',  sql.NVarChar,      observacion || '')
-        .query(`INSERT INTO Caja (tipo, concepto, monto, temporada_id, observacion)
-                VALUES ('ingreso', @concepto, @monto, @temporada_id, @observacion)`);
+        .query(`INSERT INTO StockMercaderia (temporada_id, parcela_id, tipo, kilos, destino, precio_kilo, comprador, observacion)
+                VALUES (@temporada_id, @parcela_id, 'egreso_venta', @kilos, 'deposito', @precio_kilo, @comprador, @observacion)`);
+
+      // Embalaje solo en el primer item
+      if (it === itemsArr[0]) {
+        for (const emb of embalajeItems) {
+          const cant       = parseFloat(emb.cantidad);
+          const costoUnit  = parseFloat(emb.costo_unitario || 0);
+          const costoTot   = parseFloat((cant * costoUnit).toFixed(2));
+          const retornable = emb.retornable ? 1 : 0;
+
+          await new sql.Request(transaction)
+            .input('movimiento_id',  sql.Int,           movId)
+            .input('producto_id',    sql.Int,           emb.producto_id)
+            .input('cantidad',       sql.Decimal(10,2), cant)
+            .input('costo_unitario', sql.Decimal(10,2), costoUnit)
+            .input('costo_total',    sql.Decimal(10,2), costoTot)
+            .input('retornable',     sql.Bit,           retornable)
+            .query(`INSERT INTO VentaEmbalaje (movimiento_id, producto_id, cantidad, costo_unitario, costo_total, retornable)
+                    VALUES (@movimiento_id, @producto_id, @cantidad, @costo_unitario, @costo_total, @retornable)`);
+
+          await new sql.Request(transaction)
+            .input('pid',  sql.Int,           emb.producto_id)
+            .input('cant', sql.Decimal(10,2), cant)
+            .query(`UPDATE Productos SET stock_actual = stock_actual - @cant WHERE id = @pid`);
+
+          await new sql.Request(transaction)
+            .input('producto_id', sql.Int,           emb.producto_id)
+            .input('cantidad',    sql.Decimal(10,2), cant)
+            .input('costo_total', sql.Decimal(10,2), costoTot)
+            .input('usuario_id',  sql.Int,           uid)
+            .input('obs',         sql.NVarChar,      `Embalaje remito ${nroRemito}${retornable ? ' (retornable)' : ''}`)
+            .query(`INSERT INTO StockInsumos (producto_id, tipo, cantidad, costo_total, usuario_id, observacion, fecha_hora)
+                    VALUES (@producto_id, 'embalaje_venta', @cantidad, @costo_total, @usuario_id, @obs, GETDATE())`);
+        }
+      }
+
+      // Financiero por item
+      if (precioNum && precioNum > 0) {
+        const total = kilosNum * precioNum;
+        const concepto = `Venta ${nroRemito}${compradorNombre ? ' a ' + compradorNombre : ''}${it.variedad ? ' — ' + it.variedad : ''}`;
+        if (esCC && cliente_id) {
+          await new sql.Request(transaction)
+            .input('cliente_id',    sql.Int,           parseInt(cliente_id))
+            .input('monto',         sql.Decimal(12,2), total)
+            .input('forma_pago_id', sql.Int,           forma_pago_id || null)
+            .input('temporada_id',  sql.Int,           temporada_id)
+            .input('observacion',   sql.NVarChar,      concepto + (observacion ? ' — ' + observacion : ''))
+            .query(`INSERT INTO CuentaCorrienteClientes
+                    (cliente_id, tipo, monto, forma_pago_id, temporada_id, stock_mercaderia_id, observacion)
+                    VALUES (@cliente_id, 'debito', @monto, @forma_pago_id, @temporada_id, NULL, @observacion)`);
+        } else {
+          await new sql.Request(transaction)
+            .input('concepto',       sql.NVarChar,      concepto)
+            .input('monto',          sql.Decimal(12,2), total)
+            .input('forma_pago_id',  sql.Int,           forma_pago_id || null)
+            .input('temporada_id',   sql.Int,           temporada_id)
+            .input('observacion',    sql.NVarChar,      observacion || '')
+            .input('usuario_nombre', sql.NVarChar,      usuNombre)
+            .query(`INSERT INTO Caja (tipo, concepto, monto, forma_pago_id, temporada_id, observacion, usuario_nombre)
+                    VALUES ('ingreso', @concepto, @monto, @forma_pago_id, @temporada_id, @observacion, @usuario_nombre)`);
+        }
+      }
     }
 
     await transaction.commit();
-    res.json({ ok: true, id: movId });
+    res.json({ ok: true, id: firstMovId.id, remito_id: remitoId, numero_remito: nroRemito });
   } catch (err) {
     await transaction.rollback();
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Registrar descarte de depósito ──────────────────────────────
+router.post('/descarte', async (req, res) => {
+  const { deposito_id, temporada_id, kilos, fecha, observacion } = req.body;
+  if (!deposito_id || !temporada_id || !kilos)
+    return res.status(400).json({ error: 'Depósito, temporada y kilos son obligatorios' });
+  const pool = await getPool();
+  const stockRes = await pool.request()
+    .input('did', sql.Int, deposito_id)
+    .query(`SELECT ISNULL(SUM(CASE WHEN tipo='ingreso' THEN kilos ELSE 0 END),0) -
+                   ISNULL(SUM(CASE WHEN tipo LIKE 'egreso%' THEN kilos ELSE 0 END),0) AS disponible
+            FROM MovimientosDeposito WHERE deposito_id = @did`);
+  const disponible = parseFloat(stockRes.recordset[0].disponible);
+  if (disponible < parseFloat(kilos))
+    return res.status(400).json({ error: `Stock insuficiente. Disponible: ${disponible.toFixed(2)} kg` });
+  try {
+    await pool.request()
+      .input('deposito_id',  sql.Int,           deposito_id)
+      .input('temporada_id', sql.Int,           temporada_id)
+      .input('tipo',         sql.NVarChar,      'egreso_descarte')
+      .input('kilos',        sql.Decimal(10,2), parseFloat(kilos))
+      .input('fecha',        sql.DateTime,      fecha ? new Date(fecha) : new Date())
+      .input('observacion',  sql.NVarChar,      observacion || '')
+      .input('usuario_id',   sql.Int,           req.user ? req.user.id : null)
+      .query(`INSERT INTO MovimientosDeposito (deposito_id, temporada_id, tipo, kilos, fecha, observacion, usuario_id)
+              VALUES (@deposito_id, @temporada_id, @tipo, @kilos, @fecha, @observacion, @usuario_id)`);
+    res.json({ ok: true });
+  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
@@ -503,11 +622,15 @@ router.get('/cajones-circulacion', async (req, res) => {
 // ── Ocupación de almacenes ──────────────────────────────────────
 router.get('/ocupacion', async (req, res) => {
   try {
-    const { tipo_stock } = req.query;
+    const { tipo_stock, tipo_deposito } = req.query;
     const pool = await getPool();
     const dbReq = pool.request();
     let where = 'd.activo = 1';
-    if (tipo_stock === 'insumos') {
+    if (tipo_deposito) {
+      // Soporte para lista separada por comas: tipo_deposito=fruta_fresca,camara_frio
+      const tipos = tipo_deposito.split(',').map(t => `'${t.trim().replace(/'/g, '')}'`).join(',');
+      where += ` AND d.tipo_deposito IN (${tipos})`;
+    } else if (tipo_stock === 'insumos') {
       where += ` AND d.tipo_deposito = 'insumos'`;
     } else if (tipo_stock === 'mercaderia') {
       where += ` AND d.tipo_deposito IN ('fruta_fresca','camara_frio')`;

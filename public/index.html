@@ -43,57 +43,50 @@
 
     /* ── Section labels ── */
     .section-label {
-      font-size: 11px; font-weight: 700; letter-spacing: 1.2px;
-      text-transform: uppercase; color: var(--texto-suave); margin: 20px 0 10px;
+      font-size: 10px; font-weight: 700; letter-spacing: 1.2px;
+      text-transform: uppercase; color: var(--texto-suave); margin: 14px 0 6px;
     }
 
     /* ── KPI rows ── */
-    .kpi-row-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px; }
-    .kpi-row-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 12px; }
-    .kpi-row-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
-    @media (max-width: 900px) {
-      .kpi-row-4 { grid-template-columns: 1fr 1fr; }
-      .kpi-row-3 { grid-template-columns: 1fr 1fr; }
-      .kpi-row-2 { grid-template-columns: 1fr 1fr; }
-    }
+    .kpi-row-4, .kpi-row-3, .kpi-row-2 { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+    .kpi-row-4 .kpi, .kpi-row-3 .kpi { flex: 0 0 auto; min-width: 110px; }
+    .kpi-row-2 .kpi { flex: 0 0 auto; min-width: 150px; }
     @media (max-width: 480px) {
-      .kpi-row-4 { grid-template-columns: 1fr 1fr; gap: 8px; }
-      .kpi-row-3 { grid-template-columns: 1fr; gap: 8px; }
-      .kpi-row-2 { grid-template-columns: 1fr; gap: 8px; }
+      .kpi-row-4 .kpi, .kpi-row-3 .kpi, .kpi-row-2 .kpi { flex: 1 1 calc(50% - 4px); min-width: 0; }
     }
 
     /* ── KPI Cards ── */
     .kpi {
       background: #fff;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 2px 12px rgba(0,0,0,.07);
+      border-radius: 10px;
+      padding: 12px 14px;
+      box-shadow: 0 1px 6px rgba(0,0,0,.06);
       border: 1px solid rgba(0,0,0,.06);
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 2px;
     }
     .kpi--acento { border: 2px solid var(--acento) !important; }
-    .kpi-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 4px; }
-    .kpi-label { font-size: 11px; color: var(--texto-suave); font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; }
-    .kpi-icon { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .kpi-icon svg { width: 16px; height: 16px; }
+    .kpi-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 2px; }
+    .kpi-label { font-size: 10px; color: var(--texto-suave); font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; }
+    .kpi-icon { width: 26px; height: 26px; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .kpi-icon svg { width: 13px; height: 13px; }
     .kpi-icon--verde   { background: #eef7ee; color: #2d6a4f; }
     .kpi-icon--tierra  { background: #fef3e2; color: #92400e; }
     .kpi-icon--azul    { background: #e8f0fe; color: #1565c0; }
     .kpi-icon--alerta  { background: #fde8e8; color: #c0392b; }
     .kpi-icon--ok      { background: #e8f5e2; color: #16a34a; }
     .kpi-icon--warn    { background: #fff3cd; color: #856404; }
-    .kpi-value { font-size: 28px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--texto); line-height: 1.1; }
-    .kpi-sub   { font-size: 12px; color: var(--texto-suave); }
+    .kpi-value { font-size: 20px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--texto); line-height: 1.15; }
+    .kpi-sub   { font-size: 11px; color: var(--texto-suave); }
     .kpi-value.red   { color: #DC2626; }
     .kpi-value.green { color: #16A34A; }
 
     /* ── Progress bar vendido ── */
-    .kpi-progress { margin-top: 8px; }
-    .kpi-progress-bar { height: 6px; background: #e5e7eb; border-radius: 4px; overflow: hidden; }
+    .kpi-progress { margin-top: 5px; }
+    .kpi-progress-bar { height: 5px; background: #e5e7eb; border-radius: 4px; overflow: hidden; }
     .kpi-progress-fill { height: 100%; background: #2d6a4f; border-radius: 4px; transition: width .4s ease; }
-    .kpi-progress-label { font-size: 11px; color: var(--texto-suave); margin-top: 4px; }
+    .kpi-progress-label { font-size: 10px; color: var(--texto-suave); margin-top: 3px; }
 
     /* ── Split 60/40 ── */
     .dash-split { display: grid; grid-template-columns: 3fr 2fr; gap: 16px; }
@@ -548,15 +541,34 @@ function cargar() {
 // cotizaciones.js ya define cargarCotizacion() que actualiza topbar, hero-blue y bd-*
 
 function cargarFrutilla() {
+  var hf = document.getElementById('hero-frutilla');
+  function mostrarFrutilla(precio_modal) {
+    if (hf) hf.textContent = '$' + Math.round(precio_modal).toLocaleString('es-AR') + '/kg';
+  }
+  function fallbackLocales() {
+    fetch('/api/cotizaciones/locales?cultivo=frutilla')
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        var arr = Array.isArray(d) ? d : [];
+        var item = arr.find(function(x) { return x.precio_modal || x.precio; });
+        if (item && (item.precio_modal || item.precio)) {
+          mostrarFrutilla(item.precio_modal || item.precio);
+        } else {
+          if (hf) hf.textContent = '$---';
+        }
+      })
+      .catch(function() { if (hf) hf.textContent = '$---'; });
+  }
   fetch('/api/cotizaciones/frutilla')
     .then(function(r) { return r.json(); })
     .then(function(d) {
-      if (d.error || !d.precio_modal) return;
-      var val = '$' + Math.round(d.precio_modal).toLocaleString('es-AR') + '/kg';
-      var hf = document.getElementById('hero-frutilla');
-      if (hf) hf.textContent = val;
+      if (d && !d.error && d.precio_modal) {
+        mostrarFrutilla(d.precio_modal);
+      } else {
+        fallbackLocales();
+      }
     })
-    .catch(function() {});
+    .catch(function() { fallbackLocales(); });
 }
 
 function cargarEtapasDashboard() {
@@ -638,7 +650,7 @@ function cargarMermaHoy() {
 }
 
 function cargarDepositos() {
-  fetch('/api/depositos/ocupacion?tipo_stock=mercaderia')
+  fetch('/api/depositos/ocupacion?tipo_deposito=fruta_fresca,camara_frio')
     .then(function(r) { return r.json(); })
     .then(function(data) {
       var panel = document.getElementById('depositos-panel');
