@@ -500,6 +500,9 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
   cargarProveedoresSelect();
   cargar();
   cargarTemporadaActiva();
+  if (new URLSearchParams(location.search).get('nuevo') === '1') {
+    document.getElementById('form-nuevo').classList.add('visible');
+  }
 </script>
 </body>
 </html>
