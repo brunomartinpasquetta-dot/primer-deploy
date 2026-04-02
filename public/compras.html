@@ -27,7 +27,7 @@
     .items-header { display:grid; grid-template-columns:2.5fr 0.8fr 1fr 1.2fr 32px; gap:6px; padding:6px 10px; background:#F8FAFC; border-bottom:1px solid #E2E8F0; }
     .items-header span { font-size:11px; font-weight:600; color:#64748B; text-transform:uppercase; letter-spacing:.4px; }
     .items-body { padding:6px 10px; }
-    .item-row { display:grid; grid-template-columns:2.5fr 0.8fr 1fr 1.2fr 32px; gap:6px; margin-bottom:6px; align-items:center; }
+    .item-row { display:grid; grid-template-columns:2.5fr 0.9fr 1fr 1.2fr 32px; gap:6px; margin-bottom:6px; align-items:start; }
     .item-row input, .item-row select { height:30px; padding:3px 7px; font-size:13px; border:1px solid #E2E8F0; border-radius:5px; background:#fff; outline:none; }
     .item-row input:focus, .item-row select:focus { border-color:#2D5016; }
     .item-unidad { font-size:11px; color:#64748B; margin-top:1px; }
@@ -138,7 +138,7 @@
     </header>
 
     <div class="content">
-      <a href="menu-insumos.html" class="btn-volver">← Volver</a>
+      <a href="menu-stock.html" class="btn-volver">← Volver</a>
 
       <!-- PAGE HEADER -->
       <div class="page-header">
@@ -176,10 +176,10 @@
 
           <!-- Items -->
           <div class="items-section">
-            <div class="items-header" style="grid-template-columns:2.5fr 0.8fr 1fr 1.2fr 32px;">
-              <span>Producto</span>
-              <span>Cantidad</span>
-              <span>Precio unit.</span>
+            <div class="items-header" style="grid-template-columns:2.5fr 0.9fr 1fr 1.2fr 32px;">
+              <span>Producto [Envase · Contenido]</span>
+              <span title="Cantidad de envases comprados">Unidades</span>
+              <span title="Precio por envase">Precio/envase</span>
               <span>Vto. (SENASA)</span>
               <span></span>
             </div>
@@ -302,9 +302,38 @@
 </script>
 <script>
   var productos = [];
+  var productosFiltrados = [];
   var itemCount = 0;
   var _historialData = [];
   var hoy = new Date().toISOString().split('T')[0];
+
+  function actualizarProductosPorProveedor() {
+    var provId = parseInt(document.getElementById('proveedor').value) || null;
+    if (!provId) {
+      productosFiltrados = productos;
+    } else {
+      // Primero los vinculados al proveedor, luego los sin proveedor definido
+      var vinculados = productos.filter(function(p){ return p.proveedor_id && parseInt(p.proveedor_id) === provId; });
+      var sinProveedor = productos.filter(function(p){ return !p.proveedor_id; });
+      productosFiltrados = vinculados.length > 0 ? vinculados.concat(sinProveedor) : productos;
+    }
+    // Regenerar los selects de todos los items existentes
+    document.querySelectorAll('.item-row select').forEach(function(sel) {
+      var currentVal = sel.value;
+      sel.innerHTML = _opcionesProductos();
+      sel.value = currentVal; // mantener selección si sigue disponible
+    });
+  }
+
+  function _opcionesProductos() {
+    var lista = productosFiltrados.length ? productosFiltrados : productos;
+    return '<option value="">Seleccionar...</option>' + lista.map(function(p){
+      var u = p.unidad_medida || p.presentacion || '';
+      var c = p.contenido_litros ? ' (' + p.contenido_litros + ' ' + u + ')' : '';
+      var e = p.envase ? ' [' + p.envase + ']' : '';
+      return '<option value="'+p.id+'">'+p.nombre+e+c+'</option>';
+    }).join('');
+  }
 
   function irAHistorial() {
     document.getElementById('form-nuevo').classList.remove('visible');
@@ -316,6 +345,7 @@
       document.getElementById('proveedor').innerHTML = '<option value="">Seleccionar proveedor...</option>' +
         data.map(function(p){return '<option value="'+p.id+'">'+p.nombre+'</option>';}).join('');
       recordarSeleccion('proveedor', 'ultimo_proveedor');
+      document.getElementById('proveedor').addEventListener('change', actualizarProductosPorProveedor);
     });
     fetch('/api/temporadas').then(function(r){return r.json();}).then(function(data){
       var optsTemporada = data.map(function(t){return '<option value="'+t.id+'">'+t.nombre+'</option>';}).join('');
@@ -336,20 +366,25 @@
       document.getElementById('forma_pago').innerHTML = '<option value="">Sin especificar</option>' +
         data.map(function(f){return '<option value="'+f.id+'">'+f.nombre+'</option>';}).join('');
     });
-    return fetch('/api/productos').then(function(r){return r.json();}).then(function(data){ productos = data; });
+    return fetch('/api/productos').then(function(r){return r.json();}).then(function(data){
+      productos = data;
+      productosFiltrados = data;
+    });
   }
 
   function autocompletarPrecio(sel) {
     var id = sel.value;
     var prod = productos.find(function(p) { return p.id == id; });
     var row = sel.closest('.item-row');
-    // Mostrar unidad debajo del selector
     var unidadDiv = sel.parentElement.querySelector('.item-unidad');
     if (unidadDiv) {
       if (prod) {
         var u = prod.unidad_medida || prod.presentacion || '';
-        var e = prod.envase ? ' · ' + prod.envase : '';
-        unidadDiv.textContent = u ? (u + e) : '';
+        var c = prod.contenido_litros ? parseFloat(prod.contenido_litros) : null;
+        var e = prod.envase ? prod.envase : '';
+        var txt = e ? e : '';
+        if (c && u) txt += (txt ? ' · ' : '') + c + ' ' + u + '/u';
+        unidadDiv.textContent = txt || '';
       } else {
         unidadDiv.textContent = '';
       }
@@ -359,6 +394,26 @@
       if (inputs[1] && !inputs[1].value) inputs[1].value = parseFloat(prod.costo_unitario).toFixed(2);
     }
     calcularTotal();
+    actualizarStockPreview(row);
+  }
+
+  // Muestra debajo del campo cantidad cuánto stock real ingresará
+  function actualizarStockPreview(row) {
+    var sel  = row.querySelector('select');
+    var prod = sel && sel.value ? productos.find(function(p){ return p.id == sel.value; }) : null;
+    var numInputs = row.querySelectorAll('input[type="number"]');
+    var unidades  = parseFloat(numInputs[0] ? numInputs[0].value : 0) || 0;
+    var preview   = row.querySelector('.item-stock-preview');
+    if (!preview) return;
+    if (prod && unidades > 0) {
+      var contenido = parseFloat(prod.contenido_litros) || 1;
+      var unidad = prod.unidad_medida || prod.presentacion || '';
+      var total = unidades * contenido;
+      preview.textContent = '→ ' + total.toLocaleString('es-AR', {maximumFractionDigits:3}) + ' ' + unidad + ' ingresarán al stock';
+      preview.style.color = '#2D5016';
+    } else {
+      preview.textContent = '';
+    }
   }
 
   function agregarItem() {
@@ -369,17 +424,15 @@
     div.innerHTML =
       '<div>' +
         '<select onchange="autocompletarPrecio(this)">' +
-          '<option value="">Seleccionar...</option>' +
-          productos.map(function(p){
-            var unidad = p.unidad_medida || p.presentacion || '';
-            var envase = p.envase ? ' · ' + p.envase : '';
-            return '<option value="'+p.id+'" data-unidad="'+unidad+'" data-envase="'+envase+'">'+p.nombre+'</option>';
-          }).join('') +
+          _opcionesProductos() +
         '</select>' +
-        '<div class="item-unidad" id="unidad-'+itemCount+'"></div>' +
+        '<div class="item-unidad"></div>' +
       '</div>' +
-      '<input type="number" placeholder="Cant." step="0.001" min="0" style="-moz-appearance:textfield;appearance:textfield;" oninput="calcularTotal()">' +
-      '<input type="number" placeholder="Precio" step="0.01" min="0" style="-moz-appearance:textfield;appearance:textfield;" oninput="calcularTotal()">' +
+      '<div>' +
+        '<input type="number" placeholder="Unidades" step="0.001" min="0" style="-moz-appearance:textfield;appearance:textfield;" oninput="calcularTotal();actualizarStockPreview(this.closest(\'.item-row\'))">' +
+        '<div class="item-stock-preview" style="font-size:11px;margin-top:2px;"></div>' +
+      '</div>' +
+      '<input type="number" placeholder="Precio/envase" step="0.01" min="0" style="-moz-appearance:textfield;appearance:textfield;" oninput="calcularTotal()">' +
       '<input type="date" title="Fecha de vencimiento (SENASA)">' +
       '<button class="btn-item-del" onclick="eliminarItem('+itemCount+')" title="Quitar"><i data-lucide="x" style="width:12px;height:12px;"></i></button>';
     document.getElementById('items-lista').appendChild(div);
@@ -625,7 +678,13 @@
   }
 
   document.getElementById('fecha').value = hoy;
-  cargarDatos().then(function() { agregarItem(); cargarHistorial(); });
+  cargarDatos().then(function() {
+    agregarItem();
+    cargarHistorial();
+    if (new URLSearchParams(location.search).get('nuevo') === '1') {
+      document.getElementById('form-nuevo').classList.add('visible');
+    }
+  });
   cargarTemporadaActiva();
 </script>
 </body>

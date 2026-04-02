@@ -1,0 +1,87 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - generic [ref=e6]:
+        - generic [ref=e7]: COSECHA
+        - generic [ref=e8]: SISTEMA DE CULTIVOS
+    - navigation [ref=e9]:
+      - link "Dashboard" [ref=e10] [cursor=pointer]:
+        - /url: index.html
+        - img [ref=e12]
+        - text: Dashboard
+      - generic [ref=e17]: Campo
+      - link "Cosecha" [ref=e18] [cursor=pointer]:
+        - /url: juntada.html
+        - img [ref=e20]
+        - text: Cosecha
+      - link "Despalillado" [ref=e29] [cursor=pointer]:
+        - /url: despalillado.html
+        - img [ref=e31]
+        - text: Despalillado
+      - link "Aplicaciones" [ref=e37] [cursor=pointer]:
+        - /url: aplicaciones.html
+        - img [ref=e39]
+        - text: Aplicaciones
+      - generic [ref=e42]: Sistema
+      - link "Stock" [ref=e43] [cursor=pointer]:
+        - /url: menu-stock.html
+        - img [ref=e45]
+        - text: Stock
+      - link "Comercial" [ref=e49] [cursor=pointer]:
+        - /url: menu-comercial.html
+        - img [ref=e51]
+        - text: Comercial
+      - link "Administración" [ref=e56] [cursor=pointer]:
+        - /url: menu-admin.html
+        - img [ref=e58]
+        - text: Administración
+      - link "Mercado" [ref=e60] [cursor=pointer]:
+        - /url: mercado.html
+        - img [ref=e62]
+        - text: Mercado
+      - link "Configuración" [ref=e65] [cursor=pointer]:
+        - /url: menu-config.html
+        - img [ref=e67]
+        - text: Configuración
+    - generic [ref=e70]:
+      - generic [ref=e71]: Administrador · administrador
+      - button "Cerrar sesión" [ref=e72] [cursor=pointer]
+  - generic [ref=e73]:
+    - banner [ref=e74]:
+      - generic [ref=e75]:
+        - img [ref=e76]
+        - generic [ref=e77]:
+          - generic [ref=e78]: COSECHA
+          - generic [ref=e79]: SISTEMA DE CULTIVOS
+        - generic [ref=e80]: Cargando...
+      - generic [ref=e81]:
+        - generic [ref=e82] [cursor=pointer]:
+          - img [ref=e83]
+          - text: Administrador
+        - generic [ref=e86]: martes, 31 de marzo
+    - generic [ref=e87]:
+      - link "← Volver" [ref=e88] [cursor=pointer]:
+        - /url: menu-insumos.html
+      - generic [ref=e89]:
+        - generic [ref=e90]:
+          - generic [ref=e91]: Insumos
+          - generic [ref=e92]: ABM de insumos agrícolas
+        - button "+ Nuevo insumo" [ref=e93] [cursor=pointer]
+      - generic [ref=e94]:
+        - heading "Insumos registrados" [level=2] [ref=e95]
+        - table [ref=e96]:
+          - rowgroup [ref=e97]:
+            - row "Nombre Tipo Envase Unidad Cant. por envase Stock total Costo/envase Proveedor" [ref=e98]:
+              - columnheader "Nombre" [ref=e99]
+              - columnheader "Tipo" [ref=e100]
+              - columnheader "Envase" [ref=e101]
+              - columnheader "Unidad" [ref=e102]
+              - columnheader "Cant. por envase" [ref=e103]
+              - columnheader "Stock total" [ref=e104]
+              - columnheader "Costo/envase" [ref=e105]
+              - columnheader "Proveedor" [ref=e106]
+              - columnheader [ref=e107]
+          - rowgroup [ref=e108]:
+            - row "Cargando..." [ref=e109]:
+              - cell "Cargando..." [ref=e110]

@@ -1338,3 +1338,17 @@ label { font-size: 12px; margin-bottom: 4px; }
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+
+/* ── Botones de acción rápida (ins-btn) — globales ── */
+.ins-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 16px; border-radius: 7px; font-size: 13px;
+  font-weight: 600; border: none; cursor: pointer;
+  text-decoration: none; line-height: 1;
+  transition: opacity .15s; white-space: nowrap;
+}
+.ins-btn:hover { opacity: .82; }
+.ins-btn svg { width: 14px; height: 14px; }
+.ins-btn-primary { background: #2D5016; color: #fff; }
+.ins-btn-egreso  { background: #F5A623; color: #fff; }
+.ins-btn-gray    { background: #6c757d; color: #fff; }

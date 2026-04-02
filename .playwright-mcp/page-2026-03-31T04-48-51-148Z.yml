@@ -1,0 +1,199 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - generic [ref=e6]:
+        - generic [ref=e7]: COSECHA
+        - generic [ref=e8]: SISTEMA DE CULTIVOS
+    - navigation [ref=e9]:
+      - link "Dashboard" [ref=e10] [cursor=pointer]:
+        - /url: index.html
+        - img [ref=e12]
+        - text: Dashboard
+      - generic [ref=e17]: Campo
+      - link "Cosecha" [ref=e18] [cursor=pointer]:
+        - /url: juntada.html
+        - img [ref=e20]
+        - text: Cosecha
+      - link "Despalillado" [ref=e29] [cursor=pointer]:
+        - /url: despalillado.html
+        - img [ref=e31]
+        - text: Despalillado
+      - link "Aplicaciones" [ref=e37] [cursor=pointer]:
+        - /url: aplicaciones.html
+        - img [ref=e39]
+        - text: Aplicaciones
+      - generic [ref=e42]: Sistema
+      - link "Stock" [ref=e43] [cursor=pointer]:
+        - /url: menu-stock.html
+        - img [ref=e45]
+        - text: Stock
+      - link "Comercial" [ref=e49] [cursor=pointer]:
+        - /url: menu-comercial.html
+        - img [ref=e51]
+        - text: Comercial
+      - link "Administración" [ref=e56] [cursor=pointer]:
+        - /url: menu-admin.html
+        - img [ref=e58]
+        - text: Administración
+      - link "Mercado" [ref=e60] [cursor=pointer]:
+        - /url: mercado.html
+        - img [ref=e62]
+        - text: Mercado
+      - link "Configuración" [ref=e65] [cursor=pointer]:
+        - /url: menu-config.html
+        - img [ref=e67]
+        - text: Configuración
+    - generic [ref=e70]:
+      - generic [ref=e71]: Administrador · administrador
+      - button "Cerrar sesión" [ref=e72] [cursor=pointer]
+  - generic [ref=e73]:
+    - banner [ref=e74]:
+      - generic [ref=e75]:
+        - img [ref=e76]
+        - generic [ref=e77]:
+          - generic [ref=e78]: COSECHA
+          - generic [ref=e79]: SISTEMA DE CULTIVOS
+        - generic [ref=e80]: 🌱 Campaña FIX 2026 · Día 1
+      - generic [ref=e81]:
+        - generic [ref=e82] [cursor=pointer]:
+          - img [ref=e83]
+          - text: Administrador
+        - generic [ref=e86]: martes, 31 de marzo
+    - generic [ref=e87]:
+      - link "← Volver" [ref=e88] [cursor=pointer]:
+        - /url: menu-stock.html
+      - generic [ref=e89]:
+        - generic [ref=e90]:
+          - generic [ref=e91]: Stock Insumos
+          - generic [ref=e92]: Inventario de insumos agrícolas
+        - generic [ref=e93]:
+          - link "Registrar Compra" [ref=e94] [cursor=pointer]:
+            - /url: compras.html?nuevo=1
+            - img [ref=e95]
+            - text: Registrar Compra
+          - button "Registrar Ingreso" [ref=e96] [cursor=pointer]:
+            - img [ref=e97]
+            - text: Registrar Ingreso
+          - button "Registrar Egreso" [ref=e101] [cursor=pointer]:
+            - img [ref=e102]
+            - text: Registrar Egreso
+          - link "Registrar Aplicación" [ref=e103] [cursor=pointer]:
+            - /url: aplicaciones.html
+            - img [ref=e104]
+            - text: Registrar Aplicación
+          - button "Historial de Movimientos" [ref=e107] [cursor=pointer]:
+            - img [ref=e108]
+            - text: Historial de Movimientos
+      - generic [ref=e111]:
+        - generic [ref=e112]:
+          - img [ref=e114]
+          - generic [ref=e118]: "5"
+          - generic [ref=e119]: Insumos Totales
+        - generic [ref=e120]:
+          - img [ref=e122]
+          - generic [ref=e125]: "1"
+          - generic [ref=e126]: Alertas de Stock Bajo
+        - generic [ref=e127]:
+          - img [ref=e129]
+          - generic [ref=e132]: $21.633.800
+          - generic [ref=e133]: Valor de Inventario
+      - generic [ref=e135]:
+        - generic [ref=e136]:
+          - combobox "Filtrar por..." [ref=e137]
+          - button "Exportar CSV" [ref=e139] [cursor=pointer]:
+            - img [ref=e140]
+          - button "Imprimir" [ref=e143] [cursor=pointer]:
+            - img [ref=e144]
+          - button "✕ Limpiar" [ref=e148] [cursor=pointer]
+        - table [ref=e151]:
+          - rowgroup [ref=e152]:
+            - row "PRODUCTO CATEGORÍA PRESENTACIÓN STOCK ACTUAL UNIDAD DE MEDIDA PROVEEDOR DEPÓSITO" [ref=e153]:
+              - columnheader [ref=e154]:
+                - checkbox [ref=e155] [cursor=pointer]
+              - columnheader "PRODUCTO" [ref=e156]
+              - columnheader "CATEGORÍA" [ref=e157]
+              - columnheader "PRESENTACIÓN" [ref=e158]
+              - columnheader "STOCK ACTUAL" [ref=e159]
+              - columnheader "UNIDAD DE MEDIDA" [ref=e160]
+              - columnheader "PROVEEDOR" [ref=e161]
+              - columnheader "DEPÓSITO" [ref=e162]
+          - rowgroup [ref=e163]:
+            - row "FERTILIZANTE X28 Fert. Fosforados Bidón 100 lt 10 u. (10 lt/u.) AGROQUIMICA SRL INSUMOS-STOCK" [ref=e164]:
+              - cell [ref=e165]:
+                - checkbox [ref=e166] [cursor=pointer]
+              - cell "FERTILIZANTE X28" [ref=e167]:
+                - strong [ref=e168]: FERTILIZANTE X28
+              - cell "Fert. Fosforados" [ref=e169]
+              - cell "Bidón" [ref=e170]
+              - cell "100 lt" [ref=e171]
+              - cell "10 u. (10 lt/u.)" [ref=e172]
+              - cell "AGROQUIMICA SRL" [ref=e173]
+              - cell "INSUMOS-STOCK" [ref=e174]
+            - row "FUNGICIDA C-300 WTD fungicida — 44 lt 4,4 u. (10 lt/u.) AGROQUIMICA SRL INSUMOS-STOCK" [ref=e175]:
+              - cell [ref=e176]:
+                - checkbox [ref=e177] [cursor=pointer]
+              - cell "FUNGICIDA C-300 WTD" [ref=e178]:
+                - strong [ref=e179]: FUNGICIDA C-300 WTD
+              - cell "fungicida" [ref=e180]
+              - cell "—" [ref=e181]
+              - cell "44 lt" [ref=e182]
+              - cell "4,4 u. (10 lt/u.)" [ref=e183]
+              - cell "AGROQUIMICA SRL" [ref=e184]
+              - cell "INSUMOS-STOCK" [ref=e185]
+            - row "NUTRIENTES MEGA NUTRICION nutriente — 1 lt ⚠️ 0,1 u. (20 lt/u.) AGROQUIMICA SRL INSUMOS-STOCK" [ref=e186]:
+              - cell [ref=e187]:
+                - checkbox [ref=e188] [cursor=pointer]
+              - cell "NUTRIENTES MEGA NUTRICION" [ref=e189]:
+                - strong [ref=e190]: NUTRIENTES MEGA NUTRICION
+              - cell "nutriente" [ref=e191]
+              - cell "—" [ref=e192]
+              - cell "1 lt ⚠️" [ref=e193]
+              - cell "0,1 u. (20 lt/u.)" [ref=e194]
+              - cell "AGROQUIMICA SRL" [ref=e195]
+              - cell "INSUMOS-STOCK" [ref=e196]
+            - row "PAPEL FILM Otros Rollo 40 m 2 u. (20 m/u.) QUIMICOS FRUTA S.A INSUMOS-STOCK" [ref=e197]:
+              - cell [ref=e198]:
+                - checkbox [ref=e199] [cursor=pointer]
+              - cell "PAPEL FILM" [ref=e200]:
+                - strong [ref=e201]: PAPEL FILM
+              - cell "Otros" [ref=e202]
+              - cell "Rollo" [ref=e203]
+              - cell "40 m" [ref=e204]
+              - cell "2 u. (20 m/u.)" [ref=e205]
+              - cell "QUIMICOS FRUTA S.A" [ref=e206]
+              - cell "INSUMOS-STOCK" [ref=e207]
+            - row "PLANTINES 2026 Plantines Unidad 12.000 u 12.000 u. (1 u/u.) PLANTINES SRL INSUMOS-STOCK" [ref=e208]:
+              - cell [ref=e209]:
+                - checkbox [ref=e210] [cursor=pointer]
+              - cell "PLANTINES 2026" [ref=e211]:
+                - strong [ref=e212]: PLANTINES 2026
+              - cell "Plantines" [ref=e213]
+              - cell "Unidad" [ref=e214]
+              - cell "12.000 u" [ref=e215]
+              - cell "12.000 u. (1 u/u.)" [ref=e216]
+              - cell "PLANTINES SRL" [ref=e217]
+              - cell "INSUMOS-STOCK" [ref=e218]
+      - generic [ref=e219]:
+        - generic [ref=e220]:
+          - generic [ref=e221]:
+            - img [ref=e222]
+            - text: Últimos movimientos
+          - generic [ref=e225]:
+            - textbox "Desde" [ref=e226]
+            - textbox "Hasta" [ref=e227]
+        - table [ref=e229]:
+          - rowgroup [ref=e230]:
+            - row "Fecha Producto Movimiento Cantidad Proveedor Parcela Depósito Usuario Observación" [ref=e231]:
+              - columnheader "Fecha" [ref=e232]
+              - columnheader "Producto" [ref=e233]
+              - columnheader "Movimiento" [ref=e234]
+              - columnheader "Cantidad" [ref=e235]
+              - columnheader "Proveedor" [ref=e236]
+              - columnheader "Parcela" [ref=e237]
+              - columnheader "Depósito" [ref=e238]
+              - columnheader "Usuario" [ref=e239]
+              - columnheader "Observación" [ref=e240]
+          - rowgroup [ref=e241]:
+            - row "Cargando..." [ref=e242]:
+              - cell "Cargando..." [ref=e243]

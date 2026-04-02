@@ -1,0 +1,215 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - generic [ref=e6]:
+        - generic [ref=e7]: COSECHA
+        - generic [ref=e8]: SISTEMA DE CULTIVOS
+    - navigation [ref=e9]:
+      - link "Dashboard" [ref=e10] [cursor=pointer]:
+        - /url: index.html
+        - img [ref=e12]
+        - text: Dashboard
+      - generic [ref=e17]: Campo
+      - link "Cosecha" [ref=e18] [cursor=pointer]:
+        - /url: juntada.html
+        - img [ref=e20]
+        - text: Cosecha
+      - link "Despalillado" [ref=e29] [cursor=pointer]:
+        - /url: despalillado.html
+        - img [ref=e31]
+        - text: Despalillado
+      - link "Aplicaciones" [ref=e37] [cursor=pointer]:
+        - /url: aplicaciones.html
+        - img [ref=e39]
+        - text: Aplicaciones
+      - generic [ref=e42]: Sistema
+      - link "Stock" [ref=e43] [cursor=pointer]:
+        - /url: menu-stock.html
+        - img [ref=e45]
+        - text: Stock
+      - link "Comercial" [ref=e49] [cursor=pointer]:
+        - /url: menu-comercial.html
+        - img [ref=e51]
+        - text: Comercial
+      - link "Administración" [ref=e56] [cursor=pointer]:
+        - /url: menu-admin.html
+        - img [ref=e58]
+        - text: Administración
+      - link "Mercado" [ref=e60] [cursor=pointer]:
+        - /url: mercado.html
+        - img [ref=e62]
+        - text: Mercado
+      - link "Configuración" [ref=e65] [cursor=pointer]:
+        - /url: menu-config.html
+        - img [ref=e67]
+        - text: Configuración
+    - generic [ref=e70]:
+      - generic [ref=e71]: Administrador · administrador
+      - button "Cerrar sesión" [ref=e72] [cursor=pointer]
+  - generic [ref=e73]:
+    - banner [ref=e74]:
+      - generic [ref=e75]:
+        - img [ref=e76]
+        - generic [ref=e77]:
+          - generic [ref=e78]: COSECHA
+          - generic [ref=e79]: SISTEMA DE CULTIVOS
+        - generic [ref=e80]: 🌱 Campaña FIX 2026 · Día 1
+      - generic [ref=e81]:
+        - generic [ref=e82] [cursor=pointer]:
+          - img [ref=e83]
+          - text: Administrador
+        - generic [ref=e86]: martes, 31 de marzo
+    - generic [ref=e87]:
+      - link "← Volver" [ref=e88] [cursor=pointer]:
+        - /url: menu-stock.html
+      - generic [ref=e89]:
+        - generic [ref=e90]:
+          - generic [ref=e91]: Stock Insumos
+          - generic [ref=e92]: Inventario de insumos agrícolas
+        - generic [ref=e93]:
+          - link "Registrar Compra" [ref=e94] [cursor=pointer]:
+            - /url: compras.html?nuevo=1
+            - img [ref=e95]
+            - text: Registrar Compra
+          - button "Registrar Ingreso" [ref=e96] [cursor=pointer]:
+            - img [ref=e97]
+            - text: Registrar Ingreso
+          - button "Registrar Egreso" [ref=e101] [cursor=pointer]:
+            - img [ref=e102]
+            - text: Registrar Egreso
+          - link "Registrar Aplicación" [ref=e103] [cursor=pointer]:
+            - /url: aplicaciones.html
+            - img [ref=e104]
+            - text: Registrar Aplicación
+          - button "Historial de Movimientos" [ref=e107] [cursor=pointer]:
+            - img [ref=e108]
+            - text: Historial de Movimientos
+      - generic [ref=e111]:
+        - generic [ref=e112]:
+          - img [ref=e114]
+          - generic [ref=e118]: "0"
+          - generic [ref=e119]: Insumos Totales
+        - generic [ref=e120]:
+          - img [ref=e122]
+          - generic [ref=e125]: "0"
+          - generic [ref=e126]: Alertas de Stock Bajo
+        - generic [ref=e127]:
+          - img [ref=e129]
+          - generic [ref=e132]: $0
+          - generic [ref=e133]: Valor de Inventario
+      - generic [ref=e134]:
+        - generic [ref=e135]: Estado de almacenes
+        - generic [ref=e137]:
+          - generic [ref=e138]: INSUMOS-STOCK
+          - generic [ref=e139]: "12.185"
+      - generic [ref=e141]:
+        - generic [ref=e142]:
+          - combobox "Filtrar por..." [ref=e143]
+          - button "Exportar CSV" [ref=e145] [cursor=pointer]:
+            - img [ref=e146]
+          - button "Imprimir" [ref=e149] [cursor=pointer]:
+            - img [ref=e150]
+          - button "✕ Limpiar" [ref=e154] [cursor=pointer]
+        - table [ref=e157]:
+          - rowgroup [ref=e158]:
+            - row "PRODUCTO CATEGORÍA PRESENTACIÓN STOCK ACTUAL UNIDAD DE MEDIDA PROVEEDOR DEPÓSITO" [ref=e159]:
+              - columnheader [ref=e160]:
+                - checkbox [ref=e161] [cursor=pointer]
+              - columnheader "PRODUCTO" [ref=e162]
+              - columnheader "CATEGORÍA" [ref=e163]
+              - columnheader "PRESENTACIÓN" [ref=e164]
+              - columnheader "STOCK ACTUAL" [ref=e165]
+              - columnheader "UNIDAD DE MEDIDA" [ref=e166]
+              - columnheader "PROVEEDOR" [ref=e167]
+              - columnheader "DEPÓSITO" [ref=e168]
+          - rowgroup [ref=e169]:
+            - row "Cargando..." [ref=e170]:
+              - cell "Cargando..." [ref=e171]
+      - generic [ref=e172]:
+        - generic [ref=e173]:
+          - generic [ref=e174]:
+            - img [ref=e175]
+            - text: Últimos movimientos
+          - generic [ref=e178]:
+            - textbox "Desde" [ref=e179]
+            - textbox "Hasta" [ref=e180]
+        - table [ref=e182]:
+          - rowgroup [ref=e183]:
+            - row "Fecha Producto Movimiento Cantidad Proveedor Parcela Depósito Usuario Observación" [ref=e184]:
+              - columnheader "Fecha" [ref=e185]
+              - columnheader "Producto" [ref=e186]
+              - columnheader "Movimiento" [ref=e187]
+              - columnheader "Cantidad" [ref=e188]
+              - columnheader "Proveedor" [ref=e189]
+              - columnheader "Parcela" [ref=e190]
+              - columnheader "Depósito" [ref=e191]
+              - columnheader "Usuario" [ref=e192]
+              - columnheader "Observación" [ref=e193]
+          - rowgroup [ref=e194]:
+            - row "31/03/26 01:34 FERTILIZANTE X28 Compra +100 lt AGROQUIMICA SRL — INSUMOS-STOCK Administrador" [ref=e195]:
+              - cell "31/03/26 01:34" [ref=e196]
+              - cell "FERTILIZANTE X28" [ref=e197]
+              - cell "Compra" [ref=e198]:
+                - generic [ref=e199]: Compra
+              - cell "+100 lt" [ref=e200]
+              - cell "AGROQUIMICA SRL" [ref=e201]
+              - cell "—" [ref=e202]
+              - cell "INSUMOS-STOCK" [ref=e203]
+              - cell "Administrador" [ref=e204]
+              - cell [ref=e205]
+            - row "31/03/26 01:32 PLANTINES 2026 Compra +12.000 u PLANTINES SRL — INSUMOS-STOCK Administrador" [ref=e206]:
+              - cell "31/03/26 01:32" [ref=e207]
+              - cell "PLANTINES 2026" [ref=e208]
+              - cell "Compra" [ref=e209]:
+                - generic [ref=e210]: Compra
+              - cell "+12.000 u" [ref=e211]
+              - cell "PLANTINES SRL" [ref=e212]
+              - cell "—" [ref=e213]
+              - cell "INSUMOS-STOCK" [ref=e214]
+              - cell "Administrador" [ref=e215]
+              - cell [ref=e216]
+            - row "31/03/26 01:08 PAPEL FILM Compra +40 m QUIMICOS FRUTA S.A — INSUMOS-STOCK Administrador" [ref=e217]:
+              - cell "31/03/26 01:08" [ref=e218]
+              - cell "PAPEL FILM" [ref=e219]
+              - cell "Compra" [ref=e220]:
+                - generic [ref=e221]: Compra
+              - cell "+40 m" [ref=e222]
+              - cell "QUIMICOS FRUTA S.A" [ref=e223]
+              - cell "—" [ref=e224]
+              - cell "INSUMOS-STOCK" [ref=e225]
+              - cell "Administrador" [ref=e226]
+              - cell [ref=e227]
+            - row "31/03/26 00:34 FUNGICIDA C-300 WTD Compra +40 lt AGROQUIMICA SRL — INSUMOS-STOCK Administrador" [ref=e228]:
+              - cell "31/03/26 00:34" [ref=e229]
+              - cell "FUNGICIDA C-300 WTD" [ref=e230]
+              - cell "Compra" [ref=e231]:
+                - generic [ref=e232]: Compra
+              - cell "+40 lt" [ref=e233]
+              - cell "AGROQUIMICA SRL" [ref=e234]
+              - cell "—" [ref=e235]
+              - cell "INSUMOS-STOCK" [ref=e236]
+              - cell "Administrador" [ref=e237]
+              - cell [ref=e238]
+            - row "31/03/26 00:15 NUTRIENTES MEGA NUTRICION Compra +1 lt AGROQUIMICA SRL — INSUMOS-STOCK Administrador" [ref=e239]:
+              - cell "31/03/26 00:15" [ref=e240]
+              - cell "NUTRIENTES MEGA NUTRICION" [ref=e241]
+              - cell "Compra" [ref=e242]:
+                - generic [ref=e243]: Compra
+              - cell "+1 lt" [ref=e244]
+              - cell "AGROQUIMICA SRL" [ref=e245]
+              - cell "—" [ref=e246]
+              - cell "INSUMOS-STOCK" [ref=e247]
+              - cell "Administrador" [ref=e248]
+              - cell [ref=e249]
+            - row "31/03/26 00:10 FUNGICIDA C-300 WTD Compra +4 lt AGROQUIMICA SRL — INSUMOS-STOCK Administrador" [ref=e250]:
+              - cell "31/03/26 00:10" [ref=e251]
+              - cell "FUNGICIDA C-300 WTD" [ref=e252]
+              - cell "Compra" [ref=e253]:
+                - generic [ref=e254]: Compra
+              - cell "+4 lt" [ref=e255]
+              - cell "AGROQUIMICA SRL" [ref=e256]
+              - cell "—" [ref=e257]
+              - cell "INSUMOS-STOCK" [ref=e258]
+              - cell "Administrador" [ref=e259]
+              - cell [ref=e260]

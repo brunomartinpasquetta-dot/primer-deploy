@@ -1,3 +1,16 @@
+// ── Botón Volver: siempre usa history.back() para regresar al menú desde donde se abrió ──
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.btn-volver').forEach(function(el) {
+    var fallback = el.getAttribute('href') || 'index.html';
+    el.setAttribute('href', '#');
+    el.addEventListener('click', function(e) {
+      e.preventDefault();
+      if (history.length > 1) { history.back(); }
+      else { location.href = fallback; }
+    });
+  });
+});
+
 function setLoading(btn, loading) {
   if (loading) {
     btn.disabled = true;

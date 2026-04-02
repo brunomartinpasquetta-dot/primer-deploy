@@ -69,26 +69,6 @@
     .ins-action-left  { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .ins-action-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
-    .ins-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 9px 16px;
-      border-radius: 7px;
-      font-size: 13px;
-      font-weight: 600;
-      border: none;
-      cursor: pointer;
-      text-decoration: none;
-      line-height: 1;
-      transition: opacity .15s;
-      white-space: nowrap;
-    }
-    .ins-btn:hover { opacity: .82; }
-    .ins-btn svg { width: 14px; height: 14px; }
-    .ins-btn-primary   { background: #2D5016; color: #fff; }
-    .ins-btn-egreso    { background: #F5A623; color: #fff; }
-    .ins-btn-gray      { background: #6c757d; color: #fff; }
     .ins-btn-gray.activo { background: #343a40; }
 
     .ins-search {
@@ -160,34 +140,27 @@
     .stock-bajo { color: #c0392b; font-weight: 700; }
     .stock-ok   { color: #2d6a4f; font-weight: 700; }
 
-    /* ── Layout 2 columnas stock + historial ── */
-    .ins-split {
-      display: grid;
-      grid-template-columns: 1fr 360px;
-      gap: 16px;
-      align-items: start;
-    }
-    @media (max-width: 1024px) { .ins-split { grid-template-columns: 1fr; } }
+    /* ── Layout stock (1 columna, full width) ── */
+    .ins-split { display: block; }
 
-    /* ── Historial panel lateral ── */
+    /* ── Últimos movimientos debajo del stock ── */
     .hist-panel {
       background: var(--superficie);
       border: 1px solid var(--borde);
       border-radius: 12px;
       overflow: hidden;
-      position: sticky;
-      top: 16px;
+      margin-top: 16px;
     }
     .hist-panel-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 12px 14px;
+      padding: 12px 16px;
       border-bottom: 1px solid var(--borde);
       background: var(--fondo);
     }
     .hist-panel-title { font-weight: 700; font-size: 13px; color: var(--texto); }
-    .hist-panel-body { max-height: 600px; overflow-y: auto; }
+    .hist-panel-body { overflow-x: auto; }
     .hist-item {
       padding: 10px 14px;
       border-bottom: 1px solid var(--borde);
@@ -342,8 +315,8 @@
           <div class="content-sub">Inventario de insumos agrícolas</div>
         </div>
         <div class="ins-action-left" style="flex-wrap:wrap;">
-          <a href="compras.html" class="ins-btn ins-btn-primary">
-            <i data-lucide="plus"></i> Registrar Compra
+          <a href="compras.html?nuevo=1" class="ins-btn ins-btn-gray">
+            <i data-lucide="shopping-cart"></i> Nueva compra
           </a>
           <button class="ins-btn ins-btn-primary" onclick="openIngresoManualModal()">
             <i data-lucide="package-plus"></i> Registrar Ingreso
@@ -408,9 +381,9 @@
                     <th><input type="checkbox" class="row-check" id="chk-all" onchange="toggleTodos(this)"></th>
                     <th>PRODUCTO</th>
                     <th>CATEGORÍA</th>
-                    <th>ENVASE</th>
-                    <th style="text-align:right;">KG / LITROS</th>
-                    <th style="text-align:right;">PRESENTACIÓN</th>
+                    <th>PRESENTACIÓN</th>
+                    <th style="text-align:right;">STOCK ACTUAL</th>
+                    <th style="text-align:right;">UNIDAD DE MEDIDA</th>
                     <th>PROVEEDOR</th>
                     <th>DEPÓSITO</th>
                   </tr>
@@ -423,20 +396,38 @@
           </div>
         </div>
 
-        <!-- columna derecha: historial lateral -->
-        <div class="hist-panel">
-          <div class="hist-panel-header">
-            <span class="hist-panel-title"><i data-lucide="clock" style="width:13px;height:13px;vertical-align:middle;margin-right:4px;"></i> Últimos movimientos</span>
-            <div style="display:flex;gap:6px;align-items:center;">
-              <input type="date" id="hist-desde" onchange="cargarHistorialPanel()" title="Desde" style="font-size:11px;padding:3px 6px;border:1px solid var(--borde);border-radius:5px;background:#fff;">
-              <input type="date" id="hist-hasta" onchange="cargarHistorialPanel()" title="Hasta" style="font-size:11px;padding:3px 6px;border:1px solid var(--borde);border-radius:5px;background:#fff;">
-            </div>
-          </div>
-          <div class="hist-panel-body" id="hist-panel-body">
-            <div class="activity-empty" style="padding:20px;text-align:center;color:var(--texto-suave);">Cargando...</div>
+      </div><!-- /ins-split -->
+
+      <!-- ── Últimos movimientos (debajo del stock, tabla completa) ── -->
+      <div class="hist-panel">
+        <div class="hist-panel-header">
+          <span class="hist-panel-title"><i data-lucide="clock" style="width:13px;height:13px;vertical-align:middle;margin-right:4px;"></i> Últimos movimientos</span>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input type="date" id="hist-desde" onchange="cargarHistorialPanel()" title="Desde" style="font-size:11px;padding:3px 6px;border:1px solid var(--borde);border-radius:5px;background:#fff;">
+            <input type="date" id="hist-hasta" onchange="cargarHistorialPanel()" title="Hasta" style="font-size:11px;padding:3px 6px;border:1px solid var(--borde);border-radius:5px;background:#fff;">
           </div>
         </div>
-      </div><!-- /ins-split -->
+        <div class="hist-panel-body" id="hist-panel-body">
+          <table style="width:100%;border-collapse:collapse;font-size:12px;">
+            <thead>
+              <tr style="background:var(--fondo);">
+                <th style="padding:8px 10px;text-align:left;border-bottom:1px solid var(--borde);white-space:nowrap;">Fecha</th>
+                <th style="padding:8px 10px;text-align:left;border-bottom:1px solid var(--borde);">Producto</th>
+                <th style="padding:8px 10px;text-align:left;border-bottom:1px solid var(--borde);">Movimiento</th>
+                <th style="padding:8px 10px;text-align:right;border-bottom:1px solid var(--borde);">Cantidad</th>
+                <th style="padding:8px 10px;text-align:left;border-bottom:1px solid var(--borde);">Proveedor</th>
+                <th style="padding:8px 10px;text-align:left;border-bottom:1px solid var(--borde);">Parcela</th>
+                <th style="padding:8px 10px;text-align:left;border-bottom:1px solid var(--borde);">Depósito</th>
+                <th style="padding:8px 10px;text-align:left;border-bottom:1px solid var(--borde);">Usuario</th>
+                <th style="padding:8px 10px;text-align:left;border-bottom:1px solid var(--borde);">Observación</th>
+              </tr>
+            </thead>
+            <tbody id="hist-panel-tbody">
+              <tr><td colspan="9" style="padding:20px;text-align:center;color:var(--texto-suave);">Cargando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       <!-- ── Sección Historial (colapsable) ── -->
       <div id="section-historial" style="display:none;">
@@ -748,7 +739,8 @@
     tbody.innerHTML = data.map(function(p) {
       var cant = parseFloat(p.cantidad_disponible) || 0;
       var contenido = parseFloat(p.contenido_litros) || 0;
-      var bajo = cant <= 2;
+      var minimo = (p.stock_minimo !== null && p.stock_minimo !== undefined) ? parseFloat(p.stock_minimo) : null;
+      var bajo = minimo !== null ? cant < minimo : cant <= 2;
       var unidad = p.unidad || '—';
       // Cantidad en kg/litros
       var cantLabel = cant.toLocaleString('es-AR', {minimumFractionDigits:0,maximumFractionDigits:2}) + ' ' + unidad;
@@ -781,15 +773,30 @@
       _stockData = data;
       poblarDatalist('si-stock-opciones', data, _siStockCols);
 
-      /* Actualizar KPIs */
-      var productosUnicos = {}, bajosCount = 0;
+      /* Actualizar KPIs — agregar por producto_id para evitar doble conteo por proveedor/depósito */
+      var porProducto = {};
       data.forEach(function(p) {
-        productosUnicos[p.producto_id] = true;
-        if ((parseFloat(p.cantidad_disponible) || 0) <= 2) bajosCount++;
+        var id = p.producto_id;
+        if (!porProducto[id]) {
+          porProducto[id] = {
+            stock: 0,
+            costo: parseFloat(p.costo_unitario) || 0,
+            minimo: p.stock_minimo !== null && p.stock_minimo !== undefined ? parseFloat(p.stock_minimo) : null
+          };
+        }
+        porProducto[id].stock += parseFloat(p.cantidad_disponible) || 0;
       });
-      document.getElementById('kpi-productos').textContent = Object.keys(productosUnicos).length;
+      var ids = Object.keys(porProducto);
+      var bajosCount = 0, valorTotal = 0;
+      ids.forEach(function(id) {
+        var prod = porProducto[id];
+        valorTotal += prod.stock * prod.costo;
+        if (prod.minimo !== null && prod.stock < prod.minimo) bajosCount++;
+        else if (prod.minimo === null && prod.stock <= 2) bajosCount++; // fallback si no tiene umbral
+      });
+      document.getElementById('kpi-productos').textContent = ids.length;
       document.getElementById('kpi-bajo').textContent = bajosCount;
-      document.getElementById('kpi-valor').textContent = data.length + ' líneas';
+      document.getElementById('kpi-valor').textContent = '$' + valorTotal.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
 
 
       /* Renderizar tabla */
@@ -1122,9 +1129,9 @@
   cargarHistorialPanel();
 
   function cargarHistorialPanel() {
-    var body = document.getElementById('hist-panel-body');
-    if (!body) return;
-    body.innerHTML = '<div class="activity-empty" style="padding:20px;text-align:center;color:var(--texto-suave);">Cargando...</div>';
+    var tbody = document.getElementById('hist-panel-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="9" style="padding:20px;text-align:center;color:var(--texto-suave);">Cargando...</td></tr>';
     var params = new URLSearchParams();
     var desde = document.getElementById('hist-desde').value;
     var hasta = document.getElementById('hist-hasta').value;
@@ -1134,41 +1141,44 @@
       .then(function(r) { return r.json(); })
       .then(function(data) {
         if (!data.length) {
-          body.innerHTML = '<div class="activity-empty" style="padding:20px;text-align:center;">Sin movimientos</div>';
+          tbody.innerHTML = '<tr><td colspan="9" style="padding:20px;text-align:center;">Sin movimientos</td></tr>';
           return;
         }
-        body.innerHTML = data.slice(0, 50).map(function(m) {
+        var tipoLabels = {
+          compra:'Compra', aplicacion:'Aplicación', ingreso_manual:'Ing. manual',
+          egreso:'Egreso', ajuste:'Ajuste', merma:'Merma',
+          vencimiento:'Vencimiento', perdida:'Pérdida'
+        };
+        var badgeColors = {
+          compra:'#e8f5e2;color:#2d6a4f', ingreso_manual:'#e8f5e2;color:#2d6a4f',
+          aplicacion:'#fde8e8;color:#c0392b', egreso:'#fde8e8;color:#c0392b',
+          merma:'#fff3cd;color:#856404', vencimiento:'#fff3cd;color:#856404',
+          perdida:'#fde8e8;color:#c0392b'
+        };
+        tbody.innerHTML = data.slice(0, 60).map(function(m) {
           var esIngreso = m.tipo === 'compra' || m.tipo === 'ingreso_manual';
-          var signo = esIngreso ? '+' : '−';
-          var cant  = parseFloat(m.cantidad || 0);
-          var cantStr = signo + cant.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:2}) + ' ' + (m.presentacion || '');
-          var tipoLabel = m.tipo === 'compra' ? 'Compra'
-            : m.tipo === 'aplicacion'         ? 'Aplicación'
-            : m.tipo === 'ingreso_manual'      ? 'Ing. manual'
-            : m.tipo === 'ajuste'              ? 'Ajuste'
-            : m.tipo === 'merma'               ? 'Merma'
-            : m.tipo;
-          var badgeClass = m.tipo === 'compra' ? 'compra'
-            : m.tipo === 'aplicacion'          ? 'aplicacion'
-            : m.tipo === 'ingreso_manual'       ? 'ingreso_manual'
-            : 'ajuste';
-          var meta = fmtFechaHora(m.fecha_hora);
-          if (m.parcela) meta += ' · ' + m.parcela;
-          return '<div class="hist-item">' +
-            '<div class="hist-item-top">' +
-              '<span class="hist-item-prod">' + (m.producto || '—') + '</span>' +
-              '<span class="hist-item-cant ' + (esIngreso ? 'ingreso' : 'egreso') + '">' + cantStr + '</span>' +
-            '</div>' +
-            '<div class="hist-item-meta">' +
-              '<span class="hist-tipo-badge ' + badgeClass + '">' + tipoLabel + '</span>' +
-              ' ' + meta +
-            '</div>' +
-          '</div>';
+          var cant = parseFloat(m.cantidad || 0);
+          var cantStr = (esIngreso ? '+' : '−') + cant.toLocaleString('es-AR',{maximumFractionDigits:2}) + ' ' + (m.presentacion || '');
+          var cantColor = esIngreso ? '#2d6a4f' : '#c0392b';
+          var label = tipoLabels[m.tipo] || m.tipo || '—';
+          var bc = badgeColors[m.tipo] || '#eeeeee;color:#666';
+          var fecha = fmtFechaHora(m.fecha_hora);
+          var rowBg = esIngreso ? '' : 'background:#fff9f9;';
+          return '<tr style="border-bottom:1px solid var(--borde);' + rowBg + '">' +
+            '<td style="padding:7px 10px;white-space:nowrap;font-size:11px;color:var(--texto-suave);">' + fecha + '</td>' +
+            '<td style="padding:7px 10px;font-weight:600;">' + (m.producto || '—') + '</td>' +
+            '<td style="padding:7px 10px;"><span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;background:' + bc + ';">' + label + '</span></td>' +
+            '<td style="padding:7px 10px;text-align:right;font-family:monospace;font-weight:700;color:' + cantColor + ';">' + cantStr + '</td>' +
+            '<td style="padding:7px 10px;font-size:11px;">' + (m.proveedor || '—') + '</td>' +
+            '<td style="padding:7px 10px;font-size:11px;">' + (m.parcela || '—') + '</td>' +
+            '<td style="padding:7px 10px;font-size:11px;">' + (m.deposito_nombre || '—') + '</td>' +
+            '<td style="padding:7px 10px;font-size:11px;">' + (m.usuario || '—') + '</td>' +
+            '<td style="padding:7px 10px;font-size:11px;color:var(--texto-suave);">' + (m.observacion || '') + '</td>' +
+          '</tr>';
         }).join('');
-        lucide.createIcons();
       })
       .catch(function() {
-        body.innerHTML = '<div class="activity-empty" style="padding:20px;text-align:center;color:#c0392b;">Error al cargar</div>';
+        tbody.innerHTML = '<tr><td colspan="9" style="padding:20px;text-align:center;color:#c0392b;">Error al cargar</td></tr>';
       });
   }
 

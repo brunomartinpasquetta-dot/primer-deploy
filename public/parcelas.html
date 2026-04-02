@@ -101,7 +101,19 @@
       <input type="date" id="fecha_siembra">
     </div>
     <label>Variedad</label>
-    <input type="text" id="variedad" placeholder="Ej: Camarosa, Festival">
+    <select id="variedad">
+      <option value="">— Sin especificar —</option>
+      <option>Albion</option><option>Aromas</option><option>Benicia</option><option>Brilliance</option>
+      <option>Calinda</option><option>Camarosa</option><option>Camino Real</option><option>Chandler</option>
+      <option>Diamante</option><option>Douglas</option><option>Evie 2</option><option>Festival</option>
+      <option>Festival Florida</option><option>Florentina</option><option>Fortuna</option><option>Fronteras</option>
+      <option>Kabarla</option><option>Medallion</option><option>Monterey</option><option>Oso Grande</option>
+      <option>Pajaro</option><option>Palomar</option><option>Parker</option><option>Portola</option>
+      <option>Radiance</option><option>Redlands Hope</option><option>Rubygem</option><option>Sabrina</option>
+      <option>San Andreas</option><option>Seascape</option><option>Selva</option><option>Splendor</option>
+      <option>Sweet Charlie</option><option>Sweet Sensation</option><option>Tioga</option><option>Tufts</option>
+      <option>Ventana</option><option>Winter Dawn</option>
+    </select>
     <button class="btn btn-primary" id="btn-guardar" onclick="guardar()" style="width:auto;" data-tooltip="Guardar la nueva parcela en la campaña seleccionada">Guardar parcela</button>
     <div id="mensaje"></div>
       </div>
@@ -148,7 +160,20 @@
       <input type="hidden" id="edit-id">
       <label>Nombre *</label><input type="text" id="edit-nombre" style="width:100%;margin-bottom:8px;">
       <label>Hectáreas</label><input type="number" id="edit-hectareas" step="0.001" min="0" style="width:100%;margin-bottom:8px;-moz-appearance:textfield;appearance:textfield;">
-      <label>Variedad</label><input type="text" id="edit-variedad" style="width:100%;margin-bottom:8px;">
+      <label>Variedad</label>
+      <select id="edit-variedad" style="width:100%;margin-bottom:8px;">
+        <option value="">— Sin especificar —</option>
+        <option>Albion</option><option>Aromas</option><option>Benicia</option><option>Brilliance</option>
+        <option>Calinda</option><option>Camarosa</option><option>Camino Real</option><option>Chandler</option>
+        <option>Diamante</option><option>Douglas</option><option>Evie 2</option><option>Festival</option>
+        <option>Festival Florida</option><option>Florentina</option><option>Fortuna</option><option>Fronteras</option>
+        <option>Kabarla</option><option>Medallion</option><option>Monterey</option><option>Oso Grande</option>
+        <option>Pajaro</option><option>Palomar</option><option>Parker</option><option>Portola</option>
+        <option>Radiance</option><option>Redlands Hope</option><option>Rubygem</option><option>Sabrina</option>
+        <option>San Andreas</option><option>Seascape</option><option>Selva</option><option>Splendor</option>
+        <option>Sweet Charlie</option><option>Sweet Sensation</option><option>Tioga</option><option>Tufts</option>
+        <option>Ventana</option><option>Winter Dawn</option>
+      </select>
       <label>Plantines</label><input type="number" id="edit-plantines" min="0" style="width:100%;margin-bottom:8px;-moz-appearance:textfield;appearance:textfield;">
       <div id="msg-edit" style="margin-top:8px;"></div>
       <button onclick="guardarEdicion(this)" style="margin-top:12px;width:100%;padding:12px;background:#2D5016;color:white;border:none;border-radius:10px;font-size:15px;font-weight:bold;cursor:pointer;">Guardar cambios</button>

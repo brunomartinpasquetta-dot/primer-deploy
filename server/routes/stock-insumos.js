@@ -15,6 +15,8 @@ router.get('/', async (req, res) => {
           p.contenido_litros,
           p.tipo AS categoria,
           p.envase,
+          p.costo_unitario,
+          p.stock_minimo,
           ISNULL(si.proveedor, 'Sin proveedor') AS proveedor,
           ISNULL(d.nombre, '—') AS deposito,
           d.tipo AS deposito_tipo,
@@ -28,6 +30,7 @@ router.get('/', async (req, res) => {
         LEFT JOIN Depositos d ON si.deposito_id = d.id
         WHERE p.activo = 1
         GROUP BY p.id, p.nombre, p.unidad_medida, p.presentacion, p.contenido_litros, p.tipo, p.envase,
+                 p.costo_unitario, p.stock_minimo,
                  ISNULL(si.proveedor, 'Sin proveedor'),
                  ISNULL(d.nombre, '—'), d.tipo
         HAVING SUM(CASE
@@ -44,6 +47,7 @@ router.get('/', async (req, res) => {
 });
 
 // Registrar compra directa desde stock-insumos (ingreso manual con proveedor)
+// cantidad = unidades compradas; se multiplica por contenido_litros del producto
 router.post('/compra', async (req, res) => {
   const { producto_id, cantidad, costo_total, proveedor, observacion, deposito_id, fecha_vencimiento } = req.body;
   const uid = req.user ? req.user.id : null;
@@ -51,9 +55,16 @@ router.post('/compra', async (req, res) => {
   const transaction = new sql.Transaction(pool);
   try {
     await transaction.begin();
+    // Obtener contenido_litros del producto para calcular stock real
+    const prodRes = await new sql.Request(transaction)
+      .input('pid', sql.Int, producto_id)
+      .query('SELECT ISNULL(contenido_litros, 1) AS contenido FROM Productos WHERE id = @pid');
+    const contenido = parseFloat(prodRes.recordset[0]?.contenido) || 1;
+    const stockQty  = parseFloat(cantidad) * contenido;
+
     await new sql.Request(transaction)
       .input('producto_id',      sql.Int,           producto_id)
-      .input('cantidad',         sql.Decimal(10,3), cantidad)
+      .input('cantidad',         sql.Decimal(10,3), stockQty)
       .input('costo_total',      sql.Decimal(10,2), costo_total || null)
       .input('proveedor',        sql.NVarChar,      proveedor || '')
       .input('observacion',      sql.NVarChar,      observacion || '')
@@ -64,7 +75,7 @@ router.post('/compra', async (req, res) => {
               VALUES (@producto_id, 'compra', @cantidad, @costo_total, @proveedor, @observacion, @usuario_id, @deposito_id, @fecha_vencimiento, GETDATE())`);
     await new sql.Request(transaction)
       .input('producto_id', sql.Int,           producto_id)
-      .input('cantidad',    sql.Decimal(10,3), cantidad)
+      .input('cantidad',    sql.Decimal(10,3), stockQty)
       .query('UPDATE Productos SET stock_actual = ISNULL(stock_actual, 0) + @cantidad WHERE id = @producto_id');
     await transaction.commit();
     res.json({ ok: true });

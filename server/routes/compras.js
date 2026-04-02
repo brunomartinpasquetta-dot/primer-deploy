@@ -84,35 +84,45 @@ router.post('/', async (req, res) => {
 
     const compra_id = compraResult.recordset[0].id;
 
+    // Obtener contenido_litros de todos los productos de la compra de una vez
+    const prodIds = items.map(i => parseInt(i.producto_id)).join(',');
+    const prodData = await new sql.Request(transaction)
+      .query(`SELECT id, ISNULL(contenido_litros, 1) AS contenido_litros FROM Productos WHERE id IN (${prodIds})`);
+    const prodMap = {};
+    prodData.recordset.forEach(p => { prodMap[p.id] = parseFloat(p.contenido_litros) || 1; });
+
     for (const item of items) {
-      const subtotal     = parseFloat(item.cantidad) * parseFloat(item.precio_unit);
+      const unidades     = parseFloat(item.cantidad);       // envases comprados
+      const contenido    = prodMap[item.producto_id] || 1;  // lt/kg/u por envase
+      const stockQty     = unidades * contenido;            // cantidad real que ingresa a stock
+      const subtotal     = unidades * parseFloat(item.precio_unit);
       const fechaVenc    = item.fecha_vencimiento || null;
 
-      // 1. Detalle de compra (con vencimiento)
+      // 1. Detalle de compra: cantidad = unidades compradas (para facturación)
       await new sql.Request(transaction)
         .input('compra_id',        sql.Int,           compra_id)
         .input('producto_id',      sql.Int,           item.producto_id)
-        .input('cantidad',         sql.Decimal(10,3), item.cantidad)
+        .input('cantidad',         sql.Decimal(10,3), unidades)
         .input('precio_unit',      sql.Decimal(10,3), item.precio_unit)
         .input('subtotal',         sql.Decimal(12,2), subtotal)
         .input('fecha_vencimiento',sql.Date,          fechaVenc)
         .query(`INSERT INTO ComprasDetalle (compra_id, producto_id, cantidad, precio_unit, subtotal, fecha_vencimiento)
                 VALUES (@compra_id, @producto_id, @cantidad, @precio_unit, @subtotal, @fecha_vencimiento)`);
 
-      // 2. Actualizar stock_actual en Productos (siempre)
+      // 2. Actualizar stock_actual = stock + (unidades × contenido_por_envase)
       await new sql.Request(transaction)
         .input('producto_id', sql.Int,           item.producto_id)
-        .input('cantidad',    sql.Decimal(10,3), item.cantidad)
+        .input('stock_qty',   sql.Decimal(10,3), stockQty)
         .input('precio_unit', sql.Decimal(10,3), item.precio_unit)
         .query(`UPDATE Productos
-                SET stock_actual = ISNULL(stock_actual, 0) + @cantidad,
+                SET stock_actual = ISNULL(stock_actual, 0) + @stock_qty,
                     costo_unitario = @precio_unit
                 WHERE id = @producto_id`);
 
-      // 3. Movimiento en StockInsumos (siempre — deposito_id puede ser NULL)
+      // 3. Movimiento en StockInsumos: cantidad = stock real ingresado
       await new sql.Request(transaction)
         .input('producto_id',      sql.Int,           item.producto_id)
-        .input('cantidad',         sql.Decimal(10,3), item.cantidad)
+        .input('cantidad',         sql.Decimal(10,3), stockQty)
         .input('costo_total',      sql.Decimal(10,2), subtotal)
         .input('proveedor',        sql.NVarChar,      proveedorNombre)
         .input('usuario_id',       sql.Int,           uid)

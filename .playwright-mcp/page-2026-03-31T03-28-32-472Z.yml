@@ -1,0 +1,124 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - generic [ref=e6]:
+        - generic [ref=e7]: COSECHA
+        - generic [ref=e8]: SISTEMA DE CULTIVOS
+    - navigation [ref=e9]:
+      - link "Dashboard" [ref=e10] [cursor=pointer]:
+        - /url: index.html
+        - img [ref=e12]
+        - text: Dashboard
+      - generic [ref=e17]: Campo
+      - link "Cosecha" [ref=e18] [cursor=pointer]:
+        - /url: juntada.html
+        - img [ref=e20]
+        - text: Cosecha
+      - link "Despalillado" [ref=e29] [cursor=pointer]:
+        - /url: despalillado.html
+        - img [ref=e31]
+        - text: Despalillado
+      - link "Aplicaciones" [ref=e37] [cursor=pointer]:
+        - /url: aplicaciones.html
+        - img [ref=e39]
+        - text: Aplicaciones
+      - generic [ref=e42]: Sistema
+      - link "Stock" [ref=e43] [cursor=pointer]:
+        - /url: menu-stock.html
+        - img [ref=e45]
+        - text: Stock
+      - link "Comercial" [ref=e49] [cursor=pointer]:
+        - /url: menu-comercial.html
+        - img [ref=e51]
+        - text: Comercial
+      - link "Administración" [ref=e56] [cursor=pointer]:
+        - /url: menu-admin.html
+        - img [ref=e58]
+        - text: Administración
+      - link "Mercado" [ref=e60] [cursor=pointer]:
+        - /url: mercado.html
+        - img [ref=e62]
+        - text: Mercado
+      - link "Configuración" [ref=e65] [cursor=pointer]:
+        - /url: menu-config.html
+        - img [ref=e67]
+        - text: Configuración
+    - generic [ref=e70]:
+      - generic [ref=e71]: Administrador · administrador
+      - button "Cerrar sesión" [ref=e72] [cursor=pointer]
+  - generic [ref=e73]:
+    - banner [ref=e74]:
+      - generic [ref=e75]:
+        - img [ref=e76]
+        - generic [ref=e77]:
+          - generic [ref=e78]: COSECHA
+          - generic [ref=e79]: SISTEMA DE CULTIVOS
+        - generic [ref=e80]: 🌱 Campaña FIX 2026 · Día 1
+      - generic [ref=e81]:
+        - generic [ref=e82] [cursor=pointer]:
+          - img [ref=e83]
+          - text: Administrador
+        - generic [ref=e86]: martes, 31 de marzo
+    - generic [ref=e87]:
+      - link "← Volver" [ref=e88] [cursor=pointer]:
+        - /url: menu-insumos.html
+      - generic [ref=e89]:
+        - generic [ref=e90]:
+          - generic [ref=e91]: Compras
+          - generic [ref=e92]: Registro de compras a proveedores
+        - generic [ref=e93]:
+          - link "Nuevo insumo" [ref=e94] [cursor=pointer]:
+            - /url: productos.html
+            - img [ref=e95]
+            - text: Nuevo insumo
+          - button "Nueva compra" [ref=e97] [cursor=pointer]:
+            - img [ref=e98]
+            - text: Nueva compra
+      - generic [ref=e99]:
+        - combobox "Filtrar por..." [ref=e100]
+        - combobox [ref=e102] [cursor=pointer]:
+          - option "Todas"
+          - option "Campaña FIX 2026" [selected]
+        - textbox [ref=e103]
+        - textbox [ref=e104]
+        - button "✕ Limpiar" [ref=e105] [cursor=pointer]
+      - table [ref=e107]:
+        - rowgroup [ref=e108]:
+          - row "Estado Fecha Proveedor Forma pago Total Usuario" [ref=e109]:
+            - columnheader "Estado" [ref=e110]
+            - columnheader "Fecha" [ref=e111]
+            - columnheader "Proveedor" [ref=e112]
+            - columnheader "Forma pago" [ref=e113]
+            - columnheader "Total" [ref=e114]
+            - columnheader "Usuario" [ref=e115]
+            - columnheader [ref=e116]
+        - rowgroup [ref=e117]:
+          - row "Pendiente 30/03/26 AGROQUIMICA SRL Campaña FIX 2026 — $87.000 Administrador" [ref=e118]:
+            - cell "Pendiente" [ref=e119]:
+              - generic [ref=e120]: Pendiente
+            - cell "30/03/26" [ref=e121]
+            - cell "AGROQUIMICA SRL Campaña FIX 2026" [ref=e122]:
+              - strong [ref=e123]: AGROQUIMICA SRL
+              - text: Campaña FIX 2026
+            - cell "—" [ref=e124]
+            - cell "$87.000" [ref=e125]:
+              - strong [ref=e126]: $87.000
+            - cell "Administrador" [ref=e127]
+            - cell [ref=e128]:
+              - button "Ver detalle" [ref=e129] [cursor=pointer]:
+                - img [ref=e130]
+          - row "Pagado 30/03/26 AGROQUIMICA SRL Campaña FIX 2026 Cuenta Corriente $94.800 Administrador" [ref=e133]:
+            - cell "Pagado" [ref=e134]:
+              - generic [ref=e135]: Pagado
+            - cell "30/03/26" [ref=e136]
+            - cell "AGROQUIMICA SRL Campaña FIX 2026" [ref=e137]:
+              - strong [ref=e138]: AGROQUIMICA SRL
+              - text: Campaña FIX 2026
+            - cell "Cuenta Corriente" [ref=e139]
+            - cell "$94.800" [ref=e140]:
+              - strong [ref=e141]: $94.800
+            - cell "Administrador" [ref=e142]
+            - cell [ref=e143]:
+              - button "Ver detalle" [ref=e144] [cursor=pointer]:
+                - img [ref=e145]

@@ -82,13 +82,23 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
     </header>
 
     <div class="content">
-      <a href="menu-insumos.html" class="btn-volver">← Volver</a>
+      <a href="menu-stock.html" class="btn-volver">← Volver</a>
       <div class="content-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
         <div>
           <div class="content-title">Insumos</div>
-          <div class="content-sub">ABM de insumos agrícolas</div>
+          <div class="content-sub">Alta y gestión de insumos</div>
         </div>
-        <button class="btn btn-primary" style="width:auto;margin:0;" onclick="toggleForm()">+ Nuevo insumo</button>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <a href="proveedores.html?nuevo=1" class="ins-btn ins-btn-gray" style="text-decoration:none;">
+            <i data-lucide="truck"></i> Nuevo proveedor
+          </a>
+          <a href="compras.html?nuevo=1" class="ins-btn ins-btn-gray" style="text-decoration:none;">
+            <i data-lucide="shopping-cart"></i> Nueva compra
+          </a>
+          <button class="ins-btn ins-btn-primary" onclick="toggleForm()">
+            <i data-lucide="plus"></i> Nuevo insumo
+          </button>
+        </div>
       </div>
 
       <div class="form-colapsable" id="form-nuevo">
@@ -106,95 +116,111 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
             </div>
           </div>
 
-          <!-- Fila 2: Tipo + Envase + Unidad + Contenido + Costo -->
+          <!-- Fila 2: Categoría + Presentación + Unidad de medida + Contenido + Costo -->
           <div style="display:grid;grid-template-columns:2fr 1.5fr 0.8fr 0.8fr 1fr;gap:8px;margin-top:10px;align-items:end;">
             <div class="form-row" style="margin:0;">
-              <label style="font-size:11px;">Tipo de insumo</label>
+              <label style="font-size:11px;">Categoría</label>
               <select id="tipo" style="font-size:12px;padding:7px 8px;">
-                <option value="plantines">Plantines</option>
-                <option value="mulching">Mulching (Nylon)</option>
-                <option value="manta_termica">Manta térmica (Agrotela)</option>
-                <option value="arcos_microtunnel">Arcos para microtúnel</option>
-                <option value="polietileno_microtunnel">Polietileno para microtúnel</option>
-                <option value="sustratos">Sustratos</option>
-                <option value="fumigantes">Fumigantes de suelo</option>
-                <option value="fungicidas">Fungicidas</option>
-                <option value="insecticidas">Insecticidas</option>
                 <option value="acaricidas">Acaricidas</option>
-                <option value="herbicidas">Herbicidas</option>
+                <option value="acidos_humicos">Ácidos húmicos y fúlvicos</option>
+                <option value="arcos_microtunnel">Arcos para microtúnel</option>
+                <option value="bandas_elasticas">Bandas elásticas</option>
+                <option value="bioestimulantes">Bioestimulantes</option>
+                <option value="cajas_carton">Cajas de cartón (Master)</option>
+                <option value="cajones_cosecheros">Cajones cosecheros plásticos</option>
+                <option value="carros_cosecheros">Carros cosecheros</option>
+                <option value="cinta_goteo">Cinta de goteo</option>
                 <option value="coadyuvantes">Coadyuvantes</option>
+                <option value="cubetas_clamshells">Cubetas / Clamshells (PET)</option>
+                <option value="epp">EPP (Equipos de protección)</option>
+                <option value="etiquetas">Etiquetas de trazabilidad</option>
+                <option value="fert_fosforados">Fertilizantes fosforados</option>
                 <option value="fert_nitrogenados">Fertilizantes nitrogenados</option>
                 <option value="fert_potasicos">Fertilizantes potásicos</option>
-                <option value="fert_fosforados">Fertilizantes fosforados</option>
-                <option value="micronutrientes">Micronutrientes quelatados</option>
-                <option value="bioestimulantes">Bioestimulantes</option>
-                <option value="acidos_humicos">Ácidos húmicos y fúlvicos</option>
-                <option value="cinta_goteo">Cinta de goteo</option>
-                <option value="tuberias_riego">Tuberías y conectores de riego</option>
                 <option value="filtros_riego">Filtros de riego</option>
-                <option value="cajones_cosecheros">Cajones cosecheros plásticos</option>
-                <option value="cajas_carton">Cajas de cartón (Master)</option>
-                <option value="cubetas_clamshells">Cubetas / Clamshells (PET)</option>
-                <option value="pads_absorbentes">Pads absorbentes</option>
                 <option value="film_stretch">Film stretch / Resinite</option>
-                <option value="etiquetas">Etiquetas de trazabilidad</option>
-                <option value="bandas_elasticas">Bandas elásticas</option>
-                <option value="epp">EPP (Equipos de protección)</option>
-                <option value="carros_cosecheros">Carros cosecheros</option>
+                <option value="fumigantes">Fumigantes de suelo</option>
+                <option value="fungicidas">Fungicidas</option>
+                <option value="herbicidas">Herbicidas</option>
                 <option value="herramientas">Herramientas</option>
+                <option value="insecticidas">Insecticidas</option>
+                <option value="manta_termica">Manta térmica (Agrotela)</option>
+                <option value="micronutrientes">Micronutrientes quelatados</option>
+                <option value="mulching">Mulching (Nylon)</option>
                 <option value="otro">Otros</option>
+                <option value="pads_absorbentes">Pads absorbentes</option>
+                <option value="plantines">Plantines</option>
+                <option value="polietileno_microtunnel">Polietileno para microtúnel</option>
+                <option value="sustratos">Sustratos</option>
+                <option value="tuberias_riego">Tuberías y conectores de riego</option>
               </select>
             </div>
             <div class="form-row" style="margin:0;">
-              <label style="font-size:11px;">Envase</label>
+              <label style="font-size:11px;">Presentación</label>
               <select id="envase" style="font-size:12px;padding:7px 8px;">
                 <option value="">—</option>
-                <option value="Caja">Caja</option>
-                <option value="Bandeja / Plug">Bandeja / Plug</option>
-                <option value="Rollo">Rollo</option>
                 <option value="Atado / Pack">Atado / Pack</option>
-                <option value="Bobina">Bobina</option>
-                <option value="Unidad">Unidad</option>
+                <option value="Bandeja / Plug">Bandeja / Plug</option>
                 <option value="Bidón">Bidón</option>
+                <option value="Bobina">Bobina</option>
                 <option value="Botella">Botella</option>
-                <option value="Saco / Bolsa">Saco / Bolsa</option>
-                <option value="Tambor">Tambor</option>
-                <option value="Paquete / Bulto">Paquete / Bulto</option>
-                <option value="Pallet">Pallet</option>
+                <option value="Caja">Caja</option>
                 <option value="Caja de sobres">Caja de sobres</option>
                 <option value="Granel">Granel</option>
+                <option value="Jeringa / Ampolla">Jeringa / Ampolla</option>
+                <option value="Lata">Lata</option>
+                <option value="Pallet">Pallet</option>
+                <option value="Paquete / Bulto">Paquete / Bulto</option>
+                <option value="Rollo">Rollo</option>
+                <option value="Saco / Bolsa">Saco / Bolsa</option>
+                <option value="Tambor">Tambor</option>
+                <option value="Tubo">Tubo</option>
+                <option value="Unidad">Unidad</option>
                 <option value="Otro">Otro</option>
               </select>
             </div>
             <div class="form-row" style="margin:0;">
-              <label style="font-size:11px;">Unidad</label>
+              <label style="font-size:11px;">Unidad de medida</label>
               <select id="presentacion" style="font-size:12px;padding:7px 8px;">
-                <option value="lt">lt</option>
-                <option value="ml">ml</option>
                 <option value="cc">cc</option>
-                <option value="kg">kg</option>
+                <option value="cm">cm</option>
                 <option value="g">g</option>
+                <option value="ha">ha</option>
+                <option value="kg">kg</option>
+                <option value="lt">lt</option>
+                <option value="m">m</option>
+                <option value="ml">ml</option>
+                <option value="mts">mts</option>
+                <option value="rollo">rollo</option>
+                <option value="tn">tn</option>
                 <option value="u">u</option>
               </select>
             </div>
             <div class="form-row" style="margin:0;">
-              <label style="font-size:11px;">Contenido</label>
+              <label style="font-size:11px;">Contenido unitario</label>
               <input type="number" id="contenido" placeholder="5" step="0.001" min="0"
                 style="font-size:12px;padding:7px 8px;-moz-appearance:textfield;appearance:textfield;">
             </div>
             <div class="form-row" style="margin:0;">
-              <label style="font-size:11px;">Costo ($)</label>
+              <label style="font-size:11px;">Costo unitario ($)</label>
               <input type="number" id="costo" placeholder="1500" step="0.01" min="0"
                 style="font-size:12px;padding:7px 8px;-moz-appearance:textfield;appearance:textfield;">
             </div>
           </div>
 
-          <!-- Fila 3: Proveedor principal -->
-          <div class="form-row" style="margin-top:10px;">
-            <label>Proveedor principal</label>
-            <select id="proveedor_id">
-              <option value="">Sin proveedor por defecto</option>
-            </select>
+          <!-- Fila 3: Proveedor + Alerta stock bajo -->
+          <div style="display:grid;grid-template-columns:1fr auto;gap:10px;margin-top:10px;align-items:end;">
+            <div class="form-row" style="margin:0;">
+              <label>Proveedor principal</label>
+              <select id="proveedor_id">
+                <option value="">Sin proveedor por defecto</option>
+              </select>
+            </div>
+            <div class="form-row" style="margin:0;min-width:180px;">
+              <label style="font-size:11px;" title="Cantidad mínima total en stock (lt, kg, u…) antes de mostrar alerta de stock bajo">⚠️ Alerta stock bajo</label>
+              <input type="number" id="stock_minimo" placeholder="Ej: 20" step="0.001" min="0"
+                style="font-size:12px;padding:7px 8px;-moz-appearance:textfield;appearance:textfield;">
+            </div>
           </div>
 
           <div style="margin-top:12px;display:flex;align-items:center;gap:10px;">
@@ -206,11 +232,32 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
 
   <div class="card">
     <h2>Insumos registrados</h2>
-    <table>
+    <table style="table-layout:fixed;min-width:860px;">
+      <colgroup>
+        <col style="width:19%"><!-- Nombre -->
+        <col style="width:14%"><!-- Categoría -->
+        <col style="width:10%"><!-- Presentación -->
+        <col style="width:8%"> <!-- Unidad de medida -->
+        <col style="width:10%"><!-- Contenido unitario -->
+        <col style="width:10%"><!-- Stock actual -->
+        <col style="width:10%"><!-- Costo unitario -->
+        <col style="width:15%"><!-- Proveedor -->
+        <col style="width:4%"> <!-- Acciones -->
+      </colgroup>
       <thead>
-        <tr><th>Nombre</th><th>Tipo</th><th>Envase</th><th>Unidad / Contenido</th><th>Stock</th><th>Costo</th><th>Proveedor principal</th><th>Proveedores que lo suministran</th></tr>
+        <tr>
+          <th>Nombre</th>
+          <th>Categoría</th>
+          <th>Presentación</th>
+          <th title="Unidad de medida del contenido (lt, kg, u, etc.)" style="text-align:center;">Unidad</th>
+          <th title="Cantidad de unidades de medida que trae cada presentación" style="text-align:center;">Cont. unitario</th>
+          <th title="Stock total en unidades de medida (lt, kg, u)" style="text-align:center;">Stock actual</th>
+          <th style="text-align:right;">Costo unitario</th>
+          <th>Proveedor</th>
+          <th></th>
+        </tr>
       </thead>
-      <tbody id="tbody"><tr><td colspan="8" class="empty">Cargando...</td></tr></tbody>
+      <tbody id="tbody"><tr><td colspan="9" class="empty">Cargando...</td></tr></tbody>
     </table>
   </div>
     </div>
@@ -228,6 +275,119 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
 
 </div>
 
+<!-- ── MODAL EDITAR INSUMO ── -->
+<div id="modal-editar" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#fff;border-radius:12px;width:100%;max-width:640px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.15);padding:22px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <strong style="font-size:15px;">Editar insumo</strong>
+      <button onclick="cerrarEditar()" style="background:none;border:none;cursor:pointer;font-size:20px;color:#94A3B8;">×</button>
+    </div>
+    <input type="hidden" id="edit-id">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="form-row"><label>Nombre *</label><input type="text" id="edit-nombre"></div>
+      <div class="form-row"><label>Descripción</label><input type="text" id="edit-descripcion"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:2fr 1.5fr 0.8fr 0.8fr 1fr;gap:8px;margin-top:8px;align-items:end;">
+      <div class="form-row" style="margin:0;"><label style="font-size:11px;">Categoría</label>
+        <select id="edit-tipo" style="font-size:12px;padding:7px 8px;">
+          <option value="acaricidas">Acaricidas</option>
+          <option value="acidos_humicos">Ácidos húmicos y fúlvicos</option>
+          <option value="arcos_microtunnel">Arcos para microtúnel</option>
+          <option value="bandas_elasticas">Bandas elásticas</option>
+          <option value="bioestimulantes">Bioestimulantes</option>
+          <option value="cajas_carton">Cajas de cartón (Master)</option>
+          <option value="cajones_cosecheros">Cajones cosecheros plásticos</option>
+          <option value="carros_cosecheros">Carros cosecheros</option>
+          <option value="cinta_goteo">Cinta de goteo</option>
+          <option value="coadyuvantes">Coadyuvantes</option>
+          <option value="cubetas_clamshells">Cubetas / Clamshells (PET)</option>
+          <option value="epp">EPP (Equipos de protección)</option>
+          <option value="etiquetas">Etiquetas de trazabilidad</option>
+          <option value="fert_fosforados">Fertilizantes fosforados</option>
+          <option value="fert_nitrogenados">Fertilizantes nitrogenados</option>
+          <option value="fert_potasicos">Fertilizantes potásicos</option>
+          <option value="filtros_riego">Filtros de riego</option>
+          <option value="film_stretch">Film stretch / Resinite</option>
+          <option value="fumigantes">Fumigantes de suelo</option>
+          <option value="fungicidas">Fungicidas</option>
+          <option value="herbicidas">Herbicidas</option>
+          <option value="herramientas">Herramientas</option>
+          <option value="insecticidas">Insecticidas</option>
+          <option value="manta_termica">Manta térmica (Agrotela)</option>
+          <option value="micronutrientes">Micronutrientes quelatados</option>
+          <option value="mulching">Mulching (Nylon)</option>
+          <option value="otro">Otros</option>
+          <option value="pads_absorbentes">Pads absorbentes</option>
+          <option value="plantines">Plantines</option>
+          <option value="polietileno_microtunnel">Polietileno para microtúnel</option>
+          <option value="sustratos">Sustratos</option>
+          <option value="tuberias_riego">Tuberías y conectores de riego</option>
+        </select>
+      </div>
+      <div class="form-row" style="margin:0;"><label style="font-size:11px;">Presentación</label>
+        <select id="edit-envase" style="font-size:12px;padding:7px 8px;">
+          <option value="">—</option>
+          <option value="Atado / Pack">Atado / Pack</option>
+          <option value="Bandeja / Plug">Bandeja / Plug</option>
+          <option value="Bidón">Bidón</option>
+          <option value="Bobina">Bobina</option>
+          <option value="Botella">Botella</option>
+          <option value="Caja">Caja</option>
+          <option value="Caja de sobres">Caja de sobres</option>
+          <option value="Granel">Granel</option>
+          <option value="Jeringa / Ampolla">Jeringa / Ampolla</option>
+          <option value="Lata">Lata</option>
+          <option value="Pallet">Pallet</option>
+          <option value="Paquete / Bulto">Paquete / Bulto</option>
+          <option value="Rollo">Rollo</option>
+          <option value="Saco / Bolsa">Saco / Bolsa</option>
+          <option value="Tambor">Tambor</option>
+          <option value="Tubo">Tubo</option>
+          <option value="Unidad">Unidad</option>
+          <option value="Otro">Otro</option>
+        </select>
+      </div>
+      <div class="form-row" style="margin:0;"><label style="font-size:11px;">Unidad de medida</label>
+        <select id="edit-presentacion" style="font-size:12px;padding:7px 8px;">
+          <option value="cc">cc</option>
+          <option value="cm">cm</option>
+          <option value="g">g</option>
+          <option value="ha">ha</option>
+          <option value="kg">kg</option>
+          <option value="lt">lt</option>
+          <option value="m">m</option>
+          <option value="ml">ml</option>
+          <option value="mts">mts</option>
+          <option value="rollo">rollo</option>
+          <option value="tn">tn</option>
+          <option value="u">u</option>
+        </select>
+      </div>
+      <div class="form-row" style="margin:0;"><label style="font-size:11px;">Contenido unitario</label>
+        <input type="number" id="edit-contenido" step="0.001" min="0" style="font-size:12px;padding:7px 8px;-moz-appearance:textfield;appearance:textfield;">
+      </div>
+      <div class="form-row" style="margin:0;"><label style="font-size:11px;">Costo unitario ($)</label>
+        <input type="number" id="edit-costo" step="0.01" min="0" style="font-size:12px;padding:7px 8px;-moz-appearance:textfield;appearance:textfield;">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr auto;gap:10px;margin-top:8px;align-items:end;">
+      <div class="form-row" style="margin:0;"><label>Proveedor principal</label>
+        <select id="edit-proveedor_id"><option value="">Sin proveedor por defecto</option></select>
+      </div>
+      <div class="form-row" style="margin:0;min-width:180px;">
+        <label style="font-size:11px;" title="Cantidad mínima total en stock antes de alertar">⚠️ Alerta stock bajo</label>
+        <input type="number" id="edit-stock_minimo" step="0.001" min="0" placeholder="Ej: 20"
+          style="font-size:12px;padding:7px 8px;-moz-appearance:textfield;appearance:textfield;">
+      </div>
+    </div>
+    <div id="edit-msg" style="font-size:12px;margin-top:6px;"></div>
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button onclick="cerrarEditar()" style="flex:1;padding:9px;background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;">Cancelar</button>
+      <button onclick="guardarEditar(this)" style="flex:1;padding:9px;background:#2D5016;color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://unpkg.com/lucide@latest"></script>
 <script>
   lucide.createIcons();
@@ -238,64 +398,124 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
   }
 </script>
 <script>
-  // Cargar proveedores en el selector del form
+  // Cargar proveedores en los selectores (form nuevo + modal editar)
   function cargarProveedoresSelect() {
     fetch('/api/proveedores').then(function(r){return r.json();}).then(function(data){
-      var sel = document.getElementById('proveedor_id');
-      data.forEach(function(pv){
-        var opt = document.createElement('option');
-        opt.value = pv.id;
-        opt.textContent = pv.nombre;
-        sel.appendChild(opt);
-      });
+      var opts = data.map(function(pv){ return '<option value="'+pv.id+'">'+pv.nombre+'</option>'; }).join('');
+      document.getElementById('proveedor_id').innerHTML = '<option value="">Sin proveedor por defecto</option>' + opts;
+      document.getElementById('edit-proveedor_id').innerHTML = '<option value="">Sin proveedor por defecto</option>' + opts;
     });
   }
 
   var _tipoLabels = {
-    plantines:'Plantines',mulching:'Mulching',manta_termica:'Manta térmica',
-    arcos_microtunnel:'Arcos microtúnel',polietileno_microtunnel:'Polietileno microtúnel',
-    sustratos:'Sustratos',fumigantes:'Fumigantes',fungicidas:'Fungicidas',
-    insecticidas:'Insecticidas',acaricidas:'Acaricidas',herbicidas:'Herbicidas',
-    coadyuvantes:'Coadyuvantes',fert_nitrogenados:'Fert. Nitrogenados',
-    fert_potasicos:'Fert. Potásicos',fert_fosforados:'Fert. Fosforados',
-    micronutrientes:'Micronutrientes',bioestimulantes:'Bioestimulantes',
-    acidos_humicos:'Ác. Húmicos',cinta_goteo:'Cinta goteo',
-    tuberias_riego:'Tuberías riego',filtros_riego:'Filtros riego',
-    cajones_cosecheros:'Cajones',cajas_carton:'Cajas cartón',
-    cubetas_clamshells:'Clamshells',pads_absorbentes:'Pads',
-    film_stretch:'Film stretch',etiquetas:'Etiquetas',
-    bandas_elasticas:'Bandas',epp:'EPP',carros_cosecheros:'Carros',
-    herramientas:'Herramientas',otro:'Otros'
+    acaricidas:'Acaricidas',acidos_humicos:'Ác. Húmicos y fúlvicos',
+    arcos_microtunnel:'Arcos microtúnel',bandas_elasticas:'Bandas elásticas',
+    bioestimulantes:'Bioestimulantes',cajas_carton:'Cajas cartón',
+    cajones_cosecheros:'Cajones cosecheros',carros_cosecheros:'Carros cosecheros',
+    cinta_goteo:'Cinta de goteo',coadyuvantes:'Coadyuvantes',
+    cubetas_clamshells:'Clamshells',epp:'EPP',etiquetas:'Etiquetas',
+    fert_fosforados:'Fert. Fosforados',fert_nitrogenados:'Fert. Nitrogenados',
+    fert_potasicos:'Fert. Potásicos',filtros_riego:'Filtros riego',
+    film_stretch:'Film stretch',fumigantes:'Fumigantes',fungicidas:'Fungicidas',
+    herbicidas:'Herbicidas',herramientas:'Herramientas',insecticidas:'Insecticidas',
+    manta_termica:'Manta térmica',micronutrientes:'Micronutrientes',
+    mulching:'Mulching',otro:'Otros',pads_absorbentes:'Pads absorbentes',
+    plantines:'Plantines',polietileno_microtunnel:'Polietileno microtúnel',
+    sustratos:'Sustratos',tuberias_riego:'Tuberías riego',
+    // compatibilidad con registros legacy
+    fertilizante:'Fertilizante',fungicida:'Fungicida',herbicida:'Herbicida',
+    insecticida:'Insecticida',nutriente:'Nutriente',fitosanitario:'Fitosanitario'
   };
+
+  var _productosData = [];
 
   function cargar(){
     fetch('/api/productos').then(function(r){return r.json();}).then(function(data){
+      _productosData = data;
       var tbody=document.getElementById('tbody');
-      if(!data.length){ tbody.innerHTML='<tr><td colspan="8" class="empty">Sin insumos registrados</td></tr>'; return; }
+      if(!data.length){ tbody.innerHTML='<tr><td colspan="9" class="empty">Sin insumos registrados</td></tr>'; return; }
       tbody.innerHTML=data.map(function(p){
         var tipoLabel = _tipoLabels[p.tipo] || p.tipo || '—';
-        var unidadContenido = p.contenido_litros ? p.contenido_litros+' '+(p.presentacion||'') : (p.presentacion||'-');
-        var provHistoricos = p.proveedores_historicos || '';
-        var provPrincipal = p.proveedor_nombre || '<span style="color:#bbb">—</span>';
+        var unidad = p.unidad_medida || p.presentacion || '—';
+        var contenidoNum = p.contenido_litros ? parseFloat(p.contenido_litros).toLocaleString('es-AR',{maximumFractionDigits:3}) : null;
+        var contenidoStr = contenidoNum ? contenidoNum + ' ' + unidad : '—';
+        var stock = (parseFloat(p.stock_actual)||0).toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:3});
+        var proveedor = p.proveedor_nombre || p.proveedores_historicos || '—';
         return '<tr>'+
           '<td><strong>'+p.nombre+'</strong>'+(p.descripcion?'<br><small style="color:#999">'+p.descripcion+'</small>':'')+'</td>'+
           '<td style="font-size:12px;white-space:nowrap;">'+tipoLabel+'</td>'+
-          '<td style="font-size:12px;">'+(p.envase||'<span style="color:#bbb">—</span>')+'</td>'+
-          '<td>'+unidadContenido+'</td>'+
-          '<td>'+(parseFloat(p.stock_actual)||0).toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:3})+' '+(p.presentacion||'')+'</td>'+
-          '<td>$'+(p.costo_unitario?parseFloat(p.costo_unitario).toLocaleString('es-AR'):'-')+'</td>'+
-          '<td style="font-size:12px;">'+provPrincipal+'</td>'+
-          '<td style="font-size:11px;color:var(--texto-suave,#888);">'+
-            (provHistoricos ? provHistoricos : '<span style="color:#bbb">Sin movimientos</span>')+
+          '<td style="font-size:12px;">'+(p.envase||'—')+'</td>'+
+          '<td style="font-size:12px;text-align:center;">'+unidad+'</td>'+
+          '<td style="font-size:12px;text-align:center;font-weight:600;">'+contenidoStr+'</td>'+
+          '<td style="font-family:monospace;font-weight:600;">'+stock+' '+unidad+'</td>'+
+          '<td>$'+(p.costo_unitario?parseFloat(p.costo_unitario).toLocaleString('es-AR'):'—')+'</td>'+
+          '<td style="font-size:12px;">'+proveedor+'</td>'+
+          '<td style="white-space:nowrap;">'+
+            '<button class="btn-icon-xs" onclick="abrirEditar('+p.id+')" title="Editar"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button> '+
+            '<button class="btn-icon-xs" onclick="desactivar('+p.id+',\''+p.nombre.replace(/'/g,"\\'")+'\')" title="Desactivar" style="border-color:#fecaca;color:#ef4444;"><i data-lucide="trash-2" style="width:12px;height:12px;"></i></button>'+
           '</td>'+
           '</tr>';
       }).join('');
+      lucide.createIcons();
     });
+  }
+
+  function abrirEditar(id) {
+    var p = _productosData.find(function(x){ return x.id === id; });
+    if (!p) return;
+    document.getElementById('edit-id').value = p.id;
+    document.getElementById('edit-nombre').value = p.nombre || '';
+    document.getElementById('edit-descripcion').value = p.descripcion || '';
+    document.getElementById('edit-tipo').value = p.tipo || '';
+    document.getElementById('edit-envase').value = p.envase || '';
+    document.getElementById('edit-presentacion').value = p.presentacion || '';
+    document.getElementById('edit-contenido').value = p.contenido_litros || '';
+    document.getElementById('edit-costo').value = p.costo_unitario || '';
+    document.getElementById('edit-proveedor_id').value = p.proveedor_id || '';
+    document.getElementById('edit-stock_minimo').value = p.stock_minimo || '';
+    document.getElementById('edit-msg').innerHTML = '';
+    document.getElementById('modal-editar').style.display = 'flex';
+  }
+
+  function cerrarEditar() {
+    document.getElementById('modal-editar').style.display = 'none';
+  }
+
+  function guardarEditar(btn) {
+    var id = document.getElementById('edit-id').value;
+    btn.disabled = true; btn.textContent = 'Guardando...';
+    fetch('/api/productos/' + id, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nombre:          document.getElementById('edit-nombre').value.trim(),
+        descripcion:     document.getElementById('edit-descripcion').value,
+        tipo:            document.getElementById('edit-tipo').value,
+        envase:          document.getElementById('edit-envase').value || null,
+        presentacion:    document.getElementById('edit-presentacion').value,
+        contenido_litros:document.getElementById('edit-contenido').value || null,
+        costo_unitario:  document.getElementById('edit-costo').value || null,
+        proveedor_id:    document.getElementById('edit-proveedor_id').value || null,
+        stock_minimo:    document.getElementById('edit-stock_minimo').value || null
+      })
+    }).then(function(r){return r.json();}).then(function(data){
+      btn.disabled = false; btn.textContent = 'Guardar cambios';
+      if (data.ok) { cerrarEditar(); cargar(); }
+      else document.getElementById('edit-msg').innerHTML = '<span style="color:#ef4444;">'+(data.error||'Error')+'</span>';
+    }).catch(function(){ btn.disabled=false; btn.textContent='Guardar cambios'; });
+  }
+
+  function desactivar(id, nombre) {
+    if (!confirm('¿Desactivar el insumo "'+nombre+'"?\nNo se eliminará, solo se ocultará de las listas.')) return;
+    fetch('/api/productos/'+id+'/desactivar', { method:'PATCH' })
+      .then(function(r){return r.json();})
+      .then(function(data){ if(data.ok) cargar(); });
   }
 
   function guardar(){
     var nombre=document.getElementById('nombre').value.trim();
-    if(!nombre){ alert('Ingresa el nombre del producto'); return; }
+    if(!nombre){ alert('Ingresa el nombre del insumo'); return; }
+    if(!document.getElementById('proveedor_id').value){ alert('Debés asignar un proveedor al insumo'); return; }
     var btn=document.getElementById('btn-guardar');
     btn.disabled=true; btn.textContent='Guardando...';
     fetch('/api/productos',{method:'POST',headers:{'Content-Type':'application/json'},
@@ -307,7 +527,8 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
         descripcion: document.getElementById('descripcion').value,
         presentacion: document.getElementById('presentacion').value,
         contenido_litros: document.getElementById('contenido').value||null,
-        costo_unitario: document.getElementById('costo').value||null
+        costo_unitario: document.getElementById('costo').value||null,
+        stock_minimo: document.getElementById('stock_minimo').value||null
       })})
     .then(function(r){return r.json();}).then(function(data){
       if(data.ok){
@@ -318,6 +539,7 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
         document.getElementById('costo').value='';
         document.getElementById('envase').value='';
         document.getElementById('proveedor_id').value='';
+        document.getElementById('stock_minimo').value='';
         document.getElementById('form-nuevo').classList.remove('visible');
         cargar();
       } else { mostrarMensaje('mensaje','error',data.error||'Error al guardar'); }

@@ -1,0 +1,216 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - generic [ref=e6]:
+        - generic [ref=e7]: COSECHA
+        - generic [ref=e8]: SISTEMA DE CULTIVOS
+    - navigation [ref=e9]:
+      - link "Dashboard" [ref=e10] [cursor=pointer]:
+        - /url: index.html
+        - img [ref=e12]
+        - text: Dashboard
+      - generic [ref=e17]: Campo
+      - link "Cosecha" [ref=e18] [cursor=pointer]:
+        - /url: juntada.html
+        - img [ref=e20]
+        - text: Cosecha
+      - link "Despalillado" [ref=e29] [cursor=pointer]:
+        - /url: despalillado.html
+        - img [ref=e31]
+        - text: Despalillado
+      - link "Aplicaciones" [ref=e37] [cursor=pointer]:
+        - /url: aplicaciones.html
+        - img [ref=e39]
+        - text: Aplicaciones
+      - generic [ref=e42]: Sistema
+      - link "Stock" [ref=e43] [cursor=pointer]:
+        - /url: menu-stock.html
+        - img [ref=e45]
+        - text: Stock
+      - link "Comercial" [ref=e49] [cursor=pointer]:
+        - /url: menu-comercial.html
+        - img [ref=e51]
+        - text: Comercial
+      - link "Administración" [ref=e56] [cursor=pointer]:
+        - /url: menu-admin.html
+        - img [ref=e58]
+        - text: Administración
+      - link "Mercado" [ref=e60] [cursor=pointer]:
+        - /url: mercado.html
+        - img [ref=e62]
+        - text: Mercado
+      - link "Configuración" [ref=e65] [cursor=pointer]:
+        - /url: menu-config.html
+        - img [ref=e67]
+        - text: Configuración
+    - generic [ref=e70]:
+      - generic [ref=e71]: Administrador · administrador
+      - button "Cerrar sesión" [ref=e72] [cursor=pointer]
+  - generic [ref=e73]:
+    - banner [ref=e74]:
+      - generic [ref=e75]:
+        - img [ref=e76]
+        - generic [ref=e77]:
+          - generic [ref=e78]: COSECHA
+          - generic [ref=e79]: SISTEMA DE CULTIVOS
+        - generic [ref=e80]: 🌱 Campaña FIX 2026 · Día 1
+      - generic [ref=e81]:
+        - generic [ref=e82] [cursor=pointer]:
+          - img [ref=e83]
+          - text: Administrador
+        - generic [ref=e86]: martes, 31 de marzo
+    - generic [ref=e87]:
+      - link "← Volver" [ref=e88] [cursor=pointer]:
+        - /url: menu-insumos.html
+      - generic [ref=e89]:
+        - generic [ref=e90]:
+          - generic [ref=e91]: Insumos
+          - generic [ref=e92]: Alta y gestión de insumos
+        - generic [ref=e93]:
+          - link "Nuevo proveedor" [ref=e94] [cursor=pointer]:
+            - /url: proveedores.html?nuevo=1
+            - img [ref=e95]
+            - text: Nuevo proveedor
+          - link "Nueva compra" [ref=e100] [cursor=pointer]:
+            - /url: compras.html?nuevo=1
+            - img [ref=e101]
+            - text: Nueva compra
+          - button "Nuevo insumo" [ref=e105] [cursor=pointer]:
+            - img [ref=e106]
+            - text: Nuevo insumo
+      - generic [ref=e107]:
+        - heading "Insumos registrados" [level=2] [ref=e108]
+        - table [ref=e109]:
+          - rowgroup [ref=e120]:
+            - row "Nombre Categoría Presentación Unidad Cont. unitario Stock actual Costo unitario Proveedor" [ref=e121]:
+              - columnheader "Nombre" [ref=e122]
+              - columnheader "Categoría" [ref=e123]
+              - columnheader "Presentación" [ref=e124]
+              - columnheader "Unidad" [ref=e125]
+              - columnheader "Cont. unitario" [ref=e126]
+              - columnheader "Stock actual" [ref=e127]
+              - columnheader "Costo unitario" [ref=e128]
+              - columnheader "Proveedor" [ref=e129]
+              - columnheader [ref=e130]
+          - rowgroup [ref=e131]:
+            - row "CAJAS CARTON X 5KG Cajas cartón — u 1 u 0 u $250 — Editar Desactivar" [ref=e132]:
+              - cell "CAJAS CARTON X 5KG" [ref=e133]:
+                - strong [ref=e134]: CAJAS CARTON X 5KG
+              - cell "Cajas cartón" [ref=e135]
+              - cell "—" [ref=e136]
+              - cell "u" [ref=e137]
+              - cell "1 u" [ref=e138]
+              - cell "0 u" [ref=e139]
+              - cell "$250" [ref=e140]
+              - cell "—" [ref=e141]
+              - cell "Editar Desactivar" [ref=e142]:
+                - button "Editar" [ref=e143] [cursor=pointer]:
+                  - img [ref=e144]
+                - button "Desactivar" [ref=e147] [cursor=pointer]:
+                  - img [ref=e148]
+            - row "FERTILIZANTE X28 Fertilizante — lt 10 lt 0 lt $123.650 — Editar Desactivar" [ref=e151]:
+              - cell "FERTILIZANTE X28" [ref=e152]:
+                - strong [ref=e153]: FERTILIZANTE X28
+              - cell "Fertilizante" [ref=e154]
+              - cell "—" [ref=e155]
+              - cell "lt" [ref=e156]
+              - cell "10 lt" [ref=e157]
+              - cell "0 lt" [ref=e158]
+              - cell "$123.650" [ref=e159]
+              - cell "—" [ref=e160]
+              - cell "Editar Desactivar" [ref=e161]:
+                - button "Editar" [ref=e162] [cursor=pointer]:
+                  - img [ref=e163]
+                - button "Desactivar" [ref=e166] [cursor=pointer]:
+                  - img [ref=e167]
+            - row "FUNGICIDA C-300 WTD Fungicida — lt 10 lt 44 lt $23.700 AGROQUIMICA SRL Editar Desactivar" [ref=e170]:
+              - cell "FUNGICIDA C-300 WTD" [ref=e171]:
+                - strong [ref=e172]: FUNGICIDA C-300 WTD
+              - cell "Fungicida" [ref=e173]
+              - cell "—" [ref=e174]
+              - cell "lt" [ref=e175]
+              - cell "10 lt" [ref=e176]
+              - cell "44 lt" [ref=e177]
+              - cell "$23.700" [ref=e178]
+              - cell "AGROQUIMICA SRL" [ref=e179]
+              - cell "Editar Desactivar" [ref=e180]:
+                - button "Editar" [ref=e181] [cursor=pointer]:
+                  - img [ref=e182]
+                - button "Desactivar" [ref=e185] [cursor=pointer]:
+                  - img [ref=e186]
+            - row "GLIFOSATO Herbicidas — lt 1,5 lt 0 lt $5.600 — Editar Desactivar" [ref=e189]:
+              - cell "GLIFOSATO" [ref=e190]:
+                - strong [ref=e191]: GLIFOSATO
+              - cell "Herbicidas" [ref=e192]
+              - cell "—" [ref=e193]
+              - cell "lt" [ref=e194]
+              - cell "1,5 lt" [ref=e195]
+              - cell "0 lt" [ref=e196]
+              - cell "$5.600" [ref=e197]
+              - cell "—" [ref=e198]
+              - cell "Editar Desactivar" [ref=e199]:
+                - button "Editar" [ref=e200] [cursor=pointer]:
+                  - img [ref=e201]
+                - button "Desactivar" [ref=e204] [cursor=pointer]:
+                  - img [ref=e205]
+            - row "GLIFOSATO Fumigantes Bidón lt 10 lt 0 lt $40.000 AGROQUIMICA SRL Editar Desactivar" [ref=e208]:
+              - cell "GLIFOSATO" [ref=e209]:
+                - strong [ref=e210]: GLIFOSATO
+              - cell "Fumigantes" [ref=e211]
+              - cell "Bidón" [ref=e212]
+              - cell "lt" [ref=e213]
+              - cell "10 lt" [ref=e214]
+              - cell "0 lt" [ref=e215]
+              - cell "$40.000" [ref=e216]
+              - cell "AGROQUIMICA SRL" [ref=e217]
+              - cell "Editar Desactivar" [ref=e218]:
+                - button "Editar" [ref=e219] [cursor=pointer]:
+                  - img [ref=e220]
+                - button "Desactivar" [ref=e223] [cursor=pointer]:
+                  - img [ref=e224]
+            - row "MANGUERAS Tuberías riego Unidad u 1 u 0 u $6.800 QUIMICOS FRUTA S.A Editar Desactivar" [ref=e227]:
+              - cell "MANGUERAS" [ref=e228]:
+                - strong [ref=e229]: MANGUERAS
+              - cell "Tuberías riego" [ref=e230]
+              - cell "Unidad" [ref=e231]
+              - cell "u" [ref=e232]
+              - cell "1 u" [ref=e233]
+              - cell "0 u" [ref=e234]
+              - cell "$6.800" [ref=e235]
+              - cell "QUIMICOS FRUTA S.A" [ref=e236]
+              - cell "Editar Desactivar" [ref=e237]:
+                - button "Editar" [ref=e238] [cursor=pointer]:
+                  - img [ref=e239]
+                - button "Desactivar" [ref=e242] [cursor=pointer]:
+                  - img [ref=e243]
+            - row "NUTRIENTES MEGA NUTRICION Nutriente — lt 20 lt 1 lt $87.000 AGROQUIMICA SRL Editar Desactivar" [ref=e246]:
+              - cell "NUTRIENTES MEGA NUTRICION" [ref=e247]:
+                - strong [ref=e248]: NUTRIENTES MEGA NUTRICION
+              - cell "Nutriente" [ref=e249]
+              - cell "—" [ref=e250]
+              - cell "lt" [ref=e251]
+              - cell "20 lt" [ref=e252]
+              - cell "1 lt" [ref=e253]
+              - cell "$87.000" [ref=e254]
+              - cell "AGROQUIMICA SRL" [ref=e255]
+              - cell "Editar Desactivar" [ref=e256]:
+                - button "Editar" [ref=e257] [cursor=pointer]:
+                  - img [ref=e258]
+                - button "Desactivar" [ref=e261] [cursor=pointer]:
+                  - img [ref=e262]
+            - row "PAPEL FILM Otros Rollo m 20 m 40 m $24.300 AGROQUIMICA SRL Editar Desactivar" [ref=e265]:
+              - cell "PAPEL FILM" [ref=e266]:
+                - strong [ref=e267]: PAPEL FILM
+              - cell "Otros" [ref=e268]
+              - cell "Rollo" [ref=e269]
+              - cell "m" [ref=e270]
+              - cell "20 m" [ref=e271]
+              - cell "40 m" [ref=e272]
+              - cell "$24.300" [ref=e273]
+              - cell "AGROQUIMICA SRL" [ref=e274]
+              - cell "Editar Desactivar" [ref=e275]:
+                - button "Editar" [ref=e276] [cursor=pointer]:
+                  - img [ref=e277]
+                - button "Desactivar" [ref=e280] [cursor=pointer]:
+                  - img [ref=e281]

@@ -68,7 +68,7 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
     </header>
 
     <div class="content">
-      <a href="menu-comercial.html" class="btn-volver">← Volver</a>
+      <a href="menu-stock.html" class="btn-volver">← Volver</a>
       <div class="content-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
         <div>
           <div class="content-title">Proveedores</div>
@@ -103,9 +103,52 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
   <div class="card">
     <h2>Proveedores registrados</h2>
     <table>
-      <thead><tr><th>Nombre</th><th>Rubro</th><th>Contacto</th><th>Telefono</th><th>Email</th></tr></thead>
-      <tbody id="tbody"><tr><td colspan="5" class="empty">Cargando...</td></tr></tbody>
+      <colgroup>
+        <col style="width:25%"><col style="width:12%"><col style="width:14%"><col style="width:13%">
+        <col style="width:18%"><col style="width:18%">
+      </colgroup>
+      <thead><tr><th>Nombre</th><th>Rubro</th><th>Contacto</th><th>Teléfono</th><th>Email</th><th>Acciones</th></tr></thead>
+      <tbody id="tbody"><tr><td colspan="6" class="empty">Cargando...</td></tr></tbody>
     </table>
+  </div>
+
+  <!-- Modal editar proveedor -->
+  <div id="modal-editar" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:white;border-radius:16px;padding:24px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <strong style="font-size:16px;color:#2D5016;">Editar proveedor</strong>
+        <button onclick="cerrarModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#666;">✕</button>
+      </div>
+      <input type="hidden" id="edit-id">
+      <label>Nombre *</label><input type="text" id="edit-nombre" style="width:100%;margin-bottom:8px;">
+      <label>Rubro</label>
+      <select id="edit-rubro" style="width:100%;margin-bottom:8px;">
+        <option value="insumos">Insumos agricolas</option>
+        <option value="maquinaria">Maquinaria</option>
+        <option value="transporte">Transporte</option>
+        <option value="servicios">Servicios</option>
+        <option value="otro">Otro</option>
+      </select>
+      <div class="two-col">
+        <div><label>Contacto</label><input type="text" id="edit-contacto" style="width:100%;margin-bottom:8px;"></div>
+        <div><label>Teléfono</label><input type="text" id="edit-telefono" style="width:100%;margin-bottom:8px;"></div>
+      </div>
+      <label>Email</label><input type="email" id="edit-email" style="width:100%;margin-bottom:8px;">
+      <label>Dirección</label><input type="text" id="edit-direccion" style="width:100%;margin-bottom:8px;">
+      <div id="msg-edit" style="margin-top:8px;"></div>
+      <button onclick="guardarEdicion(this)" style="margin-top:12px;width:100%;padding:12px;background:#2D5016;color:white;border:none;border-radius:10px;font-size:15px;font-weight:bold;cursor:pointer;">Guardar cambios</button>
+    </div>
+  </div>
+
+  <!-- Modal ver insumos -->
+  <div id="modal-insumos" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:white;border-radius:16px;padding:24px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <strong id="modal-insumos-title" style="font-size:16px;color:#2D5016;">Insumos del proveedor</strong>
+        <button onclick="cerrarModalInsumos()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#666;">✕</button>
+      </div>
+      <div id="insumos-body"><p style="color:#999;text-align:center;">Cargando...</p></div>
+    </div>
   </div>
     </div>
   </div>
@@ -135,12 +178,80 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
     function cargar(){
       fetch('/api/proveedores').then(function(r){return r.json();}).then(function(data){
         var tbody=document.getElementById('tbody');
-        if(!data.length){ tbody.innerHTML='<tr><td colspan="5" class="empty">Sin proveedores</td></tr>'; return; }
+        if(!data.length){ tbody.innerHTML='<tr><td colspan="6" class="empty">Sin proveedores</td></tr>'; return; }
         tbody.innerHTML=data.map(function(p){
-          return '<tr><td><strong>'+p.nombre+'</strong></td><td>'+(p.rubro||'-')+'</td><td>'+(p.contacto||'-')+'</td><td>'+(p.telefono||'-')+'</td><td>'+(p.email||'-')+'</td></tr>';
+          var acciones =
+            '<button onclick="abrirEditar('+p.id+')" style="padding:4px 10px;font-size:12px;background:#f0f4e8;color:#2D5016;border:1px solid #a8d5b5;border-radius:6px;cursor:pointer;font-weight:600;margin-right:4px;">Editar</button>' +
+            '<button onclick="verInsumos('+p.id+',\''+p.nombre.replace(/'/g,'\\\'')+'\')" style="padding:4px 10px;font-size:12px;background:#e8f0fe;color:#1a56db;border:1px solid #a8c0f5;border-radius:6px;cursor:pointer;font-weight:600;margin-right:4px;">Ver insumos</button>' +
+            '<button onclick="desactivar('+p.id+',this)" style="padding:4px 10px;font-size:12px;background:#fde8e8;color:#c0392b;border:1px solid #f5a8a8;border-radius:6px;cursor:pointer;font-weight:600;">Desactivar</button>';
+          return '<tr><td><strong>'+p.nombre+'</strong></td><td>'+(p.rubro||'-')+'</td><td>'+(p.contacto||'-')+'</td><td>'+(p.telefono||'-')+'</td><td>'+(p.email||'-')+'</td><td>'+acciones+'</td></tr>';
         }).join('');
       });
     }
+    function abrirEditar(id) {
+      fetch('/api/proveedores').then(function(r){return r.json();}).then(function(data){
+        var p = data.find(function(x){return x.id===id;});
+        if(!p) return;
+        document.getElementById('edit-id').value = p.id;
+        document.getElementById('edit-nombre').value = p.nombre||'';
+        document.getElementById('edit-rubro').value = p.rubro||'insumos';
+        document.getElementById('edit-contacto').value = p.contacto||'';
+        document.getElementById('edit-telefono').value = p.telefono||'';
+        document.getElementById('edit-email').value = p.email||'';
+        document.getElementById('edit-direccion').value = p.direccion||'';
+        document.getElementById('msg-edit').innerHTML = '';
+        document.getElementById('modal-editar').style.display = 'flex';
+      });
+    }
+    function cerrarModal() { document.getElementById('modal-editar').style.display = 'none'; }
+    function guardarEdicion(btn) {
+      var id = document.getElementById('edit-id').value;
+      var nombre = document.getElementById('edit-nombre').value.trim();
+      if(!nombre){ alert('El nombre es obligatorio'); return; }
+      btn.disabled=true; btn.textContent='Guardando...';
+      fetch('/api/proveedores/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          nombre:nombre,rubro:document.getElementById('edit-rubro').value,
+          contacto:document.getElementById('edit-contacto').value,
+          telefono:document.getElementById('edit-telefono').value,
+          email:document.getElementById('edit-email').value,
+          direccion:document.getElementById('edit-direccion').value
+        })
+      }).then(function(r){return r.json();}).then(function(data){
+        btn.disabled=false; btn.textContent='Guardar cambios';
+        if(data.ok){ cerrarModal(); cargar(); }
+        else { document.getElementById('msg-edit').innerHTML='<div class="msg-error">'+(data.error||'Error')+'</div>'; }
+      }).catch(function(){ btn.disabled=false; btn.textContent='Guardar cambios'; document.getElementById('msg-edit').innerHTML='<div class="msg-error">Error de conexión</div>'; });
+    }
+    function desactivar(id, btn) {
+      if(!confirm('¿Desactivar este proveedor?')) return;
+      btn.disabled=true;
+      fetch('/api/proveedores/'+id+'/desactivar',{method:'PATCH'}).then(function(r){return r.json();}).then(function(data){
+        btn.disabled=false;
+        if(data.ok){ cargar(); } else { alert(data.error||'Error'); }
+      }).catch(function(){ btn.disabled=false; alert('Error de conexión'); });
+    }
+    function verInsumos(id, nombre) {
+      document.getElementById('modal-insumos-title').textContent = 'Insumos de '+nombre;
+      document.getElementById('insumos-body').innerHTML = '<p style="color:#999;text-align:center;">Cargando...</p>';
+      document.getElementById('modal-insumos').style.display = 'flex';
+      fetch('/api/proveedores/'+id+'/insumos').then(function(r){return r.json();}).then(function(data){
+        if(!data.length){ document.getElementById('insumos-body').innerHTML='<p style="color:#999;text-align:center;">Sin insumos asignados</p>'; return; }
+        var html='<table style="width:100%;border-collapse:collapse;font-size:13px;">' +
+          '<thead><tr><th style="background:#2D5016;color:white;padding:8px;text-align:left;">Nombre</th>' +
+          '<th style="background:#2D5016;color:white;padding:8px;text-align:left;">Categoría</th>' +
+          '<th style="background:#2D5016;color:white;padding:8px;text-align:right;">Stock</th>' +
+          '<th style="background:#2D5016;color:white;padding:8px;text-align:right;">Costo unit.</th></tr></thead><tbody>' +
+          data.map(function(i){
+            return '<tr><td style="padding:8px;border-bottom:1px solid #eee;"><strong>'+i.nombre+'</strong></td>' +
+              '<td style="padding:8px;border-bottom:1px solid #eee;">'+(i.tipo||'-')+'</td>' +
+              '<td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">'+(parseFloat(i.stock_actual||0).toLocaleString('es-AR'))+' '+(i.unidad_medida||'')+'</td>' +
+              '<td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">$'+(parseFloat(i.costo_unitario||0).toLocaleString('es-AR'))+'</td></tr>';
+          }).join('')+'</tbody></table>';
+        document.getElementById('insumos-body').innerHTML = html;
+      }).catch(function(){ document.getElementById('insumos-body').innerHTML='<p style="color:#c0392b;text-align:center;">Error al cargar</p>'; });
+    }
+    function cerrarModalInsumos() { document.getElementById('modal-insumos').style.display = 'none'; }
     function guardar(){
       var nombre=document.getElementById('nombre').value.trim();
       if(!nombre){ alert('Ingresa el nombre del proveedor'); return; }
@@ -166,6 +277,10 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
     }
     cargar();
   cargarTemporadaActiva();
+  if (new URLSearchParams(location.search).get('nuevo') === '1') {
+    document.getElementById('form-nuevo').classList.add('visible');
+    document.querySelector('#form-nuevo input, #form-nuevo select')?.focus();
+  }
 </script>
 </body>
 </html>

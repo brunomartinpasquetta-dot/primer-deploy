@@ -38,12 +38,12 @@ router.get('/', async (req, res) => {
     const dbReq = pool.request();
     let where = 'd.activo = 1';
     if (tipo_stock === 'insumos') {
-      where += ` AND d.tipo_stock IN ('insumos','mixto')`;
+      where += ` AND d.tipo_deposito = 'insumos'`;
     } else if (tipo_stock === 'mercaderia') {
-      where += ` AND d.tipo_stock IN ('mercaderia','mixto')`;
+      where += ` AND d.tipo_deposito IN ('fruta_fresca','camara_frio')`;
     }
     const result = await dbReq.query(`
-      SELECT d.id, d.nombre, d.tipo, d.tipo_stock, d.capacidad_kg, d.costo_kg_dia,
+      SELECT d.id, d.nombre, d.tipo, d.tipo_deposito, d.capacidad_kg, d.costo_kg_dia,
              d.ubicacion, d.observacion, d.activo,
              ISNULL(SUM(CASE WHEN m.tipo = 'ingreso'         THEN m.kilos ELSE 0 END), 0) -
              ISNULL(SUM(CASE WHEN m.tipo LIKE 'egreso%'      THEN m.kilos ELSE 0 END), 0) AS stock_actual,
@@ -53,7 +53,7 @@ router.get('/', async (req, res) => {
       FROM Depositos d
       LEFT JOIN MovimientosDeposito m ON d.id = m.deposito_id
       WHERE ${where}
-      GROUP BY d.id, d.nombre, d.tipo, d.tipo_stock, d.capacidad_kg, d.costo_kg_dia,
+      GROUP BY d.id, d.nombre, d.tipo, d.tipo_deposito, d.capacidad_kg, d.costo_kg_dia,
                d.ubicacion, d.observacion, d.activo
       ORDER BY d.nombre`);
     res.json(result.recordset);
@@ -65,22 +65,22 @@ router.get('/', async (req, res) => {
 // ── Crear depósito ──────────────────────────────────────────────
 router.post('/', async (req, res) => {
   try {
-    const { nombre, tipo, tipo_stock, capacidad_kg, costo_kg_dia, ubicacion, observacion } = req.body;
+    const { nombre, tipo, tipo_deposito, capacidad_kg, costo_kg_dia, ubicacion, observacion } = req.body;
     if (!nombre || !tipo) return res.status(400).json({ error: 'Nombre y tipo son obligatorios' });
-    const tiposStockValidos = ['mercaderia', 'insumos', 'mixto'];
-    const tipoStockVal = tiposStockValidos.includes(tipo_stock) ? tipo_stock : 'mercaderia';
+    const tiposDepValidos = ['fruta_fresca', 'camara_frio', 'insumos'];
+    const tipoDepVal = tiposDepValidos.includes(tipo_deposito) ? tipo_deposito : 'fruta_fresca';
     const pool = await getPool();
     const result = await pool.request()
-      .input('nombre',       sql.NVarChar,       nombre)
-      .input('tipo',         sql.NVarChar,       tipo)
-      .input('tipo_stock',   sql.NVarChar,       tipoStockVal)
-      .input('capacidad_kg', sql.Decimal(12, 2), capacidad_kg || null)
-      .input('costo_kg_dia', sql.Decimal(10, 4), costo_kg_dia || null)
-      .input('ubicacion',    sql.NVarChar,       ubicacion    || '')
-      .input('observacion',  sql.NVarChar,       observacion  || '')
-      .query(`INSERT INTO Depositos (nombre, tipo, tipo_stock, capacidad_kg, costo_kg_dia, ubicacion, observacion)
+      .input('nombre',         sql.NVarChar,       nombre)
+      .input('tipo',           sql.NVarChar,       tipo)
+      .input('tipo_deposito',  sql.NVarChar,       tipoDepVal)
+      .input('capacidad_kg',   sql.Decimal(12, 2), capacidad_kg || null)
+      .input('costo_kg_dia',   sql.Decimal(10, 4), costo_kg_dia || null)
+      .input('ubicacion',      sql.NVarChar,       ubicacion    || '')
+      .input('observacion',    sql.NVarChar,       observacion  || '')
+      .query(`INSERT INTO Depositos (nombre, tipo, tipo_deposito, capacidad_kg, costo_kg_dia, ubicacion, observacion)
               OUTPUT INSERTED.id
-              VALUES (@nombre, @tipo, @tipo_stock, @capacidad_kg, @costo_kg_dia, @ubicacion, @observacion)`);
+              VALUES (@nombre, @tipo, @tipo_deposito, @capacidad_kg, @costo_kg_dia, @ubicacion, @observacion)`);
     res.json({ ok: true, id: result.recordset[0].id });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -90,21 +90,21 @@ router.post('/', async (req, res) => {
 // ── Editar depósito ─────────────────────────────────────────────
 router.put('/:id', async (req, res) => {
   try {
-    const { nombre, tipo, tipo_stock, capacidad_kg, costo_kg_dia, ubicacion, observacion, activo } = req.body;
-    const tiposStockValidos = ['mercaderia', 'insumos', 'mixto'];
-    const tipoStockVal = tiposStockValidos.includes(tipo_stock) ? tipo_stock : 'mercaderia';
+    const { nombre, tipo, tipo_deposito, capacidad_kg, costo_kg_dia, ubicacion, observacion, activo } = req.body;
+    const tiposDepValidos = ['fruta_fresca', 'camara_frio', 'insumos'];
+    const tipoDepVal = tiposDepValidos.includes(tipo_deposito) ? tipo_deposito : 'fruta_fresca';
     const pool = await getPool();
     await pool.request()
-      .input('id',           sql.Int,            req.params.id)
-      .input('nombre',       sql.NVarChar,       nombre)
-      .input('tipo',         sql.NVarChar,       tipo)
-      .input('tipo_stock',   sql.NVarChar,       tipoStockVal)
-      .input('capacidad_kg', sql.Decimal(12, 2), capacidad_kg || null)
-      .input('costo_kg_dia', sql.Decimal(10, 4), costo_kg_dia || null)
-      .input('ubicacion',    sql.NVarChar,       ubicacion    || '')
-      .input('observacion',  sql.NVarChar,       observacion  || '')
-      .input('activo',       sql.Bit,            activo !== undefined ? (activo ? 1 : 0) : 1)
-      .query(`UPDATE Depositos SET nombre=@nombre, tipo=@tipo, tipo_stock=@tipo_stock,
+      .input('id',            sql.Int,            req.params.id)
+      .input('nombre',        sql.NVarChar,       nombre)
+      .input('tipo',          sql.NVarChar,       tipo)
+      .input('tipo_deposito', sql.NVarChar,       tipoDepVal)
+      .input('capacidad_kg',  sql.Decimal(12, 2), capacidad_kg || null)
+      .input('costo_kg_dia',  sql.Decimal(10, 4), costo_kg_dia || null)
+      .input('ubicacion',     sql.NVarChar,       ubicacion    || '')
+      .input('observacion',   sql.NVarChar,       observacion  || '')
+      .input('activo',        sql.Bit,            activo !== undefined ? (activo ? 1 : 0) : 1)
+      .query(`UPDATE Depositos SET nombre=@nombre, tipo=@tipo, tipo_deposito=@tipo_deposito,
               capacidad_kg=@capacidad_kg, costo_kg_dia=@costo_kg_dia, ubicacion=@ubicacion,
               observacion=@observacion, activo=@activo WHERE id=@id`);
     res.json({ ok: true });
@@ -508,15 +508,15 @@ router.get('/ocupacion', async (req, res) => {
     const dbReq = pool.request();
     let where = 'd.activo = 1';
     if (tipo_stock === 'insumos') {
-      where += ` AND d.tipo_stock IN ('insumos','mixto')`;
+      where += ` AND d.tipo_deposito = 'insumos'`;
     } else if (tipo_stock === 'mercaderia') {
-      where += ` AND d.tipo_stock IN ('mercaderia','mixto')`;
+      where += ` AND d.tipo_deposito IN ('fruta_fresca','camara_frio')`;
     }
 
     if (tipo_stock === 'insumos') {
       // Ocupación desde StockInsumos (por deposito_id)
       const result = await dbReq.query(`
-        SELECT d.id, d.nombre, d.tipo, d.tipo_stock, d.capacidad_kg,
+        SELECT d.id, d.nombre, d.tipo, d.tipo_deposito, d.capacidad_kg,
                ISNULL(SUM(CASE
                  WHEN si.tipo IN ('compra','ingreso_manual') THEN si.cantidad
                  WHEN si.tipo IN ('egreso','aplicacion','merma','vencimiento','perdida') THEN -si.cantidad
@@ -524,7 +524,7 @@ router.get('/ocupacion', async (req, res) => {
         FROM Depositos d
         LEFT JOIN StockInsumos si ON si.deposito_id = d.id
         WHERE ${where}
-        GROUP BY d.id, d.nombre, d.tipo, d.tipo_stock, d.capacidad_kg
+        GROUP BY d.id, d.nombre, d.tipo, d.tipo_deposito, d.capacidad_kg
         ORDER BY d.nombre`);
       res.json(result.recordset.map(function(r) {
         const ocup = Math.max(0, parseFloat(r.ocupado_kg) || 0);
@@ -535,15 +535,15 @@ router.get('/ocupacion', async (req, res) => {
         });
       }));
     } else {
-      // Ocupación desde MovimientosDeposito (mercadería y mixto)
+      // Ocupación desde MovimientosDeposito (fruta fresca y cámara fría)
       const result = await dbReq.query(`
-        SELECT d.id, d.nombre, d.tipo, d.tipo_stock, d.capacidad_kg,
+        SELECT d.id, d.nombre, d.tipo, d.tipo_deposito, d.capacidad_kg,
                ISNULL(SUM(CASE WHEN m.tipo = 'ingreso'    THEN m.kilos ELSE 0 END), 0) -
                ISNULL(SUM(CASE WHEN m.tipo LIKE 'egreso%' THEN m.kilos ELSE 0 END), 0) AS ocupado_kg
         FROM Depositos d
         LEFT JOIN MovimientosDeposito m ON m.deposito_id = d.id
         WHERE ${where}
-        GROUP BY d.id, d.nombre, d.tipo, d.tipo_stock, d.capacidad_kg
+        GROUP BY d.id, d.nombre, d.tipo, d.tipo_deposito, d.capacidad_kg
         ORDER BY d.nombre`);
       res.json(result.recordset.map(function(r) {
         const ocup = Math.max(0, parseFloat(r.ocupado_kg) || 0);
