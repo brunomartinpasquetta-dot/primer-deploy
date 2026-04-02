@@ -418,15 +418,20 @@ router.get('/etapas', async (req, res) => {
   }
 });
 
-// PATCH /historial/:id — editar observación/remito de un movimiento de venta
+// PATCH /historial/:id — editar movimiento de venta
 router.patch('/historial/:id', async (req, res) => {
   try {
-    const { observacion, numero_remito } = req.body;
+    const { observacion, numero_remito, fecha, forma_pago_id, precio_kilo, comprador, estado_cobro } = req.body;
     const pool = await getPool();
     const r = pool.request().input('id', sql.Int, req.params.id);
     const sets = [];
-    if (observacion !== undefined)   { sets.push('observacion = @obs');    r.input('obs', sql.NVarChar, observacion || ''); }
-    if (numero_remito !== undefined) { sets.push('numero_remito = @rem');  r.input('rem', sql.NVarChar, numero_remito || null); }
+    if (observacion !== undefined)   { sets.push('observacion = @obs');       r.input('obs',   sql.NVarChar,     observacion || ''); }
+    if (numero_remito !== undefined) { sets.push('numero_remito = @rem');     r.input('rem',   sql.NVarChar,     numero_remito || null); }
+    if (fecha !== undefined)         { sets.push('fecha = @fecha');           r.input('fecha', sql.DateTime,     new Date(fecha)); }
+    if (forma_pago_id !== undefined) { sets.push('forma_pago_id = @fpid');   r.input('fpid',  sql.Int,          forma_pago_id || null); }
+    if (precio_kilo !== undefined)   { sets.push('precio_kilo = @pk');       r.input('pk',    sql.Decimal(10,2),parseFloat(precio_kilo) || 0); }
+    if (comprador !== undefined)     { sets.push('comprador = @comp');       r.input('comp',  sql.NVarChar,     comprador || null); }
+    if (estado_cobro !== undefined)  { sets.push('estado_cobro = @ec');      r.input('ec',    sql.NVarChar,     estado_cobro || null); }
     if (!sets.length) return res.json({ ok: true });
     await r.query('UPDATE MovimientosDeposito SET ' + sets.join(', ') + ' WHERE id = @id');
     res.json({ ok: true });

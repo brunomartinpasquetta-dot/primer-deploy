@@ -990,9 +990,23 @@
     var v = _historialVentas[idx];
     if (!v) return;
     document.getElementById('edit-venta-id').value = v.id;
+    document.getElementById('edit-venta-idx').value = idx;
+    document.getElementById('edit-venta-cliente').value = v.comprador || '';
+    document.getElementById('edit-venta-fecha').value = v.fecha ? v.fecha.split('T')[0] : '';
+    document.getElementById('edit-venta-precio').value = v.precio_kilo || '';
+    document.getElementById('edit-venta-estado').value = v.estado_cobro || '';
     document.getElementById('edit-venta-rem').value = v.numero_remito || '';
     document.getElementById('edit-venta-obs').value = v.observacion || '';
     document.getElementById('edit-venta-msg').textContent = '';
+    // Info de referencia
+    var info = [];
+    if (v.deposito) info.push('Depósito: ' + v.deposito);
+    if (v.variedad) info.push('Variedad: ' + v.variedad);
+    if (v.kilos) info.push('Kilos: ' + parseFloat(v.kilos).toLocaleString('es-AR') + ' kg');
+    if (v.forma_pago) info.push('Forma pago: ' + v.forma_pago);
+    document.getElementById('edit-venta-info').innerHTML = info.length
+      ? '<div style="padding:8px 10px;background:var(--fondo);border-radius:6px;border:1px solid var(--borde);">' + info.join(' · ') + '</div>'
+      : '';
     document.getElementById('modal-edit-venta').classList.add('open');
   }
   function cerrarEditarVenta() {
@@ -1005,14 +1019,18 @@
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        comprador: document.getElementById('edit-venta-cliente').value || null,
+        fecha: document.getElementById('edit-venta-fecha').value || undefined,
+        precio_kilo: document.getElementById('edit-venta-precio').value || undefined,
+        estado_cobro: document.getElementById('edit-venta-estado').value || undefined,
         numero_remito: document.getElementById('edit-venta-rem').value || null,
         observacion: document.getElementById('edit-venta-obs').value
       })
     }).then(function(r){ return r.json(); }).then(function(data){
-      btn.disabled = false; btn.textContent = 'Guardar';
+      btn.disabled = false; btn.textContent = 'Guardar cambios';
       if (data.ok) { cerrarEditarVenta(); cargarHistorial(); }
       else { document.getElementById('edit-venta-msg').innerHTML = '<span style="color:#c0392b;">' + (data.error||'Error') + '</span>'; }
-    }).catch(function(){ btn.disabled = false; btn.textContent = 'Guardar'; });
+    }).catch(function(){ btn.disabled = false; btn.textContent = 'Guardar cambios'; });
   }
 
   function cargarCotizFrutilla() {
@@ -1039,17 +1057,46 @@
 
 <!-- MODAL EDITAR VENTA -->
 <div class="modal-overlay" id="modal-edit-venta" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;">
-  <div style="background:#fff;border-radius:14px;padding:24px;width:90%;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,0.15);">
+  <div style="background:#fff;border-radius:14px;padding:24px;width:90%;max-width:500px;max-height:85vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.15);">
     <h3 style="margin-bottom:14px;color:var(--verde);font-size:17px;">Editar venta</h3>
     <input type="hidden" id="edit-venta-id">
-    <label style="font-size:11px;font-weight:600;color:#64748B;text-transform:uppercase;letter-spacing:.4px;">N° Remito</label>
-    <input type="text" id="edit-venta-rem" placeholder="Opcional" style="width:100%;margin-top:4px;margin-bottom:10px;padding:7px 9px;font-size:13px;border:1px solid #E2E8F0;border-radius:6px;box-sizing:border-box;">
+    <input type="hidden" id="edit-venta-idx">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+      <div>
+        <label style="font-size:11px;font-weight:600;color:#64748B;text-transform:uppercase;letter-spacing:.4px;">Cliente</label>
+        <input type="text" id="edit-venta-cliente" style="width:100%;margin-top:4px;height:32px;padding:4px 8px;font-size:13px;border:1px solid #E2E8F0;border-radius:6px;box-sizing:border-box;">
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:600;color:#64748B;text-transform:uppercase;letter-spacing:.4px;">Fecha</label>
+        <input type="date" id="edit-venta-fecha" style="width:100%;margin-top:4px;height:32px;padding:4px 8px;font-size:13px;border:1px solid #E2E8F0;border-radius:6px;box-sizing:border-box;">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;">
+      <div>
+        <label style="font-size:11px;font-weight:600;color:#64748B;text-transform:uppercase;letter-spacing:.4px;">Precio/Kg</label>
+        <input type="number" id="edit-venta-precio" step="any" min="0" style="width:100%;margin-top:4px;height:32px;padding:4px 8px;font-size:13px;border:1px solid #E2E8F0;border-radius:6px;box-sizing:border-box;-moz-appearance:textfield;">
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:600;color:#64748B;text-transform:uppercase;letter-spacing:.4px;">Estado cobro</label>
+        <select id="edit-venta-estado" style="width:100%;margin-top:4px;height:32px;padding:4px 8px;font-size:13px;border:1px solid #E2E8F0;border-radius:6px;box-sizing:border-box;">
+          <option value="">Sin especificar</option>
+          <option value="cobrado">Cobrado</option>
+          <option value="pendiente_cc">Pendiente CC</option>
+          <option value="pendiente">Pendiente</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:600;color:#64748B;text-transform:uppercase;letter-spacing:.4px;">N° Remito</label>
+        <input type="text" id="edit-venta-rem" placeholder="Opcional" style="width:100%;margin-top:4px;height:32px;padding:4px 8px;font-size:13px;border:1px solid #E2E8F0;border-radius:6px;box-sizing:border-box;">
+      </div>
+    </div>
     <label style="font-size:11px;font-weight:600;color:#64748B;text-transform:uppercase;letter-spacing:.4px;">Observación</label>
-    <textarea id="edit-venta-obs" rows="3" style="width:100%;margin-top:4px;padding:7px 9px;font-size:13px;border:1px solid #E2E8F0;border-radius:6px;resize:vertical;box-sizing:border-box;font-family:inherit;"></textarea>
+    <textarea id="edit-venta-obs" rows="2" style="width:100%;margin-top:4px;padding:7px 9px;font-size:13px;border:1px solid #E2E8F0;border-radius:6px;resize:vertical;box-sizing:border-box;font-family:inherit;"></textarea>
+    <div id="edit-venta-info" style="margin-top:10px;font-size:12px;color:var(--texto-suave);"></div>
     <div id="edit-venta-msg" style="font-size:12px;margin-top:6px;"></div>
     <div style="display:flex;gap:8px;margin-top:14px;">
       <button style="flex:1;padding:10px;border:1.5px solid var(--borde);border-radius:8px;background:var(--fondo-dark);font-size:13px;font-weight:700;cursor:pointer;" onclick="cerrarEditarVenta()">Cancelar</button>
-      <button class="btn btn-primary" style="flex:1;margin:0;" onclick="guardarEditarVenta(this)">Guardar</button>
+      <button class="btn btn-primary" style="flex:1;margin:0;" onclick="guardarEditarVenta(this)">Guardar cambios</button>
     </div>
   </div>
 </div>
