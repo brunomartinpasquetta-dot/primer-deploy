@@ -13,9 +13,15 @@ async function cargarCotizacion() {
     var data = await res.json();
     if (data.error) throw new Error(data.error);
     window.cotizacion = data;
+    try { localStorage.setItem('cosecha_cotiz_dolar', JSON.stringify(data)); } catch(e){}
     _actualizarWidgets();
   } catch (e) {
     console.warn('[cotizaciones] No se pudo cargar:', e.message);
+    // Usar último dato guardado
+    try {
+      var cached = localStorage.getItem('cosecha_cotiz_dolar');
+      if (cached) { window.cotizacion = JSON.parse(cached); _actualizarWidgets(); return; }
+    } catch(e2){}
     _mostrarError();
   }
 }
@@ -103,6 +109,9 @@ function _actualizarWidgets() {
   setEl('topbar-blue',   b.venta);
   setEl('topbar-oficial',o.venta);
   setEl('hero-blue',     b.venta);
+  setEl('hero-oficial',  o.venta);
+  setEl('hero-mep',      m.venta);
+  setEl('hero-ccl',      c.venta);
   var bdAct = document.getElementById('bd-actualizado');
   if (bdAct && ts) bdAct.textContent = 'Actualizado ' + ts;
 }

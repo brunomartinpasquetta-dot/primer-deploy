@@ -93,7 +93,7 @@
     @media (max-width: 900px) { .dash-split { grid-template-columns: 1fr; } }
 
     /* ── Layout principal: KPIs izq + depósitos/alertas der ── */
-    .dash-main-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; align-items: start; }
+    .dash-main-row { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 14px; align-items: start; }
     @media (max-width: 900px) { .dash-main-row { grid-template-columns: 1fr; } }
 
     /* ── Tabla registros ── */
@@ -250,8 +250,7 @@
       <div class="dash-split" style="margin-top:16px;">
         <div class="card">
           <div class="card-header">
-            <span class="card-title" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;background:var(--verde);color:#fff;padding:4px 12px;border-radius:4px;">Últimos registros de cosecha</span>
-            <a href="juntada.html" style="font-size:12px;font-weight:600;color:var(--verde);text-decoration:none;">+ Nuevo registro</a>
+            <span class="card-title">Últimos registros de cosecha</span>
           </div>
           <div id="flujo-dia">
             <div style="font-size:11px;font-weight:700;color:var(--texto-suave);letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px;">Flujo del día</div>
@@ -274,7 +273,7 @@
 
         <div class="card">
           <div class="card-header">
-            <span class="card-title" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;background:var(--verde);color:#fff;padding:4px 12px;border-radius:4px;">Últimos registros de aplicaciones</span>
+            <span class="card-title">Últimos registros de aplicaciones</span>
           </div>
           <div class="table-wrap">
             <table id="tabla-aplicaciones-dia">
@@ -396,6 +395,21 @@ function renderDashboard(d) {
           '</div>' +
           '<div class="hero-sep"></div>' +
           '<div class="hero-cotiz">' +
+            '<span class="hero-cotiz-label">Oficial</span>' +
+            '<span class="hero-cotiz-val" id="hero-oficial">$---</span>' +
+          '</div>' +
+          '<div class="hero-sep"></div>' +
+          '<div class="hero-cotiz">' +
+            '<span class="hero-cotiz-label">MEP</span>' +
+            '<span class="hero-cotiz-val" id="hero-mep">$---</span>' +
+          '</div>' +
+          '<div class="hero-sep"></div>' +
+          '<div class="hero-cotiz">' +
+            '<span class="hero-cotiz-label">CCL</span>' +
+            '<span class="hero-cotiz-val" id="hero-ccl">$---</span>' +
+          '</div>' +
+          '<div class="hero-sep"></div>' +
+          '<div class="hero-cotiz">' +
             '<span class="hero-cotiz-label">Frutilla hoy</span>' +
             '<span class="hero-cotiz-val" id="hero-frutilla">$---</span>' +
           '</div>' +
@@ -418,7 +432,7 @@ function renderDashboard(d) {
     kpiCard('Cosecha hoy', 'wheat', 'verde', fmt(kh.kilos_cosechados),
       kh.cosechadores + ' cosechador' + (kh.cosechadores !== 1 ? 'es' : '') + ' activos') +
     kpiCard('En cámara', 'warehouse', 'azul', fmt(ts.kilos_camara), 'kg disponibles') +
-    '<div class="kpi kpi--acento">' +
+    '<div class="kpi kpi--acento" style="flex:2;">' +
       '<div class="kpi-top">' +
         '<div class="kpi-label">Saldo caja</div>' +
         '<div class="kpi-icon kpi-icon--warn"><i data-lucide="banknote"></i></div>' +
@@ -576,8 +590,14 @@ function cargar() {
 
 function cargarFrutilla() {
   var hf = document.getElementById('hero-frutilla');
-  function mostrarFrutilla(precio_modal) {
-    if (hf) hf.textContent = '$' + Math.round(precio_modal).toLocaleString('es-AR') + '/kg';
+  function mostrarFrutilla(precio) {
+    localStorage.setItem('cosecha_frutilla_ultimo', precio);
+    if (hf) hf.textContent = '$' + Math.round(precio).toLocaleString('es-AR') + '/kg';
+  }
+  function usarUltimo() {
+    var ultimo = localStorage.getItem('cosecha_frutilla_ultimo');
+    if (ultimo && hf) hf.textContent = '$' + Math.round(parseFloat(ultimo)).toLocaleString('es-AR') + '/kg';
+    else if (hf) hf.textContent = '$---';
   }
   function fallbackLocales() {
     fetch('/api/cotizaciones/locales?cultivo=frutilla')
@@ -585,24 +605,18 @@ function cargarFrutilla() {
       .then(function(d) {
         var arr = Array.isArray(d) ? d : [];
         var item = arr.find(function(x) { return x.precio_modal || x.precio; });
-        if (item && (item.precio_modal || item.precio)) {
-          mostrarFrutilla(item.precio_modal || item.precio);
-        } else {
-          if (hf) hf.textContent = '$---';
-        }
+        if (item && (item.precio_modal || item.precio)) mostrarFrutilla(item.precio_modal || item.precio);
+        else usarUltimo();
       })
-      .catch(function() { if (hf) hf.textContent = '$---'; });
+      .catch(usarUltimo);
   }
   fetch('/api/cotizaciones/frutilla')
     .then(function(r) { return r.json(); })
     .then(function(d) {
-      if (d && !d.error && d.precio_modal) {
-        mostrarFrutilla(d.precio_modal);
-      } else {
-        fallbackLocales();
-      }
+      if (d && !d.error && d.precio_modal) mostrarFrutilla(d.precio_modal);
+      else fallbackLocales();
     })
-    .catch(function() { fallbackLocales(); });
+    .catch(fallbackLocales);
 }
 
 function cargarEtapasDashboard() {
