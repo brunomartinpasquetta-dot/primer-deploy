@@ -273,12 +273,22 @@ function fmtFecha(iso) {
 }
 
 function cargar() {
-  fetch('/api/cuentas-clientes/resumen')
+  return fetch('/api/cuentas-clientes/resumen')
     .then(function(r) { return r.json(); })
     .then(function(data) {
       _clientesData = data;
       calcularKpis(data);
       renderLista(data);
+      // Actualizar panel derecho si hay cliente seleccionado
+      if (_clienteSeleccionado) {
+        var updated = data.find(function(c) { return c.id === _clienteSeleccionado.id; });
+        if (updated) {
+          _clienteSeleccionado = updated;
+          var saldo = parseFloat(updated.saldo) || 0;
+          var sEl = document.getElementById('det-saldo');
+          if (sEl) { sEl.textContent = fmtPeso(saldo); sEl.className = 'detalle-saldo ' + (saldo > 0.01 ? 'deuda' : 'ok'); }
+        }
+      }
     });
 }
 

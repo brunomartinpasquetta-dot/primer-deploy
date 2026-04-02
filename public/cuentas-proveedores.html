@@ -296,12 +296,22 @@ function fmtFecha(iso) {
 
 // ── Cargar lista de proveedores ──────────────────────────────────────
 function cargar() {
-  fetch('/api/cuentas-proveedores/resumen')
+  return fetch('/api/cuentas-proveedores/resumen')
     .then(function(r) { return r.json(); })
     .then(function(data) {
       _proveedoresData = data;
       calcularKpis(data);
       renderLista(data);
+      // Actualizar panel derecho si hay proveedor seleccionado
+      if (_proveedorSeleccionado) {
+        var updated = data.find(function(p) { return p.id === _proveedorSeleccionado.id; });
+        if (updated) {
+          _proveedorSeleccionado = updated;
+          var saldo = parseFloat(updated.saldo) || 0;
+          var sEl = document.getElementById('det-saldo');
+          if (sEl) { sEl.textContent = fmtPeso(saldo); sEl.className = 'detalle-saldo ' + (saldo > 0.01 ? 'deuda' : 'ok'); }
+        }
+      }
     });
 }
 
