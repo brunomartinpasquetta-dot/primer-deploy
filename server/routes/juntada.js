@@ -41,10 +41,11 @@ router.post('/', async (req, res) => {
       if (destinos && destinos.length > 0) {
         // Obtener info de depósitos involucrados
         let depositoInfo = {};
-        const depIds = [...new Set(destinos.filter(d => d.tipo === 'deposito' && d.deposito_id).map(d => d.deposito_id))];
+        const depIds = [...new Set(destinos.filter(d => d.tipo === 'deposito' && d.deposito_id).map(d => parseInt(d.deposito_id)))];
         if (depIds.length > 0) {
-          const depRes = await transaction.request()
-            .query(`SELECT id, tipo, requiere_despalillado FROM Depositos WHERE id IN (${depIds.join(',')})`);
+          const depReq = transaction.request();
+          const depPlaceholders = depIds.map((id, i) => { depReq.input(`depId${i}`, sql.Int, id); return `@depId${i}`; });
+          const depRes = await depReq.query(`SELECT id, tipo, requiere_despalillado FROM Depositos WHERE id IN (${depPlaceholders.join(',')})`);
           depRes.recordset.forEach(r => { depositoInfo[r.id] = r; });
         }
 
@@ -223,10 +224,11 @@ router.post('/:id/destino', async (req, res) => {
 
     // Info depósitos
     let depositoInfo = {};
-    const depIds = [...new Set(destinos.filter(d => d.tipo === 'deposito' && d.deposito_id).map(d => d.deposito_id))];
+    const depIds = [...new Set(destinos.filter(d => d.tipo === 'deposito' && d.deposito_id).map(d => parseInt(d.deposito_id)))];
     if (depIds.length > 0) {
-      const depRes = await transaction.request()
-        .query(`SELECT id, tipo, requiere_despalillado FROM Depositos WHERE id IN (${depIds.join(',')})`);
+      const depReq = transaction.request();
+      const depPlaceholders = depIds.map((id, i) => { depReq.input(`depId${i}`, sql.Int, id); return `@depId${i}`; });
+      const depRes = await depReq.query(`SELECT id, tipo, requiere_despalillado FROM Depositos WHERE id IN (${depPlaceholders.join(',')})`);
       depRes.recordset.forEach(r => { depositoInfo[r.id] = r; });
     }
 
@@ -373,13 +375,14 @@ router.get('/pendientes-stock', async (req, res) => {
   try {
     const { temporada_id } = req.query;
     const pool = await getPool();
+    const dbReq = pool.request();
     let q = `SELECT COUNT(*) AS cantidad, ISNULL(SUM(jd.kilos), 0) AS total_kg
              FROM JuntadaDestino jd
              JOIN Juntada j ON jd.juntada_id = j.id
              JOIN Parcelas l ON j.parcela_id = l.id
              WHERE jd.stock_pendiente = 1`;
-    if (temporada_id) q += ` AND l.temporada_id = ${parseInt(temporada_id)}`;
-    const result = await pool.request().query(q);
+    if (temporada_id) { q += ` AND l.temporada_id = @temporada_id`; dbReq.input('temporada_id', sql.Int, parseInt(temporada_id)); }
+    const result = await dbReq.query(q);
     res.json(result.recordset[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
