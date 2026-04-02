@@ -261,10 +261,10 @@
       <div class="card">
         <table>
           <thead>
-            <tr><th>#</th><th>Fecha</th><th>Depósito</th><th>Variedad</th><th>Cliente</th><th>Kg</th><th>Precio/Kg</th><th>Total</th><th>Estado</th><th>Embalaje</th><th>CC</th><th>Usuario</th></tr>
+            <tr><th>Remito</th><th>Fecha</th><th>Depósito</th><th>Variedad</th><th>Cliente</th><th>Kg</th><th>Precio/Kg</th><th>Total</th><th>Estado</th><th>Usuario</th><th></th></tr>
           </thead>
           <tbody id="tbody-historial">
-            <tr><td colspan="12" class="empty">Cargando...</td></tr>
+            <tr><td colspan="11" class="empty">Cargando...</td></tr>
           </tbody>
           <tfoot id="tfoot-historial"></tfoot>
         </table>
@@ -720,26 +720,19 @@
     var tbody = document.getElementById('tbody-historial');
     var tfoot = document.getElementById('tfoot-historial');
     if (!data.length) {
-      tbody.innerHTML = '<tr><td colspan="12" class="empty">Sin ventas registradas</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="11" class="empty">Sin ventas registradas</td></tr>';
       tfoot.innerHTML = ''; return;
     }
     var totalKg = 0, totalPesos = 0;
     var mono = "font-family:'JetBrains Mono',monospace;";
     var s = "font-size:11px;padding:4px 6px;";
-    tbody.innerHTML = data.map(function(v) {
+    tbody.innerHTML = data.map(function(v, idx) {
       var kg = parseFloat(v.kilos) || 0;
       var precio = parseFloat(v.precio_kilo) || 0;
       var total = parseFloat(v.total) || 0;
       totalKg += kg; totalPesos += total;
-      var movId = v.movimiento_id || v.id;
-      var btnEmb = movId
-        ? '<button class="btn-emb" onclick="abrirModalEmbalaje('+movId+',\''+
-            (v.comprador||'').replace(/'/g,"\\'")+'\')" title="Ver embalaje">' +
-            '<i data-lucide="package" style="width:12px;height:12px;"></i> Embalaje</button>'
-        : '—';
       return '<tr>' +
-        '<td style="'+s+mono+'color:var(--texto-suave);">#' + (v.id || '-') +
-          (v.numero_remito ? '<br><span style="font-size:10px;color:var(--verde);">' + v.numero_remito + '</span>' : '') + '</td>' +
+        '<td style="'+s+mono+'color:var(--verde);font-weight:600;">' + (v.numero_remito || '#' + (v.id || '-')) + '</td>' +
         '<td style="'+s+'white-space:nowrap;">' + formatFechaHora(v.fecha) + '</td>' +
         '<td style="'+s+'">' + (v.deposito || '<em style="color:var(--texto-suave)">Directa</em>') + '</td>' +
         '<td style="'+s+'">' + (v.variedad || '-') + '</td>' +
@@ -748,9 +741,8 @@
         '<td style="'+s+mono+'">' + (precio > 0 ? '$' + precio.toLocaleString('es-AR', { minimumFractionDigits: 2 }) : '-') + '</td>' +
         '<td style="'+s+mono+'font-weight:700;">' + (total > 0 ? '$' + total.toLocaleString('es-AR', { minimumFractionDigits: 2 }) : '-') + '</td>' +
         '<td style="'+s+'">' + estadoBadge(v.estado_cobro, v.forma_pago) + '</td>' +
-        '<td style="'+s+'">' + btnEmb + '</td>' +
-        '<td style="'+s+'">' + (v.cliente_id ? '<button style="background:none;border:none;cursor:pointer;color:var(--texto-suave);padding:2px 4px;" title="Ver CC cliente" onclick="verCCCli('+v.cliente_id+',\''+(v.comprador||'').replace(/\'/g,"\\'")+'\')"><i data-lucide="landmark" style="width:14px;height:14px;"></i></button>' : '—') + '</td>' +
         '<td style="'+s+'color:var(--texto-suave);">' + (v.usuario || '-') + '</td>' +
+        '<td style="'+s+'"><button style="background:none;border:none;cursor:pointer;color:var(--texto-suave);padding:2px 4px;" title="Ver detalles de la venta" onclick="verDetalleVenta('+idx+')"><i data-lucide="eye" style="width:15px;height:15px;"></i></button></td>' +
         '</tr>';
     }).join('');
     tfoot.innerHTML = '<tr style="background:var(--fondo-dark);font-weight:700;">' +
@@ -758,7 +750,7 @@
       '<td style="padding:6px 8px;'+mono+'font-size:11px;">' + totalKg.toLocaleString('es-AR', { minimumFractionDigits: 2 }) + ' kg</td>' +
       '<td></td>' +
       '<td style="padding:6px 8px;'+mono+'font-size:11px;">$' + totalPesos.toLocaleString('es-AR', { minimumFractionDigits: 2 }) + '</td>' +
-      '<td colspan="4"></td>' +
+      '<td colspan="3"></td>' +
       '</tr>';
     lucide.createIcons();
   }
@@ -933,6 +925,64 @@
     document.getElementById('modal-cc-cli').classList.remove('open');
   }
 
+  /* ── Modal detalle venta ── */
+  function verDetalleVenta(idx) {
+    var v = _historialVentas[idx];
+    if (!v) return;
+    var mono = "font-family:'JetBrains Mono',monospace;";
+    var kg = parseFloat(v.kilos) || 0;
+    var precio = parseFloat(v.precio_kilo) || 0;
+    var total = parseFloat(v.total) || 0;
+    var rows = [
+      ['Remito', v.numero_remito || '—'],
+      ['Fecha', formatFechaHora(v.fecha)],
+      ['Temporada', v.temporada || '—'],
+      ['Cliente', v.comprador || '—'],
+      ['Depósito', v.deposito || 'Directa'],
+      ['Variedad', v.variedad || '—'],
+      ['Parcela', v.parcela || '—'],
+      ['Kilos', kg.toLocaleString('es-AR', {minimumFractionDigits:2}) + ' kg'],
+      ['Precio/Kg', precio > 0 ? '$' + precio.toLocaleString('es-AR', {minimumFractionDigits:2}) : '—'],
+      ['Total', total > 0 ? '$' + total.toLocaleString('es-AR', {minimumFractionDigits:2}) : '—'],
+      ['Forma de pago', v.forma_pago || '—'],
+      ['Estado cobro', v.estado_cobro || '—'],
+      ['Cosechero', v.cosechero || '—'],
+      ['Observación', v.observacion || '—'],
+      ['Usuario', v.usuario || '—']
+    ];
+    var html = '<table style="width:100%;border-collapse:collapse;font-size:13px;">' +
+      rows.map(function(r) {
+        return '<tr><td style="padding:6px 10px;font-weight:600;color:var(--texto-suave);width:130px;border-bottom:1px solid var(--borde);">' + r[0] + '</td>' +
+          '<td style="padding:6px 10px;border-bottom:1px solid var(--borde);' + (r[0]==='Total'?mono+'font-weight:700;':'') + '">' + r[1] + '</td></tr>';
+      }).join('') + '</table>';
+    document.getElementById('det-venta-body').innerHTML = html;
+    document.getElementById('det-venta-titulo').textContent = 'Detalle venta ' + (v.numero_remito || '#' + (v.id || ''));
+    document.getElementById('modal-det-venta').classList.add('open');
+
+    // Cargar embalaje si existe
+    var movId = v.movimiento_id || v.id;
+    var embWrap = document.getElementById('det-venta-embalaje');
+    embWrap.innerHTML = '';
+    if (movId) {
+      fetch('/api/depositos/embalaje/' + movId).then(function(r){return r.json();}).then(function(items){
+        if (!items.length) { embWrap.innerHTML = '<p style="color:var(--texto-suave);font-size:12px;margin-top:12px;">Sin embalaje registrado</p>'; return; }
+        embWrap.innerHTML = '<div style="margin-top:14px;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--texto-suave);letter-spacing:.5px;margin-bottom:6px;">Embalaje</div>' +
+          '<table style="width:100%;border-collapse:collapse;font-size:12px;">' +
+          '<thead><tr style="background:var(--fondo-dark);"><th style="padding:5px 8px;text-align:left;font-size:11px;">Tipo</th><th style="padding:5px 8px;text-align:center;font-size:11px;">Cant.</th><th style="padding:5px 8px;text-align:left;font-size:11px;">Retornable</th><th style="padding:5px 8px;text-align:center;font-size:11px;">Devueltos</th></tr></thead><tbody>' +
+          items.map(function(e) {
+            return '<tr><td style="padding:4px 8px;border-bottom:1px solid var(--borde);">' + (e.tipo_envase||'—') + '</td>' +
+              '<td style="padding:4px 8px;border-bottom:1px solid var(--borde);text-align:center;">' + (e.cantidad||0) + '</td>' +
+              '<td style="padding:4px 8px;border-bottom:1px solid var(--borde);">' + (e.retornable ? 'Sí' : 'No') + '</td>' +
+              '<td style="padding:4px 8px;border-bottom:1px solid var(--borde);text-align:center;">' + (e.cantidad_devuelta||0) + '</td></tr>';
+          }).join('') + '</tbody></table>';
+      }).catch(function(){});
+    }
+    lucide.createIcons();
+  }
+  function cerrarDetalleVenta() {
+    document.getElementById('modal-det-venta').classList.remove('open');
+  }
+
   function cargarCotizFrutilla() {
     var el = document.getElementById('kpi-cotiz-frutilla');
     fetch('/api/cotizaciones/frutilla').then(function(r){return r.json();}).then(function(d) {
@@ -954,6 +1004,18 @@
   cargarCajonesCirculacion();
   cargarCotizFrutilla();
 </script>
+
+<!-- MODAL DETALLE VENTA -->
+<div class="modal-overlay" id="modal-det-venta" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:14px;padding:24px;width:90%;max-width:560px;max-height:85vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.15);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <h3 id="det-venta-titulo" style="color:var(--verde);margin:0;font-size:17px;font-weight:700;">Detalle venta</h3>
+      <button onclick="cerrarDetalleVenta()" style="background:var(--fondo-dark);border:1.5px solid var(--borde);border-radius:8px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;">✕ Cerrar</button>
+    </div>
+    <div id="det-venta-body"></div>
+    <div id="det-venta-embalaje"></div>
+  </div>
+</div>
 
 <!-- MODAL CC CLIENTE -->
 <div class="modal-overlay" id="modal-cc-cli">

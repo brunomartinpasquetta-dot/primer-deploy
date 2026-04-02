@@ -575,8 +575,7 @@
         '<td class="col-total"><strong style="color:#2D5016;">$' + parseFloat(c.total).toLocaleString('es-AR') + '</strong></td>' +
         '<td style="font-size:12px;color:#64748B;">' + (c.usuario || '—') + '</td>' +
         '<td class="col-acciones" style="white-space:nowrap;">' +
-          '<button class="btn-icon" onclick="verDetalle('+c.id+',\''+provEsc+'\',\''+fechaHora+'\',\''+(c.forma_pago||'—')+'\',\''+obsEsc+'\')" title="Ver ítems"><i data-lucide="eye" style="width:13px;height:13px;"></i></button> ' +
-          (c.proveedor_id && c.forma_pago ? '<button class="btn-icon" onclick="verCCProv('+c.proveedor_id+','+c.id+',\''+provEsc+'\')" title="Ver CC proveedor" style="margin-left:2px;"><i data-lucide="landmark" style="width:13px;height:13px;"></i></button> ' : '') +
+          '<button class="btn-icon" onclick="verDetalle('+c.id+',\''+provEsc+'\',\''+fechaHora+'\',\''+(c.forma_pago||'—')+'\',\''+obsEsc+'\')" title="Ver detalles de la compra"><i data-lucide="eye" style="width:15px;height:15px;"></i></button> ' +
           editBtn +
         '</td>' +
         '</tr>';
