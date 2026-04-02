@@ -152,22 +152,29 @@ router.get('/precio/:temporada_id', async (req, res) => {
 });
 
 router.post('/precio', async (req, res) => {
+  const { temporada_id, precio_kilo, destino, fecha_desde } = req.body;
+  const pool = await getPool();
+  const transaction = new sql.Transaction(pool);
   try {
-    const { temporada_id, precio_kilo, destino, fecha_desde } = req.body;
-    const pool = await getPool();
-    await pool.request()
+    await transaction.begin();
+
+    await new sql.Request(transaction)
       .input('temporada_id', sql.Int, temporada_id)
       .query(`UPDATE PrecioHistorico SET fecha_hasta = GETDATE()
               WHERE temporada_id = @temporada_id AND fecha_hasta IS NULL`);
-    await pool.request()
+
+    await new sql.Request(transaction)
       .input('temporada_id', sql.Int, temporada_id)
       .input('precio_kilo', sql.Decimal(10,2), precio_kilo)
       .input('destino', sql.NVarChar, destino || 'fresco')
       .input('fecha_desde', sql.Date, fecha_desde || new Date())
       .query(`INSERT INTO PrecioHistorico (temporada_id, precio_kilo, destino, fecha_desde)
               VALUES (@temporada_id, @precio_kilo, @destino, @fecha_desde)`);
+
+    await transaction.commit();
     res.json({ ok: true });
   } catch (err) {
+    await transaction.rollback();
     res.status(500).json({ error: err.message });
   }
 });
