@@ -309,7 +309,11 @@ function mostrarMensaje(containerId, tipo, texto, duracion) {
   var el = document.getElementById(containerId);
   if (!el) return;
   var cls = tipo === 'success' ? 'msg-success' : 'msg-error';
-  el.innerHTML = '<div class="' + cls + '">' + texto + '</div>';
+  var div = document.createElement('div');
+  div.className = cls;
+  div.textContent = texto;
+  el.innerHTML = '';
+  el.appendChild(div);
   if (duracion !== false) {
     setTimeout(function() { if (el) el.innerHTML = ''; }, duracion || 3000);
   }
