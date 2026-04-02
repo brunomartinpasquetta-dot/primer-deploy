@@ -9,7 +9,7 @@ router.get('/', async (req, res) => {
     const pool = await getPool();
     const dbReq = pool.request();
     let query = `SELECT c.id, c.fecha, c.total, c.observacion,
-              c.proveedor_id,
+              c.proveedor_id, c.numero_remito,
               p.nombre AS proveedor,
               t.nombre AS temporada,
               fp.nombre AS forma_pago,
@@ -52,7 +52,7 @@ router.get('/:id/detalle', async (req, res) => {
 
 // POST /api/compras — registrar compra completa
 router.post('/', async (req, res) => {
-  const { proveedor_id, temporada_id, fecha, observacion, forma_pago_id, deposito_id, items } = req.body;
+  const { proveedor_id, temporada_id, fecha, observacion, forma_pago_id, deposito_id, items, numero_remito } = req.body;
   if (!items || items.length === 0) {
     return res.status(400).json({ error: 'La compra debe tener al menos un item' });
   }
@@ -78,10 +78,11 @@ router.post('/', async (req, res) => {
       .input('total',         sql.Decimal(12,2), total)
       .input('forma_pago_id', sql.Int,           forma_pago_id || null)
       .input('observacion',   sql.NVarChar,      observacion || '')
+      .input('numero_remito', sql.NVarChar,     numero_remito || null)
       .input('usuario_id',    sql.Int,           uid)
-      .query(`INSERT INTO Compras (proveedor_id, temporada_id, fecha, total, forma_pago_id, observacion, usuario_id)
+      .query(`INSERT INTO Compras (proveedor_id, temporada_id, fecha, total, forma_pago_id, observacion, numero_remito, usuario_id)
               OUTPUT INSERTED.id
-              VALUES (@proveedor_id, @temporada_id, @fecha, @total, @forma_pago_id, @observacion, @usuario_id)`);
+              VALUES (@proveedor_id, @temporada_id, @fecha, @total, @forma_pago_id, @observacion, @numero_remito, @usuario_id)`);
 
     const compra_id = compraResult.recordset[0].id;
 
@@ -203,13 +204,15 @@ router.post('/', async (req, res) => {
 
 // PATCH /:id — editar observación
 router.patch('/:id', async (req, res) => {
-  const { observacion } = req.body;
+  const { observacion, numero_remito } = req.body;
   try {
     const pool = await getPool();
-    await pool.request()
-      .input('id',          sql.Int,      req.params.id)
-      .input('observacion', sql.NVarChar, observacion || '')
-      .query('UPDATE Compras SET observacion = @observacion WHERE id = @id');
+    const r = pool.request().input('id', sql.Int, req.params.id);
+    const sets = [];
+    if (observacion !== undefined)  { sets.push('observacion = @obs');    r.input('obs', sql.NVarChar, observacion || ''); }
+    if (numero_remito !== undefined) { sets.push('numero_remito = @rem'); r.input('rem', sql.NVarChar, numero_remito || null); }
+    if (!sets.length) return res.json({ ok: true });
+    await r.query('UPDATE Compras SET ' + sets.join(', ') + ' WHERE id = @id');
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });

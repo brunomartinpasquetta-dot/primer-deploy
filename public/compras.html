@@ -64,7 +64,8 @@
     .compras-table td { padding:8px 10px; vertical-align:middle; }
     .col-estado { width:90px; }
     .col-fecha { width:110px; white-space:nowrap; }
-    .col-proveedor { min-width:140px; }
+    .col-proveedor { max-width:160px; }
+    .col-remito { width:90px; }
     .col-pago { width:110px; }
     .col-total { width:100px; text-align:right; }
     .col-acciones { width:60px; text-align:center; }
@@ -167,9 +168,10 @@
             <div><label>Fecha</label><input type="date" id="fecha"></div>
           </div>
 
-          <!-- Fila 2: Forma pago + Depósito + Observación -->
-          <div class="form-row-3-equal">
+          <!-- Fila 2: Forma pago + Remito + Depósito + Observación -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:10px;">
             <div><label>Forma de pago</label><select id="forma_pago"></select></div>
+            <div><label>N° Remito</label><input type="text" id="numero_remito" placeholder="Opcional"></div>
             <div><label>Depósito insumos</label><select id="nuevo-deposito-insumo"><option value="">Sin depósito</option></select></div>
             <div><label>Observación</label><input type="text" id="observacion" placeholder="Opcional"></div>
           </div>
@@ -223,12 +225,13 @@
         <table class="compras-table">
           <thead>
             <tr>
+              <th class="col-remito">Remito</th>
               <th class="col-estado">Estado</th>
               <th class="col-fecha">Fecha</th>
               <th class="col-proveedor">Proveedor</th>
               <th class="col-pago">Forma pago</th>
               <th class="col-total">Total</th>
-              <th style="width:90px;font-size:11px;">Usuario</th>
+              <th style="width:70px;font-size:11px;">Usuario</th>
               <th class="col-acciones"></th>
             </tr>
           </thead>
@@ -257,6 +260,8 @@
   <div class="modal-box" style="max-width:380px;">
     <h3 style="margin-bottom:14px;">Editar compra</h3>
     <input type="hidden" id="edit-compra-id">
+    <label style="font-size:11px;font-weight:600;color:#64748B;text-transform:uppercase;letter-spacing:.4px;">N° Remito</label>
+    <input type="text" id="edit-compra-rem" placeholder="Opcional" style="width:100%;margin-top:4px;margin-bottom:10px;padding:7px 9px;font-size:13px;border:1px solid #E2E8F0;border-radius:6px;box-sizing:border-box;">
     <label style="font-size:11px;font-weight:600;color:#64748B;text-transform:uppercase;letter-spacing:.4px;">Observación</label>
     <textarea id="edit-compra-obs" rows="3" style="width:100%;margin-top:4px;padding:7px 9px;font-size:13px;border:1px solid #E2E8F0;border-radius:6px;resize:vertical;box-sizing:border-box;font-family:inherit;"></textarea>
     <div id="edit-compra-msg" style="font-size:12px;margin-top:6px;"></div>
@@ -472,6 +477,7 @@
   function limpiarFormulario() {
     document.getElementById('items-lista').innerHTML = '';
     document.getElementById('observacion').value = '';
+    document.getElementById('numero_remito').value = '';
     document.getElementById('total-display').textContent = '0';
     document.getElementById('proveedor').value = '';
     document.getElementById('temporada').value = '';
@@ -512,6 +518,7 @@
         fecha: document.getElementById('fecha').value || null,
         forma_pago_id: document.getElementById('forma_pago').value || null,
         observacion: document.getElementById('observacion').value,
+        numero_remito: document.getElementById('numero_remito').value || null,
         deposito_id: document.getElementById('nuevo-deposito-insumo').value || null,
         items: items
       })
@@ -551,10 +558,9 @@
   function renderTabla(data) {
     var tbody = document.getElementById('tbody-historial');
     if (!data.length) {
-      tbody.innerHTML = '<tr class="empty-row"><td colspan="7">Sin compras para los filtros seleccionados</td></tr>';
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="8">Sin compras para los filtros seleccionados</td></tr>';
       return;
     }
-    var puedeEditar = window.tienePermiso ? window.tienePermiso('editar_movimientos') : false;
     tbody.innerHTML = data.map(function(c) {
       var pagado = !!c.forma_pago;
       var badge = pagado
@@ -563,20 +569,19 @@
       var fechaHora = formatFechaHora(c.fecha);
       var obsEsc = (c.observacion || '').replace(/'/g, '\\\'');
       var provEsc = (c.proveedor || '').replace(/'/g, '\\\'');
-      var editBtn = puedeEditar
-        ? '<button class="btn-icon" onclick="abrirEditarCompra('+c.id+',\''+obsEsc+'\')" title="Editar"><i data-lucide="pencil" style="width:13px;height:13px;"></i></button>'
-        : '';
+      var remEsc = (c.numero_remito || '').replace(/'/g, '\\\'');
       return '<tr>' +
+        '<td class="col-remito" style="font-size:11px;font-weight:600;color:var(--verde);">' + (c.numero_remito || '—') + '</td>' +
         '<td class="col-estado">' + badge + '</td>' +
         '<td class="col-fecha" style="font-size:12px;color:#475569;">' + formatFecha(c.fecha) + '</td>' +
-        '<td class="col-proveedor"><strong style="font-size:13px;">' + c.proveedor + '</strong>' +
+        '<td class="col-proveedor" style="font-size:12px;"><strong>' + c.proveedor + '</strong>' +
           (c.temporada ? '<br><span style="font-size:11px;color:#94A3B8;">' + c.temporada + '</span>' : '') + '</td>' +
         '<td class="col-pago" style="font-size:12px;color:#475569;">' + (c.forma_pago || '—') + '</td>' +
         '<td class="col-total"><strong style="color:#2D5016;">$' + parseFloat(c.total).toLocaleString('es-AR') + '</strong></td>' +
-        '<td style="font-size:12px;color:#64748B;">' + (c.usuario || '—') + '</td>' +
+        '<td style="font-size:11px;color:#64748B;">' + (c.usuario || '—') + '</td>' +
         '<td class="col-acciones" style="white-space:nowrap;">' +
           '<button class="btn-icon" onclick="verDetalle('+c.id+',\''+provEsc+'\',\''+fechaHora+'\',\''+(c.forma_pago||'—')+'\',\''+obsEsc+'\')" title="Ver detalles de la compra"><i data-lucide="eye" style="width:15px;height:15px;"></i></button> ' +
-          editBtn +
+          '<button class="btn-icon" onclick="abrirEditarCompra('+c.id+',\''+obsEsc+'\',\''+remEsc+'\')" title="Editar"><i data-lucide="pencil" style="width:13px;height:13px;"></i></button>' +
         '</td>' +
         '</tr>';
     }).join('');
@@ -654,9 +659,10 @@
     document.getElementById('modal-detalle').classList.remove('open');
   }
 
-  function abrirEditarCompra(id, obs) {
+  function abrirEditarCompra(id, obs, rem) {
     document.getElementById('edit-compra-id').value = id;
     document.getElementById('edit-compra-obs').value = obs || '';
+    document.getElementById('edit-compra-rem').value = rem || '';
     document.getElementById('edit-compra-msg').textContent = '';
     document.getElementById('modal-editar-compra').classList.add('open');
   }
@@ -673,7 +679,7 @@
     fetch('/api/compras/' + id, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ observacion: obs })
+      body: JSON.stringify({ observacion: obs, numero_remito: document.getElementById('edit-compra-rem').value || null })
     }).then(function(r){ return r.json(); }).then(function(data){
       btn.disabled = false;
       btn.textContent = 'Guardar';

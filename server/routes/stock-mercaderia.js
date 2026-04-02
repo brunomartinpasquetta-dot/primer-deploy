@@ -418,4 +418,21 @@ router.get('/etapas', async (req, res) => {
   }
 });
 
+// PATCH /historial/:id — editar observación/remito de un movimiento de venta
+router.patch('/historial/:id', async (req, res) => {
+  try {
+    const { observacion, numero_remito } = req.body;
+    const pool = await getPool();
+    const r = pool.request().input('id', sql.Int, req.params.id);
+    const sets = [];
+    if (observacion !== undefined)   { sets.push('observacion = @obs');    r.input('obs', sql.NVarChar, observacion || ''); }
+    if (numero_remito !== undefined) { sets.push('numero_remito = @rem');  r.input('rem', sql.NVarChar, numero_remito || null); }
+    if (!sets.length) return res.json({ ok: true });
+    await r.query('UPDATE MovimientosDeposito SET ' + sets.join(', ') + ' WHERE id = @id');
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

@@ -742,7 +742,10 @@
         '<td style="'+s+mono+'font-weight:700;">' + (total > 0 ? '$' + total.toLocaleString('es-AR', { minimumFractionDigits: 2 }) : '-') + '</td>' +
         '<td style="'+s+'">' + estadoBadge(v.estado_cobro, v.forma_pago) + '</td>' +
         '<td style="'+s+'color:var(--texto-suave);">' + (v.usuario || '-') + '</td>' +
-        '<td style="'+s+'"><button style="background:none;border:none;cursor:pointer;color:var(--texto-suave);padding:2px 4px;" title="Ver detalles de la venta" onclick="verDetalleVenta('+idx+')"><i data-lucide="eye" style="width:15px;height:15px;"></i></button></td>' +
+        '<td style="'+s+'white-space:nowrap;">' +
+          '<button style="background:none;border:none;cursor:pointer;color:var(--texto-suave);padding:2px 4px;" title="Ver detalles de la venta" onclick="verDetalleVenta('+idx+')"><i data-lucide="eye" style="width:15px;height:15px;"></i></button>' +
+          '<button style="background:none;border:none;cursor:pointer;color:var(--texto-suave);padding:2px 4px;" title="Editar" onclick="abrirEditarVenta('+idx+')"><i data-lucide="pencil" style="width:13px;height:13px;"></i></button>' +
+        '</td>' +
         '</tr>';
     }).join('');
     tfoot.innerHTML = '<tr style="background:var(--fondo-dark);font-weight:700;">' +
@@ -983,6 +986,36 @@
     document.getElementById('modal-det-venta').classList.remove('open');
   }
 
+  /* ── Editar venta ── */
+  function abrirEditarVenta(idx) {
+    var v = _historialVentas[idx];
+    if (!v) return;
+    document.getElementById('edit-venta-id').value = v.id;
+    document.getElementById('edit-venta-rem').value = v.numero_remito || '';
+    document.getElementById('edit-venta-obs').value = v.observacion || '';
+    document.getElementById('edit-venta-msg').textContent = '';
+    document.getElementById('modal-edit-venta').classList.add('open');
+  }
+  function cerrarEditarVenta() {
+    document.getElementById('modal-edit-venta').classList.remove('open');
+  }
+  function guardarEditarVenta(btn) {
+    var id = document.getElementById('edit-venta-id').value;
+    btn.disabled = true; btn.textContent = 'Guardando...';
+    fetch('/api/stock-mercaderia/historial/' + id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        numero_remito: document.getElementById('edit-venta-rem').value || null,
+        observacion: document.getElementById('edit-venta-obs').value
+      })
+    }).then(function(r){ return r.json(); }).then(function(data){
+      btn.disabled = false; btn.textContent = 'Guardar';
+      if (data.ok) { cerrarEditarVenta(); cargarHistorial(); }
+      else { document.getElementById('edit-venta-msg').innerHTML = '<span style="color:#c0392b;">' + (data.error||'Error') + '</span>'; }
+    }).catch(function(){ btn.disabled = false; btn.textContent = 'Guardar'; });
+  }
+
   function cargarCotizFrutilla() {
     var el = document.getElementById('kpi-cotiz-frutilla');
     fetch('/api/cotizaciones/frutilla').then(function(r){return r.json();}).then(function(d) {
@@ -1004,6 +1037,23 @@
   cargarCajonesCirculacion();
   cargarCotizFrutilla();
 </script>
+
+<!-- MODAL EDITAR VENTA -->
+<div class="modal-overlay" id="modal-edit-venta" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:14px;padding:24px;width:90%;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,0.15);">
+    <h3 style="margin-bottom:14px;color:var(--verde);font-size:17px;">Editar venta</h3>
+    <input type="hidden" id="edit-venta-id">
+    <label style="font-size:11px;font-weight:600;color:#64748B;text-transform:uppercase;letter-spacing:.4px;">N° Remito</label>
+    <input type="text" id="edit-venta-rem" placeholder="Opcional" style="width:100%;margin-top:4px;margin-bottom:10px;padding:7px 9px;font-size:13px;border:1px solid #E2E8F0;border-radius:6px;box-sizing:border-box;">
+    <label style="font-size:11px;font-weight:600;color:#64748B;text-transform:uppercase;letter-spacing:.4px;">Observación</label>
+    <textarea id="edit-venta-obs" rows="3" style="width:100%;margin-top:4px;padding:7px 9px;font-size:13px;border:1px solid #E2E8F0;border-radius:6px;resize:vertical;box-sizing:border-box;font-family:inherit;"></textarea>
+    <div id="edit-venta-msg" style="font-size:12px;margin-top:6px;"></div>
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button style="flex:1;padding:10px;border:1.5px solid var(--borde);border-radius:8px;background:var(--fondo-dark);font-size:13px;font-weight:700;cursor:pointer;" onclick="cerrarEditarVenta()">Cancelar</button>
+      <button class="btn btn-primary" style="flex:1;margin:0;" onclick="guardarEditarVenta(this)">Guardar</button>
+    </div>
+  </div>
+</div>
 
 <!-- MODAL DETALLE VENTA -->
 <div class="modal-overlay" id="modal-det-venta" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;">
