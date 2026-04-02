@@ -262,6 +262,7 @@ router.get('/hoy', async (req, res) => {
               ju.apellido + ', ' + ju.nombre AS cosechero,
               d.kilos, d.fecha_hora AS fecha, d.juntada_id,
               d.merma_kg, d.merma_pct,
+              d.estado,
               jd.kilos AS kilos_juntada,
               dep.nombre AS deposito_nombre,
               dep.nombre AS deposito,
@@ -297,6 +298,7 @@ router.get('/historial', async (req, res) => {
              ju.apellido + ', ' + ju.nombre AS despalillador,
              d.kilos, d.fecha_hora AS fecha, d.juntada_id,
              d.merma_kg, d.merma_pct,
+             d.estado,
              dep.nombre AS deposito,
              d.usuario_id, u.nombre AS usuario,
              t.nombre AS temporada
@@ -335,10 +337,150 @@ router.get('/totales-por-despalillador', async (req, res) => {
       JOIN  Juntadores ju ON d.despalillador_id = ju.id
       LEFT JOIN Parcelas   l  ON d.parcela_id   = l.id
       LEFT JOIN Temporadas t  ON l.temporada_id = t.id
-      WHERE ${where}
+      WHERE ${where} AND d.estado != 'anulada'
       GROUP BY ju.id, ju.apellido, ju.nombre
       ORDER BY kg_total DESC`);
     res.json(result.recordset);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/despalillado/:id/anular
+router.post('/:id/anular', async (req, res) => {
+  try {
+    const { motivo } = req.body;
+    if (!motivo) return res.status(400).json({ error: 'Motivo es obligatorio' });
+
+    const pool = await getPool();
+    const id = parseInt(req.params.id);
+
+    // 1. Leer el registro de Despalillado
+    const dRes = await pool.request()
+      .input('id', sql.Int, id)
+      .query(`SELECT id, juntada_id, deposito_id, kilos, parcela_id, estado FROM Despalillado WHERE id = @id`);
+    if (!dRes.recordset.length) return res.status(404).json({ error: 'Despalillado no encontrado' });
+    const desp = dRes.recordset[0];
+
+    // 2. Si ya está anulada, rechazar
+    if (desp.estado === 'anulada') return res.status(400).json({ error: 'Ya se encuentra anulada' });
+
+    const uid = req.user ? req.user.id : null;
+    const now = new Date();
+    const kilos = parseFloat(desp.kilos);
+    const obs = `Anulación despalillado #${id}`;
+
+    const transaction = new sql.Transaction(pool);
+    await transaction.begin();
+    try {
+      if (desp.juntada_id) {
+        // --- Flujo cámara ---
+        // Obtener temporada_id desde la Juntada -> Parcela
+        const tRes = await transaction.request()
+          .input('juntada_id', sql.Int, desp.juntada_id)
+          .query(`SELECT l.temporada_id FROM Juntada j JOIN Parcelas l ON j.parcela_id = l.id WHERE j.id = @juntada_id`);
+        const temporada_id = tRes.recordset[0].temporada_id;
+
+        // Egreso anulación en MovimientosDeposito
+        await transaction.request()
+          .input('deposito_id',  sql.Int,           desp.deposito_id)
+          .input('temporada_id', sql.Int,           temporada_id)
+          .input('kilos',        sql.Decimal(10,3), kilos)
+          .input('fecha',        sql.DateTime,      now)
+          .input('observacion',  sql.NVarChar,      obs)
+          .input('usuario_id',   sql.Int,           uid)
+          .query(`INSERT INTO MovimientosDeposito
+                  (deposito_id, temporada_id, tipo, kilos, fecha, observacion, usuario_id)
+                  VALUES (@deposito_id, @temporada_id, 'egreso_anulacion', @kilos, @fecha, @observacion, @usuario_id)`);
+
+        // Egreso anulación en StockMercaderia
+        await transaction.request()
+          .input('temporada_id', sql.Int,           temporada_id)
+          .input('kilos',        sql.Decimal(10,3), kilos)
+          .input('fecha',        sql.DateTime,      now)
+          .input('observacion',  sql.NVarChar,      obs)
+          .input('usuario_id',   sql.Int,           uid)
+          .query(`INSERT INTO StockMercaderia
+                  (temporada_id, tipo, kilos, destino, fecha, observacion, usuario_id)
+                  VALUES (@temporada_id, 'egreso_anulacion', @kilos, 'deposito', @fecha, @observacion, @usuario_id)`);
+
+        // Reabrir JuntadaDestino
+        await transaction.request()
+          .input('juntada_id',  sql.Int, desp.juntada_id)
+          .input('deposito_id', sql.Int, desp.deposito_id)
+          .query(`UPDATE JuntadaDestino SET stock_pendiente = 1
+                  WHERE juntada_id = @juntada_id AND deposito_id = @deposito_id AND tipo = 'deposito'`);
+
+        // Reabrir Juntada
+        await transaction.request()
+          .input('juntada_id', sql.Int, desp.juntada_id)
+          .query(`UPDATE Juntada SET stock_pendiente = 1 WHERE id = @juntada_id`);
+
+      } else {
+        // --- Flujo fruta fresca ---
+        const tempRes = await transaction.request()
+          .query('SELECT TOP 1 id FROM Temporadas WHERE activa = 1 ORDER BY id DESC');
+        if (!tempRes.recordset.length) throw new Error('No hay temporada activa');
+        const temporada_id = tempRes.recordset[0].id;
+
+        // Reversar ingreso en MovimientosDeposito (egreso_anulacion)
+        await transaction.request()
+          .input('deposito_id',  sql.Int,           desp.deposito_id)
+          .input('temporada_id', sql.Int,           temporada_id)
+          .input('kilos',        sql.Decimal(10,3), kilos)
+          .input('fecha',        sql.DateTime,      now)
+          .input('observacion',  sql.NVarChar,      obs)
+          .input('usuario_id',   sql.Int,           uid)
+          .query(`INSERT INTO MovimientosDeposito
+                  (deposito_id, temporada_id, tipo, kilos, fecha, observacion, usuario_id)
+                  VALUES (@deposito_id, @temporada_id, 'egreso_anulacion', @kilos, @fecha, @observacion, @usuario_id)`);
+
+        // Reversar egreso_despalillado en MovimientosDeposito (ingreso_anulacion)
+        await transaction.request()
+          .input('deposito_id',  sql.Int,           desp.deposito_id)
+          .input('temporada_id', sql.Int,           temporada_id)
+          .input('kilos',        sql.Decimal(10,3), kilos)
+          .input('fecha',        sql.DateTime,      now)
+          .input('observacion',  sql.NVarChar,      obs)
+          .input('usuario_id',   sql.Int,           uid)
+          .query(`INSERT INTO MovimientosDeposito
+                  (deposito_id, temporada_id, tipo, kilos, fecha, observacion, usuario_id)
+                  VALUES (@deposito_id, @temporada_id, 'ingreso_anulacion', @kilos, @fecha, @observacion, @usuario_id)`);
+
+        // Reversar ingreso en StockMercaderia (egreso_anulacion)
+        await transaction.request()
+          .input('temporada_id', sql.Int,           temporada_id)
+          .input('kilos',        sql.Decimal(10,3), kilos)
+          .input('fecha',        sql.DateTime,      now)
+          .input('observacion',  sql.NVarChar,      obs)
+          .input('usuario_id',   sql.Int,           uid)
+          .query(`INSERT INTO StockMercaderia
+                  (temporada_id, tipo, kilos, destino, fecha, observacion, usuario_id)
+                  VALUES (@temporada_id, 'egreso_anulacion', @kilos, 'deposito', @fecha, @observacion, @usuario_id)`);
+
+        // Reversar egreso_despalillado en StockMercaderia (ingreso_anulacion)
+        await transaction.request()
+          .input('temporada_id', sql.Int,           temporada_id)
+          .input('kilos',        sql.Decimal(10,3), kilos)
+          .input('fecha',        sql.DateTime,      now)
+          .input('observacion',  sql.NVarChar,      obs)
+          .input('usuario_id',   sql.Int,           uid)
+          .query(`INSERT INTO StockMercaderia
+                  (temporada_id, tipo, kilos, destino, fecha, observacion, usuario_id)
+                  VALUES (@temporada_id, 'ingreso_anulacion', @kilos, 'deposito', @fecha, @observacion, @usuario_id)`);
+      }
+
+      // Marcar como anulada
+      await transaction.request()
+        .input('id', sql.Int, id)
+        .query(`UPDATE Despalillado SET estado = 'anulada' WHERE id = @id`);
+
+      await transaction.commit();
+      res.json({ ok: true });
+    } catch (innerErr) {
+      await transaction.rollback();
+      throw innerErr;
+    }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

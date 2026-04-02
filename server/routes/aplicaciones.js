@@ -6,7 +6,7 @@ router.get('/', async (req, res) => {
   try {
     const { temporada_id, parcela_id, desde, hasta } = req.query;
     const pool = await getPool();
-    let query = `SELECT a.id, a.parcela_id, a.producto_id, a.fecha_hora, a.cantidad_usada, a.metodo,
+    let query = `SELECT a.id, a.parcela_id, a.producto_id, a.fecha_hora, a.cantidad_usada, a.metodo, a.estado,
                  a.carencia_dias, a.dosis_por_hectarea, a.observacion,
                  a.condicion_climatica, a.costo_total, a.unidad_aplicacion,
                  l.nombre AS parcela,
@@ -120,6 +120,51 @@ router.post('/', async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     await transaction.rollback();
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/:id/anular', async (req, res) => {
+  const { id } = req.params;
+  const { motivo } = req.body;
+  if (!motivo) return res.status(400).json({ error: 'Motivo es obligatorio' });
+
+  const pool = await getPool();
+  try {
+    const check = await pool.request()
+      .input('id', sql.Int, id)
+      .query('SELECT id, producto_id, cantidad_usada, costo_total, estado FROM Aplicaciones WHERE id = @id');
+    if (!check.recordset.length) return res.status(404).json({ error: 'Aplicación no encontrada' });
+    const app = check.recordset[0];
+    if (app.estado === 'anulada') return res.status(400).json({ error: 'La aplicación ya está anulada' });
+
+    const uid = req.user ? req.user.id : null;
+    const transaction = new sql.Transaction(pool);
+    await transaction.begin();
+
+    const req1 = new sql.Request(transaction);
+    await req1
+      .input('cantidad_usada', sql.Decimal(10,3), app.cantidad_usada)
+      .input('producto_id', sql.Int, app.producto_id)
+      .query('UPDATE Productos SET stock_actual = stock_actual + @cantidad_usada WHERE id = @producto_id');
+
+    const req2 = new sql.Request(transaction);
+    await req2
+      .input('producto_id', sql.Int, app.producto_id)
+      .input('cantidad', sql.Decimal(10,3), app.cantidad_usada)
+      .input('observacion', sql.NVarChar, `Anulación aplicación #${id} — ${motivo}`)
+      .input('usuario_id', sql.Int, uid)
+      .query(`INSERT INTO StockInsumos (producto_id, tipo, cantidad, observacion, usuario_id, fecha_hora)
+              VALUES (@producto_id, 'anulacion_aplicacion', @cantidad, @observacion, @usuario_id, GETDATE())`);
+
+    const req3 = new sql.Request(transaction);
+    await req3
+      .input('id', sql.Int, id)
+      .query("UPDATE Aplicaciones SET estado = 'anulada' WHERE id = @id");
+
+    await transaction.commit();
+    res.json({ ok: true });
+  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });

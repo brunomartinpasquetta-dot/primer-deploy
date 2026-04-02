@@ -324,7 +324,7 @@ router.get('/hoy', async (req, res) => {
     const result = await pool.request()
       .query(`SELECT j.id, l.nombre AS parcela,
               ju.apellido + ', ' + ju.nombre AS juntador,
-              j.kilos, j.fecha_hora, j.destino, j.stock_pendiente
+              j.kilos, j.fecha_hora, j.destino, j.stock_pendiente, j.estado
               FROM Juntada j
               JOIN Parcelas l ON j.parcela_id = l.id
               JOIN Juntadores ju ON j.juntador_id = ju.id
@@ -357,7 +357,8 @@ router.get('/destinos-hoy', async (req, res) => {
                 j.juntador_id,
                 ju.apellido + ', ' + ju.nombre AS cosechero,
                 j.usuario_id,
-                u.nombre AS usuario
+                u.nombre AS usuario,
+                j.estado
               FROM JuntadaDestino jd
               JOIN Juntada    j  ON jd.juntada_id = j.id
               JOIN Parcelas   l  ON j.parcela_id  = l.id
@@ -407,7 +408,7 @@ router.get('/historial', async (req, res) => {
              ju.apellido + ', ' + ju.nombre AS cosechero,
              j.kilos, j.fecha_hora AS fecha, j.juntador_id,
              j.usuario_id, u.nombre AS usuario,
-             t.nombre AS temporada
+             t.nombre AS temporada, j.estado
       FROM Juntada j
       JOIN Parcelas l ON j.parcela_id = l.id
       JOIN Juntadores ju ON j.juntador_id = ju.id
@@ -427,7 +428,7 @@ router.get('/totales-por-juntador', async (req, res) => {
     const { temporada_id } = req.query;
     const pool = await getPool();
     const dbReq = pool.request();
-    let where = '1=1';
+    let where = 'j.estado != \'anulada\'';
     if (temporada_id) { where += ' AND l.temporada_id = @tid'; dbReq.input('tid', sql.Int, parseInt(temporada_id)); }
     const result = await dbReq.query(`
       SELECT
@@ -443,6 +444,159 @@ router.get('/totales-por-juntador', async (req, res) => {
       GROUP BY ju.id, ju.apellido, ju.nombre
       ORDER BY kg_total DESC`);
     res.json(result.recordset);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/juntada/:id/anular — anular juntada y revertir movimientos
+router.post('/:id/anular', async (req, res) => {
+  try {
+    const juntadaId = parseInt(req.params.id);
+    const { motivo } = req.body;
+    if (!motivo) return res.status(400).json({ error: 'Motivo es obligatorio' });
+
+    const pool = await getPool();
+
+    // 1. Leer la juntada
+    const jRes = await pool.request()
+      .input('id', sql.Int, juntadaId)
+      .query(`SELECT j.id, j.kilos, j.estado, j.parcela_id, j.juntador_id,
+                     j.precio_venta_directa, j.comprador_directo,
+                     l.temporada_id
+              FROM Juntada j
+              JOIN Parcelas l ON j.parcela_id = l.id
+              WHERE j.id = @id`);
+    if (!jRes.recordset.length) return res.status(404).json({ error: 'Juntada no encontrada' });
+    const juntada = jRes.recordset[0];
+
+    if (juntada.estado === 'anulada') {
+      return res.status(400).json({ error: 'La juntada ya está anulada' });
+    }
+
+    // 2. Leer destinos
+    const dRes = await pool.request()
+      .input('jid', sql.Int, juntadaId)
+      .query(`SELECT jd.*, d.requiere_despalillado
+              FROM JuntadaDestino jd
+              LEFT JOIN Depositos d ON jd.deposito_id = d.id
+              WHERE jd.juntada_id = @jid`);
+    const destinos = dRes.recordset;
+
+    // 3. Bloquear si algún destino depósito ya fue despalillado (stock_pendiente=0 con requiere_despalillado=1)
+    const despalillados = destinos.filter(d => d.tipo === 'deposito' && d.requiere_despalillado === true && d.stock_pendiente === false);
+    if (despalillados.length > 0) {
+      return res.status(400).json({ error: 'No se puede anular: tiene destinos ya despalillados. Anule primero el despalillado.' });
+    }
+
+    // 4. Transacción
+    const transaction = new sql.Transaction(pool);
+    await transaction.begin();
+    try {
+      const now = new Date();
+      const uid = req.user ? req.user.id : null;
+      const { parcela_id, temporada_id, juntador_id } = juntada;
+
+      for (const d of destinos) {
+        if (d.tipo === 'deposito') {
+          if (d.requiere_despalillado && d.stock_pendiente === true) {
+            // Pendiente de despalillado: no hay stock que revertir, solo marcar
+            continue;
+          }
+          // Depósito fresco (no requiere despalillado): revertir ingreso
+          if (!d.requiere_despalillado) {
+            await transaction.request()
+              .input('deposito_id',  sql.Int,          d.deposito_id)
+              .input('temporada_id', sql.Int,          temporada_id)
+              .input('parcela_id',   sql.Int,          parcela_id)
+              .input('kilos',        sql.Decimal(10,3), d.kilos)
+              .input('fecha',        sql.DateTime,     now)
+              .input('observacion',  sql.NVarChar,     `Anulación juntada #${juntadaId}`)
+              .input('juntada_id',   sql.Int,          juntadaId)
+              .input('juntador_id',  sql.Int,          juntador_id)
+              .input('usuario_id',   sql.Int,          uid)
+              .query(`INSERT INTO MovimientosDeposito
+                      (deposito_id, temporada_id, parcela_id, tipo, kilos, fecha, observacion, juntada_id, juntador_id, usuario_id)
+                      VALUES (@deposito_id, @temporada_id, @parcela_id, 'egreso_anulacion', @kilos, @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id)`);
+
+            await transaction.request()
+              .input('temporada_id', sql.Int,          temporada_id)
+              .input('parcela_id',   sql.Int,          parcela_id)
+              .input('kilos',        sql.Decimal(10,3), d.kilos)
+              .input('fecha',        sql.DateTime,     now)
+              .input('observacion',  sql.NVarChar,     `Anulación juntada #${juntadaId}`)
+              .input('juntada_id',   sql.Int,          juntadaId)
+              .input('juntador_id',  sql.Int,          juntador_id)
+              .input('usuario_id',   sql.Int,          uid)
+              .query(`INSERT INTO StockMercaderia
+                      (temporada_id, parcela_id, tipo, kilos, destino, fecha, observacion, juntada_id, juntador_id, usuario_id)
+                      VALUES (@temporada_id, @parcela_id, 'egreso_anulacion', @kilos, 'deposito', @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id)`);
+          }
+
+        } else if (d.tipo === 'venta_directa') {
+          // Revertir egreso_venta con ingreso_anulacion
+          await transaction.request()
+            .input('temporada_id', sql.Int,          temporada_id)
+            .input('parcela_id',   sql.Int,          parcela_id)
+            .input('kilos',        sql.Decimal(10,3), d.kilos)
+            .input('fecha',        sql.DateTime,     now)
+            .input('observacion',  sql.NVarChar,     `Anulación venta directa juntada #${juntadaId}`)
+            .input('juntada_id',   sql.Int,          juntadaId)
+            .input('juntador_id',  sql.Int,          juntador_id)
+            .input('usuario_id',   sql.Int,          uid)
+            .query(`INSERT INTO StockMercaderia
+                    (temporada_id, parcela_id, tipo, kilos, destino, fecha, observacion, juntada_id, juntador_id, usuario_id)
+                    VALUES (@temporada_id, @parcela_id, 'ingreso_anulacion', @kilos, 'venta_directa', @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id)`);
+
+          // Revertir ingreso de caja
+          const precioKilo = d.precio_kilo ? parseFloat(d.precio_kilo) : 0;
+          if (precioKilo > 0) {
+            const total = parseFloat(d.kilos) * precioKilo;
+            await transaction.request()
+              .input('concepto',       sql.NVarChar,      `Anulación venta directa juntada #${juntadaId}`)
+              .input('monto',          sql.Decimal(12,2), total)
+              .input('temporada_id',   sql.Int,           temporada_id)
+              .input('usuario_nombre', sql.NVarChar,      req.user ? req.user.nombre : null)
+              .query(`INSERT INTO Caja (tipo, concepto, monto, temporada_id, usuario_nombre)
+                      VALUES ('egreso', @concepto, @monto, @temporada_id, @usuario_nombre)`);
+          }
+
+        } else if (d.tipo === 'descarte') {
+          // Revertir egreso_descarte con ingreso_anulacion
+          await transaction.request()
+            .input('temporada_id', sql.Int,          temporada_id)
+            .input('parcela_id',   sql.Int,          parcela_id)
+            .input('kilos',        sql.Decimal(10,3), d.kilos)
+            .input('fecha',        sql.DateTime,     now)
+            .input('observacion',  sql.NVarChar,     `Anulación descarte juntada #${juntadaId}`)
+            .input('juntada_id',   sql.Int,          juntadaId)
+            .input('juntador_id',  sql.Int,          juntador_id)
+            .input('usuario_id',   sql.Int,          uid)
+            .query(`INSERT INTO StockMercaderia
+                    (temporada_id, parcela_id, tipo, kilos, destino, fecha, observacion, juntada_id, juntador_id, usuario_id)
+                    VALUES (@temporada_id, @parcela_id, 'ingreso_anulacion', @kilos, 'descarte', @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id)`);
+        }
+      }
+
+      // Marcar juntada como anulada
+      await transaction.request()
+        .input('id', sql.Int, juntadaId)
+        .input('motivo', sql.NVarChar, motivo)
+        .query(`UPDATE Juntada SET estado = 'anulada', observacion = ISNULL(observacion, '') + ' [ANULADA: ' + @motivo + ']' WHERE id = @id`);
+
+      // Marcar todos los destinos como procesados
+      await transaction.request()
+        .input('jid', sql.Int, juntadaId)
+        .query(`UPDATE JuntadaDestino SET stock_pendiente = 0 WHERE juntada_id = @jid`);
+
+      await transaction.commit();
+      res.json({ ok: true });
+
+    } catch (innerErr) {
+      await transaction.rollback();
+      throw innerErr;
+    }
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
