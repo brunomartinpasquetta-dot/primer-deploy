@@ -320,6 +320,22 @@ function mostrarMensaje(containerId, tipo, texto, duracion) {
 }
 
 
+// ── Fetch con error handling estándar ─────────────────────────────────────────
+// fetchApi(url, opts) → Promise<data>
+// Muestra error al usuario si falla (requiere <div id="mensaje"> en la página)
+function fetchApi(url, opts) {
+  return fetch(url, opts)
+    .then(function(r) {
+      if (!r.ok) return r.json().then(function(d) { throw new Error(d.error || 'Error del servidor'); });
+      return r.json();
+    })
+    .catch(function(err) {
+      var msg = err.message || 'Error de conexión';
+      mostrarMensaje('mensaje', 'error', msg, 5000);
+      throw err;
+    });
+}
+
 // ── Navegación con retorno ────────────────────────────────────────────────────
 // Guardar página actual y navegar a destino (para poder volver)
 function navegarCon(url) {
