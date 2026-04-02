@@ -279,4 +279,67 @@ router.get('/hoy', async (req, res) => {
   }
 });
 
+// GET /api/despalillado/historial — historial completo filtrable
+router.get('/historial', async (req, res) => {
+  try {
+    const { temporada_id, desde, hasta, despalillador_id } = req.query;
+    const pool = await getPool();
+    const dbReq = pool.request();
+    let where = '1=1';
+    if (temporada_id)      { where += ' AND t.id = @tid';        dbReq.input('tid',  sql.Int,  parseInt(temporada_id)); }
+    if (desde)             { where += ' AND CAST(d.fecha_hora AS DATE) >= @desde'; dbReq.input('desde', sql.Date, desde); }
+    if (hasta)             { where += ' AND CAST(d.fecha_hora AS DATE) <= @hasta'; dbReq.input('hasta', sql.Date, hasta); }
+    if (despalillador_id)  { where += ' AND d.despalillador_id = @did'; dbReq.input('did', sql.Int, parseInt(despalillador_id)); }
+    const result = await dbReq.query(`
+      SELECT d.id, l.nombre AS parcela,
+             ju.apellido + ', ' + ju.nombre AS despalillador,
+             d.kilos, d.fecha_hora AS fecha, d.juntada_id,
+             d.merma_kg, d.merma_pct,
+             dep.nombre AS deposito,
+             d.usuario_id, u.nombre AS usuario,
+             t.nombre AS temporada
+      FROM Despalillado d
+      LEFT JOIN Parcelas   l  ON d.parcela_id      = l.id
+      LEFT JOIN Temporadas t  ON l.temporada_id    = t.id
+      JOIN  Juntadores ju ON d.despalillador_id = ju.id
+      LEFT JOIN Depositos  dep ON d.deposito_id   = dep.id
+      LEFT JOIN Usuarios   u   ON d.usuario_id    = u.id
+      WHERE ${where}
+      ORDER BY d.fecha_hora DESC`);
+    res.json(result.recordset);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/despalillado/totales-por-despalillador — totales campaña activa
+router.get('/totales-por-despalillador', async (req, res) => {
+  try {
+    const { temporada_id } = req.query;
+    const pool = await getPool();
+    const dbReq = pool.request();
+    let where = '1=1';
+    if (temporada_id) { where += ' AND t.id = @tid'; dbReq.input('tid', sql.Int, parseInt(temporada_id)); }
+    const result = await dbReq.query(`
+      SELECT
+        ju.apellido + ', ' + ju.nombre AS despalillador,
+        COUNT(d.id)                          AS registros,
+        SUM(d.kilos)                         AS kg_total,
+        AVG(d.merma_pct)                     AS merma_pct_promedio,
+        SUM(d.merma_kg)                      AS merma_kg_total,
+        MIN(d.fecha_hora)                    AS primera_fecha,
+        MAX(d.fecha_hora)                    AS ultima_fecha
+      FROM Despalillado d
+      JOIN  Juntadores ju ON d.despalillador_id = ju.id
+      LEFT JOIN Parcelas   l  ON d.parcela_id   = l.id
+      LEFT JOIN Temporadas t  ON l.temporada_id = t.id
+      WHERE ${where}
+      GROUP BY ju.id, ju.apellido, ju.nombre
+      ORDER BY kg_total DESC`);
+    res.json(result.recordset);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

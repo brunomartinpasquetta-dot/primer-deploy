@@ -116,6 +116,8 @@
     }
     /* Historial merma */
     .hist-merma { margin-top:24px; }
+    .modal-overlay { display:none; }
+    .modal-overlay.open { display:flex; }
     .hist-merma-title { font-size:13px; font-weight:700; color:var(--texto-secundario); text-transform:uppercase; letter-spacing:.5px; margin-bottom:10px; }
     .hist-row {
       display:flex; align-items:center; gap:10px; padding:10px 12px;
@@ -393,19 +395,32 @@
       </div><!-- /columna izquierda -->
 
       <!-- columna derecha: grilla registros del día -->
-      <div id="hist-merma-wrap" style="display:none;">
-        <div style="font-size:13px;font-weight:700;color:var(--texto-secundario);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">Registros del día</div>
-        <div class="table-wrap">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>#</th><th>Despalillador</th><th>Fecha</th><th>Tipo</th>
-                <th style="text-align:right;">Kg</th><th>Parcela</th><th>Depósito</th><th>Usuario</th>
-              </tr>
-            </thead>
-            <tbody id="tbody-desp-hoy"></tbody>
-          </table>
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+          <span style="font-size:13px;font-weight:700;color:var(--texto-secundario);text-transform:uppercase;letter-spacing:.5px;">Registros del día</span>
+          <div style="display:flex;gap:8px;">
+            <button class="ins-btn ins-btn-gray" onclick="abrirHistorialCompleto()" style="font-size:12px;padding:7px 12px;">
+              <i data-lucide="list" style="width:13px;height:13px;"></i> Historial
+            </button>
+            <button class="ins-btn ins-btn-primary" onclick="abrirTotalesDespalillador()" style="font-size:12px;padding:7px 12px;">
+              <i data-lucide="bar-chart-2" style="width:13px;height:13px;"></i> Totales campaña
+            </button>
+          </div>
         </div>
+        <div id="hist-merma-wrap" style="display:none;">
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>#</th><th>Despalillador</th><th>Fecha</th><th>Tipo</th>
+                  <th style="text-align:right;">Kg</th><th>Parcela</th><th>Depósito</th><th>Usuario</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-desp-hoy"></tbody>
+            </table>
+          </div>
+        </div>
+        <div id="hist-vacio" style="display:none;color:var(--texto-suave);font-size:13px;padding:20px 0;text-align:center;">Sin registros hoy</div>
       </div><!-- /columna derecha -->
 
       </div><!-- /layout-desp -->
@@ -852,9 +867,15 @@
       .then(function(r) { return r.json(); })
       .then(function(data) {
         var wrap    = document.getElementById('hist-merma-wrap');
+        var vacio   = document.getElementById('hist-vacio');
         var kpiWrap = document.getElementById('kpi-merma-wrap');
 
-        if (!data.length) { wrap.style.display = 'none'; kpiWrap.style.display = 'none'; return; }
+        if (!data.length) {
+          wrap.style.display = 'none';
+          if (vacio) vacio.style.display = '';
+          kpiWrap.style.display = 'none'; return;
+        }
+        if (vacio) vacio.style.display = 'none';
 
         // KPIs
         var conMerma     = data.filter(function(r) { return r.merma_kg != null; });
@@ -888,10 +909,157 @@
       });
   }
 
+  // ── HISTORIAL COMPLETO ────────────────────────────────────────────
+  var _histComplData = [];
+  function abrirHistorialCompleto() {
+    document.getElementById('modal-hist-desp').classList.add('open');
+    cargarHistorialCompleto();
+  }
+  function cerrarHistorialCompleto() {
+    document.getElementById('modal-hist-desp').classList.remove('open');
+  }
+  function cargarHistorialCompleto() {
+    var tbody = document.getElementById('tbody-hist-completo');
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--texto-suave);">Cargando...</td></tr>';
+    var tid = _temporadaActivaId || '';
+    var desde = document.getElementById('hist-desde').value;
+    var hasta  = document.getElementById('hist-hasta').value;
+    var params = [];
+    if (tid)   params.push('temporada_id=' + tid);
+    if (desde) params.push('desde=' + desde);
+    if (hasta)  params.push('hasta=' + hasta);
+    fetch('/api/despalillado/historial' + (params.length ? '?' + params.join('&') : ''))
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        _histComplData = data;
+        if (!data.length) {
+          tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--texto-suave);">Sin registros</td></tr>';
+          return;
+        }
+        var fmtFH = function(iso) { if (!iso) return '—'; var d = new Date(iso); return d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}); };
+        var mono = "font-family:'JetBrains Mono',monospace;";
+        tbody.innerHTML = data.map(function(r) {
+          var mermaColor = parseFloat(r.merma_pct) > 5 ? '#c0392b' : '#2d6a4f';
+          return '<tr>' +
+            '<td style="' + mono + 'font-size:11px;color:var(--texto-suave);">#' + r.id + '</td>' +
+            '<td style="font-size:12px;">' + (r.despalillador || '—') + '</td>' +
+            '<td style="font-size:12px;">' + fmtFH(r.fecha) + '</td>' +
+            '<td style="font-size:12px;">' + (r.parcela || '<em style="color:var(--texto-suave);">Fresca</em>') + '</td>' +
+            '<td style="font-size:12px;">' + (r.deposito || '—') + '</td>' +
+            '<td style="' + mono + 'text-align:right;font-weight:700;">' + parseFloat(r.kilos||0).toLocaleString('es-AR',{minimumFractionDigits:2}) + ' kg</td>' +
+            '<td style="' + mono + 'text-align:right;color:' + mermaColor + ';">' + (r.merma_pct != null ? parseFloat(r.merma_pct).toFixed(1) + '%' : '—') + '</td>' +
+            '<td style="font-size:11px;color:var(--texto-suave);">' + (r.usuario || '—') + '</td>' +
+          '</tr>';
+        }).join('');
+        lucide.createIcons();
+      })
+      .catch(function() {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:#c0392b;">Error al cargar</td></tr>';
+      });
+  }
+
+  // ── TOTALES POR DESPALILLADOR ─────────────────────────────────────
+  function abrirTotalesDespalillador() {
+    document.getElementById('modal-totales-desp').classList.add('open');
+    cargarTotalesDespalillador();
+  }
+  function cerrarTotalesDespalillador() {
+    document.getElementById('modal-totales-desp').classList.remove('open');
+  }
+  function cargarTotalesDespalillador() {
+    var tbody = document.getElementById('tbody-totales-desp');
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--texto-suave);">Cargando...</td></tr>';
+    var tid = _temporadaActivaId || '';
+    fetch('/api/despalillado/totales-por-despalillador' + (tid ? '?temporada_id=' + tid : ''))
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (!data.length) {
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--texto-suave);">Sin registros</td></tr>';
+          return;
+        }
+        var mono = "font-family:'JetBrains Mono',monospace;";
+        var totalKg = data.reduce(function(s,r){ return s + parseFloat(r.kg_total||0); }, 0);
+        var totalReg = data.reduce(function(s,r){ return s + parseInt(r.registros||0); }, 0);
+        tbody.innerHTML = data.map(function(r, i) {
+          var pct = parseFloat(r.merma_pct_promedio||0);
+          var mermaColor = pct > 5 ? '#c0392b' : '#2d6a4f';
+          return '<tr>' +
+            '<td style="font-weight:700;">' + (r.despalillador || '—') + '</td>' +
+            '<td style="' + mono + 'text-align:center;">' + r.registros + '</td>' +
+            '<td style="' + mono + 'text-align:right;font-weight:700;color:var(--sem-verde);">' + parseFloat(r.kg_total||0).toLocaleString('es-AR',{minimumFractionDigits:2}) + ' kg</td>' +
+            '<td style="' + mono + 'text-align:right;color:#c0392b;">' + parseFloat(r.merma_kg_total||0).toLocaleString('es-AR',{minimumFractionDigits:2}) + ' kg</td>' +
+            '<td style="' + mono + 'text-align:right;color:' + mermaColor + ';font-weight:700;">' + (pct > 0 ? pct.toFixed(1) + '%' : '—') + '</td>' +
+            '<td style="font-size:11px;color:var(--texto-suave);">' + (r.ultima_fecha ? new Date(r.ultima_fecha).toLocaleDateString('es-AR') : '—') + '</td>' +
+          '</tr>';
+        }).join('');
+        // Fila totales
+        tbody.innerHTML += '<tr style="background:var(--fondo-dark);font-weight:700;">' +
+          '<td>TOTAL</td><td style="text-align:center;font-family:\'JetBrains Mono\',monospace;">' + totalReg + '</td>' +
+          '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;color:var(--sem-verde);">' + totalKg.toLocaleString('es-AR',{minimumFractionDigits:2}) + ' kg</td>' +
+          '<td colspan="3"></td></tr>';
+      })
+      .catch(function() {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#c0392b;">Error al cargar</td></tr>';
+      });
+  }
+
   // ── INIT ──────────────────────────────────────────────────────────
   cargarPendientes();
   cargarHistorial();
   cargarTemporadaActiva();
 </script>
+
+<!-- MODAL HISTORIAL COMPLETO -->
+<div class="modal-overlay" id="modal-hist-desp" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:14px;padding:24px;width:92%;max-width:860px;max-height:88vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.15);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+      <h3 style="color:var(--verde);margin:0;font-size:17px;font-weight:700;">Historial completo de despalillado</h3>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="date" id="hist-desde" onchange="cargarHistorialCompleto()" style="height:32px;padding:0 8px;border:1px solid var(--borde);border-radius:6px;font-size:12px;">
+        <input type="date" id="hist-hasta" onchange="cargarHistorialCompleto()" style="height:32px;padding:0 8px;border:1px solid var(--borde);border-radius:6px;font-size:12px;">
+        <button onclick="cerrarHistorialCompleto()" style="background:var(--fondo-dark);border:1.5px solid var(--borde);border-radius:8px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;">✕ Cerrar</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead><tr style="background:var(--fondo-dark);">
+          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">#</th>
+          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Despalillador</th>
+          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Fecha/Hora</th>
+          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Parcela</th>
+          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Depósito</th>
+          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:right;color:var(--texto-suave);">Kg</th>
+          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:right;color:var(--texto-suave);">Merma</th>
+          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Usuario</th>
+        </tr></thead>
+        <tbody id="tbody-hist-completo"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TOTALES POR DESPALILLADOR -->
+<div class="modal-overlay" id="modal-totales-desp" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:14px;padding:24px;width:90%;max-width:640px;max-height:80vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.15);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <h3 style="color:var(--verde);margin:0;font-size:17px;font-weight:700;">Totales campaña — por despalillador</h3>
+      <button onclick="cerrarTotalesDespalillador()" style="background:var(--fondo-dark);border:1.5px solid var(--borde);border-radius:8px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;">✕ Cerrar</button>
+    </div>
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead><tr style="background:var(--fondo-dark);">
+          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Despalillador</th>
+          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:center;color:var(--texto-suave);">Registros</th>
+          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:right;color:var(--texto-suave);">KG Total</th>
+          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:right;color:var(--texto-suave);">Merma KG</th>
+          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:right;color:var(--texto-suave);">Merma %</th>
+          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Últ. registro</th>
+        </tr></thead>
+        <tbody id="tbody-totales-desp"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
