@@ -257,14 +257,18 @@
       var total = 0;
       var rows = data.map(function(g) {
         var fecha = g.fecha ? g.fecha.toString().split('T')[0] : '-';
-        total += parseFloat(g.monto);
-        return '<tr>' +
-          '<td>' + fecha + '</td>' +
+        var esAnulada = g.estado === 'anulada';
+        if (!esAnulada) total += parseFloat(g.monto);
+        var estilo = esAnulada ? ' style="opacity:.5;text-decoration:line-through;"' : '';
+        var badge = esAnulada ? ' <span style="background:#c0392b;color:#fff;padding:1px 6px;border-radius:4px;font-size:10px;">Anulada</span>' : '';
+        var acciones = esAnulada ? '' : '<button class="btn-icon-danger" title="Anular" onclick="anularGasto(' + g.id + ')"><i data-lucide="ban" style="width:14px;height:14px;"></i></button>';
+        return '<tr' + estilo + '>' +
+          '<td>' + fecha + badge + '</td>' +
           '<td>' + g.categoria + '</td>' +
           '<td>' + g.concepto + (g.proveedor ? '<br><small style="color:var(--texto-suave)">' + g.proveedor + '</small>' : '') + '</td>' +
           '<td>' + (g.parcela || '-') + '</td>' +
           '<td><strong>$' + parseFloat(g.monto).toLocaleString('es-AR') + '</strong></td>' +
-          '<td><button class="btn-icon-danger" title="Eliminar" onclick="eliminar(' + g.id + ')"><i data-lucide="trash-2" style="width:14px;height:14px;"></i></button></td>' +
+          '<td>' + acciones + '</td>' +
           '</tr>';
       }).join('');
       rows += '<tr class="total-row"><td colspan="4">TOTAL</td><td>$' + total.toLocaleString('es-AR') + '</td><td></td></tr>';
@@ -314,9 +318,15 @@
         });
     }
 
-    function eliminar(id) {
-      if (!confirm('Eliminar este gasto?')) return;
-      fetch('/api/gastos/' + id, { method: 'DELETE' })
+    function anularGasto(id) {
+      var motivo = prompt('Motivo de anulación:');
+      if (!motivo) return;
+      if (!confirm('¿Anular este gasto? Se revertirá el movimiento en caja/CC.')) return;
+      fetch('/api/gastos/' + id + '/anular', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+        body: JSON.stringify({ motivo: motivo })
+      })
         .then(function(r) { return r.json(); })
         .then(function(data) { if (data.ok) cargarHistorial(); });
     }
