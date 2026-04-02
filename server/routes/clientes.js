@@ -32,4 +32,37 @@ router.post('/', async (req, res) => {
   }
 });
 
+// Editar cliente
+router.put('/:id', async (req, res) => {
+  try {
+    const { nombre, contacto, telefono, email, direccion } = req.body;
+    if (!nombre) return res.status(400).json({ error: 'El nombre es obligatorio' });
+    const pool = await getPool();
+    await pool.request()
+      .input('id', sql.Int, req.params.id)
+      .input('nombre', sql.NVarChar, nombre)
+      .input('contacto', sql.NVarChar, contacto || '')
+      .input('telefono', sql.NVarChar, telefono || '')
+      .input('email', sql.NVarChar, email || '')
+      .input('direccion', sql.NVarChar, direccion || '')
+      .query('UPDATE Clientes SET nombre=@nombre, contacto=@contacto, telefono=@telefono, email=@email, direccion=@direccion WHERE id=@id');
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Desactivar cliente
+router.patch('/:id/desactivar', async (req, res) => {
+  try {
+    const pool = await getPool();
+    await pool.request()
+      .input('id', sql.Int, req.params.id)
+      .query('UPDATE Clientes SET activo = 0 WHERE id = @id');
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

@@ -94,9 +94,29 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
   <div class="card">
     <h2>Clientes registrados</h2>
     <table>
-      <thead><tr><th>Nombre</th><th>Contacto</th><th>Telefono</th><th>Email</th></tr></thead>
-      <tbody id="tbody"><tr><td colspan="4" class="empty">Cargando...</td></tr></tbody>
+      <thead><tr><th>Nombre</th><th>Contacto</th><th>Teléfono</th><th>Email</th><th></th></tr></thead>
+      <tbody id="tbody"><tr><td colspan="5" class="empty">Cargando...</td></tr></tbody>
     </table>
+  </div>
+
+  <!-- Modal editar cliente -->
+  <div id="modal-editar" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:white;border-radius:16px;padding:24px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <strong style="font-size:16px;color:#2D5016;">Editar cliente</strong>
+        <button onclick="cerrarModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#666;">✕</button>
+      </div>
+      <input type="hidden" id="edit-id">
+      <label>Nombre *</label><input type="text" id="edit-nombre" style="width:100%;margin-bottom:8px;">
+      <div class="two-col">
+        <div><label>Contacto</label><input type="text" id="edit-contacto" style="width:100%;margin-bottom:8px;"></div>
+        <div><label>Teléfono</label><input type="text" id="edit-telefono" style="width:100%;margin-bottom:8px;"></div>
+      </div>
+      <label>Email</label><input type="email" id="edit-email" style="width:100%;margin-bottom:8px;">
+      <label>Dirección</label><input type="text" id="edit-direccion" style="width:100%;margin-bottom:8px;">
+      <div id="msg-edit" style="margin-top:8px;"></div>
+      <button onclick="guardarEdicion(this)" style="margin-top:12px;width:100%;padding:12px;background:#2D5016;color:white;border:none;border-radius:10px;font-size:15px;font-weight:bold;cursor:pointer;">Guardar cambios</button>
+    </div>
   </div>
     </div>
   </div>
@@ -123,14 +143,60 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
   }
 </script>
 <script>
+    var _clientesData = [];
     function cargar(){
       fetch('/api/clientes').then(function(r){return r.json();}).then(function(data){
+        _clientesData = data;
         var tbody=document.getElementById('tbody');
-        if(!data.length){ tbody.innerHTML='<tr><td colspan="4" class="empty">Sin clientes</td></tr>'; return; }
+        if(!data.length){ tbody.innerHTML='<tr><td colspan="5" class="empty">Sin clientes</td></tr>'; return; }
         tbody.innerHTML=data.map(function(c){
-          return '<tr><td><strong>'+c.nombre+'</strong></td><td>'+(c.contacto||'-')+'</td><td>'+(c.telefono||'-')+'</td><td>'+(c.email||'-')+'</td></tr>';
+          var acciones =
+            '<button onclick="abrirEditar('+c.id+')" style="padding:4px 10px;font-size:12px;background:#f0f4e8;color:#2D5016;border:1px solid #a8d5b5;border-radius:6px;cursor:pointer;font-weight:600;margin-right:4px;"><i data-lucide="pencil" style="width:12px;height:12px;vertical-align:-2px;"></i> Editar</button>' +
+            '<button onclick="location.href=\'cuentas-clientes.html\'" style="padding:4px 10px;font-size:12px;background:#e8f0fe;color:#1a56db;border:1px solid #a8c0f5;border-radius:6px;cursor:pointer;font-weight:600;margin-right:4px;"><i data-lucide="receipt" style="width:12px;height:12px;vertical-align:-2px;"></i> Ver cuenta</button>' +
+            '<button onclick="desactivar('+c.id+',this)" style="padding:4px 10px;font-size:12px;background:#fde8e8;color:#c0392b;border:1px solid #f5a8a8;border-radius:6px;cursor:pointer;font-weight:600;"><i data-lucide="x-circle" style="width:12px;height:12px;vertical-align:-2px;"></i> Desactivar</button>';
+          return '<tr><td><strong>'+c.nombre+'</strong></td><td>'+(c.contacto||'-')+'</td><td>'+(c.telefono||'-')+'</td><td>'+(c.email||'-')+'</td><td style="white-space:nowrap;">'+acciones+'</td></tr>';
         }).join('');
+        lucide.createIcons();
       });
+    }
+    function abrirEditar(id) {
+      var c = _clientesData.find(function(x){return x.id===id;});
+      if(!c) return;
+      document.getElementById('edit-id').value = c.id;
+      document.getElementById('edit-nombre').value = c.nombre||'';
+      document.getElementById('edit-contacto').value = c.contacto||'';
+      document.getElementById('edit-telefono').value = c.telefono||'';
+      document.getElementById('edit-email').value = c.email||'';
+      document.getElementById('edit-direccion').value = c.direccion||'';
+      document.getElementById('msg-edit').innerHTML = '';
+      document.getElementById('modal-editar').style.display = 'flex';
+    }
+    function cerrarModal() { document.getElementById('modal-editar').style.display = 'none'; }
+    function guardarEdicion(btn) {
+      var id = document.getElementById('edit-id').value;
+      var nombre = document.getElementById('edit-nombre').value.trim();
+      if(!nombre){ alert('El nombre es obligatorio'); return; }
+      btn.disabled=true; btn.textContent='Guardando...';
+      fetch('/api/clientes/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          nombre:nombre,contacto:document.getElementById('edit-contacto').value,
+          telefono:document.getElementById('edit-telefono').value,
+          email:document.getElementById('edit-email').value,
+          direccion:document.getElementById('edit-direccion').value
+        })
+      }).then(function(r){return r.json();}).then(function(data){
+        btn.disabled=false; btn.textContent='Guardar cambios';
+        if(data.ok){ cerrarModal(); cargar(); }
+        else { document.getElementById('msg-edit').innerHTML='<div class="msg-error">'+(data.error||'Error')+'</div>'; }
+      }).catch(function(){ btn.disabled=false; btn.textContent='Guardar cambios'; });
+    }
+    function desactivar(id, btn) {
+      if(!confirm('¿Desactivar este cliente?')) return;
+      btn.disabled=true;
+      fetch('/api/clientes/'+id+'/desactivar',{method:'PATCH'}).then(function(r){return r.json();}).then(function(data){
+        btn.disabled=false;
+        if(data.ok){ cargar(); } else { alert(data.error||'Error'); }
+      }).catch(function(){ btn.disabled=false; alert('Error de conexión'); });
     }
     function guardar(){
       var nombre=document.getElementById('nombre').value.trim();

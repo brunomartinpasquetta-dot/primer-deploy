@@ -54,7 +54,7 @@
     /* Cajones en circulación badge */
     .badge-circulacion { display:inline-block; padding:2px 8px; border-radius:12px; font-size:11px; font-weight:700; background:#fff3cd; color:#856404; }
     /* KPI */
-    .vta-kpis { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:16px; }
+    .vta-kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:16px; }
     .vta-kpi { background:#fff; border-radius:10px; padding:16px 18px; box-shadow:0 2px 10px rgba(0,0,0,.08); }
     .vta-kpi-icon { width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; margin-bottom:8px; }
     .vta-kpi-icon.verde { background:#eef7ee; color:#2D5016; }
@@ -158,6 +158,11 @@
           <div class="vta-kpi-valor naranja" id="kpi-precio-prom">$0</div>
           <div class="vta-kpi-label">Precio Promedio / Kg</div>
         </div>
+        <div class="vta-kpi">
+          <div class="vta-kpi-icon" style="background:#fce4ec;color:#c0392b;"><i data-lucide="cherry"></i></div>
+          <div class="vta-kpi-valor" style="color:#c0392b;" id="kpi-cotiz-frutilla">$—</div>
+          <div class="vta-kpi-label">Cotización Frutilla</div>
+        </div>
         <div class="vta-kpi" id="kpi-cajones-card" style="display:none;">
           <div class="vta-kpi-icon" style="background:#f3e8ff;color:#7c3aed;"><i data-lucide="package"></i></div>
           <div class="vta-kpi-valor" style="color:#7c3aed;" id="kpi-cajones-val">0</div>
@@ -254,7 +259,7 @@
       <div class="card">
         <table>
           <thead>
-            <tr><th>#</th><th>Fecha</th><th>Depósito</th><th>Variedad</th><th>Parcela</th><th>Cliente</th><th>Kg</th><th>Precio/Kg</th><th>Total</th><th>Estado</th><th>Embalaje</th><th>CC</th><th>Usuario</th></tr>
+            <tr><th>#</th><th>Fecha</th><th>Cliente</th><th>Variedad</th><th>Kg</th><th>$/Kg</th><th>Total</th><th>Estado</th><th></th></tr>
           </thead>
           <tbody id="tbody-historial">
             <tr><td colspan="12" class="empty">Cargando...</td></tr>
@@ -713,7 +718,7 @@
     var tbody = document.getElementById('tbody-historial');
     var tfoot = document.getElementById('tfoot-historial');
     if (!data.length) {
-      tbody.innerHTML = '<tr><td colspan="13" class="empty">Sin ventas registradas</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" class="empty">Sin ventas registradas</td></tr>';
       tfoot.innerHTML = ''; return;
     }
     var totalKg = 0, totalPesos = 0;
@@ -724,34 +729,35 @@
       var total = parseFloat(v.total) || 0;
       totalKg += kg; totalPesos += total;
       var movId = v.movimiento_id || v.id;
-      var btnEmb = movId
-        ? '<button class="btn-emb" onclick="abrirModalEmbalaje('+movId+',\''+
-            (v.comprador||'').replace(/'/g,"\\'")+'\')" title="Ver embalaje">' +
-            '<i data-lucide="package" style="width:12px;height:12px;"></i> Embalaje</button>'
-        : '—';
+      // Acciones compactas
+      var acciones = '';
+      if (movId) {
+        acciones += '<button style="background:none;border:none;cursor:pointer;color:var(--texto-suave);padding:2px;" title="Embalaje" onclick="abrirModalEmbalaje('+movId+',\''+(v.comprador||'').replace(/'/g,"\\'")+'\')">' +
+          '<i data-lucide="package" style="width:14px;height:14px;"></i></button>';
+      }
+      if (v.cliente_id) {
+        acciones += '<button style="background:none;border:none;cursor:pointer;color:var(--texto-suave);padding:2px;" title="Ver CC" onclick="verCCCli('+v.cliente_id+',\''+(v.comprador||'').replace(/'/g,"\\'")+'\')">' +
+          '<i data-lucide="receipt" style="width:14px;height:14px;"></i></button>';
+      }
       return '<tr>' +
         '<td style="'+mono+'color:var(--texto-suave);font-size:11px;">#' + (v.id || '-') +
           (v.numero_remito ? '<br><span style="font-size:10px;color:var(--verde);">' + v.numero_remito + '</span>' : '') + '</td>' +
-        '<td>' + formatFechaHora(v.fecha) + (v.temporada ? '<br><small style="color:var(--texto-suave)">' + v.temporada + '</small>' : '') + '</td>' +
-        '<td>' + (v.deposito || '<em style="color:var(--texto-suave)">Directa</em>') + '</td>' +
-        '<td style="font-size:12px;">' + (v.variedad || (v.parcela ? '—' : '-')) + '</td>' +
-        '<td style="font-size:12px;">' + (v.parcela || '-') + '</td>' +
-        '<td>' + (v.comprador || '-') + '</td>' +
-        '<td style="'+mono+'">' + kg.toLocaleString('es-AR', { minimumFractionDigits: 2 }) + ' kg</td>' +
-        '<td style="'+mono+'">' + (precio > 0 ? '$' + precio.toLocaleString('es-AR', { minimumFractionDigits: 2 }) : '-') + '</td>' +
-        '<td style="'+mono+'font-weight:700;">' + (total > 0 ? '$' + total.toLocaleString('es-AR', { minimumFractionDigits: 2 }) : '-') + '</td>' +
+        '<td style="font-size:12px;white-space:nowrap;">' + formatFechaHora(v.fecha) + '</td>' +
+        '<td style="font-size:12px;">' + (v.comprador || '-') + '</td>' +
+        '<td style="font-size:12px;">' + (v.variedad || '-') + '</td>' +
+        '<td style="'+mono+'text-align:right;">' + kg.toLocaleString('es-AR', { minimumFractionDigits: 2 }) + '</td>' +
+        '<td style="'+mono+'text-align:right;">' + (precio > 0 ? '$' + precio.toLocaleString('es-AR') : '-') + '</td>' +
+        '<td style="'+mono+'text-align:right;font-weight:700;">' + (total > 0 ? '$' + total.toLocaleString('es-AR') : '-') + '</td>' +
         '<td>' + estadoBadge(v.estado_cobro, v.forma_pago) + '</td>' +
-        '<td>' + btnEmb + '</td>' +
-        '<td>' + (v.cliente_id ? '<button style="background:none;border:none;cursor:pointer;color:var(--texto-suave);padding:2px 4px;" title="Ver CC cliente" onclick="verCCCli('+v.cliente_id+',\''+(v.comprador||'').replace(/\'/g,"\\'")+'\')"><i data-lucide="landmark" style="width:14px;height:14px;"></i></button>' : '—') + '</td>' +
-        '<td style="font-size:12px;color:var(--texto-suave);">' + (v.usuario || '-') + '</td>' +
+        '<td style="white-space:nowrap;">' + (acciones || '—') + '</td>' +
         '</tr>';
     }).join('');
     tfoot.innerHTML = '<tr style="background:var(--fondo-dark);font-weight:700;">' +
-      '<td colspan="6" style="padding:10px 12px;">TOTALES</td>' +
-      '<td style="padding:10px 12px;font-family:\'JetBrains Mono\',monospace;">' + totalKg.toLocaleString('es-AR', { minimumFractionDigits: 2 }) + ' kg</td>' +
+      '<td colspan="4" style="padding:10px 12px;">TOTALES</td>' +
+      '<td style="padding:10px 12px;'+mono+'text-align:right;">' + totalKg.toLocaleString('es-AR', { minimumFractionDigits: 2 }) + ' kg</td>' +
       '<td></td>' +
-      '<td style="padding:10px 12px;font-family:\'JetBrains Mono\',monospace;">$' + totalPesos.toLocaleString('es-AR', { minimumFractionDigits: 2 }) + '</td>' +
-      '<td colspan="4"></td>' +
+      '<td style="padding:10px 12px;'+mono+'text-align:right;">$' + totalPesos.toLocaleString('es-AR', { minimumFractionDigits: 2 }) + '</td>' +
+      '<td colspan="2"></td>' +
       '</tr>';
     lucide.createIcons();
   }
@@ -926,9 +932,26 @@
     document.getElementById('modal-cc-cli').classList.remove('open');
   }
 
+  function cargarCotizFrutilla() {
+    var el = document.getElementById('kpi-cotiz-frutilla');
+    fetch('/api/cotizaciones/frutilla').then(function(r){return r.json();}).then(function(d) {
+      if (d && !d.error && d.precio_modal) { el.textContent = '$' + Math.round(d.precio_modal).toLocaleString('es-AR') + '/kg'; }
+      else { fallbackCotiz(); }
+    }).catch(fallbackCotiz);
+    function fallbackCotiz() {
+      fetch('/api/cotizaciones/locales?cultivo=frutilla').then(function(r){return r.json();}).then(function(d) {
+        var arr = Array.isArray(d) ? d : [];
+        var item = arr.find(function(x){return x.precio_modal || x.precio;});
+        if (item && (item.precio_modal || item.precio)) el.textContent = '$' + Math.round(item.precio_modal || item.precio).toLocaleString('es-AR') + '/kg';
+        else el.textContent = '$—';
+      }).catch(function(){ el.textContent = '$—'; });
+    }
+  }
+
   cargarDatos();
   cargarTemporadaActiva();
   cargarCajonesCirculacion();
+  cargarCotizFrutilla();
 </script>
 
 <!-- MODAL CC CLIENTE -->

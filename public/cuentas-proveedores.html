@@ -470,9 +470,10 @@ function cargarFormasPago() {
     .then(function(data) {
       document.getElementById('pago-forma').innerHTML =
         '<option value="">Sin especificar</option>' +
-        data.map(function(f) {
-          return '<option value="' + f.id + '">' + f.nombre + '</option>';
-        }).join('');
+        data.filter(function(f) { return !f.es_cuenta_corriente; })
+            .map(function(f) {
+              return '<option value="' + f.id + '">' + f.nombre + '</option>';
+            }).join('');
     });
 }
 
