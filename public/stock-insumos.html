@@ -384,7 +384,7 @@
                     <th style="text-align:right;">STOCK ACTUAL</th>
                     <th>PROVEEDOR</th>
                     <th>DEPÓSITO</th>
-                    <th></th>
+                    <th style="text-align:center;">ACCIONES</th>
                   </tr>
                 </thead>
                 <tbody id="tbody-stock">
@@ -419,7 +419,7 @@
                 <th style="padding:8px 10px;text-align:left;border-bottom:1px solid var(--borde);">Depósito</th>
                 <th style="padding:8px 10px;text-align:left;border-bottom:1px solid var(--borde);">Usuario</th>
                 <th style="padding:8px 10px;text-align:left;border-bottom:1px solid var(--borde);">Observación</th>
-                <th style="padding:8px 10px;border-bottom:1px solid var(--borde);"></th>
+                <th style="padding:8px 10px;text-align:center;border-bottom:1px solid var(--borde);">Acciones</th>
               </tr>
             </thead>
             <tbody id="hist-panel-tbody">
@@ -751,7 +751,7 @@
         '</td>' +
         '<td style="font-size:12px;">' + (p.proveedor || 'Sin proveedor') + '</td>' +
         '<td style="font-size:12px;color:var(--texto-suave);">' + (p.deposito || '—') + '</td>' +
-        '<td style="white-space:nowrap;">' +
+        '<td style="white-space:nowrap;text-align:center;">' +
           '<button class="btn-icon-xs" onclick="verDetalleProducto('+p.producto_id+')" title="Ver detalles del producto"><i data-lucide="eye" style="width:13px;height:13px;"></i></button> ' +
           '<button class="btn-icon-xs" onclick="editarProducto('+p.producto_id+')" title="Editar producto"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button> ' +
           '<button class="btn-icon-xs" style="border-color:#ccc;color:#aaa;cursor:not-allowed;opacity:.5;" title="Activar/Desactivar desde Inventario" disabled><i data-lucide="power" style="width:12px;height:12px;"></i></button>' +
@@ -1190,13 +1190,14 @@
             '<td style="padding:7px 10px;font-size:11px;">' + (m.deposito_nombre || '—') + '</td>' +
             '<td style="padding:7px 10px;font-size:11px;">' + (m.usuario || '—') + '</td>' +
             '<td style="padding:7px 10px;font-size:11px;color:var(--texto-suave);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (m.observacion || '') + '</td>' +
-            '<td style="padding:7px 10px;white-space:nowrap;">' +
+            '<td style="padding:7px 10px;white-space:nowrap;text-align:center;">' +
               '<button class="btn-icon-xs" onclick="'+eyeClick+'" title="Ver detalles"><i data-lucide="eye" style="width:13px;height:13px;"></i></button> ' +
               '<button class="btn-icon-xs" onclick="'+pencilClick+'" title="Editar"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button> ' +
               '<button class="btn-icon-xs" style="border-color:#ccc;color:#aaa;cursor:not-allowed;opacity:.5;" title="Activar/Desactivar desde Inventario" disabled><i data-lucide="power" style="width:12px;height:12px;"></i></button>' +
             '</td>' +
           '</tr>';
         }).join('');
+        lucide.createIcons();
       })
       .catch(function() {
         tbody.innerHTML = '<tr><td colspan="10" style="padding:20px;text-align:center;color:#c0392b;">Error al cargar</td></tr>';
