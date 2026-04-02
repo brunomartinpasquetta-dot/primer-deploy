@@ -2,6 +2,7 @@ const express  = require('express');
 const router   = express.Router();
 const { getPool, sql } = require('../db');
 const cheerio  = require('cheerio');
+const requireAuth = require('../middleware/auth');
 
 // ── Caches ────────────────────────────────────────────────────────
 let cacheDolar    = null, cacheDolarTime    = 0;
@@ -228,7 +229,7 @@ router.get('/locales', async (req, res) => {
 });
 
 // ── POST /api/cotizaciones/locales ───────────────────────────────
-router.post('/locales', async (req, res) => {
+router.post('/locales', requireAuth, async (req, res) => {
   const { cultivo, precio, unidad, comprador, observacion, temporada_id } = req.body;
   if (!cultivo || !precio || !unidad) {
     return res.status(400).json({ error: 'cultivo, precio y unidad son requeridos' });

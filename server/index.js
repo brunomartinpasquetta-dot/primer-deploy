@@ -16,7 +16,7 @@ app.use(express.static(path.join(__dirname, '../public')));
 
 // ── Rutas públicas ──────────────────────────────────────────────
 app.use('/api/auth',         require('./routes/auth'));
-app.use('/api/cotizaciones', require('./routes/cotizaciones'));
+app.use('/api/cotizaciones', require('./routes/cotizaciones'));  // GET público, POST protegido en la ruta
 
 // ── Dashboard ───────────────────────────────────────────────────
 app.use('/api/dashboard',  requireAuth, encargadoOAdmin, require('./routes/dashboard'));
