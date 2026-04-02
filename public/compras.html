@@ -64,7 +64,7 @@
     .compras-table td { padding:8px 10px; vertical-align:middle; }
     .col-estado { width:90px; }
     .col-fecha { width:110px; white-space:nowrap; }
-    .col-proveedor { max-width:160px; }
+    .col-proveedor { max-width:130px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .col-remito { width:90px; }
     .col-pago { width:110px; }
     .col-total { width:100px; text-align:right; }
@@ -148,7 +148,10 @@
           <div class="page-sub">Registro de compras a proveedores</div>
         </div>
         <div style="display:flex;gap:8px;align-items:center;">
-          <a href="productos.html" class="btn btn-secondary" style="text-decoration:none;" title="Crear nuevo insumo si no está en la lista">
+          <a href="proveedores.html?nuevo=1" class="btn-secondary-flat" style="text-decoration:none;display:inline-flex;align-items:center;gap:5px;" title="Crear nuevo proveedor">
+            <i data-lucide="user-plus" style="width:14px;height:14px;"></i> Nuevo proveedor
+          </a>
+          <a href="productos.html?nuevo=1" class="btn-secondary-flat" style="text-decoration:none;display:inline-flex;align-items:center;gap:5px;" title="Crear nuevo insumo">
             <i data-lucide="flask-conical" style="width:14px;height:14px;"></i> Nuevo insumo
           </a>
           <button class="btn-primary-flat" onclick="toggleForm()">
@@ -217,7 +220,11 @@
         <input type="date" id="filtro-desde" onchange="cargarHistorial()" style="max-width:120px;font-size:11px;height:30px;padding:2px 4px;">
         <input type="date" id="filtro-hasta" onchange="cargarHistorial()" style="max-width:120px;font-size:11px;height:30px;padding:2px 4px;">
         <button class="fb-limpiar" onclick="limpiarFiltrosCompras()">✕ Limpiar</button>
+        <button class="btn-icon" onclick="abrirAuditoria()" title="Auditoría de compras" style="margin-left:auto;gap:4px;width:auto;padding:0 8px;font-size:11px;font-weight:600;color:#64748B;"><i data-lucide="clipboard-list" style="width:14px;height:14px;"></i> Auditoría</button>
       </div>
+
+      <!-- ── ALERTAS COMPRAS ── -->
+      <div id="alertas-compras" style="display:none;"></div>
 
       <!-- ── TABLA ── -->
       <div class="card" style="padding:0;overflow:hidden;">
@@ -231,7 +238,7 @@
               <th class="col-pago">Forma pago</th>
               <th class="col-total">Total</th>
               <th style="width:70px;font-size:11px;">Usuario</th>
-              <th class="col-acciones"></th>
+              <th class="col-acciones">Acciones</th>
             </tr>
           </thead>
           <tbody id="tbody-historial">
@@ -252,6 +259,28 @@
     <a href="menu-campo.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="menu"></i></span><span>Menú</span></a>
   </nav>
 
+</div>
+
+<!-- ── MODAL AUDITORÍA ── -->
+<div class="modal-overlay" id="modal-auditoria">
+  <div class="modal-box" style="max-width:650px;">
+    <h3 style="margin-bottom:14px;">Auditoría de compras</h3>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+      <select id="audit-tipo" onchange="cargarAuditoriaCompras()" style="height:30px;font-size:12px;padding:2px 8px;border:1px solid #E2E8F0;border-radius:6px;">
+        <option value="">Todas las acciones</option>
+        <option value="edicion">Ediciones</option>
+        <option value="anulacion">Anulaciones</option>
+      </select>
+      <input type="search" id="audit-buscar" placeholder="Buscar..." oninput="filtrarAuditoria()" style="height:30px;font-size:12px;padding:2px 8px;border:1px solid #E2E8F0;border-radius:6px;width:140px;">
+    </div>
+    <div style="max-height:50vh;overflow-y:auto;">
+      <table class="detalle-table" style="font-size:12px;">
+        <thead><tr><th>Fecha</th><th>Compra</th><th>Acción</th><th>Campo</th><th>Anterior</th><th>Nuevo</th><th>Usuario</th></tr></thead>
+        <tbody id="audit-tbody"><tr><td colspan="7" style="text-align:center;color:#94A3B8;padding:16px;">Cargando...</td></tr></tbody>
+      </table>
+    </div>
+    <button class="btn-cerrar" onclick="document.getElementById('modal-auditoria').classList.remove('open')">Cerrar</button>
+  </div>
 </div>
 
 <!-- ── MODAL EDITAR COMPRA ── -->
@@ -561,6 +590,9 @@
 
   function formatFecha(str) {
     if (!str) return '—';
+    // Parse as local date to avoid timezone shift
+    var parts = str.toString().split('T')[0].split('-');
+    if (parts.length === 3) return parts[2] + '/' + parts[1] + '/' + parts[0].slice(-2);
     var d = new Date(str);
     return String(d.getDate()).padStart(2,'0') + '/' +
            String(d.getMonth()+1).padStart(2,'0') + '/' +
@@ -569,7 +601,10 @@
 
   function formatFechaHora(str) {
     if (!str) return '—';
-    var d = new Date(str);
+    // For date-only fields (no time component), just show date
+    var s = str.toString();
+    if (s.endsWith('T00:00:00.000Z') || s.length === 10) return formatFecha(s);
+    var d = new Date(s);
     return d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'});
   }
 
@@ -580,15 +615,17 @@
       return;
     }
     tbody.innerHTML = data.map(function(c) {
-      var pagado = !!c.forma_pago;
-      var badge = pagado
-        ? '<span class="badge-pagado">Pagado</span>'
-        : '<span class="badge-pendiente">Pendiente</span>';
+      var esAnulada = c.estado === 'anulada';
+      var badge;
+      if (esAnulada) badge = '<span style="background:#fde8e8;color:#c0392b;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;">Anulada</span>';
+      else if (c.forma_pago) badge = '<span class="badge-pagado">Pagado</span>';
+      else badge = '<span class="badge-pendiente">Pendiente</span>';
       var fechaHora = formatFechaHora(c.fecha);
       var obsEsc = (c.observacion || '').replace(/'/g, '\\\'');
       var provEsc = (c.proveedor || '').replace(/'/g, '\\\'');
       var remEsc = (c.numero_remito || '').replace(/'/g, '\\\'');
-      return '<tr>' +
+      var rowStyle = esAnulada ? ' style="opacity:.5;text-decoration:line-through;"' : '';
+      return '<tr' + rowStyle + '>' +
         '<td class="col-remito" style="font-size:11px;font-weight:600;color:var(--verde);">' + (c.numero_remito || '—') + '</td>' +
         '<td class="col-estado">' + badge + '</td>' +
         '<td class="col-fecha" style="font-size:12px;color:#475569;">' + formatFecha(c.fecha) + '</td>' +
@@ -598,8 +635,10 @@
         '<td class="col-total"><strong style="color:#2D5016;">$' + parseFloat(c.total).toLocaleString('es-AR') + '</strong></td>' +
         '<td style="font-size:11px;color:#64748B;">' + (c.usuario || '—') + '</td>' +
         '<td class="col-acciones" style="white-space:nowrap;">' +
-          '<button class="btn-icon" onclick="verDetalle('+c.id+',\''+provEsc+'\',\''+fechaHora+'\',\''+(c.forma_pago||'—')+'\',\''+obsEsc+'\')" title="Ver detalles de la compra"><i data-lucide="eye" style="width:15px;height:15px;"></i></button> ' +
-          '<button class="btn-icon" onclick="abrirEditarCompra('+c.id+',\''+obsEsc+'\',\''+remEsc+'\')" title="Editar"><i data-lucide="pencil" style="width:13px;height:13px;"></i></button>' +
+          '<button class="btn-icon" onclick="verDetalle('+c.id+',\''+provEsc+'\',\''+fechaHora+'\',\''+(c.forma_pago||'—')+'\',\''+obsEsc+'\')" title="Ver detalles"><i data-lucide="eye" style="width:15px;height:15px;"></i></button> ' +
+          (esAnulada ? '' :
+            '<button class="btn-icon" onclick="abrirEditarCompra('+c.id+',\''+obsEsc+'\',\''+remEsc+'\')" title="Editar"><i data-lucide="pencil" style="width:13px;height:13px;"></i></button> ' +
+            '<button class="btn-icon" onclick="anularCompra('+c.id+')" title="Anular compra" style="color:#c0392b;"><i data-lucide="ban" style="width:13px;height:13px;"></i></button>') +
         '</td>' +
         '</tr>';
     }).join('');
@@ -792,6 +831,127 @@
     document.getElementById('modal-cc-prov').classList.remove('open');
   }
 
+  // ── Auditoría ──
+  var _auditData = [];
+  function abrirAuditoria() {
+    document.getElementById('modal-auditoria').classList.add('open');
+    cargarAuditoriaCompras();
+  }
+  function cargarAuditoriaCompras() {
+    var tipo = document.getElementById('audit-tipo').value;
+    // Cargar auditoría de todas las compras
+    var ids = _historialData.map(function(c){ return c.id; });
+    if (!ids.length) {
+      document.getElementById('audit-tbody').innerHTML = '<tr><td colspan="7" style="text-align:center;color:#94A3B8;padding:16px;">Sin compras cargadas</td></tr>';
+      return;
+    }
+    Promise.all(ids.map(function(id){
+      return fetch('/api/compras/' + id + '/auditoria').then(function(r){ return r.json(); }).then(function(data){
+        return data.map(function(a){ a._compra_id = id; return a; });
+      });
+    })).then(function(arrays){
+      _auditData = [].concat.apply([], arrays);
+      _auditData.sort(function(a,b){ return new Date(b.fecha_hora) - new Date(a.fecha_hora); });
+      if (tipo) _auditData = _auditData.filter(function(a){ return a.accion === tipo; });
+      filtrarAuditoria();
+    });
+  }
+  function filtrarAuditoria() {
+    var q = (document.getElementById('audit-buscar').value || '').toLowerCase();
+    var data = q ? _auditData.filter(function(a){
+      return (a.campo||'').toLowerCase().includes(q) || (a.valor_nuevo||'').toLowerCase().includes(q) || (a.usuario_nombre||'').toLowerCase().includes(q) || String(a._compra_id).includes(q);
+    }) : _auditData;
+    var tbody = document.getElementById('audit-tbody');
+    if (!data.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#94A3B8;padding:16px;">Sin registros de auditoría</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.slice(0, 50).map(function(a){
+      var accionBadge = a.accion === 'anulacion'
+        ? '<span style="background:#fde8e8;color:#c0392b;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;">Anulación</span>'
+        : '<span style="background:#E0F2FE;color:#0369A1;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;">Edición</span>';
+      return '<tr>' +
+        '<td style="white-space:nowrap;font-size:11px;">' + formatFechaHora(a.fecha_hora) + '</td>' +
+        '<td style="font-weight:600;color:var(--verde);">#' + a._compra_id + '</td>' +
+        '<td>' + accionBadge + '</td>' +
+        '<td style="font-size:11px;">' + (a.campo || '—') + '</td>' +
+        '<td style="font-size:11px;color:#94A3B8;max-width:100px;overflow:hidden;text-overflow:ellipsis;">' + (a.valor_anterior || '—') + '</td>' +
+        '<td style="font-size:11px;font-weight:600;max-width:100px;overflow:hidden;text-overflow:ellipsis;">' + (a.valor_nuevo || '—') + '</td>' +
+        '<td style="font-size:11px;color:#64748B;">' + (a.usuario_nombre || '—') + '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  // ── Alertas compras ──
+  function cargarAlertasCompras() {
+    Promise.all([
+      fetch('/api/stock-insumos/historial').then(function(r){ return r.json(); }).catch(function(){ return []; }),
+      fetch('/api/productos').then(function(r){ return r.json(); }).catch(function(){ return []; })
+    ]).then(function(results){
+      var movimientos = results[0];
+      var todos = results[1];
+      // Insumos con compras sin depósito asignado
+      var sinDepositoMap = {};
+      movimientos.forEach(function(m){
+        if (m.tipo === 'compra' && !m.deposito_nombre && m.producto) sinDepositoMap[m.producto] = true;
+      });
+      var sinDeposito = Object.keys(sinDepositoMap);
+      // Productos con vencimiento próximo (30 días)
+      var vencProximos = todos.filter(function(p){
+        if (!p.fecha_vencimiento) return false;
+        var dias = (new Date(p.fecha_vencimiento) - new Date()) / 86400000;
+        return dias >= 0 && dias <= 30;
+      });
+      var stockBajo = todos.filter(function(p){ return p.activo && p.stock_actual != null && parseFloat(p.stock_actual) < 2 && parseFloat(p.stock_actual) >= 0; });
+
+      var panel = document.getElementById('alertas-compras');
+      var html = '';
+      var count = 0;
+
+      if (sinDeposito.length) {
+        count += sinDeposito.length;
+        html += '<div style="display:flex;align-items:flex-start;gap:8px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;padding:8px 12px;margin-bottom:6px;">' +
+          '<i data-lucide="alert-triangle" style="width:16px;height:16px;color:#D97706;flex-shrink:0;margin-top:1px;"></i>' +
+          '<div style="font-size:12px;"><strong style="color:#92400E;">'+sinDeposito.length+' insumo'+(sinDeposito.length>1?'s':'')+' sin depósito asignado</strong><br>' +
+          '<span style="color:#78716C;">'+sinDeposito.slice(0,5).join(', ')+(sinDeposito.length>5 ? ' y '+(sinDeposito.length-5)+' más' : '')+'</span></div></div>';
+      }
+      if (vencProximos.length) {
+        count += vencProximos.length;
+        html += '<div style="display:flex;align-items:flex-start;gap:8px;background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:8px 12px;margin-bottom:6px;">' +
+          '<i data-lucide="calendar-clock" style="width:16px;height:16px;color:#DC2626;flex-shrink:0;margin-top:1px;"></i>' +
+          '<div style="font-size:12px;"><strong style="color:#991B1B;">'+vencProximos.length+' insumo'+(vencProximos.length>1?'s':'')+' por vencer (30 días)</strong><br>' +
+          '<span style="color:#78716C;">'+vencProximos.map(function(p){ return p.nombre + ' (' + formatFecha(p.fecha_vencimiento) + ')'; }).slice(0,3).join(', ')+(vencProximos.length>3 ? ' y '+(vencProximos.length-3)+' más' : '')+'</span></div></div>';
+      }
+      if (stockBajo.length) {
+        count += stockBajo.length;
+        html += '<div style="display:flex;align-items:flex-start;gap:8px;background:#FFF7ED;border:1px solid #FED7AA;border-radius:8px;padding:8px 12px;margin-bottom:6px;">' +
+          '<i data-lucide="package-minus" style="width:16px;height:16px;color:#EA580C;flex-shrink:0;margin-top:1px;"></i>' +
+          '<div style="font-size:12px;"><strong style="color:#9A3412;">'+stockBajo.length+' insumo'+(stockBajo.length>1?'s':'')+' con stock bajo</strong><br>' +
+          '<span style="color:#78716C;">'+stockBajo.map(function(p){ return p.nombre + ' ('+parseFloat(p.stock_actual||0)+')'; }).slice(0,4).join(', ')+(stockBajo.length>4 ? ' y '+(stockBajo.length-4)+' más' : '')+'</span></div></div>';
+      }
+
+      if (count > 0) {
+        panel.style.display = 'block';
+        panel.innerHTML = html;
+        lucide.createIcons();
+      }
+    });
+  }
+
+  function anularCompra(id) {
+    var motivo = prompt('Motivo de anulación (obligatorio):');
+    if (!motivo) return;
+    if (!confirm('¿Anular compra #' + id + '? Se revertirá el stock, caja y cuenta corriente. Esta acción no se puede deshacer.')) return;
+    fetch('/api/compras/' + id + '/anular', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ motivo: motivo })
+    }).then(function(r){ return r.json(); }).then(function(data){
+      if (data.ok) { cargarHistorial(); }
+      else { alert('Error: ' + (data.error || 'No se pudo anular')); }
+    }).catch(function(){ alert('Error de conexión'); });
+  }
+
   document.getElementById('fecha').value = hoy;
   cargarDatos().then(function() {
     agregarItem();
@@ -816,6 +976,7 @@
     });
   });
   cargarTemporadaActiva();
+  cargarAlertasCompras();
 </script>
 </body>
 </html>
