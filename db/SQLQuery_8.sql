@@ -1,0 +1,1 @@
+ALTER TABLE Productos ADD proveedor_id INT REFERENCES Proveedores(id);

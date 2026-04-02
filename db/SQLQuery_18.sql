@@ -1,0 +1,1 @@
+INSERT INTO FormasPago (nombre) VALUES ('Cuenta Corriente');

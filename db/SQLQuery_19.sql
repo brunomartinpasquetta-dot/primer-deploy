@@ -1,0 +1,1 @@
+ALTER TABLE Compras ADD fecha_hora DATETIME DEFAULT GETDATE();

@@ -1,0 +1,1 @@
+ALTER TABLE Temporadas ADD activa BIT DEFAULT 1;
