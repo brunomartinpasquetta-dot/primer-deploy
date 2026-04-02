@@ -154,19 +154,19 @@ router.get('/actual', async (req, res) => {
       .input('temporada_id', sql.Int, parseInt(temporada_id))
       .query(`
         SELECT
-          ISNULL(l.variedad, l.nombre) AS variedad,
+          COALESCE(l.variedad, l.nombre, m.variedad, '—') AS variedad,
           d.nombre AS deposito,
           d.tipo   AS deposito_tipo,
           COUNT(DISTINCT m.parcela_id) AS parcelas_involucradas,
           CASE WHEN COUNT(DISTINCT m.parcela_id) = 1 THEN MIN(l.nombre) ELSE NULL END AS parcela_nombre,
           SUM(CASE WHEN m.tipo = 'ingreso' THEN m.kilos ELSE -m.kilos END) AS kg_disponibles
         FROM MovimientosDeposito m
-        JOIN Parcelas      l ON m.parcela_id      = l.id
-        JOIN Depositos  d ON m.deposito_id  = d.id
+        LEFT JOIN Parcelas l ON m.parcela_id = l.id
+        JOIN Depositos d ON m.deposito_id = d.id
         WHERE m.temporada_id = @temporada_id
-        GROUP BY ISNULL(l.variedad, l.nombre), d.nombre, d.tipo
+        GROUP BY COALESCE(l.variedad, l.nombre, m.variedad, '—'), d.nombre, d.tipo
         HAVING SUM(CASE WHEN m.tipo = 'ingreso' THEN m.kilos ELSE -m.kilos END) > 0
-        ORDER BY ISNULL(l.variedad, l.nombre), d.nombre
+        ORDER BY COALESCE(l.variedad, l.nombre, m.variedad, '—'), d.nombre
       `);
 
     res.json(result.recordset);
