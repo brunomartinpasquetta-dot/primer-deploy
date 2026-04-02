@@ -628,8 +628,9 @@ router.get('/ocupacion', async (req, res) => {
     let where = 'd.activo = 1';
     if (tipo_deposito) {
       // Soporte para lista separada por comas: tipo_deposito=fruta_fresca,camara_frio
-      const tipos = tipo_deposito.split(',').map(t => `'${t.trim().replace(/'/g, '')}'`).join(',');
-      where += ` AND d.tipo_deposito IN (${tipos})`;
+      const tiposArr = tipo_deposito.split(',').map(t => t.trim());
+      const tiposPlaceholders = tiposArr.map((t, i) => { dbReq.input(`tipo_dep_${i}`, sql.NVarChar, t); return `@tipo_dep_${i}`; });
+      where += ` AND d.tipo_deposito IN (${tiposPlaceholders.join(',')})`;
     } else if (tipo_stock === 'insumos') {
       where += ` AND d.tipo_deposito = 'insumos'`;
     } else if (tipo_stock === 'mercaderia') {
