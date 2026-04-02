@@ -121,17 +121,44 @@ router.post('/pago', async (req, res) => {
   }
 });
 
-// ── DELETE /:id — anular movimiento (solo admin) ─────────────────────
-router.delete('/:id', async (req, res) => {
+// ── POST /:id/anular — anular movimiento (solo admin, soft-delete) ───
+router.post('/:id/anular', async (req, res) => {
   if (!req.user || req.user.rol !== 'administrador')
     return res.status(403).json({ error: 'Solo administradores pueden anular movimientos' });
+
+  const pool = await getPool();
+  const transaction = new sql.Transaction(pool);
   try {
-    const pool = await getPool();
-    await pool.request()
-      .input('id', sql.Int, req.params.id)
-      .query('DELETE FROM CuentaCorrienteProveedores WHERE id = @id');
+    await transaction.begin();
+    const movId = parseInt(req.params.id);
+    const motivo = req.body.motivo || 'Anulación manual';
+
+    const movRes = await new sql.Request(transaction)
+      .input('id', sql.Int, movId)
+      .query('SELECT id, estado, proveedor_id, tipo, monto, observacion FROM CuentaCorrienteProveedores WHERE id = @id');
+    if (!movRes.recordset.length) { await transaction.rollback(); return res.status(404).json({ error: 'Movimiento no encontrado' }); }
+    if (movRes.recordset[0].estado === 'anulada') { await transaction.rollback(); return res.status(400).json({ error: 'El movimiento ya está anulado' }); }
+
+    const mov = movRes.recordset[0];
+
+    // Insertar movimiento compensatorio inverso
+    const tipoInverso = mov.tipo === 'debito' ? 'credito' : 'debito';
+    await new sql.Request(transaction)
+      .input('proveedor_id', sql.Int, mov.proveedor_id)
+      .input('monto', sql.Decimal(12,2), mov.monto)
+      .input('observacion', sql.NVarChar, 'Anulación mov #' + movId + ' — ' + motivo)
+      .query(`INSERT INTO CuentaCorrienteProveedores (proveedor_id, tipo, monto, observacion, fecha_hora)
+              VALUES (@proveedor_id, '${tipoInverso}', @monto, @observacion, GETDATE())`);
+
+    // Marcar original como anulada
+    await new sql.Request(transaction)
+      .input('id', sql.Int, movId)
+      .query("UPDATE CuentaCorrienteProveedores SET estado = 'anulada' WHERE id = @id");
+
+    await transaction.commit();
     res.json({ ok: true });
   } catch (err) {
+    await transaction.rollback();
     res.status(500).json({ error: err.message });
   }
 });

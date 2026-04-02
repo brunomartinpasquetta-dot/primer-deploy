@@ -20,7 +20,7 @@ router.get('/', async (req, res) => {
     const { temporada_id, parcela_id, desde, hasta } = req.query;
     const pool = await getPool();
     const dbReq = pool.request();
-    let query = `SELECT g.id, g.concepto, g.monto, g.fecha, g.observacion,
+    let query = `SELECT g.id, g.concepto, g.monto, g.fecha, g.observacion, g.estado,
                  cg.nombre AS categoria,
                  l.nombre AS parcela,
                  t.nombre AS temporada,
@@ -112,64 +112,56 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Eliminar gasto
-router.delete('/:id', async (req, res) => {
+// Anular gasto (soft-delete + reversión financiera)
+router.post('/:id/anular', async (req, res) => {
   const pool = await getPool();
   const transaction = new sql.Transaction(pool);
   try {
     await transaction.begin();
+    const gastoId = parseInt(req.params.id);
+    const motivo = req.body.motivo || 'Anulación manual';
 
-    // Obtener datos del gasto antes de borrarlo
-    const r1 = new sql.Request(transaction);
-    const gastoRes = await r1
-      .input('id', sql.Int, req.params.id)
-      .query(`SELECT g.concepto, g.monto, g.forma_pago_id, g.proveedor_id,
+    const gastoRes = await new sql.Request(transaction)
+      .input('id', sql.Int, gastoId)
+      .query(`SELECT g.id, g.estado, g.concepto, g.monto, g.forma_pago_id, g.proveedor_id, g.temporada_id,
               fp.nombre AS forma_pago_nombre
               FROM Gastos g
               LEFT JOIN FormasPago fp ON g.forma_pago_id = fp.id
               WHERE g.id = @id`);
 
-    if (gastoRes.recordset.length === 0) {
-      await transaction.rollback();
-      return res.status(404).json({ error: 'Gasto no encontrado' });
-    }
+    if (!gastoRes.recordset.length) { await transaction.rollback(); return res.status(404).json({ error: 'Gasto no encontrado' }); }
+    if (gastoRes.recordset[0].estado === 'anulada') { await transaction.rollback(); return res.status(400).json({ error: 'El gasto ya está anulado' }); }
 
     const gasto = gastoRes.recordset[0];
 
+    // Revertir movimiento financiero con compensación (INSERT inverso, nunca DELETE)
     if (gasto.forma_pago_id) {
       const esCuentaCorriente = gasto.forma_pago_nombre &&
         gasto.forma_pago_nombre.toLowerCase().includes('cuenta corriente');
 
       if (esCuentaCorriente && gasto.proveedor_id) {
-        // Revertir el débito en CuentaCorrienteProveedores
-        const r2 = new sql.Request(transaction);
-        await r2
+        await new sql.Request(transaction)
           .input('proveedor_id', sql.Int, gasto.proveedor_id)
           .input('monto', sql.Decimal(12,2), gasto.monto)
-          .input('observacion', sql.NVarChar, gasto.concepto)
-          .query(`DELETE TOP(1) FROM CuentaCorrienteProveedores
-                  WHERE proveedor_id = @proveedor_id
-                    AND tipo = 'debito'
-                    AND monto = @monto
-                    AND observacion = @observacion`);
+          .input('observacion', sql.NVarChar, 'Anulación gasto: ' + gasto.concepto + ' — ' + motivo)
+          .query(`INSERT INTO CuentaCorrienteProveedores
+                  (proveedor_id, tipo, monto, observacion)
+                  VALUES (@proveedor_id, 'credito', @monto, @observacion)`);
       } else if (!esCuentaCorriente) {
-        // Revertir el egreso en Caja
-        const r3 = new sql.Request(transaction);
-        await r3
-          .input('concepto', sql.NVarChar, gasto.concepto)
+        await new sql.Request(transaction)
+          .input('concepto', sql.NVarChar, 'Anulación gasto: ' + gasto.concepto + ' — ' + motivo)
           .input('monto', sql.Decimal(12,2), gasto.monto)
-          .query(`DELETE TOP(1) FROM Caja
-                  WHERE tipo = 'egreso'
-                    AND monto = @monto
-                    AND (concepto = @concepto OR concepto LIKE @concepto + '%')`);
+          .input('temporada_id', sql.Int, gasto.temporada_id || null)
+          .input('usuario_nombre', sql.NVarChar, req.user ? req.user.nombre : null)
+          .query(`INSERT INTO Caja (tipo, concepto, monto, temporada_id, usuario_nombre)
+                  VALUES ('ingreso', @concepto, @monto, @temporada_id, @usuario_nombre)`);
       }
     }
 
-    // Borrar el gasto
-    const r4 = new sql.Request(transaction);
-    await r4
-      .input('id', sql.Int, req.params.id)
-      .query('DELETE FROM Gastos WHERE id = @id');
+    // Marcar como anulada
+    await new sql.Request(transaction)
+      .input('id', sql.Int, gastoId)
+      .query("UPDATE Gastos SET estado = 'anulada' WHERE id = @id");
 
     await transaction.commit();
     res.json({ ok: true });
