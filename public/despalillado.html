@@ -412,8 +412,11 @@
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>#</th><th>Despalillador</th><th>Fecha</th><th>Tipo</th>
-                  <th style="text-align:right;">Kg</th><th>Parcela</th><th>Depósito</th><th>Usuario</th>
+                  <th>Despalillador</th><th>Fecha/Hora</th>
+                  <th style="text-align:right;">Kg desp.</th>
+                  <th style="text-align:right;">Merma kg</th>
+                  <th style="text-align:right;">Merma %</th>
+                  <th>Parcela/Origen</th><th>Depósito</th>
                 </tr>
               </thead>
               <tbody id="tbody-desp-hoy"></tbody>
@@ -862,6 +865,41 @@
   }
 
   // ── HISTORIAL + KPIs ──────────────────────────────────────────────
+  function fmtFH(iso) {
+    if (!iso) return '—';
+    var d = new Date(iso);
+    return d.toLocaleDateString('es-AR', {day:'2-digit',month:'2-digit'}) + ' ' +
+           d.toLocaleTimeString('es-AR', {hour:'2-digit',minute:'2-digit'});
+  }
+  function fmtKg(v) {
+    return parseFloat(v || 0).toLocaleString('es-AR', {minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+
+  function renderDespalilladoHoy(data) {
+    var tbody = document.getElementById('tbody-desp-hoy');
+    if (!data || !data.length) {
+      tbody.innerHTML = '<tr><td colspan="7" class="empty">Sin registros hoy</td></tr>';
+      return;
+    }
+    var mono = "font-family:'JetBrains Mono',monospace;";
+    tbody.innerHTML = data.map(function(r) {
+      var mermaKg  = r.merma_kg  != null ? parseFloat(r.merma_kg) : null;
+      var mermaPct = r.merma_pct != null ? parseFloat(r.merma_pct) : null;
+      var mermaColor = mermaPct != null && mermaPct > 5 ? 'color:var(--sem-rojo);' : 'color:var(--sem-verde);';
+      return '<tr>' +
+        '<td style="font-weight:600;font-size:13px;">' + (r.despalillador || '—') + '</td>' +
+        '<td style="font-size:12px;white-space:nowrap;">' + fmtFH(r.fecha) + '</td>' +
+        '<td style="' + mono + 'text-align:right;font-weight:700;color:var(--sem-verde);">' + fmtKg(r.kilos) + ' kg</td>' +
+        '<td style="' + mono + 'text-align:right;' + (mermaKg != null ? 'color:var(--sem-rojo);' : 'color:var(--texto-suave);') + '">' +
+          (mermaKg != null ? fmtKg(mermaKg) + ' kg' : '—') + '</td>' +
+        '<td style="' + mono + 'text-align:right;font-weight:700;' + (mermaPct != null ? mermaColor : 'color:var(--texto-suave);') + '">' +
+          (mermaPct != null ? mermaPct.toFixed(1) + '%' : '—') + '</td>' +
+        '<td style="font-size:12px;">' + (r.parcela || '<em style="color:var(--texto-suave);">Fruta fresca</em>') + '</td>' +
+        '<td style="font-size:12px;">' + (r.deposito || '—') + '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
   function cargarHistorial() {
     fetch('/api/despalillado/hoy')
       .then(function(r) { return r.json(); })
@@ -889,22 +927,7 @@
         document.getElementById('kpi-merma-pct').textContent = avgMermaPct != null ? avgMermaPct.toFixed(1) + '%' : '—';
         kpiWrap.style.display = '';
 
-        // Grilla estándar — mapear al formato de movimientos-grid
-        var rows = data.map(function(r) {
-          return {
-            juntada_id:  r.juntada_id,
-            cosechero:   r.despalillador,
-            juntador_id: null,
-            fecha:       r.fecha,
-            tipo:        'ingreso',
-            kilos:       r.kilos,
-            lote:        r.parcela || 'Fresco s/parcela',
-            deposito:    r.deposito,
-            usuario:     r.usuario,
-            usuario_id:  r.usuario_id
-          };
-        });
-        renderMovimientosGrid('tbody-desp-hoy', rows);
+        renderDespalilladoHoy(data);
         wrap.style.display = '';
       });
   }
@@ -921,7 +944,7 @@
   function cargarHistorialCompleto() {
     var tbody = document.getElementById('tbody-hist-completo');
     tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--texto-suave);">Cargando...</td></tr>';
-    var tid = _temporadaActivaId || '';
+    var tid = (window.temporadaActiva && window.temporadaActiva.id) || '';
     var desde = document.getElementById('hist-desde').value;
     var hasta  = document.getElementById('hist-hasta').value;
     var params = [];
@@ -969,7 +992,7 @@
   function cargarTotalesDespalillador() {
     var tbody = document.getElementById('tbody-totales-desp');
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--texto-suave);">Cargando...</td></tr>';
-    var tid = _temporadaActivaId || '';
+    var tid = (window.temporadaActiva && window.temporadaActiva.id) || '';
     fetch('/api/despalillado/totales-por-despalillador' + (tid ? '?temporada_id=' + tid : ''))
       .then(function(r) { return r.json(); })
       .then(function(data) {
@@ -1010,7 +1033,7 @@
 </script>
 
 <!-- MODAL HISTORIAL COMPLETO -->
-<div class="modal-overlay" id="modal-hist-desp" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;">
+<div class="modal-overlay" id="modal-hist-desp" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;">
   <div style="background:#fff;border-radius:14px;padding:24px;width:92%;max-width:860px;max-height:88vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.15);">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
       <h3 style="color:var(--verde);margin:0;font-size:17px;font-weight:700;">Historial completo de despalillado</h3>
@@ -1039,7 +1062,7 @@
 </div>
 
 <!-- MODAL TOTALES POR DESPALILLADOR -->
-<div class="modal-overlay" id="modal-totales-desp" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;">
+<div class="modal-overlay" id="modal-totales-desp" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;">
   <div style="background:#fff;border-radius:14px;padding:24px;width:90%;max-width:640px;max-height:80vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.15);">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
       <h3 style="color:var(--verde);margin:0;font-size:17px;font-weight:700;">Totales campaña — por despalillador</h3>
