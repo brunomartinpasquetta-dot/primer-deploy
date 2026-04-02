@@ -18,7 +18,7 @@
     .rol-usuario        { background:#F1F5F9; color:#475569; }
     .badge-activo   { background:var(--success-bg); color:var(--success-text); }
     .badge-inactivo { background:var(--fondo-dark); color:var(--texto-suave); }
-    .btn-sm-danger { padding:4px 10px; font-size:12px; border-radius:5px; cursor:pointer; font-weight:600; background:var(--error-bg); color:var(--error-text); border:1px solid var(--error-border); }
+
 
     /* ── Permisos section ── */
     .permisos-tabs { display:flex; gap:4px; margin-bottom:0; flex-wrap:wrap; }
@@ -110,7 +110,7 @@
                 <th>Usuario</th>
                 <th>Rol</th>
                 <th>Estado</th>
-                <th></th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody id="tbody-usuarios">
@@ -212,10 +212,11 @@
           ? '<span class="badge-rol badge-activo">Activo</span>'
           : '<span class="badge-rol badge-inactivo">Inactivo</span>') + '</td>' +
         '<td>' + (u.activo
-          ? '<button class="btn-sm-danger" onclick="desactivar('+u.id+',\''+u.nombre+'\')">Desactivar</button>'
+          ? '<button class="btn-icon-danger" title="Desactivar" onclick="desactivar('+u.id+',\''+u.nombre+'\')"><i data-lucide="power"></i></button>'
           : '') + '</td>' +
         '</tr>';
     }).join('');
+    lucide.createIcons();
   }
 
   // ── Crear usuario ───────────────────────────────────────────────

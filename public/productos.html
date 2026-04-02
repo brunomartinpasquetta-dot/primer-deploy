@@ -229,7 +229,7 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
           <th title="Stock total en unidades de medida (lt, kg, u)" style="text-align:center;">Stock actual</th>
           <th style="text-align:right;">Costo unitario</th>
           <th>Proveedor</th>
-          <th></th>
+          <th>Acciones</th>
         </tr>
       </thead>
       <tbody id="tbody"><tr><td colspan="9" class="empty">Cargando...</td></tr></tbody>
@@ -401,8 +401,8 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
           '<td>$'+(p.costo_unitario?parseFloat(p.costo_unitario).toLocaleString('es-AR'):'—')+'</td>'+
           '<td style="font-size:12px;">'+proveedor+'</td>'+
           '<td style="white-space:nowrap;">'+
-            '<button class="btn-icon-xs" onclick="abrirEditar('+p.id+')" title="Editar"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button> '+
-            '<button class="btn-icon-xs" onclick="desactivar('+p.id+',\''+p.nombre.replace(/'/g,"\\'")+'\')" title="Desactivar" style="border-color:#fecaca;color:#ef4444;"><i data-lucide="power" style="width:12px;height:12px;"></i></button>'+
+            '<button class="btn-icon" onclick="abrirEditar('+p.id+')" title="Editar"><i data-lucide="pencil"></i></button> '+
+            '<button class="btn-icon-danger" onclick="desactivar('+p.id+',\''+p.nombre.replace(/'/g,"\\'")+'\')" title="Desactivar"><i data-lucide="power"></i></button>'+
           '</td>'+
           '</tr>';
       }).join('');

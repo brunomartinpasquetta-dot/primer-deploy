@@ -107,7 +107,7 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
         <col style="width:25%"><col style="width:12%"><col style="width:14%"><col style="width:13%">
         <col style="width:18%"><col style="width:18%">
       </colgroup>
-      <thead><tr><th>Nombre</th><th>Rubro</th><th>Contacto</th><th>Teléfono</th><th>Email</th><th></th></tr></thead>
+      <thead><tr><th>Nombre</th><th>Rubro</th><th>Contacto</th><th>Teléfono</th><th>Email</th><th>Acciones</th></tr></thead>
       <tbody id="tbody"><tr><td colspan="6" class="empty">Cargando...</td></tr></tbody>
     </table>
   </div>
@@ -181,9 +181,9 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
         if(!data.length){ tbody.innerHTML='<tr><td colspan="6" class="empty">Sin proveedores</td></tr>'; return; }
         tbody.innerHTML=data.map(function(p){
           var acciones =
-            '<button onclick="abrirEditar('+p.id+')" style="padding:4px 10px;font-size:12px;background:#f0f4e8;color:#2D5016;border:1px solid #a8d5b5;border-radius:6px;cursor:pointer;font-weight:600;margin-right:4px;"><i data-lucide="pencil" style="width:12px;height:12px;vertical-align:-2px;"></i> Editar</button>' +
-            '<button onclick="verInsumos('+p.id+',\''+p.nombre.replace(/'/g,'\\\'')+'\')" style="padding:4px 10px;font-size:12px;background:#e8f0fe;color:#1a56db;border:1px solid #a8c0f5;border-radius:6px;cursor:pointer;font-weight:600;margin-right:4px;"><i data-lucide="package" style="width:12px;height:12px;vertical-align:-2px;"></i> Ver insumos</button>' +
-            '<button onclick="desactivar('+p.id+',this)" style="padding:4px 10px;font-size:12px;background:#fde8e8;color:#c0392b;border:1px solid #f5a8a8;border-radius:6px;cursor:pointer;font-weight:600;"><i data-lucide="x-circle" style="width:12px;height:12px;vertical-align:-2px;"></i> Desactivar</button>';
+            '<button class="btn-icon" onclick="abrirEditar('+p.id+')"><i data-lucide="pencil" style="width:12px;height:12px;vertical-align:-2px;"></i> Editar</button>' +
+            '<button class="btn-icon" onclick="verInsumos('+p.id+',\''+p.nombre.replace(/'/g,'\\\'')+'\')"><i data-lucide="package" style="width:12px;height:12px;vertical-align:-2px;"></i> Ver insumos</button>' +
+            '<button class="btn-icon-danger" onclick="desactivar('+p.id+',this)"><i data-lucide="power" style="width:12px;height:12px;vertical-align:-2px;"></i> Desactivar</button>';
           return '<tr><td><strong>'+p.nombre+'</strong></td><td>'+(p.rubro||'-')+'</td><td>'+(p.contacto||'-')+'</td><td>'+(p.telefono||'-')+'</td><td>'+(p.email||'-')+'</td><td style="white-space:nowrap;">'+acciones+'</td></tr>';
         }).join('');
         lucide.createIcons();

@@ -94,7 +94,7 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
   <div class="card">
     <h2>Clientes registrados</h2>
     <table>
-      <thead><tr><th>Nombre</th><th>Contacto</th><th>Teléfono</th><th>Email</th><th></th></tr></thead>
+      <thead><tr><th>Nombre</th><th>Contacto</th><th>Teléfono</th><th>Email</th><th>Acciones</th></tr></thead>
       <tbody id="tbody"><tr><td colspan="5" class="empty">Cargando...</td></tr></tbody>
     </table>
   </div>
@@ -151,9 +151,9 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
         if(!data.length){ tbody.innerHTML='<tr><td colspan="5" class="empty">Sin clientes</td></tr>'; return; }
         tbody.innerHTML=data.map(function(c){
           var acciones =
-            '<button onclick="abrirEditar('+c.id+')" style="padding:4px 10px;font-size:12px;background:#f0f4e8;color:#2D5016;border:1px solid #a8d5b5;border-radius:6px;cursor:pointer;font-weight:600;margin-right:4px;"><i data-lucide="pencil" style="width:12px;height:12px;vertical-align:-2px;"></i> Editar</button>' +
-            '<button onclick="location.href=\'cuentas-clientes.html\'" style="padding:4px 10px;font-size:12px;background:#e8f0fe;color:#1a56db;border:1px solid #a8c0f5;border-radius:6px;cursor:pointer;font-weight:600;margin-right:4px;"><i data-lucide="receipt" style="width:12px;height:12px;vertical-align:-2px;"></i> Ver cuenta</button>' +
-            '<button onclick="desactivar('+c.id+',this)" style="padding:4px 10px;font-size:12px;background:#fde8e8;color:#c0392b;border:1px solid #f5a8a8;border-radius:6px;cursor:pointer;font-weight:600;"><i data-lucide="x-circle" style="width:12px;height:12px;vertical-align:-2px;"></i> Desactivar</button>';
+            '<button class="btn-icon" onclick="abrirEditar('+c.id+')"><i data-lucide="pencil" style="width:12px;height:12px;vertical-align:-2px;"></i> Editar</button>' +
+            '<button class="btn-icon" onclick="location.href=\'cuentas-clientes.html\'"><i data-lucide="receipt" style="width:12px;height:12px;vertical-align:-2px;"></i> Ver cuenta</button>' +
+            '<button class="btn-icon-danger" onclick="desactivar('+c.id+',this)"><i data-lucide="power" style="width:12px;height:12px;vertical-align:-2px;"></i> Desactivar</button>';
           return '<tr><td><strong>'+c.nombre+'</strong></td><td>'+(c.contacto||'-')+'</td><td>'+(c.telefono||'-')+'</td><td>'+(c.email||'-')+'</td><td style="white-space:nowrap;">'+acciones+'</td></tr>';
         }).join('');
         lucide.createIcons();

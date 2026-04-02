@@ -127,7 +127,7 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
     <h2>Campañas registradas</h2>
     <table>
       <thead>
-        <tr><th>Nombre</th><th>Cultivo</th><th>Tipo</th><th>Inicio</th><th>Fin</th><th>Estado</th><th>Acción</th></tr>
+        <tr><th>Nombre</th><th>Cultivo</th><th>Tipo</th><th>Inicio</th><th>Fin</th><th>Estado</th><th>Acciones</th></tr>
       </thead>
       <tbody id="tbody"></tbody>
     </table>
@@ -188,8 +188,8 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
           var inicio=t.fecha_inicio?t.fecha_inicio.toString().split('T')[0]:'-';
           var fin=t.fecha_fin?t.fecha_fin.toString().split('T')[0]:'-';
           var btnAccion=t.activa
-            ?'<button class="btn-sm btn-desactivar" onclick="cambiarEstado('+t.id+',0)" data-tooltip="Desactivar esta campaña">Desactivar</button>'
-            :'<button class="btn-sm btn-activar"    onclick="cambiarEstado('+t.id+',1)" data-tooltip="Activar esta campaña como la campaña activa del sistema">Activar</button>';
+            ?'<button class="btn-toggle-activo activo" onclick="cambiarEstado('+t.id+',0)" title="Desactivar"><i data-lucide="power" style="width:13px;height:13px;"></i></button>'
+            :'<button class="btn-toggle-activo inactivo" onclick="cambiarEstado('+t.id+',1)" title="Activar"><i data-lucide="power" style="width:13px;height:13px;"></i></button>';
           return '<tr>' +
             '<td><strong>'+t.nombre+'</strong>'+(t.descripcion?'<br><small style="color:#888;font-weight:400;">'+t.descripcion+'</small>':'')+'</td>'+
             '<td>'+cultivoBadge(t.cultivo)+'</td>'+
@@ -197,6 +197,7 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
             '<td>'+inicio+'</td><td>'+fin+'</td>'+
             '<td>'+estadoBadge+'</td><td>'+btnAccion+'</td></tr>';
         }).join('');
+        lucide.createIcons();
       });
     }
 

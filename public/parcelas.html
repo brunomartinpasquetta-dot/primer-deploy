@@ -172,7 +172,7 @@
         <button class="fb-limpiar" onclick="limpiarFiltrosParcelasActiva()">✕ Limpiar</button>
       </div>
       <table>
-        <thead><tr><th>Nombre</th><th>Hectáreas</th><th>Variedad</th><th>Implantación / Densidad</th><th>Estado</th><th></th></tr></thead>
+        <thead><tr><th>Nombre</th><th>Hectáreas</th><th>Variedad</th><th>Implantación / Densidad</th><th>Estado</th><th>Acciones</th></tr></thead>
         <tbody id="tbody-activa"><tr><td colspan="6" class="empty">Cargando...</td></tr></tbody>
       </table>
     </div>
@@ -183,7 +183,7 @@
         <button class="fb-limpiar" onclick="limpiarFiltrosParcelasTodos()">✕ Limpiar</button>
       </div>
       <table>
-        <thead><tr><th>Nombre</th><th>Campaña</th><th>Hectáreas</th><th>Variedad</th><th>Implantación / Densidad</th><th>Estado</th><th></th></tr></thead>
+        <thead><tr><th>Nombre</th><th>Campaña</th><th>Hectáreas</th><th>Variedad</th><th>Implantación / Densidad</th><th>Estado</th><th>Acciones</th></tr></thead>
         <tbody id="tbody-todos"><tr><td colspan="7" class="empty">Cargando...</td></tr></tbody>
       </table>
     </div>
@@ -365,11 +365,11 @@
 
     function renderParcelasActiva(data) {
       function btnEditar(l) {
-        return '<button onclick="abrirEditar('+l.id+',\''+encodeURIComponent(l.nombre||'')+'\',' +
+        return '<button class="btn-icon" onclick="abrirEditar('+l.id+',\''+encodeURIComponent(l.nombre||'')+'\',' +
           (l.hectareas||'')+',' +
           '\''+encodeURIComponent(l.variedad||'')+'\',' +
-          (l.cantidad_plantines||'')+')" ' +
-          'style="padding:4px 10px;font-size:12px;background:#f0f4e8;color:#2D5016;border:1px solid #a8d5b5;border-radius:6px;cursor:pointer;font-weight:600;">Editar</button>';
+          (l.cantidad_plantines||'')+')" title="Editar">' +
+          '<i data-lucide="pencil" style="width:14px;height:14px;"></i></button>';
       }
       var tbody = document.getElementById('tbody-activa');
       if (!data.length) { tbody.innerHTML='<tr><td colspan="6" class="empty">Sin parcelas en la campaña activa</td></tr>'; return; }
@@ -380,15 +380,16 @@
           '<td><span class="'+(l.activo?'badge-activo':'badge-inactivo')+'">'+(l.activo?'Activo':'Inactivo')+'</span></td>'+
           '<td>'+btnEditar(l)+'</td></tr>';
       }).join('');
+      lucide.createIcons();
     }
 
     function renderParcelasTodos(data) {
       function btnEditar(l) {
-        return '<button onclick="abrirEditar('+l.id+',\''+encodeURIComponent(l.nombre||'')+'\',' +
+        return '<button class="btn-icon" onclick="abrirEditar('+l.id+',\''+encodeURIComponent(l.nombre||'')+'\',' +
           (l.hectareas||'')+',' +
           '\''+encodeURIComponent(l.variedad||'')+'\',' +
-          (l.cantidad_plantines||'')+')" ' +
-          'style="padding:4px 10px;font-size:12px;background:#f0f4e8;color:#2D5016;border:1px solid #a8d5b5;border-radius:6px;cursor:pointer;font-weight:600;">Editar</button>';
+          (l.cantidad_plantines||'')+')" title="Editar">' +
+          '<i data-lucide="pencil" style="width:14px;height:14px;"></i></button>';
       }
       var tbody = document.getElementById('tbody-todos');
       if (!data.length) { tbody.innerHTML='<tr><td colspan="7" class="empty">Sin parcelas</td></tr>'; return; }
@@ -399,6 +400,7 @@
           '<td><span class="'+(l.activo?'badge-activo':'badge-inactivo')+'">'+(l.activo?'Activo':'Inactivo')+'</span></td>'+
           '<td>'+btnEditar(l)+'</td></tr>';
       }).join('');
+      lucide.createIcons();
     }
 
     var _parcelasActCols = [
