@@ -21,30 +21,11 @@
     .kpi-val.naranja { color:#f59e0b; }
     .kpi-val.rojo    { color:var(--sem-rojo); }
 
-    /* Estado badges */
-    .badge-en_cartera { background:#dbeafe; color:#1d4ed8; }
-    .badge-depositado { background:#fef9c3; color:#854d0e; }
-    .badge-acreditado { background:#dcfce7; color:#166534; }
-    .badge-rechazado  { background:#fee2e2; color:#991b1b; }
-    .badge-endosado   { background:#f3e8ff; color:#6b21a8; }
-    .badge-entregado  { background:#e0e7ff; color:#3730a3; }
-
     /* Row alerts */
     .vence-pronto td { background:var(--sem-amarillo-bg) !important; }
     .vencido td      { background:var(--sem-rojo-bg) !important; }
 
-    /* Action buttons */
-    .btn-accion { padding:4px 9px; font-size:11px; font-weight:600; border:none; border-radius:6px; cursor:pointer; margin:2px 1px; white-space:nowrap; }
-    .btn-dep    { background:#fef9c3; color:#854d0e;  border:1px solid #fde047; }
-    .btn-acred  { background:#dcfce7; color:#166534;  border:1px solid #86efac; }
-    .btn-rech   { background:#fee2e2; color:#991b1b;  border:1px solid #fca5a5; }
-    .btn-endos  { background:#f3e8ff; color:#6b21a8;  border:1px solid #d8b4fe; }
-    .btn-hist   { background:#f1f5f9; color:#475569;  border:1px solid #cbd5e1; }
-
-    /* Modal */
-    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:500; align-items:center; justify-content:center; padding:16px; }
-    .modal-overlay.open { display:flex; }
-    .modal-box { background:var(--superficie); border-radius:var(--radius-lg); width:100%; max-width:480px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,.25); padding:24px; }
+    /* Modal extras (title/close not in cosecha.css) */
     .modal-title { font-size:15px; font-weight:700; color:var(--verde); margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; }
     .modal-close { background:none; border:none; font-size:20px; cursor:pointer; color:#666; }
 
@@ -335,6 +316,10 @@ var ESTADO_LABEL = {
   en_cartera:'En cartera', depositado:'Depositado', acreditado:'Acreditado',
   rechazado:'Rechazado',   endosado:'Endosado',     entregado:'Entregado'
 };
+var ESTADO_BADGE_CLASS = {
+  en_cartera:'badge-activo', depositado:'badge-pendiente', acreditado:'badge-pagado',
+  rechazado:'badge-anulada', endosado:'badge-inactivo',    entregado:'badge-pendiente'
+};
 
 function fmt(n) { return parseFloat(n||0).toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:0}); }
 function parseFecha(str) {
@@ -415,7 +400,7 @@ function renderCheques(data, tipo, tbodyId) {
     if (dias !== null && (c.estado === 'en_cartera' || c.estado === 'depositado')) {
       if (dias < 0) rowClass = 'vencido'; else if (dias <= 7) rowClass = 'vence-pronto';
     }
-    var badge = '<span class="badge badge-' + c.estado + '">' + (ESTADO_LABEL[c.estado]||c.estado) + '</span>';
+    var badge = '<span class="badge ' + (ESTADO_BADGE_CLASS[c.estado]||'badge-inactivo') + '">' + (ESTADO_LABEL[c.estado]||c.estado) + '</span>';
     var numCol = c.tipo_cheque === 'echeq'
       ? '<span style="background:#dbeafe;color:#1e40af;font-size:10px;font-weight:700;padding:1px 5px;border-radius:8px;margin-right:3px;">E</span>' + (c.id_echeq||'-')
       : (c.numero||'-');
@@ -444,6 +429,7 @@ function renderCheques(data, tipo, tbodyId) {
         '<td>'+badge+'</td><td>'+btns+'</td></tr>';
     }
   }).join('');
+  lucide.createIcons();
 }
 
 function accionesHTML(c) {
@@ -451,17 +437,17 @@ function accionesHTML(c) {
   var ref  = JSON.stringify(c.numero || c.id_echeq || c.id).replace(/'/g,"\\'");
   if (c.tipo === 'recibido') {
     if (c.estado === 'en_cartera') {
-      btns += '<button class="btn-accion btn-dep"   onclick="accion('+c.id+',\'depositar\')">Depositar</button>';
-      btns += '<button class="btn-accion btn-endos" onclick="accion('+c.id+',\'endosar\')">Endosar</button>';
-      btns += '<button class="btn-accion btn-rech"  onclick="accion('+c.id+',\'rechazar\')">Rechazar</button>';
+      btns += '<button class="btn-icon" title="Depositar" onclick="accion('+c.id+',\'depositar\')"><i data-lucide="landmark"></i></button>';
+      btns += '<button class="btn-icon" title="Endosar" onclick="accion('+c.id+',\'endosar\')"><i data-lucide="arrow-right-left"></i></button>';
+      btns += '<button class="btn-icon-danger" title="Rechazar" onclick="accion('+c.id+',\'rechazar\')"><i data-lucide="x-circle"></i></button>';
     } else if (c.estado === 'depositado') {
-      btns += '<button class="btn-accion btn-acred" onclick="accion('+c.id+',\'acreditar\')">Acreditar →Caja</button>';
-      btns += '<button class="btn-accion btn-rech"  onclick="accion('+c.id+',\'rechazar\')">Rechazar</button>';
+      btns += '<button class="btn-icon" title="Acreditar → Caja" onclick="accion('+c.id+',\'acreditar\')"><i data-lucide="check-circle"></i></button>';
+      btns += '<button class="btn-icon-danger" title="Rechazar" onclick="accion('+c.id+',\'rechazar\')"><i data-lucide="x-circle"></i></button>';
     }
   } else if (c.tipo === 'emitido' && c.estado === 'entregado') {
-    btns += '<button class="btn-accion btn-rech" onclick="accion('+c.id+',\'rechazar\')">Rechazar</button>';
+    btns += '<button class="btn-icon-danger" title="Rechazar" onclick="accion('+c.id+',\'rechazar\')"><i data-lucide="x-circle"></i></button>';
   }
-  btns += '<button class="btn-accion btn-hist" onclick="verHistorial('+c.id+','+ref+')">Hist.</button>';
+  btns += '<button class="btn-icon" title="Historial" onclick="verHistorial('+c.id+','+ref+')"><i data-lucide="clock"></i></button>';
   return btns;
 }
 
