@@ -265,8 +265,8 @@
                 </div>
                 <div class="form-row" style="margin-top:12px;">
                   <label>Kg a despalillar</label>
-                  <input type="text" inputmode="decimal" id="kilos-origen" placeholder="0.00"
-                    data-miles oninput="checkReady();actualizarMermaPreview()">
+                  <input type="number" inputmode="decimal" id="kilos-origen" placeholder="0.00" min="0" step="any"
+                    style="-moz-appearance:textfield;" oninput="checkReady();actualizarMermaPreview()">
                 </div>
               </div>
 
@@ -294,10 +294,10 @@
                 <div class="form-row" style="margin-top:12px;">
                   <label>Kg repesados</label>
                   <div class="peso" id="peso-display-fresca">— kg</div>
-                  <input type="text" inputmode="decimal" id="kilos-repesaje" placeholder="0.00"
-                    data-miles
+                  <input type="number" inputmode="decimal" id="kilos-repesaje" placeholder="0.00" min="0" step="any"
+                    style="-moz-appearance:textfield;"
                     oninput="
-                      var v = _parseVal(this.value)||null;
+                      var v = parseFloat(this.value)||null;
                       pesoActual = v;
                       var d = document.getElementById('peso-display-fresca');
                       d.textContent = v ? v + ' kg' : '— kg';
@@ -365,9 +365,9 @@
             <div class="peso" id="peso-display">— kg</div>
             <div class="form-row" style="margin-top:8px;">
               <label>Ingreso manual</label>
-              <input type="text" inputmode="decimal" id="peso-manual" placeholder="0.00"
-                data-miles
-                oninput="pesoActual=_parseVal(this.value)||null;checkReady();actualizarMermaPreview()">
+              <input type="number" inputmode="decimal" id="peso-manual" placeholder="0.00" min="0" step="any"
+                style="-moz-appearance:textfield;"
+                oninput="pesoActual=parseFloat(this.value)||null;checkReady();actualizarMermaPreview()">
             </div>
             <div class="merma-preview" id="merma-preview-camara">
               <div class="merma-preview-title">Merma estimada</div>

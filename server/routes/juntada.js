@@ -146,11 +146,12 @@ router.post('/', async (req, res) => {
             if (d.precio_kilo && parseFloat(d.precio_kilo) > 0) {
               const total = parseFloat(d.kilos) * parseFloat(d.precio_kilo);
               await transaction.request()
-                .input('concepto',     sql.NVarChar,     `Venta directa juntada #${newId}${d.comprador ? ' a ' + d.comprador : ''}`)
-                .input('monto',        sql.Decimal(12,2),total)
-                .input('temporada_id', sql.Int,          temporada_id)
-                .query(`INSERT INTO Caja (tipo, concepto, monto, temporada_id)
-                        VALUES ('ingreso', @concepto, @monto, @temporada_id)`);
+                .input('concepto',       sql.NVarChar,     `Venta directa juntada #${newId}${d.comprador ? ' a ' + d.comprador : ''}`)
+                .input('monto',          sql.Decimal(12,2),total)
+                .input('temporada_id',   sql.Int,          temporada_id)
+                .input('usuario_nombre', sql.NVarChar,     req.user ? req.user.nombre : null)
+                .query(`INSERT INTO Caja (tipo, concepto, monto, temporada_id, usuario_nombre)
+                        VALUES ('ingreso', @concepto, @monto, @temporada_id, @usuario_nombre)`);
             }
 
           } else if (d.tipo === 'descarte') {

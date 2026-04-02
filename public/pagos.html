@@ -123,9 +123,9 @@
         </div>
       </div>
       <label>Precio por kilo ($)</label>
-      <input type="text" inputmode="decimal" id="liq-precio" placeholder="Ej: 800" data-miles onchange="calcularLiquidacion()">
+      <input type="number" inputmode="decimal" id="liq-precio" placeholder="Ej: 800" min="0" step="any" style="-moz-appearance:textfield;" onchange="calcularLiquidacion()">
       <label>Anticipos a descontar ($)</label>
-      <input type="text" inputmode="decimal" id="liq-anticipos" placeholder="Ej: 5000" data-miles onchange="calcularLiquidacion()">
+      <input type="number" inputmode="decimal" id="liq-anticipos" placeholder="Ej: 5000" min="0" step="any" style="-moz-appearance:textfield;" onchange="calcularLiquidacion()">
       <label>Observacion</label>
       <input type="text" id="liq-obs" placeholder="Opcional">
       <div class="resultado-liquidacion" id="resultado" style="display:none;">
@@ -147,7 +147,7 @@
       <label>Juntador</label>
       <select id="ant-juntador"></select>
       <label>Monto ($)</label>
-      <input type="text" inputmode="decimal" id="ant-monto" placeholder="Ej: 5000" data-miles>
+      <input type="number" inputmode="decimal" id="ant-monto" placeholder="Ej: 5000" min="0" step="any" style="-moz-appearance:textfield;">
       <label>Observacion</label>
       <input type="text" id="ant-obs" placeholder="Opcional">
       <button class="btn btn-red" id="btn-anticipo" onclick="registrarAnticipo(this)">Registrar Anticipo</button>
@@ -166,7 +166,7 @@
       <label>Temporada</label>
       <select id="precio-temporada"></select>
       <label>Precio por kilo ($)</label>
-      <input type="text" inputmode="decimal" id="precio-valor" placeholder="Ej: 800" data-miles>
+      <input type="number" inputmode="decimal" id="precio-valor" placeholder="Ej: 800" min="0" step="any" style="-moz-appearance:textfield;">
       <label>Destino</label>
       <select id="precio-destino">
         <option value="fresco">Fresco</option>

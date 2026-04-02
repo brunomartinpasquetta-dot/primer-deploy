@@ -90,35 +90,14 @@
 
   <!-- HISTORIAL -->
   <div id="tab-historial" class="tab-content active">
-    <div class="card" style="margin-bottom:12px;">
-      <div class="two-col">
-        <div>
-          <label>Temporada</label>
-          <select id="filtro-temporada" onchange="cargarParcelasPorTemporada();cargarHistorial()"></select>
-        </div>
-        <div>
-          <label>Parcela</label>
-          <select id="filtro-parcela" onchange="cargarHistorial()">
-            <option value="">Todos los parcelas</option>
-          </select>
-        </div>
-      </div>
-      <label class="toggle-fecha">
-        <input type="checkbox" id="filtrar-fechas" onchange="toggleFechas()">
-        <span>Filtrar por rango de fechas</span>
-      </label>
-      <div id="rango-fechas" style="display:none;">
-        <div class="two-col">
-          <div>
-            <label>Desde</label>
-            <input type="date" id="filtro-desde" onchange="cargarHistorial()">
-          </div>
-          <div>
-            <label>Hasta</label>
-            <input type="date" id="filtro-hasta" onchange="cargarHistorial()">
-          </div>
-        </div>
-      </div>
+    <div class="filtros-barra" style="margin-bottom:12px;">
+      <select id="filtro-temporada" onchange="cargarParcelasPorTemporada();cargarHistorial()"></select>
+      <select id="filtro-parcela" onchange="cargarHistorial()">
+        <option value="">Todas las parcelas</option>
+      </select>
+      <input type="date" id="filtro-desde" onchange="cargarHistorial()" title="Desde">
+      <input type="date" id="filtro-hasta" onchange="cargarHistorial()" title="Hasta">
+      <button class="fb-limpiar" onclick="limpiarFiltros()">✕ Limpiar</button>
     </div>
     <div class="gasto-toolbar">
       <input type="text" id="buscar-gasto" placeholder="Buscar concepto, categoría..." oninput="filtrarGastos()">
@@ -175,13 +154,10 @@
     });
   }
 
-  function toggleFechas() {
-    var checked = document.getElementById('filtrar-fechas').checked;
-    document.getElementById('rango-fechas').style.display = checked ? '' : 'none';
-    if (!checked) {
-      document.getElementById('filtro-desde').value = '';
-      document.getElementById('filtro-hasta').value = '';
-    }
+  function limpiarFiltros() {
+    document.getElementById('filtro-desde').value = '';
+    document.getElementById('filtro-hasta').value = '';
+    document.getElementById('filtro-parcela').value = '';
     cargarHistorial();
   }
 </script>

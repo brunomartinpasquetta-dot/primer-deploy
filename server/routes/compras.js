@@ -9,6 +9,7 @@ router.get('/', async (req, res) => {
     const pool = await getPool();
     const dbReq = pool.request();
     let query = `SELECT c.id, c.fecha, c.total, c.observacion,
+              c.proveedor_id,
               p.nombre AS proveedor,
               t.nombre AS temporada,
               fp.nombre AS forma_pago,
@@ -170,22 +171,24 @@ router.post('/', async (req, res) => {
           const cheque_id = chequeResult.recordset[0].id;
 
           await new sql.Request(transaction)
-            .input('concepto',      sql.NVarChar,      'Compra: ' + proveedorNombre + ' (cheque)' + (observacion ? ' - ' + observacion : ''))
-            .input('monto',         sql.Decimal(12,2), total)
-            .input('forma_pago_id', sql.Int,           forma_pago_id)
-            .input('cheque_id',     sql.Int,           cheque_id)
-            .input('temporada_id',  sql.Int,           temporada_id || null)
-            .query(`INSERT INTO Caja (tipo, concepto, monto, forma_pago_id, cheque_id, temporada_id)
-                    VALUES ('egreso', @concepto, @monto, @forma_pago_id, @cheque_id, @temporada_id)`);
+            .input('concepto',        sql.NVarChar,      'Compra: ' + proveedorNombre + ' (cheque)' + (observacion ? ' - ' + observacion : ''))
+            .input('monto',           sql.Decimal(12,2), total)
+            .input('forma_pago_id',   sql.Int,           forma_pago_id)
+            .input('cheque_id',       sql.Int,           cheque_id)
+            .input('temporada_id',    sql.Int,           temporada_id || null)
+            .input('usuario_nombre',  sql.NVarChar,      req.user ? req.user.nombre : null)
+            .query(`INSERT INTO Caja (tipo, concepto, monto, forma_pago_id, cheque_id, temporada_id, usuario_nombre)
+                    VALUES ('egreso', @concepto, @monto, @forma_pago_id, @cheque_id, @temporada_id, @usuario_nombre)`);
 
         } else {
           await new sql.Request(transaction)
-            .input('concepto',      sql.NVarChar,      'Compra: ' + proveedorNombre + (observacion ? ' - ' + observacion : ''))
-            .input('monto',         sql.Decimal(12,2), total)
-            .input('forma_pago_id', sql.Int,           forma_pago_id)
-            .input('temporada_id',  sql.Int,           temporada_id || null)
-            .query(`INSERT INTO Caja (tipo, concepto, monto, forma_pago_id, temporada_id)
-                    VALUES ('egreso', @concepto, @monto, @forma_pago_id, @temporada_id)`);
+            .input('concepto',        sql.NVarChar,      'Compra: ' + proveedorNombre + (observacion ? ' - ' + observacion : ''))
+            .input('monto',           sql.Decimal(12,2), total)
+            .input('forma_pago_id',   sql.Int,           forma_pago_id)
+            .input('temporada_id',    sql.Int,           temporada_id || null)
+            .input('usuario_nombre',  sql.NVarChar,      req.user ? req.user.nombre : null)
+            .query(`INSERT INTO Caja (tipo, concepto, monto, forma_pago_id, temporada_id, usuario_nombre)
+                    VALUES ('egreso', @concepto, @monto, @forma_pago_id, @temporada_id, @usuario_nombre)`);
         }
       }
     }

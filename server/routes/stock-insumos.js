@@ -5,15 +5,22 @@ const { getPool, sql } = require('../db');
 // Obtener stock actual consolidado por producto + proveedor + depósito
 router.get('/', async (req, res) => {
   try {
+    const { categoria } = req.query;
     const pool = await getPool();
-    const result = await pool.request()
-      .query(`
+    const dbReq = pool.request();
+    let catFilter = '';
+    if (categoria) {
+      dbReq.input('categoria', sql.NVarChar, categoria);
+      catFilter = 'AND p.categoria = @categoria';
+    }
+    const result = await dbReq.query(`
         SELECT
           p.id   AS producto_id,
           p.nombre AS producto,
           ISNULL(p.unidad_medida, p.presentacion) AS unidad,
           p.contenido_litros,
           p.tipo AS categoria,
+          p.categoria AS categoria_nueva,
           p.envase,
           p.costo_unitario,
           p.stock_minimo,
@@ -28,8 +35,8 @@ router.get('/', async (req, res) => {
         FROM Productos p
         JOIN StockInsumos si ON si.producto_id = p.id
         LEFT JOIN Depositos d ON si.deposito_id = d.id
-        WHERE p.activo = 1
-        GROUP BY p.id, p.nombre, p.unidad_medida, p.presentacion, p.contenido_litros, p.tipo, p.envase,
+        WHERE p.activo = 1 ${catFilter}
+        GROUP BY p.id, p.nombre, p.unidad_medida, p.presentacion, p.contenido_litros, p.tipo, p.categoria, p.envase,
                  p.costo_unitario, p.stock_minimo,
                  ISNULL(si.proveedor, 'Sin proveedor'),
                  ISNULL(d.nombre, '—'), d.tipo

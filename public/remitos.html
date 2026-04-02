@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1A2E0A">
+  <title>Remitos — Cosecha</title>
+  <link rel="icon" href="img/logo.png">
+  <script src="js/utils.js"></script>
+  <link rel="stylesheet" href="cosecha.css">
+  <style>
+    .empty { text-align:center; color:var(--texto-suave); padding:20px; }
+    .estado-badge { display:inline-block; padding:2px 10px; border-radius:12px; font-size:11px; font-weight:700; white-space:nowrap; }
+    .estado-cobrado     { background:#eef7ee; color:#2d6a4f; }
+    .estado-pendiente   { background:#fff3cd; color:#856404; }
+    .estado-anulado     { background:#fde8e8; color:#c0392b; }
+    .mono { font-family:'JetBrains Mono',monospace; }
+    /* Modal */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:100; align-items:center; justify-content:center; }
+    .modal-overlay.open { display:flex; }
+    .modal-box { background:#fff; border-radius:14px; padding:24px; width:92%; max-width:600px; max-height:88vh; overflow-y:auto; box-shadow:0 8px 32px rgba(0,0,0,.18); }
+    .modal-box h3 { color:var(--verde); margin-bottom:4px; font-size:17px; font-weight:700; }
+    .modal-meta { display:flex; flex-wrap:wrap; gap:6px; font-size:12px; margin-bottom:14px; }
+    .modal-meta span { background:var(--fondo); border:1px solid var(--borde); border-radius:20px; padding:3px 10px; }
+    .items-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .items-table th { background:var(--fondo-dark); font-size:10px; text-transform:uppercase; letter-spacing:.5px; font-weight:700; padding:8px 10px; text-align:left; }
+    .items-table td { padding:8px 10px; border-bottom:1px solid var(--borde); }
+    .btn-marcar { padding:4px 12px; border-radius:6px; border:none; font-size:12px; font-weight:700; cursor:pointer; }
+    .btn-marcar.cobrar { background:#eef7ee; color:#2d6a4f; border:1px solid #2d6a4f; }
+    .btn-marcar.anular { background:#fde8e8; color:#c0392b; border:1px solid #c0392b; }
+    .btn-cerrar { background:var(--fondo-dark); color:var(--texto-2); border:1.5px solid var(--borde); border-radius:8px; padding:10px 20px; font-size:13px; font-weight:700; cursor:pointer; margin-top:16px; width:100%; }
+    .kpi-row { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+    .kpi-r { background:var(--superficie); border:1px solid var(--borde); border-radius:10px; padding:10px 16px; flex:0 0 auto; min-width:130px; }
+    .kpi-r-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.6px; color:var(--texto-suave); }
+    .kpi-r-val   { font-size:18px; font-weight:700; font-family:'JetBrains Mono',monospace; margin-top:2px; }
+  </style>
+  <script src="js/auth-check.js"></script>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="img/logo-icon.png" style="height:44px;width:44px;border-radius:10px;">
+      <div style="margin-left:10px;display:flex;flex-direction:column;justify-content:center;line-height:1.1;">
+        <span style="color:white;font-weight:700;font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span>
+        <span style="color:rgba(255,255,255,0.5);font-size:10px;letter-spacing:1.5px;margin-top:2px;">SISTEMA DE CULTIVOS</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-item"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard</a>
+      <div class="nav-section">Campo</div>
+      <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
+      <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
+      <div class="nav-section">Sistema</div>
+      <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
+      <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
+      <a href="menu-admin.html" class="nav-item active"><span class="nav-icon"><i data-lucide="landmark"></i></span> Administración</a>
+      <a href="mercado.html" class="nav-item"><span class="nav-icon"><i data-lucide="trending-up"></i></span> Mercado</a>
+      <a href="menu-config.html" class="nav-item"><span class="nav-icon"><i data-lucide="settings"></i></span> Configuración</a>
+    </nav>
+    <div class="sidebar-footer">Sistema Agrícola v2</div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
+        <img src="img/logo-icon.png" style="height:44px;width:44px;border-radius:10px;">
+        <div style="margin-left:10px;display:flex;flex-direction:column;justify-content:center;line-height:1.1;">
+          <span style="color:white;font-weight:700;font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span>
+          <span style="color:rgba(255,255,255,0.5);font-size:10px;letter-spacing:1.5px;margin-top:2px;">SISTEMA DE CULTIVOS</span>
+        </div>
+        <span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-date" id="topbar-date"></span>
+      </div>
+    </header>
+
+    <div class="content">
+      <a href="#" onclick="volverPagina('menu-admin.html');return false;" class="btn-volver">← Volver</a>
+      <div class="content-header">
+        <div class="content-title">Remitos</div>
+        <div class="content-sub">Registro de todos los remitos de venta generados</div>
+      </div>
+
+      <!-- KPIs -->
+      <div class="kpi-row" id="kpi-remitos"></div>
+
+      <!-- Filtros -->
+      <div class="filtros-barra">
+        <input type="search" class="fb-buscar" id="filtro-buscar" placeholder="Filtrar por cliente, N° remito..." oninput="buscarRemitos()">
+        <div class="fb-sep"></div>
+        <select id="filtro-estado" onchange="cargarRemitos()" title="Estado">
+          <option value="">Todos los estados</option>
+          <option value="cobrado">Cobrado</option>
+          <option value="pendiente_cc">CC Pendiente</option>
+          <option value="anulado">Anulado</option>
+        </select>
+        <div class="fb-sep"></div>
+        <select id="filtro-temporada" onchange="cargarRemitos()" title="Temporada">
+          <option value="">Todas las temporadas</option>
+        </select>
+        <div class="fb-sep"></div>
+        <input type="date" id="filtro-desde" onchange="cargarRemitos()" title="Desde">
+        <input type="date" id="filtro-hasta" onchange="cargarRemitos()" title="Hasta">
+        <button class="fb-limpiar" onclick="limpiarFiltros()">✕ Limpiar</button>
+      </div>
+
+      <!-- Tabla -->
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>N° Remito</th>
+                <th>Fecha</th>
+                <th>Cliente</th>
+                <th>Ítems</th>
+                <th>Kg Total</th>
+                <th>Total</th>
+                <th>Forma de pago</th>
+                <th>Estado</th>
+                <th>Usuario</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="tbody-remitos">
+              <tr><td colspan="10" class="empty">Cargando...</td></tr>
+            </tbody>
+            <tfoot id="tfoot-remitos"></tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal detalle remito -->
+  <div class="modal-overlay" id="modal-remito">
+    <div class="modal-box">
+      <h3 id="modal-numero">Remito</h3>
+      <div class="modal-meta" id="modal-meta"></div>
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>Depósito</th>
+            <th>Variedad</th>
+            <th style="text-align:right;">Kg</th>
+            <th style="text-align:right;">Precio/Kg</th>
+            <th style="text-align:right;">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody id="modal-items"></tbody>
+      </table>
+      <div id="modal-acciones" style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;"></div>
+      <div id="modal-msg" style="font-size:13px;margin-top:8px;"></div>
+      <button class="btn-cerrar" onclick="cerrarModal()">Cerrar</button>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <a href="index.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="home"></i></span><span>Inicio</span></a>
+    <a href="juntada.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="wheat"></i></span><span>Cosecha</span></a>
+    <a href="despalillado.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="scissors"></i></span><span>Despalillado</span></a>
+    <a href="aplicaciones.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="droplets"></i></span><span>Aplicaciones</span></a>
+    <a href="menu-campo.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="menu"></i></span><span>Menú</span></a>
+  </nav>
+
+</div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+  lucide.createIcons();
+  document.getElementById('topbar-date').textContent =
+    new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
+
+  var _remitosData = [];
+
+  function limpiarFiltros() {
+    document.getElementById('filtro-buscar').value = '';
+    document.getElementById('filtro-estado').value = '';
+    document.getElementById('filtro-temporada').value = '';
+    document.getElementById('filtro-desde').value = '';
+    document.getElementById('filtro-hasta').value = '';
+    cargarRemitos();
+  }
+
+  function buscarRemitos() {
+    var q = (document.getElementById('filtro-buscar').value || '').toLowerCase();
+    var filtrados = _remitosData.filter(function(r) {
+      return !q ||
+        (r.numero || '').toLowerCase().indexOf(q) >= 0 ||
+        (r.cliente || '').toLowerCase().indexOf(q) >= 0;
+    });
+    renderRemitos(filtrados);
+  }
+
+  function estadoBadgeHtml(estado) {
+    var map = {
+      'cobrado':      ['estado-cobrado',   'Cobrado'],
+      'pendiente_cc': ['estado-pendiente', '⏳ CC Pendiente'],
+      'anulado':      ['estado-anulado',   'Anulado']
+    };
+    var e = map[estado] || ['estado-cobrado', estado || '—'];
+    return '<span class="estado-badge ' + e[0] + '">' + e[1] + '</span>';
+  }
+
+  function renderRemitos(data) {
+    var tbody = document.getElementById('tbody-remitos');
+    var tfoot = document.getElementById('tfoot-remitos');
+    if (!data.length) {
+      tbody.innerHTML = '<tr><td colspan="10" class="empty">Sin remitos</td></tr>';
+      tfoot.innerHTML = ''; return;
+    }
+    var totalKg = 0, totalMonto = 0;
+    var mono = "font-family:'JetBrains Mono',monospace;";
+    tbody.innerHTML = data.map(function(r) {
+      var kg  = parseFloat(r.kilos_total) || 0;
+      var tot = parseFloat(r.total) || 0;
+      totalKg += kg; totalMonto += tot;
+      var fecha = r.fecha ? r.fecha.toString().split('T')[0] : '-';
+      return '<tr style="cursor:pointer;" onclick="abrirDetalle(' + r.id + ')">' +
+        '<td style="'+mono+'font-weight:700;color:var(--verde);">' + (r.numero || '-') + '</td>' +
+        '<td style="font-size:12px;">' + fecha + (r.temporada ? '<br><small style="color:var(--texto-suave);">' + r.temporada + '</small>' : '') + '</td>' +
+        '<td>' + (r.cliente || '<em style="color:var(--texto-suave);">Sin cliente</em>') + '</td>' +
+        '<td style="text-align:center;color:var(--texto-suave);font-size:12px;">' + (r.cant_items || 0) + '</td>' +
+        '<td style="'+mono+'">' + kg.toLocaleString('es-AR', {maximumFractionDigits:1}) + ' kg</td>' +
+        '<td style="'+mono+'font-weight:700;">' + (tot > 0 ? '$' + tot.toLocaleString('es-AR', {minimumFractionDigits:2}) : '—') + '</td>' +
+        '<td style="font-size:12px;">' + (r.forma_pago || '—') + '</td>' +
+        '<td>' + estadoBadgeHtml(r.estado) + '</td>' +
+        '<td style="font-size:11px;color:var(--texto-suave);">' + (r.usuario_nombre || '—') + '</td>' +
+        '<td><button class="btn btn-secondary" style="padding:4px 10px;font-size:12px;" onclick="event.stopPropagation();abrirDetalle(' + r.id + ')">Ver</button></td>' +
+      '</tr>';
+    }).join('');
+    tfoot.innerHTML = '<tr style="background:var(--fondo-dark);font-weight:700;">' +
+      '<td colspan="4" style="padding:10px 12px;">TOTALES</td>' +
+      '<td style="padding:10px 12px;font-family:\'JetBrains Mono\',monospace;">' + totalKg.toLocaleString('es-AR',{maximumFractionDigits:1}) + ' kg</td>' +
+      '<td style="padding:10px 12px;font-family:\'JetBrains Mono\',monospace;">$' + totalMonto.toLocaleString('es-AR',{minimumFractionDigits:2}) + '</td>' +
+      '<td colspan="4"></td></tr>';
+    lucide.createIcons();
+  }
+
+  function cargarRemitos() {
+    var params = [];
+    var est = document.getElementById('filtro-estado').value;
+    var tid = document.getElementById('filtro-temporada').value;
+    var desde = document.getElementById('filtro-desde').value;
+    var hasta = document.getElementById('filtro-hasta').value;
+    if (est)   params.push('estado=' + est);
+    if (tid)   params.push('temporada_id=' + tid);
+    if (desde) params.push('desde=' + desde);
+    if (hasta) params.push('hasta=' + hasta);
+    document.getElementById('tbody-remitos').innerHTML = '<tr><td colspan="10" class="empty">Cargando...</td></tr>';
+    fetch('/api/remitos' + (params.length ? '?' + params.join('&') : ''))
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        _remitosData = data;
+        actualizarKPIs(data);
+        buscarRemitos();
+      })
+      .catch(function() {
+        document.getElementById('tbody-remitos').innerHTML = '<tr><td colspan="10" class="empty">Error al cargar</td></tr>';
+      });
+  }
+
+  function actualizarKPIs(data) {
+    var total  = data.reduce(function(s,r){ return s + (parseFloat(r.total)||0); }, 0);
+    var kg     = data.reduce(function(s,r){ return s + (parseFloat(r.kilos_total)||0); }, 0);
+    var pend   = data.filter(function(r){ return r.estado === 'pendiente_cc'; });
+    var montoPend = pend.reduce(function(s,r){ return s + (parseFloat(r.total)||0); }, 0);
+    document.getElementById('kpi-remitos').innerHTML =
+      '<div class="kpi-r"><div class="kpi-r-label">Remitos</div><div class="kpi-r-val" style="color:var(--verde);">' + data.length + '</div></div>' +
+      '<div class="kpi-r"><div class="kpi-r-label">Kg total</div><div class="kpi-r-val" style="color:#1565c0;">' + kg.toLocaleString('es-AR',{maximumFractionDigits:0}) + '</div></div>' +
+      '<div class="kpi-r"><div class="kpi-r-label">Monto total</div><div class="kpi-r-val" style="color:var(--verde);">$' + total.toLocaleString('es-AR',{maximumFractionDigits:0}) + '</div></div>' +
+      '<div class="kpi-r"><div class="kpi-r-label">CC Pendiente</div><div class="kpi-r-val" style="color:#856404;">$' + montoPend.toLocaleString('es-AR',{maximumFractionDigits:0}) + '</div></div>';
+  }
+
+  var _remitoActual = null;
+
+  function abrirDetalle(id) {
+    document.getElementById('modal-items').innerHTML = '<tr><td colspan="5" class="empty">Cargando...</td></tr>';
+    document.getElementById('modal-acciones').innerHTML = '';
+    document.getElementById('modal-msg').textContent = '';
+    document.getElementById('modal-remito').classList.add('open');
+    fetch('/api/remitos/' + id)
+      .then(function(r){ return r.json(); })
+      .then(function(rem) {
+        _remitoActual = rem;
+        document.getElementById('modal-numero').textContent = 'Remito ' + rem.numero;
+        var fecha = rem.fecha ? rem.fecha.toString().split('T')[0] : '-';
+        document.getElementById('modal-meta').innerHTML =
+          '<span>' + fecha + '</span>' +
+          (rem.cliente ? '<span>' + rem.cliente + '</span>' : '') +
+          (rem.temporada ? '<span>' + rem.temporada + '</span>' : '') +
+          (rem.forma_pago ? '<span>' + rem.forma_pago + '</span>' : '') +
+          '<span>' + estadoBadgeHtml(rem.estado) + '</span>' +
+          (rem.usuario_nombre ? '<span>👤 ' + rem.usuario_nombre + '</span>' : '');
+        var items = rem.items || [];
+        var mono = "font-family:'JetBrains Mono',monospace;";
+        document.getElementById('modal-items').innerHTML = items.length
+          ? items.map(function(it) {
+              var kg  = parseFloat(it.kilos) || 0;
+              var pr  = parseFloat(it.precio_kilo) || 0;
+              var sub = parseFloat(it.subtotal) || 0;
+              return '<tr>' +
+                '<td>' + (it.deposito || '—') + '</td>' +
+                '<td>' + (it.variedad || '—') + '</td>' +
+                '<td style="text-align:right;' + mono + '">' + kg.toLocaleString('es-AR',{maximumFractionDigits:2}) + ' kg</td>' +
+                '<td style="text-align:right;' + mono + '">' + (pr > 0 ? '$' + pr.toLocaleString('es-AR',{minimumFractionDigits:2}) : '—') + '</td>' +
+                '<td style="text-align:right;' + mono + 'font-weight:700;">' + (sub > 0 ? '$' + sub.toLocaleString('es-AR',{minimumFractionDigits:2}) : '—') + '</td>' +
+              '</tr>';
+            }).join('') +
+            '<tr style="font-weight:700;background:var(--fondo-dark);">' +
+              '<td colspan="2">TOTAL</td>' +
+              '<td style="text-align:right;' + mono + '">' + (parseFloat(rem.kilos_total)||0).toLocaleString('es-AR',{maximumFractionDigits:2}) + ' kg</td>' +
+              '<td></td>' +
+              '<td style="text-align:right;' + mono + '">$' + (parseFloat(rem.total)||0).toLocaleString('es-AR',{minimumFractionDigits:2}) + '</td>' +
+            '</tr>'
+          : '<tr><td colspan="5" class="empty">Sin ítems</td></tr>';
+        // Acciones según estado
+        var acc = document.getElementById('modal-acciones');
+        if (rem.estado === 'pendiente_cc') {
+          acc.innerHTML = '<button class="btn-marcar cobrar" onclick="cambiarEstado(\'cobrado\')">✓ Marcar como cobrado</button>' +
+                          '<button class="btn-marcar anular" onclick="cambiarEstado(\'anulado\')" style="margin-left:8px;">✕ Anular</button>';
+        } else if (rem.estado === 'cobrado') {
+          acc.innerHTML = '<button class="btn-marcar anular" onclick="cambiarEstado(\'anulado\')">✕ Anular</button>';
+        }
+      })
+      .catch(function() {
+        document.getElementById('modal-items').innerHTML = '<tr><td colspan="5" class="empty" style="color:#c0392b;">Error al cargar</td></tr>';
+      });
+  }
+
+  function cambiarEstado(nuevoEstado) {
+    if (!_remitoActual) return;
+    fetch('/api/remitos/' + _remitoActual.id + '/estado', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ estado: nuevoEstado })
+    }).then(function(r){ return r.json(); }).then(function(d) {
+      if (d.ok) {
+        document.getElementById('modal-msg').innerHTML = '<span style="color:#2d6a4f;font-weight:600;">Estado actualizado</span>';
+        document.getElementById('modal-acciones').innerHTML = '';
+        cargarRemitos();
+        setTimeout(cerrarModal, 1200);
+      } else {
+        document.getElementById('modal-msg').innerHTML = '<span style="color:#c0392b;">' + (d.error||'Error') + '</span>';
+      }
+    });
+  }
+
+  function cerrarModal() {
+    document.getElementById('modal-remito').classList.remove('open');
+    _remitoActual = null;
+  }
+
+  // Cargar temporadas para filtro
+  fetch('/api/temporadas').then(function(r){ return r.json(); }).then(function(data) {
+    document.getElementById('filtro-temporada').innerHTML =
+      '<option value="">Todas las temporadas</option>' +
+      data.map(function(t){ return '<option value="'+t.id+'">'+t.nombre+'</option>'; }).join('');
+    var activa = data.find(function(t){ return t.activa; });
+    if (activa) document.getElementById('filtro-temporada').value = activa.id;
+    cargarRemitos();
+  });
+
+  cargarTemporadaActiva();
+</script>
+</body>
+</html>

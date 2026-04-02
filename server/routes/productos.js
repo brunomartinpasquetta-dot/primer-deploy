@@ -45,6 +45,7 @@ router.post('/', async (req, res) => {
       .input('nombre',          sql.NVarChar,      nombre)
       .input('descripcion',     sql.NVarChar,      descripcion || '')
       .input('tipo',            sql.NVarChar,      tipo || '')
+      .input('categoria',       sql.NVarChar,      tipo || '')
       .input('presentacion',    sql.NVarChar,      presentacion || '')
       .input('unidad_medida',   sql.NVarChar,      presentacion || null)
       .input('contenido_litros',sql.Decimal(8,3),  contenido_litros || null)
@@ -52,8 +53,8 @@ router.post('/', async (req, res) => {
       .input('proveedor_id',    sql.Int,            proveedor_id || null)
       .input('envase',          sql.NVarChar,       envase || null)
       .input('stock_minimo',    sql.Decimal(10,3),  stock_minimo || null)
-      .query(`INSERT INTO Productos (nombre, descripcion, tipo, presentacion, unidad_medida, contenido_litros, costo_unitario, proveedor_id, envase, stock_minimo)
-              VALUES (@nombre, @descripcion, @tipo, @presentacion, @unidad_medida, @contenido_litros, @costo_unitario, @proveedor_id, @envase, @stock_minimo)`);
+      .query(`INSERT INTO Productos (nombre, descripcion, tipo, categoria, presentacion, unidad_medida, contenido_litros, costo_unitario, proveedor_id, envase, stock_minimo)
+              VALUES (@nombre, @descripcion, @tipo, @categoria, @presentacion, @unidad_medida, @contenido_litros, @costo_unitario, @proveedor_id, @envase, @stock_minimo)`);
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -70,6 +71,7 @@ router.put('/:id', async (req, res) => {
       .input('nombre',          sql.NVarChar,      nombre)
       .input('descripcion',     sql.NVarChar,      descripcion || '')
       .input('tipo',            sql.NVarChar,      tipo || '')
+      .input('categoria',       sql.NVarChar,      tipo || '')
       .input('presentacion',    sql.NVarChar,      presentacion || '')
       .input('unidad_medida',   sql.NVarChar,      presentacion || null)
       .input('contenido_litros',sql.Decimal(8,3),  contenido_litros || null)
@@ -78,7 +80,7 @@ router.put('/:id', async (req, res) => {
       .input('envase',          sql.NVarChar,       envase || null)
       .input('stock_minimo',    sql.Decimal(10,3),  stock_minimo || null)
       .query(`UPDATE Productos SET
-                nombre=@nombre, descripcion=@descripcion, tipo=@tipo,
+                nombre=@nombre, descripcion=@descripcion, tipo=@tipo, categoria=@categoria,
                 presentacion=@presentacion, unidad_medida=@unidad_medida,
                 contenido_litros=@contenido_litros, costo_unitario=@costo_unitario,
                 proveedor_id=@proveedor_id, envase=@envase, stock_minimo=@stock_minimo

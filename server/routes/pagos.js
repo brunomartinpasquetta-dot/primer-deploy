@@ -71,7 +71,8 @@ router.post('/anticipo', async (req, res) => {
     await req2
       .input('concepto', sql.NVarChar, 'Anticipo a trabajador')
       .input('monto', sql.Decimal(10,2), monto)
-      .query(`INSERT INTO Caja (tipo, concepto, monto) VALUES ('egreso', @concepto, @monto)`);
+      .input('usuario_nombre', sql.NVarChar, req.user ? req.user.nombre : null)
+      .query(`INSERT INTO Caja (tipo, concepto, monto, usuario_nombre) VALUES ('egreso', @concepto, @monto, @usuario_nombre)`);
 
     await transaction.commit();
     res.json({ ok: true });
@@ -125,7 +126,8 @@ router.post('/liquidacion', async (req, res) => {
     await req3
       .input('concepto', sql.NVarChar, 'Liquidacion trabajador')
       .input('monto', sql.Decimal(10,2), saldo_final)
-      .query(`INSERT INTO Caja (tipo, concepto, monto) VALUES ('egreso', @concepto, @monto)`);
+      .input('usuario_nombre', sql.NVarChar, req.user ? req.user.nombre : null)
+      .query(`INSERT INTO Caja (tipo, concepto, monto, usuario_nombre) VALUES ('egreso', @concepto, @monto, @usuario_nombre)`);
 
     await transaction.commit();
     res.json({ ok: true, kilos: kilos, total_bruto: total_bruto, saldo_final: saldo_final });

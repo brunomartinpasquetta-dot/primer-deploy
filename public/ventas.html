@@ -10,10 +10,31 @@
   <link rel="stylesheet" href="cosecha.css">
   <style>
     .empty { text-align:center; color:var(--texto-suave); padding:20px; }
-    .two-col { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-    .three-col { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
     .form-colapsable { display:none; }
     .form-colapsable.visible { display:block; }
+    /* ── Form layout .fg/.fi ── */
+    .fg { display:flex; flex-wrap:wrap; gap:6px 10px; align-items:flex-end; margin-bottom:10px; }
+    .fi { display:flex; flex-direction:column; gap:3px; }
+    .fi label { font-size:11px; font-weight:600; color:var(--texto-suave); text-transform:uppercase; letter-spacing:.5px; }
+    .fi input, .fi select { height:36px; padding:0 10px; border:1px solid var(--borde); border-radius:8px;
+      font-size:13px; color:var(--texto); background:#fff; outline:none; box-sizing:border-box; width:100%; }
+    .fi input:focus, .fi select:focus { border-color:var(--verde); }
+    .fi-temporada{ flex:0 1 150px; min-width:120px; }
+    .fi-fecha    { flex:0 0 130px; }
+    .fi-deposito { flex:1 1 200px; min-width:160px; }
+    .fi-variedad { flex:1 1 170px; min-width:140px; }
+    .fi-parcela  { flex:1 1 170px; min-width:140px; }
+    .fi-cliente  { flex:1 1 180px; min-width:150px; }
+    .fi-destino  { flex:1 1 170px; min-width:130px; }
+    .fi-fp       { flex:0 1 160px; min-width:130px; }
+    .fi-remito   { flex:0 1 120px; min-width:100px; }
+    .fi-obs      { flex:1 1 180px; min-width:140px; }
+    .fi-kilos    { flex:0 0 110px; }
+    .fi-precio   { flex:0 0 110px; }
+    .fi-subtotal { flex:0 0 140px; }
+    /* Item row multi-mercadería */
+    .item-row { display:flex; flex-wrap:wrap; gap:6px 10px; align-items:flex-end; background:var(--fondo); border:1px solid var(--borde); border-radius:8px; padding:10px; margin-bottom:8px; }
+    .item-row .fi input, .item-row .fi select { background:#fff; }
     .total-venta { font-size:20px; font-weight:700; color:var(--verde); text-align:right; padding:12px 0; }
     .stock-deposito-info { font-size:12px; color:var(--texto-suave); margin-top:4px; }
     .stock-deposito-info.ok   { color:#2d6a4f; font-weight:600; }
@@ -104,7 +125,8 @@
       <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
         <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div><span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
       </div>
-      <div class="topbar-right">
+      <div class="topbar-right" style="display:flex;align-items:center;gap:10px;">
+        <span id="cotiz-frutilla" style="font-size:12px;color:rgba(255,255,255,0.85);font-family:'JetBrains Mono',monospace;background:rgba(255,255,255,0.1);padding:3px 10px;border-radius:20px;"></span>
         <span class="topbar-date" id="topbar-date"></span>
       </div>
     </header>
@@ -116,7 +138,7 @@
           <div class="content-title">Ventas</div>
           <div class="content-sub">Registro de ventas de mercadería</div>
         </div>
-        <button class="btn btn-primary" style="width:auto;margin:0;" onclick="toggleForm()">+ Nueva venta</button>
+        <button class="btn btn-primary" style="width:auto;margin:0;" onclick="toggleForm()"><i data-lucide="shopping-cart" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>+ Nueva venta</button>
       </div>
 
       <!-- ── KPI Cards ── -->
@@ -147,104 +169,68 @@
       <div class="form-colapsable" id="form-nuevo">
         <div class="card-form" style="margin-bottom:12px;">
 
-          <!-- Bloque 1: Origen -->
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--texto-suave);margin-bottom:10px;">Origen de la mercadería</div>
-          <div class="two-col">
-            <div class="form-row" style="margin-bottom:0;"><label>Temporada *</label><select id="temporada" onchange="actualizarKPIs()"></select></div>
-            <div class="form-row" style="margin-bottom:0;"><label>Fecha</label><input type="date" id="fecha"></div>
-          </div>
-          <div class="form-row" style="margin-top:10px;">
-            <label>Depósito de origen *</label>
-            <select id="deposito" onchange="cargarStockDisponible()">
-              <option value="">Seleccionar depósito...</option>
-            </select>
-          </div>
-          <div class="two-col">
-            <div class="form-row" style="margin-bottom:0;">
-              <label>Variedad *</label>
-              <select id="variedad" onchange="filtrarParcelasPorVariedad()">
-                <option value="">— Seleccioná depósito primero —</option>
-              </select>
-              <div class="stock-deposito-info" id="variedad-stock-info"></div>
+          <!-- Cabecera de la venta -->
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--texto-suave);margin-bottom:8px;">Datos de la venta</div>
+          <div class="fg">
+            <div class="fi fi-temporada">
+              <label>Temporada *</label>
+              <select id="temporada" onchange="actualizarKPIs()"></select>
             </div>
-            <div class="form-row" style="margin-bottom:0;">
-              <label>Parcela <span style="font-weight:normal;color:var(--texto-suave);">(opcional)</span></label>
-              <select id="parcela" onchange="actualizarKgDisponibles()">
-                <option value="">Todas las parcelas de la variedad</option>
-              </select>
-              <div class="stock-deposito-info" id="parcela-stock-info"></div>
+            <div class="fi fi-fecha">
+              <label>Fecha</label>
+              <input type="date" id="fecha">
             </div>
-          </div>
-
-          <!-- Bloque 2: Destino -->
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--texto-suave);margin:16px 0 10px;">Destino y condiciones</div>
-          <div class="two-col">
-            <div class="form-row" style="margin-bottom:0;">
+            <div class="fi fi-cliente">
               <label>Cliente *</label>
-              <select id="cliente_id" onchange="onClienteChange()">
+              <select id="cliente_id">
                 <option value="">Seleccionar cliente...</option>
               </select>
             </div>
-            <div class="form-row" style="margin-bottom:0;"><label>Destino / Dirección</label><input type="text" id="destino_venta" placeholder="Ej: Mercado Central"></div>
+            <div class="fi fi-destino">
+              <label>Destino / Dirección</label>
+              <input type="text" id="destino_venta" placeholder="Ej: Mercado Central">
+            </div>
+            <div class="fi fi-fp">
+              <label>Forma de pago *</label>
+              <select id="forma_pago" onchange="onFormaPagoChange()">
+                <option value="">Seleccionar...</option>
+              </select>
+            </div>
+            <div class="fi fi-remito">
+              <label>N° Remito</label>
+              <input type="text" id="numero_remito" placeholder="R-0001" readonly style="background:#f5f5f5;cursor:default;">
+            </div>
+            <div class="fi fi-obs">
+              <label>Observación</label>
+              <input type="text" id="observacion" placeholder="Opcional">
+            </div>
           </div>
-          <div class="two-col" style="margin-top:10px;">
-            <div class="form-row" style="margin-bottom:0;"><label>Forma de pago</label><select id="forma_pago"></select></div>
-            <div class="form-row" style="margin-bottom:0;"><label>Observación</label><input type="text" id="observacion" placeholder="Opcional"></div>
-          </div>
-
-          <!-- Bloque 3: Cantidades y precio -->
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--texto-suave);margin:16px 0 10px;">Cantidades y precio</div>
-          <div class="three-col">
-            <div class="form-row" style="margin-bottom:0;">
-              <label>Kilos a vender *</label>
-              <input type="text" inputmode="decimal" id="kilos" placeholder="Ej: 1000" data-miles oninput="calcularResumen()">
-              <div class="stock-deposito-info" id="kg-disponibles-info"></div>
-            </div>
-            <div class="form-row" style="margin-bottom:0;">
-              <label>Precio x Kg</label>
-              <input type="text" inputmode="decimal" id="precio_kilo" placeholder="Ej: 450" data-miles oninput="calcularResumen()">
-            </div>
-            <div class="form-row" style="margin-bottom:0;">
-              <label>Subtotal fruta</label>
-              <div class="total-venta" style="padding:6px 0;font-size:18px;">$<span id="subtotal-fruta">0</span></div>
-            </div>
+          <div id="aviso-cc" style="display:none;margin-bottom:10px;padding:8px 12px;background:#fff3cd;border:1px solid #f39c12;border-radius:8px;font-size:12px;color:#856404;">
+            <strong>Cuenta Corriente:</strong> Esta venta generará una deuda en la CC del cliente. Se registra como pendiente de cobro.
           </div>
 
-          <!-- Bloque 4: Embalaje -->
+          <!-- Items de mercadería -->
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--texto-suave);margin:12px 0 8px;">Mercadería a vender</div>
+          <div id="items-lista"></div>
+          <button type="button" class="emb-btn-add" onclick="agregarItem()" style="margin-bottom:10px;">
+            <i data-lucide="plus" style="width:13px;height:13px;"></i> Agregar otra mercadería
+          </button>
+          <div id="total-venta-display" style="text-align:right;font-size:18px;font-weight:700;color:var(--verde);padding:6px 0;display:none;">
+            Total: $<span id="total-venta-val">0</span>
+          </div>
+
+          <!-- Embalaje -->
           <div class="emb-section">
             <div class="emb-title">
               <i data-lucide="package" style="width:14px;height:14px;"></i>
               Embalaje utilizado
             </div>
-            <div style="font-size:11px;color:var(--texto-suave);margin-bottom:8px;">Seleccioná los insumos de embalaje. Se descontará automáticamente del stock de insumos.</div>
+            <div style="font-size:11px;color:var(--texto-suave);margin-bottom:8px;">Aplica a toda la venta. Se descuenta del stock de insumos.</div>
             <div class="emb-lista" id="emb-lista"></div>
             <button type="button" class="emb-btn-add" onclick="agregarEmbalaje()">
               <i data-lucide="plus" style="width:13px;height:13px;"></i> Agregar embalaje
             </button>
             <div class="emb-resumen" id="emb-resumen"></div>
-          </div>
-
-          <!-- Bloque 5: Resumen de costos -->
-          <div id="resumen-costos" style="display:none;border:1px solid var(--borde);border-radius:10px;padding:14px 16px;margin-top:14px;background:#f8fff8;">
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--texto-suave);margin-bottom:10px;">Resumen de la venta</div>
-            <div style="display:flex;flex-direction:column;gap:6px;font-size:13px;">
-              <div style="display:flex;justify-content:space-between;">
-                <span>Subtotal fruta</span>
-                <span style="font-family:'JetBrains Mono',monospace;font-weight:600;" id="rc-fruta">$0</span>
-              </div>
-              <div style="display:flex;justify-content:space-between;">
-                <span>Costo embalaje</span>
-                <span style="font-family:'JetBrains Mono',monospace;font-weight:600;color:#c0392b;" id="rc-embalaje">$0</span>
-              </div>
-              <div style="border-top:1px solid var(--borde);padding-top:6px;display:flex;justify-content:space-between;font-weight:700;font-size:15px;">
-                <span>Total cobrado</span>
-                <span style="font-family:'JetBrains Mono',monospace;color:#2d6a4f;" id="rc-total">$0</span>
-              </div>
-              <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--texto-suave);">
-                <span>Costo embalaje por kg</span>
-                <span style="font-family:'JetBrains Mono',monospace;" id="rc-emb-kg">$0/kg</span>
-              </div>
-            </div>
           </div>
 
           <button class="btn btn-primary" id="btn-guardar" onclick="guardarVenta()" style="width:auto;margin-top:16px;">Registrar venta</button>
@@ -254,12 +240,10 @@
 
       <!-- ── Filtros historial ── -->
       <div class="filtros-barra">
-        <input type="search" class="fb-buscar" id="filtro-buscar" placeholder="Filtrar por..." list="ventas-opciones" oninput="buscarHistorial()">
-        <datalist id="ventas-opciones"></datalist>
-        <div class="fb-sep"></div>
         <select id="filtro-temporada" onchange="cargarHistorial()" title="Temporada">
           <option value="">Temporada: Todas</option>
         </select>
+        <input type="search" class="fb-buscar" id="filtro-buscar" placeholder="Filtrar por: Cliente · Variedad · Destino · Estado · Usuario" oninput="buscarHistorial()">
         <div class="fb-sep"></div>
         <input type="date" id="filtro-desde" onchange="cargarHistorial()" title="Desde">
         <input type="date" id="filtro-hasta" onchange="cargarHistorial()" title="Hasta">
@@ -270,10 +254,10 @@
       <div class="card">
         <table>
           <thead>
-            <tr><th>#</th><th>Fecha</th><th>Depósito</th><th>Variedad</th><th>Parcela</th><th>Cliente</th><th>Kg</th><th>Precio/Kg</th><th>Total</th><th>Embalaje</th><th>Usuario</th></tr>
+            <tr><th>#</th><th>Fecha</th><th>Depósito</th><th>Variedad</th><th>Parcela</th><th>Cliente</th><th>Kg</th><th>Precio/Kg</th><th>Total</th><th>Estado</th><th>Embalaje</th><th>CC</th><th>Usuario</th></tr>
           </thead>
           <tbody id="tbody-historial">
-            <tr><td colspan="11" class="empty">Cargando...</td></tr>
+            <tr><td colspan="12" class="empty">Cargando...</td></tr>
           </tbody>
           <tfoot id="tfoot-historial"></tfoot>
         </table>
@@ -307,34 +291,52 @@
 </div>
 
 <script src="https://unpkg.com/lucide@latest"></script>
+<script src="js/cotizaciones.js"></script>
 <script>
   lucide.createIcons();
   document.getElementById('topbar-date').textContent =
     new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
 
+  // Cotización frutilla en topbar
+  (function() {
+    fetch('/api/cotizaciones').then(function(r){ return r.json(); }).then(function(data) {
+      var el = document.getElementById('cotiz-frutilla');
+      if (!el || !Array.isArray(data)) return;
+      var frutilla = data.find(function(c){ return (c.cultivo||c.nombre||'').toLowerCase().indexOf('frutilla') >= 0; });
+      if (frutilla) {
+        var p = parseFloat(frutilla.precio_kg || frutilla.precio || 0);
+        el.textContent = '🍓 $' + p.toLocaleString('es-AR', {minimumFractionDigits:2}) + '/kg';
+      }
+    }).catch(function(){});
+  })();
+
   var hoy = new Date().toISOString().split('T')[0];
   var _depositos = [];
   var _clientes  = [];
   var _temporadaActivaId = null;
+  var _itemsContador = 0;
+  var _stockPorDeposito = {};  // cache: { deposito_id: [{variedad, kg_disponibles}] }
 
   function toggleForm() {
-    document.getElementById('form-nuevo').classList.toggle('visible');
+    var f = document.getElementById('form-nuevo');
+    var visible = f.classList.toggle('visible');
+    if (visible && document.getElementById('items-lista').children.length === 0) {
+      agregarItem();
+    }
   }
 
   var _historialVentas = [];
   var _ventasCols = [
-    {label:'Parcela',campo:'parcela'},
     {label:'Comprador',campo:'comprador'},
     {label:'Destino',campo:'destino_venta'},
+    {label:'Remito',campo:'numero_remito'},
+    {label:'Forma de pago',campo:'forma_pago'},
     {label:'Usuario',campo:'usuario'}
   ];
 
   function buscarHistorial() {
-    var q   = (document.getElementById('filtro-buscar').value || '').trim();
-    var data = _historialVentas.filter(function(v) {
-      return matchFiltro(v, q, _ventasCols);
-    });
-    renderHistorial(data);
+    var q = (document.getElementById('filtro-buscar').value || '').trim();
+    renderHistorial(_historialVentas.filter(function(v){ return matchFiltro(v, q, _ventasCols); }));
   }
 
   function limpiarFiltrosVentas() {
@@ -345,127 +347,132 @@
     cargarHistorial();
   }
 
-  function _parseInput(id) {
-    var el = document.getElementById(id);
-    var raw = (el.dataset.rawValue !== undefined && el.dataset.rawValue !== '')
-      ? el.dataset.rawValue
-      : String(el.value).replace(/\./g, '').replace(',', '.');
-    return parseFloat(raw) || 0;
+  // ── Items de mercadería ──────────────────────────────────────
+  function agregarItem() {
+    _itemsContador++;
+    var idx = _itemsContador;
+    var row = document.createElement('div');
+    row.className = 'item-row';
+    row.id = 'item-row-' + idx;
+    var depOpts = _depositos.map(function(d){
+      return '<option value="'+d.id+'">'+d.nombre+'</option>';
+    }).join('');
+    row.innerHTML =
+      '<div class="fi fi-deposito">' +
+        '<label>Depósito *</label>' +
+        '<select id="item-dep-'+idx+'" onchange="cargarStockItem('+idx+')">' +
+          '<option value="">Seleccionar...</option>' + depOpts +
+        '</select>' +
+      '</div>' +
+      '<div class="fi fi-variedad">' +
+        '<label>Variedad</label>' +
+        '<select id="item-var-'+idx+'" onchange="actualizarKgItem('+idx+')">' +
+          '<option value="">— Seleccioná depósito —</option>' +
+        '</select>' +
+        '<div class="stock-deposito-info" id="item-kginfo-'+idx+'"></div>' +
+      '</div>' +
+      '<div class="fi fi-kilos">' +
+        '<label>Kilos *</label>' +
+        '<input type="number" inputmode="decimal" min="0" step="any" id="item-kilos-'+idx+'" placeholder="Ej: 500" oninput="calcularTotal();actualizarKgItem('+idx+')" style="-moz-appearance:textfield;">' +
+      '</div>' +
+      '<div class="fi fi-precio">' +
+        '<label>Precio/Kg</label>' +
+        '<input type="number" inputmode="decimal" min="0" step="any" id="item-precio-'+idx+'" placeholder="Ej: 450" oninput="calcularTotal()" style="-moz-appearance:textfield;">' +
+      '</div>' +
+      '<div class="fi" style="flex:0 0 auto;align-self:flex-end;">' +
+        '<button type="button" class="emb-btn-del" onclick="quitarItem('+idx+')" title="Quitar">×</button>' +
+      '</div>';
+    document.getElementById('items-lista').appendChild(row);
+    lucide.createIcons();
   }
 
-  /* Stock disponible por depósito: [{parcela_id, parcela, variedad, kg_disponibles}] */
-  var _stockDisponible = [];
+  function quitarItem(idx) {
+    var row = document.getElementById('item-row-' + idx);
+    if (row) row.remove();
+    calcularTotal();
+  }
 
-  function cargarStockDisponible() {
-    var depId = document.getElementById('deposito').value;
+  function cargarStockItem(idx) {
+    var depId = document.getElementById('item-dep-' + idx).value;
     var tid   = document.getElementById('temporada').value;
-    // Resetear selects dependientes
-    document.getElementById('variedad').innerHTML = '<option value="">Cargando...</option>';
-    document.getElementById('parcela').innerHTML = '<option value="">Todas las parcelas</option>';
-    document.getElementById('variedad-stock-info').textContent = '';
-    document.getElementById('parcela-stock-info').textContent = '';
-    document.getElementById('kg-disponibles-info').textContent = '';
-    _stockDisponible = [];
-    if (!depId) {
-      document.getElementById('variedad').innerHTML = '<option value="">— Seleccioná depósito —</option>';
-      return;
-    }
+    var varSel = document.getElementById('item-var-' + idx);
+    var kgInfo = document.getElementById('item-kginfo-' + idx);
+    varSel.innerHTML = '<option value="">Cargando...</option>';
+    kgInfo.textContent = '';
+    if (!depId) { varSel.innerHTML = '<option value="">— Seleccioná depósito —</option>'; return; }
     var url = '/api/depositos/stock-disponible?deposito_id=' + depId + (tid ? '&temporada_id=' + tid : '');
     fetch(url).then(function(r){ return r.json(); }).then(function(data){
-      _stockDisponible = data;
-      // Armar opciones de variedad únicas
-      var variedades = [];
-      data.forEach(function(r){
-        if (variedades.indexOf(r.variedad) === -1) variedades.push(r.variedad);
-      });
-      document.getElementById('variedad').innerHTML =
-        '<option value="">Seleccionar variedad...</option>' +
-        variedades.map(function(v){
-          var kgTot = data.filter(function(r){ return r.variedad === v; })
-                         .reduce(function(s,r){ return s + parseFloat(r.kg_disponibles||0); }, 0);
-          return '<option value="'+v+'">'+v+' ('+kgTot.toLocaleString('es-AR',{maximumFractionDigits:0})+' kg disp.)</option>';
+      _stockPorDeposito[depId] = data;
+      var vars = [];
+      data.forEach(function(r){ if (vars.indexOf(r.variedad) < 0) vars.push(r.variedad); });
+      varSel.innerHTML =
+        '<option value="">Todas las variedades</option>' +
+        vars.map(function(v){
+          var kg = data.filter(function(r){ return r.variedad === v; })
+                       .reduce(function(s,r){ return s + parseFloat(r.kg_disponibles||0); }, 0);
+          return '<option value="'+v+'">'+v+' — '+kg.toLocaleString('es-AR',{maximumFractionDigits:0})+' kg</option>';
         }).join('');
-      if (variedades.length === 1) {
-        document.getElementById('variedad').value = variedades[0];
-        filtrarParcelasPorVariedad();
-      }
-    }).catch(function(){
-      document.getElementById('variedad').innerHTML = '<option value="">Error al cargar</option>';
-    });
+      // Si hay una sola variedad, seleccionar automáticamente
+      if (vars.length === 1) { varSel.value = vars[0]; }
+      actualizarKgItem(idx);
+    }).catch(function(){ varSel.innerHTML = '<option value="">Error</option>'; });
   }
 
-  function filtrarParcelasPorVariedad() {
-    var variedad = document.getElementById('variedad').value;
-    var parcelas    = _stockDisponible.filter(function(r){ return !variedad || r.variedad === variedad; });
-    var kgTotal  = parcelas.reduce(function(s,r){ return s + parseFloat(r.kg_disponibles||0); }, 0);
-    document.getElementById('variedad-stock-info').textContent =
-      variedad ? kgTotal.toLocaleString('es-AR', {maximumFractionDigits:0}) + ' kg disponibles en esta variedad' : '';
-    document.getElementById('parcela').innerHTML =
-      '<option value="">Todas las parcelas (' + kgTotal.toLocaleString('es-AR',{maximumFractionDigits:0}) + ' kg)</option>' +
-      parcelas.map(function(l){
-        return '<option value="'+l.parcela_id+'">'+l.parcela+' — '+parseFloat(l.kg_disponibles).toLocaleString('es-AR',{maximumFractionDigits:0})+' kg</option>';
-      }).join('');
-    actualizarKgDisponibles();
-  }
-
-  function actualizarKgDisponibles() {
-    var parcelaId   = document.getElementById('parcela').value;
-    var variedad = document.getElementById('variedad').value;
-    var parcelas    = _stockDisponible.filter(function(r){
-      if (parcelaId)   return r.parcela_id == parcelaId;
-      if (variedad) return r.variedad === variedad;
-      return true;
-    });
-    var kgDisp = parcelas.reduce(function(s,r){ return s + parseFloat(r.kg_disponibles||0); }, 0);
-    var info = document.getElementById('kg-disponibles-info');
-    var kilos = _parseInput('kilos') || 0;
+  function actualizarKgItem(idx) {
+    var depId   = document.getElementById('item-dep-' + idx).value;
+    var varVal  = document.getElementById('item-var-' + idx).value;
+    var kilos   = parseFloat(document.getElementById('item-kilos-' + idx).value) || 0;
+    var kgInfo  = document.getElementById('item-kginfo-' + idx);
+    var data    = _stockPorDeposito[depId] || [];
+    var subset  = varVal ? data.filter(function(r){ return r.variedad === varVal; }) : data;
+    var kgDisp  = subset.reduce(function(s,r){ return s + parseFloat(r.kg_disponibles||0); }, 0);
     if (kgDisp > 0) {
-      info.className = 'stock-deposito-info ' + (kilos > kgDisp ? 'warn' : 'ok');
-      info.textContent = 'Disponible: ' + kgDisp.toLocaleString('es-AR', {maximumFractionDigits:0}) + ' kg';
+      kgInfo.className = 'stock-deposito-info ' + (kilos > kgDisp ? 'warn' : 'ok');
+      kgInfo.textContent = 'Disp: ' + kgDisp.toLocaleString('es-AR',{maximumFractionDigits:0}) + ' kg';
     } else {
-      info.textContent = '';
+      kgInfo.textContent = '';
     }
-    calcularResumen();
   }
 
-  function calcularResumen() {
-    var kilos  = _parseInput('kilos')      || 0;
-    var precio = _parseInput('precio_kilo') || 0;
-    var subtotalFruta = kilos * precio;
-
-    // Costo embalaje
-    var costoEmbalaje = 0;
-    document.querySelectorAll('#emb-lista .emb-item').forEach(function(row){
-      var idx   = row.id.replace('emb-row-','');
-      var cant  = parseFloat(document.getElementById('emb-cant-'+idx).value) || 0;
-      var costo = parseFloat(document.getElementById('emb-costo-'+idx).value) || 0;
-      costoEmbalaje += cant * costo;
+  function leerItems() {
+    var result = [];
+    document.querySelectorAll('#items-lista .item-row').forEach(function(row) {
+      var idx = row.id.replace('item-row-', '');
+      var dep  = document.getElementById('item-dep-'   + idx).value;
+      var varv = document.getElementById('item-var-'   + idx).value;
+      var kg   = parseFloat(document.getElementById('item-kilos-' + idx).value) || 0;
+      var pr   = parseFloat(document.getElementById('item-precio-'+ idx).value) || null;
+      if (dep && kg > 0) result.push({ deposito_id: dep, variedad: varv || '', kilos: kg, precio_kilo: pr });
     });
+    return result;
+  }
 
-    var fmt2 = function(v){ return v.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2}); };
-
-    document.getElementById('subtotal-fruta').textContent = fmt2(subtotalFruta);
-
-    var rc = document.getElementById('resumen-costos');
-    if (subtotalFruta > 0 || costoEmbalaje > 0) {
-      rc.style.display = '';
-      document.getElementById('rc-fruta').textContent    = '$' + fmt2(subtotalFruta);
-      document.getElementById('rc-embalaje').textContent = '$' + fmt2(costoEmbalaje);
-      document.getElementById('rc-total').textContent    = '$' + fmt2(subtotalFruta);
-      document.getElementById('rc-emb-kg').textContent   = kilos > 0
-        ? '$' + fmt2(costoEmbalaje / kilos) + '/kg'
-        : '—';
+  function calcularTotal() {
+    var total = 0;
+    document.querySelectorAll('#items-lista .item-row').forEach(function(row) {
+      var idx = row.id.replace('item-row-', '');
+      var kg  = parseFloat(document.getElementById('item-kilos-'  + idx).value) || 0;
+      var pr  = parseFloat(document.getElementById('item-precio-' + idx).value) || 0;
+      total += kg * pr;
+    });
+    var d = document.getElementById('total-venta-display');
+    var v = document.getElementById('total-venta-val');
+    if (total > 0) {
+      d.style.display = '';
+      v.textContent = total.toLocaleString('es-AR', {minimumFractionDigits:2});
     } else {
-      rc.style.display = 'none';
+      d.style.display = 'none';
     }
-
-    // Validar kg vs disponible
-    actualizarKgDisponibles();
   }
 
-  function onClienteChange() {
-    // Podría pre-llenar destino si el cliente tiene dirección
+  function onFormaPagoChange() {
+    var sel = document.getElementById('forma_pago');
+    var opt = sel ? sel.options[sel.selectedIndex] : null;
+    var esCC = opt ? opt.getAttribute('data-cc') === '1' : false;
+    document.getElementById('aviso-cc').style.display = esCC ? '' : 'none';
   }
+
+  function calcularResumen() { calcularTotal(); }
 
   function cargarDatos() {
     fetch('/api/temporadas').then(function(r) { return r.json(); }).then(function(data) {
@@ -484,10 +491,6 @@
 
     fetch('/api/depositos').then(function(r) { return r.json(); }).then(function(data) {
       _depositos = data;
-      document.getElementById('deposito').innerHTML = '<option value="">Seleccionar depósito...</option>' +
-        data.map(function(d) {
-          return '<option value="'+d.id+'">'+d.nombre+'</option>';
-        }).join('');
     });
 
     fetch('/api/clientes').then(function(r) { return r.json(); }).then(function(data) {
@@ -498,13 +501,20 @@
     });
 
     fetch('/api/caja/formas-pago').then(function(r) { return r.json(); }).then(function(data) {
-      document.getElementById('forma_pago').innerHTML = '<option value="">Sin especificar</option>' +
-        data.map(function(f) { return '<option value="'+f.id+'">'+f.nombre+'</option>'; }).join('');
+      document.getElementById('forma_pago').innerHTML = '<option value="">Seleccionar...</option>' +
+        data.map(function(f) {
+          return '<option value="'+f.id+'" data-cc="'+(f.es_cuenta_corriente?'1':'0')+'">'+f.nombre+'</option>';
+        }).join('');
     });
 
-    fetch('/api/stock-insumos').then(function(r) { return r.json(); }).then(function(data) {
+    fetch('/api/stock-insumos?categoria=embalaje_contenedores').then(function(r) { return r.json(); }).then(function(data) {
       _embalajeOpciones = data || [];
     }).catch(function() { _embalajeOpciones = []; });
+
+    // Próximo número de remito
+    fetch('/api/remitos/siguiente-numero').then(function(r){ return r.json(); }).then(function(d){
+      document.getElementById('numero_remito').value = d.numero || 'R-0001';
+    }).catch(function(){ document.getElementById('numero_remito').value = 'R-0001'; });
 
     document.getElementById('fecha').value = hoy;
   }
@@ -607,41 +617,37 @@
   }
 
   function limpiarFormulario() {
-    document.getElementById('deposito').value = '';
-    document.getElementById('variedad').innerHTML = '<option value="">— Seleccioná depósito —</option>';
-    document.getElementById('parcela').innerHTML = '<option value="">Todas las parcelas</option>';
-    document.getElementById('variedad-stock-info').textContent = '';
-    document.getElementById('parcela-stock-info').textContent = '';
-    document.getElementById('kg-disponibles-info').textContent = '';
+    document.getElementById('items-lista').innerHTML = '';
+    _itemsContador = 0;
+    _stockPorDeposito = {};
     document.getElementById('cliente_id').value = '';
-    document.getElementById('kilos').value = '';
-    document.getElementById('precio_kilo').value = '';
+    document.getElementById('forma_pago').value = '';
     document.getElementById('destino_venta').value = '';
     document.getElementById('observacion').value = '';
-    document.getElementById('subtotal-fruta').textContent = '0';
-    document.getElementById('resumen-costos').style.display = 'none';
     document.getElementById('mensaje').innerHTML = '';
+    document.getElementById('total-venta-display').style.display = 'none';
+    document.getElementById('aviso-cc').style.display = 'none';
     document.getElementById('fecha').value = hoy;
     limpiarEmbalaje();
-    _stockDisponible = [];
     if (_temporadaActivaId) document.getElementById('temporada').value = _temporadaActivaId;
+    // Nuevo número de remito para la próxima venta
+    fetch('/api/remitos/siguiente-numero').then(function(r){ return r.json(); }).then(function(d){
+      document.getElementById('numero_remito').value = d.numero || 'R-0001';
+    }).catch(function(){});
+    agregarItem();
   }
 
   function guardarVenta() {
-    var deposito_id  = document.getElementById('deposito').value;
-    var temporada_id = document.getElementById('temporada').value;
-    var variedad     = document.getElementById('variedad').value;
-    var cliente_id   = document.getElementById('cliente_id').value;
-    var kilos        = _parseInput('kilos');
-    var precio_kilo  = _parseInput('precio_kilo');
-    if (!deposito_id)         { mostrarMensaje('mensaje', 'error', 'Seleccioná un depósito'); return; }
-    if (!temporada_id)        { mostrarMensaje('mensaje', 'error', 'Seleccioná una temporada'); return; }
-    if (!variedad)            { mostrarMensaje('mensaje', 'error', 'Seleccioná la variedad'); return; }
-    if (!cliente_id)          { mostrarMensaje('mensaje', 'error', 'Seleccioná el cliente'); return; }
-    if (!kilos || kilos <= 0) { mostrarMensaje('mensaje', 'error', 'Ingresá los kilos'); return; }
+    var temporada_id  = document.getElementById('temporada').value;
+    var cliente_id    = document.getElementById('cliente_id').value;
+    var forma_pago_id = document.getElementById('forma_pago').value;
+    if (!temporada_id)  { mostrarMensaje('mensaje', 'error', 'Seleccioná una temporada'); return; }
+    if (!cliente_id)    { mostrarMensaje('mensaje', 'error', 'Seleccioná el cliente'); return; }
+    if (!forma_pago_id) { mostrarMensaje('mensaje', 'error', 'Seleccioná la forma de pago'); return; }
+    var itemsData = leerItems();
+    if (!itemsData.length) { mostrarMensaje('mensaje', 'error', 'Agregá al menos una mercadería con depósito y kilos'); return; }
 
     var embalajeItems = leerEmbalaje();
-
     var btn = document.getElementById('btn-guardar');
     setLoading(btn, true);
 
@@ -649,17 +655,14 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        deposito_id:   deposito_id,
         temporada_id:  temporada_id,
-        parcela_id:       document.getElementById('parcela').value || null,
-        tipo_egreso:   'egreso_venta',
-        kilos:         kilos,
-        precio_kilo:   precio_kilo || null,
-        cliente_id:    cliente_id  || null,
-        variedad:      variedad    || '',
+        cliente_id:    cliente_id    || null,
+        forma_pago_id: forma_pago_id || null,
         destino_venta: document.getElementById('destino_venta').value,
+        numero_remito: document.getElementById('numero_remito').value || null,
         fecha:         document.getElementById('fecha').value || null,
         observacion:   document.getElementById('observacion').value,
+        items:         itemsData,
         embalaje:      embalajeItems
       })
     })
@@ -667,21 +670,14 @@
     .then(function(data) {
       setLoading(btn, false);
       if (data.ok) {
-        var msg = 'Venta registrada';
-        if (data.id) msg += ' — Mov. #' + data.id;
-        if (embalajeItems.length) msg += ' con ' + embalajeItems.length + ' tipo(s) de embalaje';
+        var msg = '✓ Venta registrada — ' + (data.numero_remito || '');
+        if (embalajeItems.length) msg += ' · ' + embalajeItems.length + ' tipo(s) embalaje';
         mostrarMensaje('mensaje', 'success', msg, 5000);
         limpiarFormulario();
         document.getElementById('form-nuevo').classList.remove('visible');
         cargarHistorial();
         actualizarKPIs();
-        fetch('/api/depositos').then(function(r) { return r.json(); }).then(function(deps) {
-          _depositos = deps;
-          document.getElementById('deposito').innerHTML = '<option value="">Seleccionar depósito...</option>' +
-            deps.map(function(d) {
-              return '<option value="'+d.id+'">'+d.nombre+' ('+parseFloat(d.stock_actual||0).toLocaleString('es-AR')+' kg)</option>';
-            }).join('');
-        });
+        fetch('/api/depositos').then(function(r){ return r.json(); }).then(function(d){ _depositos = d; });
       } else {
         mostrarMensaje('mensaje', 'error', data.error || 'Error al registrar venta');
       }
@@ -698,11 +694,26 @@
     return d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
   }
 
+  var _estadoCobro = {
+    'cobrado':      { label: 'Cobrado',      bg: '#eef7ee', color: '#2d6a4f' },
+    'cobrada':      { label: 'Cobrado',      bg: '#eef7ee', color: '#2d6a4f' },
+    'pendiente_cc': { label: '⏳ CC Pendiente', bg: '#fff3cd', color: '#856404' },
+    'pendiente':    { label: '⏳ CC Pendiente', bg: '#fff3cd', color: '#856404' },
+    'anulado':      { label: 'Anulado',      bg: '#fde8e8', color: '#c0392b' }
+  };
+
+  function estadoBadge(estado, formaPago) {
+    var e = _estadoCobro[estado] || _estadoCobro['cobrado'];
+    var fp = formaPago ? '<br><small style="color:var(--texto-suave);font-size:10px;">' + formaPago + '</small>' : '';
+    return '<span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;background:' +
+      e.bg + ';color:' + e.color + ';">' + e.label + '</span>' + fp;
+  }
+
   function renderHistorial(data) {
     var tbody = document.getElementById('tbody-historial');
     var tfoot = document.getElementById('tfoot-historial');
     if (!data.length) {
-      tbody.innerHTML = '<tr><td colspan="11" class="empty">Sin ventas registradas</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="13" class="empty">Sin ventas registradas</td></tr>';
       tfoot.innerHTML = ''; return;
     }
     var totalKg = 0, totalPesos = 0;
@@ -719,7 +730,8 @@
             '<i data-lucide="package" style="width:12px;height:12px;"></i> Embalaje</button>'
         : '—';
       return '<tr>' +
-        '<td style="'+mono+'color:var(--texto-suave);font-size:11px;">#' + (v.id || '-') + '</td>' +
+        '<td style="'+mono+'color:var(--texto-suave);font-size:11px;">#' + (v.id || '-') +
+          (v.numero_remito ? '<br><span style="font-size:10px;color:var(--verde);">' + v.numero_remito + '</span>' : '') + '</td>' +
         '<td>' + formatFechaHora(v.fecha) + (v.temporada ? '<br><small style="color:var(--texto-suave)">' + v.temporada + '</small>' : '') + '</td>' +
         '<td>' + (v.deposito || '<em style="color:var(--texto-suave)">Directa</em>') + '</td>' +
         '<td style="font-size:12px;">' + (v.variedad || (v.parcela ? '—' : '-')) + '</td>' +
@@ -728,7 +740,9 @@
         '<td style="'+mono+'">' + kg.toLocaleString('es-AR', { minimumFractionDigits: 2 }) + ' kg</td>' +
         '<td style="'+mono+'">' + (precio > 0 ? '$' + precio.toLocaleString('es-AR', { minimumFractionDigits: 2 }) : '-') + '</td>' +
         '<td style="'+mono+'font-weight:700;">' + (total > 0 ? '$' + total.toLocaleString('es-AR', { minimumFractionDigits: 2 }) : '-') + '</td>' +
+        '<td>' + estadoBadge(v.estado_cobro, v.forma_pago) + '</td>' +
         '<td>' + btnEmb + '</td>' +
+        '<td>' + (v.cliente_id ? '<button style="background:none;border:none;cursor:pointer;color:var(--texto-suave);padding:2px 4px;" title="Ver CC cliente" onclick="verCCCli('+v.cliente_id+',\''+(v.comprador||'').replace(/\'/g,"\\'")+'\')"><i data-lucide="landmark" style="width:14px;height:14px;"></i></button>' : '—') + '</td>' +
         '<td style="font-size:12px;color:var(--texto-suave);">' + (v.usuario || '-') + '</td>' +
         '</tr>';
     }).join('');
@@ -737,7 +751,7 @@
       '<td style="padding:10px 12px;font-family:\'JetBrains Mono\',monospace;">' + totalKg.toLocaleString('es-AR', { minimumFractionDigits: 2 }) + ' kg</td>' +
       '<td></td>' +
       '<td style="padding:10px 12px;font-family:\'JetBrains Mono\',monospace;">$' + totalPesos.toLocaleString('es-AR', { minimumFractionDigits: 2 }) + '</td>' +
-      '<td colspan="2"></td>' +
+      '<td colspan="4"></td>' +
       '</tr>';
     lucide.createIcons();
   }
@@ -870,9 +884,74 @@
       });
   }
 
+  function fmtPesoV(n) { return '$\u202F' + Math.abs(parseFloat(n||0)).toLocaleString('es-AR',{maximumFractionDigits:0}); }
+
+  function verCCCli(cliente_id, cliNombre) {
+    document.getElementById('cc-cli-titulo').textContent = 'CC: ' + cliNombre;
+    document.getElementById('cc-cli-saldo').textContent  = 'Cargando...';
+    document.getElementById('cc-cli-tbody').innerHTML    = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--texto-suave);">Cargando...</td></tr>';
+    document.getElementById('modal-cc-cli').classList.add('open');
+    fetch('/api/cuentas-clientes/' + cliente_id)
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        var saldo = data.length ? parseFloat(data[0].saldo_acumulado) : 0;
+        document.getElementById('cc-cli-saldo').innerHTML =
+          'Saldo: <strong style="color:' + (saldo > 0 ? '#c0392b' : '#2d6a4f') + ';">' + fmtPesoV(saldo) + '</strong>';
+        if (!data.length) {
+          document.getElementById('cc-cli-tbody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--texto-suave);">Sin movimientos CC</td></tr>';
+          return;
+        }
+        document.getElementById('cc-cli-tbody').innerHTML = data.map(function(m) {
+          var esDebito = m.tipo === 'debito';
+          var badge = esDebito ? '<span style="background:#fde8e8;color:#c0392b;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;">Venta CC</span>'
+                               : '<span style="background:#eef7ee;color:#2d6a4f;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;">Cobro</span>';
+          var sAcum = parseFloat(m.saldo_acumulado) || 0;
+          return '<tr>' +
+            '<td style="font-size:12px;white-space:nowrap;">' + (m.fecha_hora || m.fecha || '—').toString().slice(0,10) + '</td>' +
+            '<td>' + badge + '</td>' +
+            '<td style="font-size:12px;">' + (m.observacion || (esDebito ? 'Venta CC' : 'Cobro')) + '</td>' +
+            '<td style="font-size:12px;">' + (m.forma_pago || '—') + '</td>' +
+            '<td style="text-align:right;font-weight:700;color:' + (esDebito ? '#c0392b' : '#2d6a4f') + ';">' + (esDebito ? '' : '-') + fmtPesoV(m.monto) + '</td>' +
+            '<td style="text-align:right;color:' + (sAcum > 0 ? '#c0392b' : '#2d6a4f') + ';font-weight:700;">' + fmtPesoV(sAcum) + '</td>' +
+          '</tr>';
+        }).join('');
+        lucide.createIcons();
+      })
+      .catch(function() {
+        document.getElementById('cc-cli-tbody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:16px;color:#c0392b;">Error al cargar</td></tr>';
+      });
+  }
+
+  function cerrarCCCli() {
+    document.getElementById('modal-cc-cli').classList.remove('open');
+  }
+
   cargarDatos();
   cargarTemporadaActiva();
   cargarCajonesCirculacion();
 </script>
+
+<!-- MODAL CC CLIENTE -->
+<div class="modal-overlay" id="modal-cc-cli">
+  <div class="modal-box" style="max-width:640px;">
+    <h3 id="cc-cli-titulo">CC Cliente</h3>
+    <div id="cc-cli-saldo" style="font-size:13px;margin-bottom:12px;color:var(--texto-suave);"></div>
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead><tr style="background:var(--fondo-dark);">
+          <th style="padding:6px 8px;font-size:11px;font-weight:600;color:var(--texto-suave);text-align:left;">Fecha</th>
+          <th style="padding:6px 8px;font-size:11px;font-weight:600;color:var(--texto-suave);text-align:left;">Tipo</th>
+          <th style="padding:6px 8px;font-size:11px;font-weight:600;color:var(--texto-suave);text-align:left;">Descripción</th>
+          <th style="padding:6px 8px;font-size:11px;font-weight:600;color:var(--texto-suave);text-align:left;">Forma pago</th>
+          <th style="padding:6px 8px;font-size:11px;font-weight:600;color:var(--texto-suave);text-align:right;">Monto</th>
+          <th style="padding:6px 8px;font-size:11px;font-weight:600;color:var(--texto-suave);text-align:right;">Saldo CC</th>
+        </tr></thead>
+        <tbody id="cc-cli-tbody"></tbody>
+      </table>
+    </div>
+    <button class="btn-cerrar" onclick="cerrarCCCli()">Cerrar</button>
+  </div>
+</div>
+
 </body>
 </html>

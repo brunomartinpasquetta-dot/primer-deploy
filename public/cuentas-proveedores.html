@@ -114,7 +114,7 @@
     </header>
 
     <div class="content">
-      <a href="menu-comercial.html" class="btn-volver">← Volver</a>
+      <a href="#" onclick="volverPagina('menu-comercial.html');return false;" class="btn-volver">← Volver</a>
       <div class="content-header">
         <div class="content-title">Cuentas Corrientes — Proveedores</div>
         <div class="content-sub">Compras en cuenta corriente y pagos realizados</div>
@@ -147,6 +147,10 @@
           <div class="filtros-barra" style="margin-bottom:8px;">
             <input type="search" class="fb-buscar" id="buscar-prov" placeholder="Buscar proveedor..."
                    oninput="filtrarLista()">
+            <button class="fb-limpiar" id="btn-solo-deuda" onclick="toggleSoloDeuda()"
+                    style="padding:5px 10px;font-size:11px;font-weight:700;border-radius:6px;border:1.5px solid var(--borde);background:#fff;cursor:pointer;color:var(--texto-suave);">
+              Solo con deuda
+            </button>
             <button class="fb-limpiar" onclick="limpiarBusqueda()">✕</button>
           </div>
           <div id="lista-proveedores" style="max-height:65vh;overflow-y:auto;">
@@ -188,6 +192,7 @@
                     <th>Forma pago</th>
                     <th style="text-align:right;">Monto</th>
                     <th style="text-align:right;">Saldo</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody id="tbody-movimientos">
@@ -217,6 +222,7 @@
   <div class="modal-box">
     <div class="modal-title">Registrar pago a proveedor</div>
     <input type="hidden" id="pago-proveedor-id">
+    <input type="hidden" id="pago-temporada-id">
 
     <div class="form-row">
       <label>Proveedor</label>
@@ -224,7 +230,7 @@
     </div>
     <div class="form-row">
       <label>Monto ($) *</label>
-      <input type="text" inputmode="decimal" id="pago-monto" placeholder="Ej: 150.000">
+      <input type="number" inputmode="decimal" id="pago-monto" placeholder="0" min="0" step="any" style="appearance:textfield;-moz-appearance:textfield;">
     </div>
     <div class="form-row">
       <label>Forma de pago</label>
@@ -244,6 +250,19 @@
   </div>
 </div>
 
+<!-- ── MODAL DETALLE MOVIMIENTO ── -->
+<div class="modal" id="modal-detalle">
+  <div class="modal-box" style="max-width:500px;">
+    <div class="modal-title" id="det-modal-titulo">Detalle del movimiento</div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;" id="det-modal-tabla">
+      <tbody id="det-modal-body"></tbody>
+    </table>
+    <div class="modal-actions" style="margin-top:16px;">
+      <button class="btn btn-back" onclick="cerrarDetalleModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://unpkg.com/lucide@latest"></script>
 <script>
 lucide.createIcons();
@@ -252,6 +271,17 @@ document.getElementById('topbar-date').textContent =
 
 var _proveedoresData = [];
 var _proveedorSeleccionado = null;
+var _soloDeuda = false;
+var _temporadaActivaId = null;
+
+function toggleSoloDeuda() {
+  _soloDeuda = !_soloDeuda;
+  var btn = document.getElementById('btn-solo-deuda');
+  btn.style.background = _soloDeuda ? '#fde8e8' : '#fff';
+  btn.style.color      = _soloDeuda ? '#c0392b' : 'var(--texto-suave)';
+  btn.style.borderColor= _soloDeuda ? '#c0392b' : 'var(--borde)';
+  filtrarLista();
+}
 
 function fmtPeso(n) {
   var v = parseFloat(n || 0);
@@ -305,9 +335,11 @@ function renderLista(data) {
 
 function filtrarLista() {
   var q = document.getElementById('buscar-prov').value.toLowerCase();
-  var filtrado = q ? _proveedoresData.filter(function(p) {
-    return p.proveedor.toLowerCase().indexOf(q) >= 0;
-  }) : _proveedoresData;
+  var filtrado = _proveedoresData.filter(function(p) {
+    var matchQ     = !q || p.proveedor.toLowerCase().indexOf(q) >= 0;
+    var matchDeuda = !_soloDeuda || parseFloat(p.saldo) > 0.01;
+    return matchQ && matchDeuda;
+  });
   renderLista(filtrado);
 }
 
@@ -332,6 +364,7 @@ function seleccionar(p) {
   // Setear en modal
   document.getElementById('pago-proveedor-id').value     = p.id;
   document.getElementById('pago-proveedor-nombre').value = p.proveedor;
+  document.getElementById('pago-temporada-id').value     = _temporadaActivaId || '';
 
   // Re-render lista para marcar activo
   renderLista(_proveedoresData);
@@ -356,9 +389,9 @@ function cargarMovimientos(proveedor_id) {
         var montoStr  = (esDebito ? '-' : '+') + fmtPeso(m.monto);
         var montoCol  = 'color:' + (esDebito ? '#c0392b' : '#2d6a4f') + ';font-weight:700;';
         var desc      = m.observacion || (esDebito ? 'Compra en CC' : 'Pago registrado');
-        if (m.compra_id) desc += ' <span style="font-size:10px;opacity:.6;">#' + m.compra_id + '</span>';
         var saldoAcum = parseFloat(m.saldo_acumulado) || 0;
         var saldoCol  = saldoAcum > 0.01 ? 'color:#c0392b;' : 'color:#2d6a4f;';
+        var mData     = JSON.stringify(m).replace(/'/g,'&apos;');
         return '<tr>' +
           '<td style="font-size:12px;white-space:nowrap;">' + fmtFecha(m.fecha_hora || m.fecha) + '</td>' +
           '<td>' + badge + '</td>' +
@@ -366,8 +399,10 @@ function cargarMovimientos(proveedor_id) {
           '<td style="font-size:12px;">' + (m.forma_pago || '—') + '</td>' +
           '<td style="text-align:right;' + montoCol + '" class="mono">' + montoStr + '</td>' +
           '<td style="text-align:right;' + saldoCol + '" class="mono">' + fmtPeso(saldoAcum) + '</td>' +
+          '<td><button style="background:none;border:none;cursor:pointer;color:var(--texto-suave);padding:2px 4px;" title="Ver detalle" onclick=\'abrirDetalleMovProv(' + mData + ')\'><i data-lucide="eye" style="width:15px;height:15px;"></i></button></td>' +
         '</tr>';
       }).join('');
+      lucide.createIcons();
     })
     .catch(function() {
       tbody.innerHTML = '<tr><td colspan="6" class="empty-det">Error al cargar</td></tr>';
@@ -387,9 +422,10 @@ function cerrarModal() {
 }
 
 function registrarPago(btn) {
-  var proveedor_id = document.getElementById('pago-proveedor-id').value;
-  var monto        = _parseVal(document.getElementById('pago-monto').value);
-  var msg          = document.getElementById('msg-pago');
+  var proveedor_id  = document.getElementById('pago-proveedor-id').value;
+  var monto         = parseFloat(document.getElementById('pago-monto').value);
+  var temporada_id  = document.getElementById('pago-temporada-id').value || null;
+  var msg           = document.getElementById('msg-pago');
   if (!monto || monto <= 0) { msg.textContent = 'Ingresá un monto válido'; return; }
   setLoading(btn, true);
   fetch('/api/cuentas-proveedores/pago', {
@@ -399,7 +435,8 @@ function registrarPago(btn) {
       proveedor_id:  proveedor_id,
       monto:         monto,
       forma_pago_id: document.getElementById('pago-forma').value || null,
-      observacion:   document.getElementById('pago-obs').value
+      observacion:   document.getElementById('pago-obs').value,
+      temporada_id:  temporada_id
     })
   })
   .then(function(r) { return r.json(); })
@@ -428,6 +465,36 @@ function cargarFormasPago() {
         }).join('');
     });
 }
+
+function abrirDetalleMovProv(m) {
+  var esDebito = m.tipo === 'debito';
+  document.getElementById('det-modal-titulo').textContent = esDebito ? 'Detalle compra CC' : 'Detalle pago CC';
+  var rows = [
+    ['Fecha',       fmtFecha(m.fecha_hora || m.fecha)],
+    ['Tipo',        esDebito ? 'Compra en cuenta corriente' : 'Pago registrado'],
+    ['Monto',       fmtPeso(m.monto)],
+    ['Forma pago',  m.forma_pago || '—'],
+    ['Temporada',   m.temporada  || '—'],
+    ['Descripción', m.observacion || '—'],
+    ['Saldo acum.', fmtPeso(m.saldo_acumulado)],
+  ];
+  if (m.compra_id) rows.push(['Compra vinculada', '#' + m.compra_id]);
+  document.getElementById('det-modal-body').innerHTML = rows.map(function(r) {
+    return '<tr><td style="font-weight:600;color:var(--texto-suave);font-size:11px;text-transform:uppercase;padding:5px 8px 5px 0;white-space:nowrap;">' + r[0] + '</td>' +
+           '<td style="font-size:13px;padding:5px 0;">' + r[1] + '</td></tr>';
+  }).join('');
+  document.getElementById('modal-detalle').classList.add('open');
+}
+
+function cerrarDetalleModal() {
+  document.getElementById('modal-detalle').classList.remove('open');
+}
+
+// Capturar temporada activa para pasarla al pago
+fetch('/api/temporadas').then(function(r){return r.json();}).then(function(data){
+  var activa = data.find(function(t){ return t.activa; });
+  if (activa) _temporadaActivaId = activa.id;
+});
 
 cargar();
 cargarFormasPago();

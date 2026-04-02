@@ -3,7 +3,7 @@
   var ADMIN_ONLY_PAGES = [
     'balance.html', 'caja.html', 'cheques.html', 'pagos.html',
     'gastos.html', 'cuentas-proveedores.html', 'cuentas-clientes.html',
-    'menu-admin.html', 'usuarios.html', 'admin.html'
+    'menu-admin.html', 'usuarios.html', 'admin.html', 'remitos.html'
   ];
   var ADMIN_ONLY_HREFS = ADMIN_ONLY_PAGES;
 

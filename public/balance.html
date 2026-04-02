@@ -9,40 +9,40 @@
   <script src="js/utils.js"></script>
   <link rel="stylesheet" href="cosecha.css">
   <style>
-h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
-    h2 { color: #2D5016; margin-bottom: 12px; font-size: 16px; }
-    .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    label { font-weight: bold; color: #444; display: block; margin-bottom: 6px; margin-top: 12px; }
-    input, select { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
-    .btn { width: 100%; padding: 14px; font-size: 16px; font-weight: bold; border: none; border-radius: 12px; cursor: pointer; margin-top: 12px; }
-    .btn-purple { background: #2D5016; color: white; }
-    .btn-back { background: #eee; color: #444; margin-top: 16px; }
+    h2 { color: var(--verde); margin-bottom: 12px; font-size: 16px; }
+    .card { background: var(--superficie); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 16px; border: 1px solid var(--borde); }
     .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
-    .tab { flex: 1; padding: 12px; text-align: center; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; background: #ddd; color: #444; font-size: 13px; }
-    .tab.active { background: #2D5016; color: white; }
+    .tab { flex: 1; padding: 9px 12px; text-align: center; border: 1.5px solid var(--borde); border-radius: var(--radius-md); cursor: pointer; font-weight: 600; background: var(--fondo); color: var(--texto-suave); font-size: 13px; transition: background .15s; }
+    .tab.active { background: var(--verde); color: white; border-color: var(--verde); }
+    .tab:hover:not(.active) { background: var(--verde-suave); color: var(--verde); border-color: var(--verde); }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
     .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
-    .kpi { background: white; border-radius: 12px; padding: 16px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    .kpi-valor { font-size: 22px; font-weight: bold; }
-    .kpi-label { font-size: 11px; color: #666; margin-top: 4px; }
-    .verde { color: #2d6a4f; }
-    .rojo { color: #c0392b; }
-    .azul { color: #1565c0; }
-    .naranja { color: #2D5016; }
-    .fila { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+    .kpi { background: var(--superficie); border-radius: var(--radius-md); padding: 16px; text-align: center; border: 1px solid var(--borde); }
+    .kpi-valor { font-size: 22px; font-weight: bold; font-family: 'JetBrains Mono', monospace; }
+    .kpi-label { font-size: 11px; color: var(--texto-suave); margin-top: 4px; }
+    .verde { color: var(--sem-verde); }
+    .rojo { color: var(--sem-rojo); }
+    .azul { color: var(--sem-azul); }
+    .naranja { color: var(--verde); }
+    .fila { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--borde); font-size: 14px; }
     .fila:last-child { border-bottom: none; }
-    .fila.subtotal { font-weight: bold; background: #f5f5f5; padding: 10px; border-radius: 8px; margin-top: 4px; }
+    .fila.subtotal { font-weight: bold; background: var(--fondo); padding: 10px; border-radius: 8px; margin-top: 4px; }
     .fila.total-final { font-weight: bold; font-size: 18px; padding: 14px; border-radius: 8px; margin-top: 8px; }
-    .fila.ganancia { background: #e8f5e2; color: #2d6a4f; }
-    .fila.perdida { background: #fde8e8; color: #c0392b; }
-    .seccion-titulo { font-weight: bold; color: #444; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin: 16px 0 8px; }
-    .ingreso-item { color: #2d6a4f; }
-    .costo-item { color: #c0392b; }
-    .empty { text-align: center; color: #999; padding: 40px; }
-    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .page-logo-h1 { height: 44px; width: auto; }
-    @media (max-width: 767px) { .page-logo-h1 { height: 32px; } }
+    .fila.ganancia { background: var(--sem-verde-bg); color: var(--sem-verde); }
+    .fila.perdida { background: var(--sem-rojo-bg); color: var(--sem-rojo); }
+    .seccion-titulo { font-weight: 700; color: var(--texto-suave); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin: 16px 0 8px; }
+    .ingreso-item { color: var(--sem-verde); }
+    .costo-item { color: var(--sem-rojo); }
+    .empty { text-align: center; color: var(--texto-suave); padding: 40px; }
+    /* filtros compactos */
+    .bal-filtros { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; margin-bottom: 12px; }
+    .bal-filtros .fi { display: flex; flex-direction: column; gap: 3px; }
+    .bal-filtros label { font-size: 11px; font-weight: 600; color: var(--texto-suave); text-transform: uppercase; letter-spacing: .5px; }
+    .bal-filtros select, .bal-filtros input[type="date"] { padding: 7px 10px; border: 1.5px solid var(--borde); border-radius: 8px; font-size: 13px; background: var(--fondo); color: var(--texto); width: auto; }
+    .bal-filtros select:focus, .bal-filtros input:focus { border-color: var(--verde); outline: none; }
+    .btn-bal { padding: 8px 20px; background: var(--verde); color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn-bal:hover { opacity: .88; }
   </style>
   <script src="js/auth-check.js"></script>
   <script src="js/cotizaciones.js"></script>
@@ -98,38 +98,38 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
 
   <!-- POR TEMPORADA -->
   <div id="tab-temporada" class="tab-content active">
-    <div class="card" style="margin-bottom:12px;">
-      <label>Temporada</label>
-      <select id="sel-temporada" onchange="cargarBalanceTemporada()"></select>
+    <div class="filtros-barra" style="margin-bottom:12px;">
+      <label style="font-size:11px;font-weight:600;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.5px;">Temporada</label>
+      <select id="sel-temporada" onchange="cargarBalanceTemporada()" style="padding:7px 10px;border:1.5px solid var(--borde);border-radius:8px;font-size:13px;background:var(--fondo);color:var(--texto);"></select>
     </div>
     <div id="balance-temporada"><div class="empty">Selecciona una temporada</div></div>
   </div>
 
   <!-- POR PARCELA -->
   <div id="tab-parcela" class="tab-content">
-    <div class="card" style="margin-bottom:12px;">
-      <label>Parcela</label>
-      <select id="sel-parcela" onchange="cargarBalanceParcela()"></select>
+    <div class="filtros-barra" style="margin-bottom:12px;">
+      <label style="font-size:11px;font-weight:600;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.5px;">Parcela</label>
+      <select id="sel-parcela" onchange="cargarBalanceParcela()" style="padding:7px 10px;border:1.5px solid var(--borde);border-radius:8px;font-size:13px;background:var(--fondo);color:var(--texto);"></select>
     </div>
-    <div id="balance-parcela"><div class="empty">Selecciona un parcela</div></div>
+    <div id="balance-parcela"><div class="empty">Selecciona una parcela</div></div>
   </div>
 
   <!-- POR PERIODO -->
   <div id="tab-periodo" class="tab-content">
-    <div class="card" style="margin-bottom:12px;">
-      <div class="two-col">
-        <div>
-          <label>Desde</label>
-          <input type="date" id="periodo-desde">
-        </div>
-        <div>
-          <label>Hasta</label>
-          <input type="date" id="periodo-hasta">
-        </div>
+    <div class="filtros-barra" style="margin-bottom:12px;">
+      <div style="display:flex;flex-direction:column;gap:3px;">
+        <label style="font-size:11px;font-weight:600;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.5px;">Desde</label>
+        <input type="date" id="periodo-desde" style="padding:7px 10px;border:1.5px solid var(--borde);border-radius:8px;font-size:13px;background:var(--fondo);color:var(--texto);">
       </div>
-      <label>Temporada (opcional)</label>
-      <select id="periodo-temporada"></select>
-      <button class="btn btn-purple" onclick="cargarBalancePeriodo()">Ver balance</button>
+      <div style="display:flex;flex-direction:column;gap:3px;">
+        <label style="font-size:11px;font-weight:600;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.5px;">Hasta</label>
+        <input type="date" id="periodo-hasta" style="padding:7px 10px;border:1.5px solid var(--borde);border-radius:8px;font-size:13px;background:var(--fondo);color:var(--texto);">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:3px;">
+        <label style="font-size:11px;font-weight:600;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.5px;">Temporada (opcional)</label>
+        <select id="periodo-temporada" style="padding:7px 10px;border:1.5px solid var(--borde);border-radius:8px;font-size:13px;background:var(--fondo);color:var(--texto);"></select>
+      </div>
+      <button class="btn-bal" onclick="cargarBalancePeriodo()">Ver balance</button>
     </div>
     <div id="balance-periodo"></div>
   </div>

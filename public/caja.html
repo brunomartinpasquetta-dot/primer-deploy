@@ -9,21 +9,48 @@
   <script src="js/utils.js"></script>
   <link rel="stylesheet" href="cosecha.css">
   <style>
-    .caja-kpis { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:20px; }
-    .caja-kpi { background:var(--superficie); border:1px solid var(--borde); border-radius:12px; box-shadow:var(--shadow-sm); padding:16px 18px; display:flex; flex-direction:column; gap:4px; }
-    .caja-kpi-label { font-size:11px; font-weight:700; color:var(--texto-suave); text-transform:uppercase; letter-spacing:.6px; }
-    .caja-kpi-value { font-size:22px; font-weight:700; letter-spacing:-.3px; line-height:1.2; }
-    .caja-kpi-value.verde { color:var(--sem-verde); }
-    .caja-kpi-value.rojo  { color:var(--sem-rojo); }
-    .caja-kpi-value.azul  { color:var(--sem-azul); }
-    .caja-kpi-sub { font-size:11px; color:var(--texto-suave); font-family:'JetBrains Mono',monospace; }
+    /* ── KPI cards ── */
+    .caja-kpis { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+    .caja-kpi { background:var(--superficie); border:1px solid var(--borde); border-radius:10px; box-shadow:var(--shadow-sm); padding:10px 14px; display:flex; flex-direction:column; gap:2px; min-width:120px; flex:0 0 auto; }
+    .caja-kpi-label { font-size:10px; font-weight:700; color:var(--texto-suave); text-transform:uppercase; letter-spacing:.6px; }
+    .caja-kpi-value { font-size:17px; font-weight:700; letter-spacing:-.3px; line-height:1.2; font-family:'JetBrains Mono',monospace; }
+    .caja-kpi-value.verde  { color:var(--sem-verde); }
+    .caja-kpi-value.rojo   { color:var(--sem-rojo); }
+    .caja-kpi-value.azul   { color:var(--sem-azul); }
+    .caja-kpi-value.naranja{ color:#f39c12; }
+    .caja-kpi-value.morado { color:#7c3aed; }
+    .caja-kpi-sub { font-size:10px; color:var(--texto-suave); font-family:'JetBrains Mono',monospace; }
+    /* ── Tabla ── */
     .ingreso { color:var(--sem-verde); font-weight:700; }
     .egreso  { color:var(--sem-rojo);  font-weight:700; }
     .empty { text-align:center; color:var(--texto-suave); padding:20px; }
-    .filtros { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
     .monto-dual { display:flex; flex-direction:column; align-items:flex-end; gap:1px; }
-    .monto-usd { font-size:11px; color:var(--texto-suave); font-family:'JetBrains Mono',monospace; }
-    @media(max-width:600px) { .caja-kpis { grid-template-columns:repeat(3,1fr); gap:8px; } .caja-kpi-value { font-size:16px; } }
+    .monto-usd  { font-size:11px; color:var(--texto-suave); font-family:'JetBrains Mono',monospace; }
+    /* ── Origen badge ── */
+    .origen-badge { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600;
+      padding:2px 8px; border-radius:12px; white-space:nowrap; }
+    .origen-venta    { background:#eef7ee; color:#2d6a4f; }
+    .origen-compra   { background:#fde8e8; color:#c0392b; }
+    .origen-personal { background:#e8f0fe; color:#1565c0; }
+    .origen-manual   { background:var(--fondo-dark); color:var(--texto-suave); }
+    /* ── Formulario colapsable ── */
+    .form-colapsable { display:none; }
+    .form-colapsable.visible { display:block; }
+    /* ── Form grid ── */
+    .fg { display:flex; flex-wrap:wrap; gap:6px 10px; align-items:flex-end; margin-bottom:10px; }
+    .fi { display:flex; flex-direction:column; gap:3px; }
+    .fi label { font-size:11px; font-weight:600; color:var(--texto-suave); text-transform:uppercase; letter-spacing:.5px; }
+    .fi input, .fi select { height:36px; padding:0 10px; border:1px solid var(--borde); border-radius:8px;
+      font-size:13px; color:var(--texto); background:#fff; outline:none; box-sizing:border-box; }
+    .fi input:focus, .fi select:focus { border-color:var(--verde); }
+    .fi-tipo    { flex:0 0 120px; }
+    .fi-concepto{ flex:1 1 200px; min-width:160px; }
+    .fi-monto   { flex:0 0 130px; }
+    .fi-fp      { flex:0 1 160px; min-width:130px; }
+    .fi-temp    { flex:0 1 160px; min-width:130px; }
+    .fi-fecha   { flex:0 0 130px; }
+    .fi-obs     { flex:1 1 180px; min-width:140px; }
+    @media(max-width:500px) { .caja-kpi { min-width:calc(50% - 4px); } }
   </style>
   <script src="js/auth-check.js"></script>
   <script src="js/cotizaciones.js"></script>
@@ -34,10 +61,13 @@
   <!-- ── SIDEBAR ── -->
   <aside class="sidebar">
     <div class="sidebar-brand">
-      <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div>
+      <img src="img/logo-icon.png" style="height:44px;width:44px;border-radius:10px;">
+      <div style="margin-left:10px;display:flex;flex-direction:column;justify-content:center;line-height:1.1;">
+        <span style="color:white;font-weight:700;font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span>
+        <span style="color:rgba(255,255,255,0.5);font-size:10px;letter-spacing:1.5px;margin-top:2px;">SISTEMA DE CULTIVOS</span>
+      </div>
     </div>
     <nav class="sidebar-nav">
-      
       <a href="index.html" class="nav-item"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard</a>
       <div class="nav-section">Campo</div>
       <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
@@ -57,7 +87,12 @@
   <div class="main">
     <header class="topbar">
       <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
-        <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div><span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
+        <img src="img/logo-icon.png" style="height:44px;width:44px;border-radius:10px;">
+        <div style="margin-left:10px;display:flex;flex-direction:column;justify-content:center;line-height:1.1;">
+          <span style="color:white;font-weight:700;font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span>
+          <span style="color:rgba(255,255,255,0.5);font-size:10px;letter-spacing:1.5px;margin-top:2px;">SISTEMA DE CULTIVOS</span>
+        </div>
+        <span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
       </div>
       <div class="topbar-right">
         <span class="topbar-date" id="topbar-date"></span>
@@ -65,108 +100,146 @@
     </header>
 
     <div class="content">
-      <a href="menu-admin.html" class="btn-volver">← Volver</a>
-      <div class="content-header">
-        <div class="content-title">Caja</div>
-        <div class="content-sub">Movimientos de caja</div>
+      <a href="#" onclick="volverPagina('menu-admin.html');return false;" class="btn-volver">← Volver</a>
+      <div class="content-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div class="content-title">Caja</div>
+          <div class="content-sub">Movimientos de caja — ingresos y egresos</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+          <button class="ins-btn ins-btn-gray" onclick="exportarCSV()">↓ CSV</button>
+          <button class="ins-btn ins-btn-gray" onclick="navegarCon('cuentas-clientes.html')" title="Ver cuentas corrientes clientes">CC Clientes</button>
+          <button class="ins-btn ins-btn-gray" onclick="navegarCon('cuentas-proveedores.html')" title="Ver cuentas corrientes proveedores">CC Proveedores</button>
+          <button class="btn btn-primary" style="width:auto;margin:0;" onclick="toggleFormCaja()">+ Nuevo movimiento</button>
+        </div>
       </div>
 
+      <!-- ── KPI Cards ── -->
       <div class="caja-kpis">
         <div class="caja-kpi">
           <div class="caja-kpi-label">Ingresos</div>
           <div class="caja-kpi-value verde" id="total-ingresos">$0</div>
+          <div class="caja-kpi-sub" id="kpi-ing-sub">—</div>
         </div>
         <div class="caja-kpi">
           <div class="caja-kpi-label">Egresos</div>
           <div class="caja-kpi-value rojo" id="total-egresos">$0</div>
+          <div class="caja-kpi-sub" id="kpi-egr-sub">—</div>
         </div>
         <div class="caja-kpi">
           <div class="caja-kpi-label">Saldo</div>
           <div class="caja-kpi-value azul" id="saldo">$0</div>
+          <div class="caja-kpi-sub" id="kpi-saldo-sub">—</div>
+        </div>
+        <div class="caja-kpi">
+          <div class="caja-kpi-label">Efectivo</div>
+          <div class="caja-kpi-value naranja" id="kpi-efectivo">$0</div>
+          <div class="caja-kpi-sub" id="kpi-efectivo-sub">—</div>
+        </div>
+        <div class="caja-kpi">
+          <div class="caja-kpi-label">Transferencia</div>
+          <div class="caja-kpi-value naranja" id="kpi-transferencia">$0</div>
+          <div class="caja-kpi-sub" id="kpi-transf-sub">—</div>
+        </div>
+        <div class="caja-kpi">
+          <div class="caja-kpi-label">Cheques</div>
+          <div class="caja-kpi-value morado" id="kpi-cheques">$0</div>
+          <div class="caja-kpi-sub" id="kpi-cheques-sub">—</div>
         </div>
       </div>
 
-  <div class="tabs">
-    <button class="tab active" onclick="showTab('movimientos', this)">Movimientos</button>
-    <button class="tab" onclick="showTab('nuevo', this)">+ Nuevo</button>
-  </div>
-
-  <!-- MOVIMIENTOS -->
-  <div id="tab-movimientos" class="tab-content active">
-    <div class="filtros-barra">
-      <input type="search" class="fb-buscar" id="filtro-buscar" placeholder="Filtrar por..." list="caja-opciones" oninput="aplicarFiltroTipo()">
-      <datalist id="caja-opciones"></datalist>
-      <div class="fb-sep"></div>
-      <select id="filtro-temporada" onchange="cargarMovimientos()" title="Temporada">
-        <option value="">Temporada: Todas</option>
-      </select>
-      <div class="fb-sep"></div>
-      <input type="date" id="filtro-desde" onchange="cargarMovimientos()" title="Desde">
-      <input type="date" id="filtro-hasta" onchange="cargarMovimientos()" title="Hasta">
-      <button class="fb-limpiar" onclick="limpiarFiltrosCaja()">✕ Limpiar</button>
-    </div>
-    <div class="card" style="padding: 0; overflow: hidden;">
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Fecha</th>
-              <th>Concepto</th>
-              <th>Forma de pago</th>
-              <th>Temporada</th>
-              <th style="text-align:right;">Monto</th>
-            </tr>
-          </thead>
-          <tbody id="tbody-movimientos">
-            <tr><td colspan="5" class="empty">Cargando...</td></tr>
-          </tbody>
-          <tfoot id="tfoot-movimientos" style="display:none;">
-            <tr style="background:#f0f4e8;">
-              <td colspan="4" style="font-weight:700;padding:10px;text-align:right;">TOTAL visible:</td>
-              <td style="text-align:right;font-weight:700;font-family:'JetBrains Mono',monospace;padding:10px;" id="total-visible">$0</td>
-            </tr>
-          </tfoot>
-        </table>
+      <!-- ── Formulario colapsable ── -->
+      <div class="form-colapsable" id="form-nuevo-caja">
+        <div class="card-form" style="margin-bottom:12px;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--texto-suave);margin-bottom:12px;">Nuevo movimiento manual</div>
+          <div class="fg">
+            <div class="fi fi-tipo">
+              <label>Tipo *</label>
+              <select id="nuevo-tipo" onchange="actualizarColorTipo(this)">
+                <option value="ingreso">Ingreso Caja</option>
+                <option value="egreso">Egreso Caja</option>
+              </select>
+            </div>
+            <div class="fi fi-concepto">
+              <label>Concepto *</label>
+              <input type="text" id="nuevo-concepto" placeholder="Descripción del movimiento">
+            </div>
+            <div class="fi fi-monto">
+              <label>Monto ($) *</label>
+              <input type="number" inputmode="decimal" id="nuevo-monto" placeholder="Ej: 50000" min="0" step="any" style="appearance:textfield;-moz-appearance:textfield;">
+            </div>
+            <div class="fi fi-fp">
+              <label>Forma de pago</label>
+              <select id="nuevo-forma-pago">
+                <option value="">Sin especificar</option>
+              </select>
+            </div>
+            <div class="fi fi-temp">
+              <label>Temporada</label>
+              <select id="nuevo-temporada">
+                <option value="">Sin temporada</option>
+              </select>
+            </div>
+            <div class="fi fi-fecha">
+              <label>Fecha</label>
+              <input type="date" id="nuevo-fecha">
+            </div>
+            <div class="fi fi-obs">
+              <label>Observación</label>
+              <input type="text" id="nuevo-obs" placeholder="Opcional">
+            </div>
+          </div>
+          <button class="btn btn-primary" id="btn-guardar" onclick="guardar(this)" style="width:auto;margin-top:4px;">Registrar movimiento</button>
+          <div id="mensaje" style="margin-top:8px;"></div>
+        </div>
       </div>
-    </div>
-  </div>
 
-  <!-- NUEVO MOVIMIENTO -->
-  <div id="tab-nuevo" class="tab-content">
-    <div class="card">
-      <h2>Nuevo movimiento</h2>
-      <label>Tipo</label>
-      <select id="nuevo-tipo">
-        <option value="ingreso">Ingreso</option>
-        <option value="egreso">Egreso</option>
-      </select>
-      <label>Concepto</label>
-      <input type="text" id="nuevo-concepto" placeholder="Descripción del movimiento">
-      <label>Monto ($)</label>
-      <input type="text" inputmode="decimal" id="nuevo-monto" placeholder="Ej: 50000" data-miles>
-      <label>Forma de pago</label>
-      <select id="nuevo-forma-pago">
-        <option value="">Sin especificar</option>
-      </select>
-      <label>Temporada (opcional)</label>
-      <select id="nuevo-temporada">
-        <option value="">Sin temporada</option>
-      </select>
-      <label>Fecha</label>
-      <input type="date" id="nuevo-fecha">
-      <label>Observación</label>
-      <input type="text" id="nuevo-obs" placeholder="Opcional">
-      <button class="btn btn-green" id="btn-guardar" onclick="guardar(this)">Registrar Movimiento</button>
-      <div id="mensaje"></div>
-    </div>
-  </div>
+      <!-- ── Filtros ── -->
+      <div class="filtros-barra">
+        <input type="search" class="fb-buscar" id="filtro-buscar" placeholder="Filtrar por: Fecha · Origen · Concepto · Forma de pago · Temporada · Usuario · Monto" oninput="aplicarFiltro()" style="max-width:380px;">
+        <div class="fb-sep"></div>
+        <select id="filtro-temporada" onchange="cargarMovimientos()" title="Temporada" style="max-width:150px;">
+          <option value="">Todas las temporadas</option>
+        </select>
+        <div class="fb-sep"></div>
+        <input type="date" id="filtro-desde" onchange="cargarMovimientos()" title="Desde">
+        <input type="date" id="filtro-hasta" onchange="cargarMovimientos()" title="Hasta">
+        <button class="fb-limpiar" onclick="limpiarFiltrosCaja()">✕ Limpiar</button>
+      </div>
+
+      <!-- ── Tabla movimientos ── -->
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Motivo</th>
+                <th>Detalle</th>
+                <th>Forma de pago</th>
+                <th>Temporada</th>
+                <th>Usuario</th>
+                <th style="text-align:right;">Monto</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-movimientos">
+              <tr><td colspan="7" class="empty">Cargando...</td></tr>
+            </tbody>
+            <tfoot id="tfoot-movimientos" style="display:none;">
+              <tr style="background:#f0f4e8;">
+                <td colspan="6" style="font-weight:700;padding:10px;text-align:right;">TOTAL visible:</td>
+                <td style="text-align:right;font-weight:700;font-family:'JetBrains Mono',monospace;padding:10px;" id="total-visible">$0</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
 
     </div>
   </div>
 
   <!-- ── BOTTOM NAV ── -->
   <nav class="bottom-nav">
-    
     <a href="index.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="home"></i></span><span>Inicio</span></a>
     <a href="juntada.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="wheat"></i></span><span>Cosecha</span></a>
     <a href="despalillado.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="scissors"></i></span><span>Despalillado</span></a>
@@ -183,190 +256,242 @@
     new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
 </script>
 <script>
-    function showTab(tab, el) {
-      document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.remove('active'); });
-      document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
-      document.getElementById('tab-' + tab).classList.add('active');
-      el.classList.add('active');
-    }
+  var movimientosCargados = [];
+  var hoy = new Date().toISOString().split('T')[0];
 
-    function limpiarFiltrosCaja() {
-      document.getElementById('filtro-buscar').value = '';
-      document.getElementById('filtro-temporada').value = '';
-      document.getElementById('filtro-desde').value = '';
-      document.getElementById('filtro-hasta').value = '';
-      cargarMovimientos();
-    }
+  var _cajaCols = [
+    {label:'Fecha',       campo:'fecha'},
+    {label:'Concepto',    campo:'concepto'},
+    {label:'Forma de pago', campo:'forma_pago'},
+    {label:'Temporada',   campo:'temporada'},
+    {label:'Usuario',     campo:'usuario_nombre'}
+  ];
 
-    function actualizarResumen(data) {
-      var ingresos = 0, egresos = 0;
-      data.forEach(function(m) {
-        if (m.tipo === 'ingreso') ingresos += parseFloat(m.monto) || 0;
-        else egresos += parseFloat(m.monto) || 0;
-      });
-      var saldo = ingresos - egresos;
-      var ingEl = document.getElementById('total-ingresos');
-      ingEl.textContent = '$' + ingresos.toLocaleString('es-AR');
-      ingEl.parentElement.querySelector('.caja-kpi-sub') && (ingEl.parentElement.querySelector('.caja-kpi-sub').textContent = formatDolares(ingresos));
-      var egrEl = document.getElementById('total-egresos');
-      egrEl.textContent = '$' + egresos.toLocaleString('es-AR');
-      egrEl.parentElement.querySelector('.caja-kpi-sub') && (egrEl.parentElement.querySelector('.caja-kpi-sub').textContent = formatDolares(egresos));
+  // ── Detectar origen del movimiento según concepto y tipo ──────────────
+  function origenBadge(concepto, tipo) {
+    var c = (concepto || '').toLowerCase();
+    if (c.indexOf('venta') !== -1)
+      return '<span class="origen-badge origen-venta">💰 Venta</span>';
+    if (c.indexOf('compra') !== -1 || c.indexOf('insumo') !== -1)
+      return '<span class="origen-badge origen-compra">🛒 Compra</span>';
+    if (c.indexOf('liquidaci') !== -1 || c.indexOf('anticipo') !== -1 || c.indexOf('cosechero') !== -1 || c.indexOf('jornalero') !== -1)
+      return '<span class="origen-badge origen-personal">👷 Personal</span>';
+    if (c.indexOf('cobro cc') !== -1)
+      return '<span class="origen-badge origen-venta">💰 Cobro CC</span>';
+    if (c.indexOf('pago cc') !== -1)
+      return '<span class="origen-badge origen-compra">💸 Pago CC</span>';
+    // Manual: distinguir por tipo
+    if (tipo === 'ingreso')
+      return '<span class="origen-badge origen-manual" style="background:#eef7ee;color:#2d6a4f;">↑ Ingreso Caja</span>';
+    return '<span class="origen-badge origen-manual" style="background:#fde8e8;color:#c0392b;">↓ Egreso Caja</span>';
+  }
+
+  // Color del selector Tipo según selección
+  function actualizarColorTipo(sel) {
+    sel.style.color = sel.value === 'ingreso' ? 'var(--sem-verde)' : 'var(--sem-rojo)';
+    sel.style.fontWeight = '700';
+  }
+
+  function toggleFormCaja() {
+    document.getElementById('form-nuevo-caja').classList.toggle('visible');
+  }
+
+  function limpiarFiltrosCaja() {
+    document.getElementById('filtro-buscar').value = '';
+    document.getElementById('filtro-temporada').value = '';
+    document.getElementById('filtro-desde').value = '';
+    document.getElementById('filtro-hasta').value = '';
+    cargarMovimientos();
+  }
+
+  // ── KPIs desde API /resumen ─────────────────────────────────────
+  function cargarResumen() {
+    var tid = document.getElementById('filtro-temporada').value;
+    var url = '/api/caja/resumen' + (tid ? '?temporada_id=' + tid : '');
+    fetch(url).then(function(r){ return r.json(); }).then(function(d) {
+      var ing   = parseFloat(d.total_ingresos)       || 0;
+      var egr   = parseFloat(d.total_egresos)        || 0;
+      var saldo = parseFloat(d.saldo)                || 0;
+      var ef    = parseFloat(d.ingresos_efectivo)    || 0;
+      var tr    = parseFloat(d.ingresos_transferencia)|| 0;
+      var ch    = parseFloat(d.ingresos_cheque)      || 0;
+
+      document.getElementById('total-ingresos').textContent = '$' + ing.toLocaleString('es-AR');
+      document.getElementById('kpi-ing-sub').textContent = formatDolares(ing);
+
+      document.getElementById('total-egresos').textContent = '$' + egr.toLocaleString('es-AR');
+      document.getElementById('kpi-egr-sub').textContent = formatDolares(egr);
+
       var saldoEl = document.getElementById('saldo');
-      saldoEl.textContent = '$' + Math.abs(saldo).toLocaleString('es-AR') + (saldo < 0 ? ' (-)' : '');
+      saldoEl.textContent = (saldo < 0 ? '-' : '') + '$' + Math.abs(saldo).toLocaleString('es-AR');
       saldoEl.className = 'caja-kpi-value ' + (saldo >= 0 ? 'azul' : 'rojo');
-      saldoEl.parentElement.querySelector('.caja-kpi-sub') && (saldoEl.parentElement.querySelector('.caja-kpi-sub').textContent = formatDolares(Math.abs(saldo)));
+      document.getElementById('kpi-saldo-sub').textContent = formatDolares(Math.abs(saldo));
+
+      document.getElementById('kpi-efectivo').textContent = '$' + ef.toLocaleString('es-AR');
+      document.getElementById('kpi-efectivo-sub').textContent = formatDolares(ef);
+
+      document.getElementById('kpi-transferencia').textContent = '$' + tr.toLocaleString('es-AR');
+      document.getElementById('kpi-transf-sub').textContent = formatDolares(tr);
+
+      document.getElementById('kpi-cheques').textContent = '$' + ch.toLocaleString('es-AR');
+      document.getElementById('kpi-cheques-sub').textContent = formatDolares(ch);
+    }).catch(function(){});
+  }
+
+  function renderMovimientos(data) {
+    var tbody = document.getElementById('tbody-movimientos');
+    var tfoot = document.getElementById('tfoot-movimientos');
+    if (!data.length) {
+      tbody.innerHTML = '<tr><td colspan="7" class="empty">Sin movimientos en el período</td></tr>';
+      tfoot.style.display = 'none'; return;
     }
+    var totalVisible = 0;
+    var mono = "font-family:'JetBrains Mono',monospace;";
+    tbody.innerHTML = data.map(function(m) {
+      var fecha = m.fecha ? m.fecha.toString().split('T')[0] : '-';
+      var monto = parseFloat(m.monto) || 0;
+      var signo = m.tipo === 'ingreso' ? '+' : '-';
+      var colorClass = m.tipo === 'ingreso' ? 'ingreso' : 'egreso';
+      totalVisible += m.tipo === 'ingreso' ? monto : -monto;
+      var rowStyle = m.tipo === 'ingreso' ? ' style="background:rgba(45,106,79,.04);"' : '';
+      return '<tr' + rowStyle + '>' +
+        '<td style="white-space:nowrap;">' + fecha + '</td>' +
+        '<td>' + origenBadge(m.concepto, m.tipo) + '</td>' +
+        '<td>' + (m.concepto || '-') + (m.observacion ? '<br><small style="color:var(--texto-suave)">' + m.observacion + '</small>' : '') + '</td>' +
+        '<td style="font-size:12px;">' + (m.forma_pago || '<em style="color:var(--texto-suave)">—</em>') + '</td>' +
+        '<td style="font-size:12px;color:var(--texto-suave);">' + (m.temporada || '—') + '</td>' +
+        '<td style="font-size:11px;color:var(--texto-suave);">' + (m.usuario_nombre || '<em>—</em>') + '</td>' +
+        '<td style="text-align:right;">' +
+          '<div class="monto-dual ' + colorClass + '">' +
+            '<span style="'+mono+'">' + signo + '$' + monto.toLocaleString('es-AR') + '</span>' +
+            '<span class="monto-usd">' + formatDolares(monto) + '</span>' +
+          '</div>' +
+        '</td>' +
+        '</tr>';
+    }).join('');
+    var signoTotal = totalVisible >= 0 ? '' : '-';
+    var totalEl = document.getElementById('total-visible');
+    totalEl.textContent = signoTotal + '$' + Math.abs(totalVisible).toLocaleString('es-AR');
+    totalEl.className = totalVisible >= 0 ? 'ingreso' : 'egreso';
+    tfoot.style.display = '';
+    lucide.createIcons();
+  }
 
-    function cargarDatos() {
-      fetch('/api/caja/formas-pago')
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-          document.getElementById('nuevo-forma-pago').innerHTML =
-            '<option value="">Sin especificar</option>' +
-            data.map(function(f) { return '<option value="' + f.id + '">' + f.nombre + '</option>'; }).join('');
-        });
-      fetch('/api/temporadas')
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-          var optsTemporada = data.map(function(t) {
-            return '<option value="' + t.id + '">' + t.nombre + '</option>';
-          }).join('');
-          document.getElementById('nuevo-temporada').innerHTML = '<option value="">Sin temporada</option>' + optsTemporada;
-          document.getElementById('filtro-temporada').innerHTML = '<option value="">Todas</option>' + optsTemporada;
-          var activa = data.find(function(t){ return t.activa; });
-          if (activa) document.getElementById('filtro-temporada').value = activa.id;
-          cargarMovimientos();
-        });
-    }
+  function aplicarFiltro() {
+    var q = (document.getElementById('filtro-buscar').value || '').trim();
+    var filtrados = movimientosCargados.filter(function(m) {
+      return matchFiltro(m, q, _cajaCols);
+    });
+    renderMovimientos(filtrados);
+  }
 
-    var movimientosCargados = [];
+  function cargarMovimientos() {
+    var temporada_id = document.getElementById('filtro-temporada').value;
+    var desde = document.getElementById('filtro-desde').value;
+    var hasta  = document.getElementById('filtro-hasta').value;
+    var params = [];
+    if (temporada_id) params.push('temporada_id=' + temporada_id);
+    if (desde) params.push('desde=' + desde);
+    if (hasta) params.push('hasta=' + hasta);
+    var url = '/api/caja' + (params.length ? '?' + params.join('&') : '');
+    document.getElementById('tbody-movimientos').innerHTML =
+      '<tr><td colspan="7" class="empty">Cargando...</td></tr>';
+    fetch(url).then(function(r){ return r.json(); }).then(function(data) {
+      movimientosCargados = data;
+      aplicarFiltro();
+    }).catch(function(){
+      document.getElementById('tbody-movimientos').innerHTML =
+        '<tr><td colspan="7" class="empty">Error al cargar</td></tr>';
+    });
+    cargarResumen();
+  }
 
-    function renderMovimientos(data) {
-      var tbody = document.getElementById('tbody-movimientos');
-      var tfoot = document.getElementById('tfoot-movimientos');
-      if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="empty">Sin movimientos en el período</td></tr>';
-        tfoot.style.display = 'none';
-        return;
+  function cargarDatos() {
+    fetch('/api/caja/formas-pago').then(function(r){ return r.json(); }).then(function(data) {
+      document.getElementById('nuevo-forma-pago').innerHTML =
+        '<option value="">Sin especificar</option>' +
+        data.map(function(f){ return '<option value="'+f.id+'">'+f.nombre+'</option>'; }).join('');
+    });
+    fetch('/api/temporadas').then(function(r){ return r.json(); }).then(function(data) {
+      var opts = data.map(function(t){ return '<option value="'+t.id+'">'+t.nombre+'</option>'; }).join('');
+      document.getElementById('nuevo-temporada').innerHTML  = '<option value="">Sin temporada</option>' + opts;
+      document.getElementById('filtro-temporada').innerHTML = '<option value="">Todas</option>' + opts;
+      var activa = data.find(function(t){ return t.activa; });
+      if (activa) {
+        document.getElementById('filtro-temporada').value = activa.id;
+        document.getElementById('nuevo-temporada').value  = activa.id;
       }
-      var totalVisible = 0;
-      tbody.innerHTML = data.map(function(m) {
-        var fecha = m.fecha ? m.fecha.toString().split('T')[0] : '-';
-        var monto = parseFloat(m.monto) || 0;
-        var signo = m.tipo === 'ingreso' ? '+' : '-';
-        var colorClass = m.tipo === 'ingreso' ? 'ingreso' : 'egreso';
-        totalVisible += m.tipo === 'ingreso' ? monto : -monto;
-        return '<tr>' +
-          '<td>' + fecha + '</td>' +
-          '<td>' + (m.concepto || '-') + '</td>' +
-          '<td>' + (m.forma_pago || '-') + '</td>' +
-          '<td>' + (m.temporada || '-') + '</td>' +
-          '<td style="text-align:right;">' +
-            '<div class="monto-dual ' + colorClass + '">' +
-              '<span class="monto-pesos">' + signo + '$' + monto.toLocaleString('es-AR') + '</span>' +
-              '<span class="monto-usd">' + formatDolares(monto) + '</span>' +
-            '</div>' +
-          '</td>' +
-          '</tr>';
-      }).join('');
-      var totalEl = document.getElementById('total-visible');
-      var signoTotal = totalVisible >= 0 ? '' : '-';
-      totalEl.textContent = signoTotal + '$' + Math.abs(totalVisible).toLocaleString('es-AR');
-      totalEl.className = totalVisible >= 0 ? 'ingreso' : 'egreso';
-      tfoot.style.display = '';
-    }
+      cargarMovimientos();
+    });
+  }
 
-    var _cajaCols = [
-      {label:'Concepto',campo:'concepto'},
-      {label:'Tipo',campo:'tipo'},
-      {label:'Forma de pago',campo:'forma_pago'},
-      {label:'Usuario',campo:'usuario'}
-    ];
-
-    function aplicarFiltroTipo() {
-      var q      = (document.getElementById('filtro-buscar').value || '').trim();
-      var filtrados = movimientosCargados.filter(function(m) {
-        var matchQ    = matchFiltro(m, q, _cajaCols);
-        return matchQ;
-      });
-      actualizarResumen(filtrados);
-      renderMovimientos(filtrados);
-    }
-
-    function cargarMovimientos() {
-      var temporada_id = document.getElementById('filtro-temporada').value;
-      var desde = document.getElementById('filtro-desde').value;
-      var hasta = document.getElementById('filtro-hasta').value;
-      var params = [];
-      if (temporada_id) params.push('temporada_id=' + temporada_id);
-      if (desde) params.push('desde=' + desde);
-      if (hasta) params.push('hasta=' + hasta);
-      var url = '/api/caja' + (params.length ? '?' + params.join('&') : '');
-
-      var tbody = document.getElementById('tbody-movimientos');
-      tbody.innerHTML = '<tr><td colspan="5" class="empty">Cargando...</td></tr>';
-
-      fetch(url)
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-          movimientosCargados = data;
-          poblarDatalist('caja-opciones', data, _cajaCols);
-          aplicarFiltroTipo();
-        })
-        .catch(function() {
-          tbody.innerHTML = '<tr><td colspan="5" class="empty">Error al cargar movimientos</td></tr>';
-        });
-    }
-
-    function guardar(btn) {
-      var concepto = document.getElementById('nuevo-concepto').value.trim();
-      var monto = _parseEl('nuevo-monto');
-      if (!concepto) { alert('Ingresá el concepto'); return; }
-      if (!monto || monto <= 0) { alert('Ingresá un monto válido'); return; }
-      setLoading(btn, true);
-      fetch('/api/caja', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tipo: document.getElementById('nuevo-tipo').value,
-          concepto: concepto,
-          monto: monto,
-          forma_pago_id: document.getElementById('nuevo-forma-pago').value || null,
-          temporada_id: document.getElementById('nuevo-temporada').value || null,
-          fecha: document.getElementById('nuevo-fecha').value || null,
-          observacion: document.getElementById('nuevo-obs').value
-        })
+  function guardar(btn) {
+    var concepto = document.getElementById('nuevo-concepto').value.trim();
+    var monto    = parseFloat(document.getElementById('nuevo-monto').value);
+    if (!concepto)       { mostrarMensaje('mensaje','error','Ingresá el concepto'); return; }
+    if (!monto || monto <= 0) { mostrarMensaje('mensaje','error','Ingresá un monto válido'); return; }
+    setLoading(btn, true);
+    fetch('/api/caja', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tipo:          document.getElementById('nuevo-tipo').value,
+        concepto:      concepto,
+        monto:         monto,
+        forma_pago_id: document.getElementById('nuevo-forma-pago').value || null,
+        temporada_id:  document.getElementById('nuevo-temporada').value  || null,
+        fecha:         document.getElementById('nuevo-fecha').value       || null,
+        observacion:   document.getElementById('nuevo-obs').value
       })
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        setLoading(btn, false);
-        if (data.ok) {
-          document.getElementById('mensaje').innerHTML = '<div class="alert-success">Movimiento registrado correctamente</div>';
-          document.getElementById('nuevo-concepto').value = '';
-          document.getElementById('nuevo-monto').value = '';
-          document.getElementById('nuevo-obs').value = '';
-          cargarMovimientos();
-          setTimeout(function() {
-            document.getElementById('mensaje').innerHTML = '';
-            // Volver al tab de movimientos
-            var tabBtn = document.querySelector('.tab');
-            showTab('movimientos', tabBtn);
-          }, 1200);
-        } else {
-          document.getElementById('mensaje').innerHTML = '<div class="alert-error">' + (data.error || 'Error al registrar') + '</div>';
-        }
-      })
-      .catch(function() {
-        setLoading(btn, false);
-        document.getElementById('mensaje').innerHTML = '<div class="alert-error">Error de conexión</div>';
-      });
-    }
+    }).then(function(r){ return r.json(); }).then(function(data) {
+      setLoading(btn, false);
+      if (data.ok) {
+        mostrarMensaje('mensaje','success','Movimiento registrado');
+        document.getElementById('nuevo-concepto').value = '';
+        document.getElementById('nuevo-monto').value    = '';
+        document.getElementById('nuevo-obs').value      = '';
+        setTimeout(function(){
+          document.getElementById('mensaje').innerHTML = '';
+          document.getElementById('form-nuevo-caja').classList.remove('visible');
+        }, 1200);
+        cargarMovimientos();
+      } else {
+        mostrarMensaje('mensaje','error', data.error || 'Error al registrar');
+      }
+    }).catch(function(){
+      setLoading(btn, false);
+      mostrarMensaje('mensaje','error','Error de conexión');
+    });
+  }
 
-    // Inicializar
-    var hoy = new Date().toISOString().split('T')[0];
-    document.getElementById('nuevo-fecha').value = hoy;
-    cargarDatos();
-    cargarCotizacion().then(function() { cargarMovimientos(); });
+  // ── Exportar CSV ────────────────────────────────────────────────
+  function exportarCSV() {
+    var rows = movimientosCargados;
+    if (!rows.length) { alert('No hay movimientos para exportar'); return; }
+    var header = ['Fecha','Tipo','Concepto','Forma de pago','Temporada','Usuario','Monto'];
+    var lines  = rows.map(function(m) {
+      return [
+        (m.fecha||'').toString().split('T')[0],
+        m.tipo || '',
+        '"' + (m.concepto||'').replace(/"/g,'""') + '"',
+        m.forma_pago || '',
+        m.temporada  || '',
+        m.usuario_nombre || '',
+        parseFloat(m.monto) || 0
+      ].join(',');
+    });
+    var blob = new Blob([header.join(',') + '\n' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    var url  = URL.createObjectURL(blob);
+    var a    = document.createElement('a');
+    a.href = url; a.download = 'caja.csv'; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ── Inicializar ─────────────────────────────────────────────────
+  document.getElementById('nuevo-fecha').value = hoy;
+  actualizarColorTipo(document.getElementById('nuevo-tipo'));
+  cargarDatos();
+  cargarCotizacion();
   cargarTemporadaActiva();
 </script>
 </body>

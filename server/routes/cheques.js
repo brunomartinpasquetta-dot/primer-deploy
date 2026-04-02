@@ -199,16 +199,17 @@ router.post('/:id/acreditar', async (req, res) => {
       // 2. Insert into Caja (now real cash)
       const concepto = `Cheque acreditado — ${ch.banco || ''} ${ch.numero || ''} ${ch.emisor ? '(' + ch.emisor + ')' : ''}`.trim();
       await new sql.Request(transaction)
-        .input('tipo',         sql.NVarChar,    'ingreso')
-        .input('concepto',     sql.NVarChar,    concepto)
-        .input('monto',        sql.Decimal(12,2), ch.monto)
-        .input('medio_pago',   sql.NVarChar,    'cheque')
-        .input('cheque_id',    sql.Int,         chequeId)
-        .input('fecha',        sql.Date,        new Date())
-        .input('temporada_id', sql.Int,         temporada_id || null)
-        .input('observacion',  sql.NVarChar,    descripcion || '')
-        .query(`INSERT INTO Caja (tipo, concepto, monto, medio_pago, cheque_id, fecha, temporada_id, observacion)
-                VALUES (@tipo, @concepto, @monto, @medio_pago, @cheque_id, @fecha, @temporada_id, @observacion)`);
+        .input('tipo',            sql.NVarChar,    'ingreso')
+        .input('concepto',        sql.NVarChar,    concepto)
+        .input('monto',           sql.Decimal(12,2), ch.monto)
+        .input('medio_pago',      sql.NVarChar,    'cheque')
+        .input('cheque_id',       sql.Int,         chequeId)
+        .input('fecha',           sql.Date,        new Date())
+        .input('temporada_id',    sql.Int,         temporada_id || null)
+        .input('observacion',     sql.NVarChar,    descripcion || '')
+        .input('usuario_nombre',  sql.NVarChar,    req.user ? req.user.nombre : null)
+        .query(`INSERT INTO Caja (tipo, concepto, monto, medio_pago, cheque_id, fecha, temporada_id, observacion, usuario_nombre)
+                VALUES (@tipo, @concepto, @monto, @medio_pago, @cheque_id, @fecha, @temporada_id, @observacion, @usuario_nombre)`);
 
       // 3. Audit log
       await new sql.Request(transaction)

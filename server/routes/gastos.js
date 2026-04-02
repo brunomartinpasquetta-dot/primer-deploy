@@ -97,8 +97,9 @@ router.post('/', async (req, res) => {
             .input('monto', sql.Decimal(12,2), monto)
             .input('forma_pago_id', sql.Int, forma_pago_id)
             .input('temporada_id', sql.Int, temporada_id || null)
-            .query(`INSERT INTO Caja (tipo, concepto, monto, forma_pago_id, temporada_id)
-                    VALUES ('egreso', @concepto, @monto, @forma_pago_id, @temporada_id)`);
+            .input('usuario_nombre', sql.NVarChar, req.user ? req.user.nombre : null)
+            .query(`INSERT INTO Caja (tipo, concepto, monto, forma_pago_id, temporada_id, usuario_nombre)
+                    VALUES ('egreso', @concepto, @monto, @forma_pago_id, @temporada_id, @usuario_nombre)`);
         }
       }
     }

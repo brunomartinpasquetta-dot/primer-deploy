@@ -195,7 +195,7 @@
       </div>
       <div class="form-row">
         <label>Kilos</label>
-        <input type="text" inputmode="decimal" id="ingreso-kilos" placeholder="Ej: 500" data-miles>
+        <input type="number" inputmode="decimal" id="ingreso-kilos" placeholder="Ej: 500" min="0" step="any" style="-moz-appearance:textfield;">
       </div>
       <div class="form-row">
         <label>Fecha</label>
@@ -237,7 +237,7 @@
       </div>
       <div class="form-row">
         <label>Kilos</label>
-        <input type="text" inputmode="decimal" id="egreso-kilos" placeholder="Ej: 200" data-miles>
+        <input type="number" inputmode="decimal" id="egreso-kilos" placeholder="Ej: 200" min="0" step="any" style="-moz-appearance:textfield;">
       </div>
       <div class="form-row">
         <label>Fecha</label>
@@ -247,7 +247,7 @@
       <div class="egreso-fields" id="fields-venta">
         <div class="form-row">
           <label>Precio $/kg</label>
-          <input type="text" inputmode="decimal" id="egreso-precio" placeholder="Ej: 1200" data-miles>
+          <input type="number" inputmode="decimal" id="egreso-precio" placeholder="Ej: 1200" min="0" step="any" style="-moz-appearance:textfield;">
         </div>
         <div class="form-row">
           <label>Comprador</label>
@@ -309,7 +309,7 @@
       <div class="two-col">
         <div class="form-row">
           <label>Capacidad (kg)</label>
-          <input type="text" inputmode="decimal" id="dep-capacidad" placeholder="Ej: 50000" data-miles data-tooltip="Capacidad máxima del depósito en kilogramos">
+          <input type="number" inputmode="decimal" id="dep-capacidad" placeholder="Ej: 50000" min="0" step="any" style="-moz-appearance:textfield;" data-tooltip="Capacidad máxima del depósito en kilogramos">
         </div>
         <div class="form-row">
           <label>Costo $/kg/día</label>

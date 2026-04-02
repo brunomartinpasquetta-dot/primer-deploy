@@ -90,7 +90,7 @@ function formatearMiles(input) {
     var m = v.match(/[,.](\d*)$/);
     if (m && m[1].length < 1) return;
     clearTimeout(_timer);
-    _timer = setTimeout(function () { _aplicar(el); }, 800);
+    _timer = setTimeout(function () { _aplicar(el); }, 200);
   });
 
   input.addEventListener('focus', function () {
@@ -246,6 +246,21 @@ function _parseEl(id) {
 }
 
 /**
+ * Puebla un <datalist> SOLO con los títulos de las columnas como prefijos de filtro.
+ * Muestra: "Concepto: ", "Forma de pago: ", etc.
+ * El usuario elige el título y luego tipea el valor → matchFiltro maneja "Label: valor".
+ * columnas: [{ label: 'Concepto', campo: 'concepto' }, ...]
+ */
+function poblarDatalistTitulos(datalistId, columnas) {
+  var dl = document.getElementById(datalistId);
+  if (!dl) return;
+  dl.innerHTML = columnas.map(function(col) {
+    var v = col.label + ': ';
+    return '<option value="' + v.replace(/"/g, '&quot;') + '">';
+  }).join('');
+}
+
+/**
  * Puebla un <datalist> con valores únicos de las columnas especificadas.
  * columnas: [{ label: 'Cosechero', campo: 'cosechero' }, ...]
  */
@@ -298,4 +313,19 @@ function mostrarMensaje(containerId, tipo, texto, duracion) {
   if (duracion !== false) {
     setTimeout(function() { if (el) el.innerHTML = ''; }, duracion || 3000);
   }
+}
+
+
+// ── Navegación con retorno ────────────────────────────────────────────────────
+// Guardar página actual y navegar a destino (para poder volver)
+function navegarCon(url) {
+  localStorage.setItem('cosecha_retorno', location.pathname + location.search);
+  location.href = url;
+}
+
+// Volver a página anterior guardada, o fallback
+function volverPagina(fallback) {
+  var prev = localStorage.getItem('cosecha_retorno');
+  localStorage.removeItem('cosecha_retorno');
+  location.href = prev || fallback || 'menu-admin.html';
 }

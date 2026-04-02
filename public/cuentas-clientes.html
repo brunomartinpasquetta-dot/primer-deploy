@@ -99,7 +99,7 @@
     </header>
 
     <div class="content">
-      <a href="menu-comercial.html" class="btn-volver">← Volver</a>
+      <a href="#" onclick="volverPagina('menu-comercial.html');return false;" class="btn-volver">← Volver</a>
       <div class="content-header">
         <div class="content-title">Cuentas Corrientes — Clientes</div>
         <div class="content-sub">Ventas en cuenta corriente y cobros registrados</div>
@@ -128,6 +128,10 @@
         <div>
           <div class="filtros-barra" style="margin-bottom:8px;">
             <input type="search" class="fb-buscar" id="buscar-cli" placeholder="Buscar cliente..." oninput="filtrarLista()">
+            <button class="fb-limpiar" id="btn-solo-deuda" onclick="toggleSoloDeuda()"
+                    style="padding:5px 10px;font-size:11px;font-weight:700;border-radius:6px;border:1.5px solid var(--borde);background:#fff;cursor:pointer;color:var(--texto-suave);">
+              Solo con deuda
+            </button>
             <button class="fb-limpiar" onclick="limpiarBusqueda()">✕</button>
           </div>
           <div id="lista-clientes" style="max-height:65vh;overflow-y:auto;">
@@ -165,6 +169,7 @@
                     <th>Forma pago</th>
                     <th style="text-align:right;">Monto</th>
                     <th style="text-align:right;">Saldo CC</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody id="tbody-movimientos">
@@ -193,13 +198,14 @@
   <div class="modal-box">
     <div class="modal-title">Registrar cobro de cliente</div>
     <input type="hidden" id="cobro-cliente-id">
+    <input type="hidden" id="cobro-temporada-id">
     <div class="form-row">
       <label>Cliente</label>
       <input type="text" id="cobro-cliente-nombre" disabled>
     </div>
     <div class="form-row">
       <label>Monto ($) *</label>
-      <input type="text" inputmode="decimal" id="cobro-monto" placeholder="Ej: 150.000">
+      <input type="number" inputmode="decimal" id="cobro-monto" placeholder="0" min="0" step="any" style="appearance:textfield;-moz-appearance:textfield;">
     </div>
     <div class="form-row">
       <label>Forma de pago</label>
@@ -217,6 +223,19 @@
   </div>
 </div>
 
+<!-- MODAL DETALLE MOVIMIENTO -->
+<div class="modal" id="modal-detalle">
+  <div class="modal-box" style="max-width:500px;">
+    <div class="modal-title" id="det-modal-titulo">Detalle del movimiento</div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <tbody id="det-modal-body"></tbody>
+    </table>
+    <div class="modal-actions" style="margin-top:16px;">
+      <button class="btn btn-back" onclick="cerrarDetalleModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://unpkg.com/lucide@latest"></script>
 <script>
 lucide.createIcons();
@@ -225,6 +244,24 @@ document.getElementById('topbar-date').textContent =
 
 var _clientesData = [];
 var _clienteSeleccionado = null;
+var _soloDeuda = false;
+var _DIAS_VENCIMIENTO = 30;
+var _temporadaActivaId = null;
+
+function toggleSoloDeuda() {
+  _soloDeuda = !_soloDeuda;
+  var btn = document.getElementById('btn-solo-deuda');
+  btn.style.background  = _soloDeuda ? '#fde8e8' : '#fff';
+  btn.style.color       = _soloDeuda ? '#c0392b' : 'var(--texto-suave)';
+  btn.style.borderColor = _soloDeuda ? '#c0392b' : 'var(--borde)';
+  filtrarLista();
+}
+
+function diasDesde(isoStr) {
+  if (!isoStr) return 9999;
+  var d = new Date(isoStr);
+  return Math.floor((Date.now() - d.getTime()) / 86400000);
+}
 
 function fmtPeso(n) {
   return '$\u202F' + Math.abs(parseFloat(n || 0)).toLocaleString('es-AR', { maximumFractionDigits: 0 });
@@ -259,19 +296,30 @@ function renderLista(data) {
   var el = document.getElementById('lista-clientes');
   if (!data.length) { el.innerHTML = '<div class="empty-det">Sin clientes</div>'; return; }
   el.innerHTML = data.map(function(c) {
-    var saldo      = parseFloat(c.saldo) || 0;
-    var bClass     = saldo > 0.01 ? 'deuda' : (saldo < -0.01 ? 'ok' : 'cero');
-    var isActive   = _clienteSeleccionado && _clienteSeleccionado.id === c.id ? ' active' : '';
+    var saldo    = parseFloat(c.saldo) || 0;
+    var bClass   = saldo > 0.01 ? 'deuda' : (saldo < -0.01 ? 'ok' : 'cero');
+    var isActive = _clienteSeleccionado && _clienteSeleccionado.id === c.id ? ' active' : '';
+    var dias     = diasDesde(c.ultimo_movimiento);
+    var vencido  = saldo > 0.01 && dias >= _DIAS_VENCIMIENTO;
+    var vencidoBadge = vencido
+      ? '<span style="display:inline-block;margin-left:4px;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;background:#fde8e8;color:#c0392b;">+' + dias + 'd</span>'
+      : '';
     return '<div class="cli-item' + isActive + '" onclick="seleccionar(' + JSON.stringify(c).replace(/"/g,'&quot;') + ')">' +
-      '<div><div class="cli-nombre">' + c.cliente + '</div>' +
-      '<div class="cli-sub">' + (c.cant_ventas || 0) + ' ventas en CC</div></div>' +
+      '<div><div class="cli-nombre">' + c.cliente + vencidoBadge + '</div>' +
+      '<div class="cli-sub">' + (c.cant_ventas || 0) + ' ventas en CC' +
+        (c.ultimo_movimiento ? ' · último: ' + fmtFecha(c.ultimo_movimiento).slice(0,10) : '') +
+      '</div></div>' +
       '<span class="saldo-badge ' + bClass + '">' + fmtPeso(saldo) + '</span></div>';
   }).join('');
 }
 
 function filtrarLista() {
   var q = document.getElementById('buscar-cli').value.toLowerCase();
-  renderLista(q ? _clientesData.filter(function(c) { return c.cliente.toLowerCase().indexOf(q) >= 0; }) : _clientesData);
+  renderLista(_clientesData.filter(function(c) {
+    var matchQ     = !q || c.cliente.toLowerCase().indexOf(q) >= 0;
+    var matchDeuda = !_soloDeuda || parseFloat(c.saldo) > 0.01;
+    return matchQ && matchDeuda;
+  }));
 }
 
 function limpiarBusqueda() {
@@ -291,6 +339,7 @@ function seleccionar(c) {
   sEl.className   = 'detalle-saldo ' + (saldo > 0.01 ? 'deuda' : 'ok');
   document.getElementById('cobro-cliente-id').value     = c.id;
   document.getElementById('cobro-cliente-nombre').value = c.cliente;
+  document.getElementById('cobro-temporada-id').value   = _temporadaActivaId || '';
   renderLista(_clientesData);
   cargarMovimientos(c.id);
 }
@@ -315,11 +364,12 @@ function cargarMovimientos(cliente_id) {
         if (m.kilos && m.precio_kilo) {
           extra = '<br><span style="font-size:10px;color:var(--texto-suave);">' +
             parseFloat(m.kilos).toLocaleString('es-AR', {maximumFractionDigits:1}) + ' kg · ' +
-            fmtPeso(m.precio_kilo) + '/kg' + (m.parcela ? ' · Parcela ' + m.parcela : '') + '</span>';
+            fmtPeso(m.precio_kilo) + '/kg' + (m.parcela ? ' · ' + m.parcela : '') + '</span>';
         }
         if (m.temporada) extra += '<br><span style="font-size:10px;color:var(--texto-suave);">' + m.temporada + '</span>';
         var sAcum  = parseFloat(m.saldo_acumulado) || 0;
         var sColor = sAcum > 0.01 ? '#c0392b' : '#2d6a4f';
+        var mData  = JSON.stringify(m).replace(/'/g,'&apos;');
         return '<tr>' +
           '<td style="font-size:12px;white-space:nowrap;">' + fmtFecha(m.fecha_hora || m.fecha) + '</td>' +
           '<td>' + badge + '</td>' +
@@ -327,8 +377,10 @@ function cargarMovimientos(cliente_id) {
           '<td style="font-size:12px;">' + (m.forma_pago || '—') + '</td>' +
           '<td style="text-align:right;color:' + mCol + ';font-weight:700;" class="mono">' + mSign + fmtPeso(m.monto) + '</td>' +
           '<td style="text-align:right;color:' + sColor + ';font-weight:700;" class="mono">' + fmtPeso(sAcum) + '</td>' +
+          '<td><button style="background:none;border:none;cursor:pointer;color:var(--texto-suave);padding:2px 4px;" title="Ver detalle" onclick=\'abrirDetalleMovCli(' + mData + ')\'><i data-lucide="eye" style="width:15px;height:15px;"></i></button></td>' +
         '</tr>';
       }).join('');
+      lucide.createIcons();
     })
     .catch(function() { tbody.innerHTML = '<tr><td colspan="6" class="empty-det">Error al cargar</td></tr>'; });
 }
@@ -344,9 +396,36 @@ function cerrarModal() {
   document.getElementById('modal-cobro').classList.remove('open');
 }
 
+function abrirDetalleMovCli(m) {
+  var esDebito = m.tipo === 'debito';
+  document.getElementById('det-modal-titulo').textContent = esDebito ? 'Detalle venta CC' : 'Detalle cobro CC';
+  var rows = [
+    ['Fecha',       fmtFecha(m.fecha_hora || m.fecha)],
+    ['Tipo',        esDebito ? 'Venta en cuenta corriente' : 'Cobro registrado'],
+    ['Monto',       fmtPeso(m.monto)],
+    ['Forma pago',  m.forma_pago || '—'],
+    ['Temporada',   m.temporada  || '—'],
+    ['Descripción', m.observacion || '—'],
+    ['Saldo acum.', fmtPeso(m.saldo_acumulado)],
+  ];
+  if (m.kilos)      rows.push(['Kg',          parseFloat(m.kilos).toLocaleString('es-AR', {maximumFractionDigits:1}) + ' kg']);
+  if (m.precio_kilo) rows.push(['Precio/kg',  fmtPeso(m.precio_kilo)]);
+  if (m.parcela)    rows.push(['Parcela',      m.parcela]);
+  document.getElementById('det-modal-body').innerHTML = rows.map(function(r) {
+    return '<tr><td style="font-weight:600;color:var(--texto-suave);font-size:11px;text-transform:uppercase;padding:5px 8px 5px 0;white-space:nowrap;">' + r[0] + '</td>' +
+           '<td style="font-size:13px;padding:5px 0;">' + r[1] + '</td></tr>';
+  }).join('');
+  document.getElementById('modal-detalle').classList.add('open');
+}
+
+function cerrarDetalleModal() {
+  document.getElementById('modal-detalle').classList.remove('open');
+}
+
 function registrarCobro(btn) {
-  var cliente_id = document.getElementById('cobro-cliente-id').value;
-  var monto      = _parseVal(document.getElementById('cobro-monto').value);
+  var cliente_id   = document.getElementById('cobro-cliente-id').value;
+  var monto        = parseFloat(document.getElementById('cobro-monto').value);
+  var temporada_id = document.getElementById('cobro-temporada-id').value || null;
   var msg        = document.getElementById('msg-cobro');
   if (!monto || monto <= 0) { msg.textContent = 'Ingresá un monto válido'; return; }
   setLoading(btn, true);
@@ -357,7 +436,8 @@ function registrarCobro(btn) {
       cliente_id:    cliente_id,
       monto:         monto,
       forma_pago_id: document.getElementById('cobro-forma').value || null,
-      observacion:   document.getElementById('cobro-obs').value
+      observacion:   document.getElementById('cobro-obs').value,
+      temporada_id:  temporada_id
     })
   })
   .then(function(r) { return r.json(); })
@@ -385,6 +465,12 @@ function cargarFormasPago() {
             .join('');
     });
 }
+
+// Capturar temporada activa
+fetch('/api/temporadas').then(function(r){return r.json();}).then(function(data){
+  var activa = data.find(function(t){ return t.activa; });
+  if (activa) _temporadaActivaId = activa.id;
+});
 
 cargar();
 cargarFormasPago();

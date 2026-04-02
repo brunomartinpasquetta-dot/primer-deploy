@@ -106,12 +106,13 @@ router.post('/cobro', async (req, res) => {
 
     // Ingreso en Caja
     await new sql.Request(transaction)
-      .input('concepto',     sql.NVarChar,    `Cobro CC: ${clienteNombre}${observacion ? ' - ' + observacion : ''}`)
-      .input('monto',        sql.Decimal(12,2), monto)
-      .input('forma_pago_id',sql.Int,         forma_pago_id || null)
-      .input('temporada_id', sql.Int,         temporada_id || null)
-      .query(`INSERT INTO Caja (tipo, concepto, monto, forma_pago_id, temporada_id)
-              VALUES ('ingreso', @concepto, @monto, @forma_pago_id, @temporada_id)`);
+      .input('concepto',       sql.NVarChar,    `Cobro CC: ${clienteNombre}${observacion ? ' - ' + observacion : ''}`)
+      .input('monto',          sql.Decimal(12,2), monto)
+      .input('forma_pago_id',  sql.Int,         forma_pago_id || null)
+      .input('temporada_id',   sql.Int,         temporada_id || null)
+      .input('usuario_nombre', sql.NVarChar,    req.user ? req.user.nombre : null)
+      .query(`INSERT INTO Caja (tipo, concepto, monto, forma_pago_id, temporada_id, usuario_nombre)
+              VALUES ('ingreso', @concepto, @monto, @forma_pago_id, @temporada_id, @usuario_nombre)`);
 
     await transaction.commit();
     res.json({ ok: true });

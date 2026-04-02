@@ -82,14 +82,24 @@
     }
     .filtro-grupo input,
     .filtro-grupo select {
-      padding: 7px 10px;
-      border: 1px solid var(--borde);
+      padding: 6px 9px;
+      border: 1.5px solid var(--borde);
       border-radius: 6px;
       font-size: 13px;
       background: var(--fondo);
       color: var(--texto);
-      min-width: 130px;
+      width: auto;
+      min-width: 80px;
+      max-width: 180px;
     }
+    .filtro-grupo input[type="date"] { max-width: 145px; }
+    .filtro-grupo input,
+    .filtro-grupo select { outline: none; }
+    .filtro-grupo input:focus,
+    .filtro-grupo select:focus { border-color: var(--verde); }
+    .kpi-reporte { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
+    .kpi-rep-box { background:var(--fondo); border:1.5px solid var(--borde); border-radius:var(--radius-md); padding:10px 16px; font-size:13px; }
+    .kpi-rep-box .val { font-weight:700; font-family:'JetBrains Mono',monospace; color:var(--verde); font-size:16px; }
     .acciones-row {
       display: flex;
       gap: 8px;
@@ -333,7 +343,21 @@ function renderTabla(cols, rows, totalCols) {
   }
 
   html += '</tbody></table></div>';
-  return html;
+
+  // KPI summary
+  var kpiHtml = '<div class="kpi-reporte">';
+  kpiHtml += '<div class="kpi-rep-box"><div style="color:var(--texto-suave);font-size:11px;text-transform:uppercase;letter-spacing:.5px;">Registros</div><div class="val">' + rows.length + '</div></div>';
+  if (totalCols) {
+    totalCols.forEach(function(k) {
+      var col = cols.find(function(c){ return c.key === k; });
+      var label = col ? col.label : k;
+      var val = totales[k];
+      var display = col && col.monto ? fmtMonto(val) : fmt(val) + (col && col.kilos ? ' kg' : '');
+      kpiHtml += '<div class="kpi-rep-box"><div style="color:var(--texto-suave);font-size:11px;text-transform:uppercase;letter-spacing:.5px;">Total ' + label + '</div><div class="val">' + display + '</div></div>';
+    });
+  }
+  kpiHtml += '</div>';
+  return kpiHtml + html;
 }
 
 // ── estado global ────────────────────────────────────────────────────────────

@@ -32,31 +32,45 @@
     .aplic-kpi .valor.azul  { color:#1565c0; }
     .aplic-kpi .label { font-size:11px; text-transform:uppercase; letter-spacing:.5px;
                         color:var(--texto-suave); margin-top:4px; }
-    .aplic-layout    { display:grid; grid-template-columns:220px 1fr; gap:16px; align-items:start; }
-    .aplic-form      { max-width:220px; position:relative; z-index:2; }
-    .aplic-historial { position:relative; z-index:1; }
-    .aplic-form .form-row { margin-bottom:7px; }
-    .aplic-form label { font-size:11px; font-weight:600; color:var(--texto-suave); margin-bottom:2px; display:block; }
-    .aplic-form input, .aplic-form select { font-size:12px; padding:5px 7px; }
-    .aplic-form .btn { font-size:12px; padding:6px 10px; }
-    .aplic-form .btn-scan { font-size:11px; padding:4px 8px; }
-    .aplic-form .empleado-info { font-size:12px; padding:5px 7px; }
-    /* Modos empleado — mismo patrón que juntada */
-    .cosechador-modos { display:flex; gap:4px; margin-bottom:6px; }
+    /* ── Layout: form arriba, grilla abajo ── */
+    .aplic-layout    { display:flex; flex-direction:column; gap:14px; }
+    .aplic-form      { width:100%; }
+    .aplic-historial { width:100%; }
+
+    /* ── Compact form grid (igual que parcelas) ── */
+    .fg { display:flex; flex-wrap:wrap; gap:6px 10px; align-items:flex-end; }
+    .fg > .fi { display:flex; flex-direction:column; gap:2px; }
+    .fg > .fi > label { font-size:11px; font-weight:600; color:var(--texto-suave); margin:0; white-space:nowrap; }
+    .fg > .fi > input,
+    .fg > .fi > select { margin:0; padding:6px 8px; font-size:12px; height:32px; box-sizing:border-box; }
+    .fi-empleado  { flex:1 1 170px; min-width:140px; }
+    .fi-temporada { flex:0 1 150px; min-width:120px; }
+    .fi-parcela   { flex:0 1 150px; min-width:120px; }
+    .fi-producto  { flex:1 1 180px; min-width:150px; }
+    .fi-cantidad  { flex:0 0 88px; }
+    .fi-unidad    { flex:0 0 100px; }
+    .fi-dosis     { flex:0 0 88px; }
+    .fi-carencia  { flex:0 0 80px; }
+    .fi-metodo    { flex:0 0 110px; }
+    .fi-clima     { flex:0 0 130px; }
+    .fi-obs       { flex:1 1 160px; min-width:120px; }
+
+    /* Empleado: modos y chip inline */
+    .cosechador-modos { display:flex; gap:4px; margin-bottom:0; }
     .modo-btn {
-      flex:1; padding:5px 4px; border:2px solid var(--borde); border-radius:8px;
-      background:var(--fondo); color:var(--texto-2); font-size:11px; font-weight:600;
-      cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px;
-      transition:all .15s; min-height:28px;
+      padding:4px 8px; border:1.5px solid var(--borde); border-radius:6px;
+      background:var(--fondo); color:var(--texto-2); font-size:10px; font-weight:600;
+      cursor:pointer; display:flex; align-items:center; gap:3px;
+      transition:all .15s; white-space:nowrap; height:32px;
     }
     .modo-btn.active { border-color:var(--verde); background:var(--verde-suave); color:var(--verde); }
     .juntador-chip {
-      display:flex; align-items:center; gap:6px; margin-top:6px;
+      display:flex; align-items:center; gap:5px;
       background:var(--sem-verde-bg); border:1px solid var(--sem-verde-borde);
-      border-radius:8px; padding:7px 10px; color:var(--sem-verde);
+      border-radius:7px; padding:5px 8px; color:var(--sem-verde); height:32px; box-sizing:border-box;
     }
-    .juntador-chip strong { flex:1; font-size:12px; }
-    .juntador-chip-clear { background:none; border:none; cursor:pointer; color:var(--sem-verde); font-size:14px; padding:0 2px; }
+    .juntador-chip strong { flex:1; font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:110px; }
+    .juntador-chip-clear { background:none; border:none; cursor:pointer; color:var(--sem-verde); font-size:13px; padding:0 1px; line-height:1; }
     /* ── Toolbar historial ── */
     .aplic-toolbar {
       display:flex; align-items:center; justify-content:space-between;
@@ -220,101 +234,110 @@
               <button class="btn btn-secondary" id="btn-repetir" style="display:none;font-size:10px;padding:3px 7px;" onclick="repetirUltimaAplicacion()">↩ Repetir</button>
             </div>
 
-            <!-- EMPLEADO — PRIMERO -->
-            <div class="form-row">
-              <label>Empleado que aplica</label>
-              <div class="cosechador-modos">
-                <button id="btn-modo-lista" class="modo-btn active" onclick="setModoEmpleado('lista')">
-                  <i data-lucide="list" style="width:12px;height:12px;"></i> Seleccionar
-                </button>
-                <button id="btn-modo-qr" class="modo-btn" onclick="setModoEmpleado('qr')">
-                  <i data-lucide="scan-line" style="width:12px;height:12px;"></i> Escanear QR
-                </button>
-              </div>
-              <div id="modo-lista-empleado">
-                <select id="lista-empleados" onchange="seleccionarEmpleadoLista(this.value)">
-                  <option value="">— seleccionar empleado —</option>
-                </select>
-              </div>
-              <div id="modo-qr-empleado" style="display:none;">
-                <div class="empleado-info" id="empleado-info">Escaneá el QR del empleado</div>
-                <button class="btn btn-scan" onclick="toggleCamera()" style="margin-top:4px;">
-                  <i data-lucide="scan-line"></i> Escanear QR
-                </button>
-                <div id="camera-container" class="hidden" style="margin-top:8px;position:relative;z-index:10;">
-                  <video id="video" autoplay playsinline></video>
-                  <canvas id="canvas" class="hidden"></canvas>
+            <!-- FILA 1: Empleado · Temporada · Parcela · Producto -->
+            <div class="fg" style="margin-bottom:6px;">
+              <div class="fi fi-empleado">
+                <label>Empleado</label>
+                <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
+                  <div class="cosechador-modos" style="display:flex;gap:3px;">
+                    <button id="btn-modo-lista" class="modo-btn active" onclick="setModoEmpleado('lista')">
+                      <i data-lucide="list" style="width:11px;height:11px;"></i> Lista
+                    </button>
+                    <button id="btn-modo-qr" class="modo-btn" onclick="setModoEmpleado('qr')">
+                      <i data-lucide="scan-line" style="width:11px;height:11px;"></i> QR
+                    </button>
+                  </div>
+                  <div id="modo-lista-empleado" style="flex:1;min-width:100px;">
+                    <select id="lista-empleados" onchange="seleccionarEmpleadoLista(this.value)" style="width:100%;margin:0;padding:6px 8px;font-size:12px;height:32px;box-sizing:border-box;">
+                      <option value="">— empleado —</option>
+                    </select>
+                  </div>
+                  <div id="modo-qr-empleado" style="display:none;flex:1;">
+                    <div class="empleado-info" id="empleado-info" style="font-size:11px;">Escaneá el QR</div>
+                    <button class="btn btn-scan" onclick="toggleCamera()" style="margin-top:2px;font-size:11px;padding:3px 6px;">
+                      <i data-lucide="scan-line" style="width:11px;height:11px;"></i> Escanear
+                    </button>
+                    <div id="camera-container" class="hidden" style="margin-top:6px;position:relative;z-index:10;">
+                      <video id="video" autoplay playsinline></video>
+                      <canvas id="canvas" class="hidden"></canvas>
+                    </div>
+                  </div>
+                </div>
+                <div id="empleado-chip" class="juntador-chip" style="display:none;margin-top:3px;">
+                  <i data-lucide="user-check" style="width:13px;height:13px;flex-shrink:0;"></i>
+                  <strong id="empleado-chip-nombre"></strong>
+                  <button onclick="limpiarEmpleado()" class="juntador-chip-clear" title="Cambiar">✕</button>
                 </div>
               </div>
-              <div id="empleado-chip" class="juntador-chip" style="display:none;">
-                <i data-lucide="user-check" style="width:14px;height:14px;flex-shrink:0;"></i>
-                <strong id="empleado-chip-nombre"></strong>
-                <button onclick="limpiarEmpleado()" class="juntador-chip-clear" title="Cambiar empleado">✕</button>
+              <div class="fi fi-temporada">
+                <label>Temporada</label>
+                <select id="temporada"></select>
+              </div>
+              <div class="fi fi-parcela">
+                <label>Parcela</label>
+                <select id="parcela"></select>
+              </div>
+              <div class="fi fi-producto">
+                <label>Producto</label>
+                <select id="producto" onchange="mostrarStock()"></select>
+                <div id="stock-info" style="font-size:10px;color:var(--verde);margin-top:1px;line-height:1.2;"></div>
               </div>
             </div>
 
-            <div class="form-row">
-              <label>Temporada</label>
-              <select id="temporada"></select>
+            <!-- FILA 2: Cantidad · Unidad · Dosis · Carencia · Método · Clima · Obs · Guardar -->
+            <div class="fg" style="align-items:flex-end;">
+              <div class="fi fi-cantidad">
+                <label>Cantidad</label>
+                <input type="number" id="cantidad" placeholder="0.00" step="0.001" min="0">
+              </div>
+              <div class="fi fi-unidad">
+                <label>Unidad</label>
+                <select id="unidad-aplicacion">
+                  <option value="lt">lt</option>
+                  <option value="ml">ml</option>
+                  <option value="cc">cc</option>
+                  <option value="kg">kg</option>
+                  <option value="g">g</option>
+                </select>
+              </div>
+              <div class="fi fi-dosis">
+                <label>Dosis/ha</label>
+                <input type="number" id="dosis" placeholder="1.5" step="0.001">
+              </div>
+              <div class="fi fi-carencia">
+                <label>Carencia</label>
+                <input type="number" id="carencia" placeholder="7" step="1">
+              </div>
+              <div class="fi fi-metodo">
+                <label>Método</label>
+                <select id="metodo">
+                  <option value="mochila">Mochila</option>
+                  <option value="tractor">Tractor</option>
+                  <option value="manual">Manual</option>
+                  <option value="otro">Otro</option>
+                </select>
+              </div>
+              <div class="fi fi-clima">
+                <label>Clima</label>
+                <select id="clima">
+                  <option value="optima">Óptima</option>
+                  <option value="viento_leve">Vto.leve</option>
+                  <option value="nublado">Nublado</option>
+                  <option value="calor">Calor</option>
+                </select>
+              </div>
+              <div class="fi fi-obs">
+                <label>Observación</label>
+                <input type="text" id="observacion" placeholder="Opcional">
+              </div>
+              <div class="fi" style="flex:0 0 auto;">
+                <label style="visibility:hidden;">_</label>
+                <button class="btn btn-green" id="btn-guardar" onclick="guardar(this)" style="height:32px;padding:0 14px;white-space:nowrap;">
+                  <i data-lucide="save" style="width:13px;height:13px;"></i> Registrar
+                </button>
+              </div>
             </div>
-            <div class="form-row">
-              <label>Parcela</label>
-              <select id="parcela"></select>
-            </div>
-            <div class="form-row">
-              <label>Producto</label>
-              <select id="producto" onchange="mostrarStock()"></select>
-              <div id="stock-info" style="font-size:10px;color:var(--verde);margin-top:2px;"></div>
-            </div>
-            <div class="form-row">
-              <label>Cantidad aplicada</label>
-              <input type="number" id="cantidad" placeholder="0.00" step="0.001" min="0">
-            </div>
-            <div class="form-row">
-              <label>Unidad</label>
-              <select id="unidad-aplicacion">
-                <option value="lt">Litro (lt)</option>
-                <option value="ml">Mililitro (ml)</option>
-                <option value="cc">cc</option>
-                <option value="kg">Kg</option>
-                <option value="g">Gramo (g)</option>
-              </select>
-            </div>
-            <div class="form-row">
-              <label>Dosis / hectárea</label>
-              <input type="number" id="dosis" placeholder="Ej: 1.5" step="0.001">
-            </div>
-            <div class="form-row">
-              <label>Días de carencia</label>
-              <input type="number" id="carencia" placeholder="Ej: 7" step="1">
-            </div>
-            <div class="form-row">
-              <label>Método</label>
-              <select id="metodo">
-                <option value="mochila">Mochila</option>
-                <option value="tractor">Tractor</option>
-                <option value="manual">Manual</option>
-                <option value="otro">Otro</option>
-              </select>
-            </div>
-            <div class="form-row">
-              <label>Clima</label>
-              <select id="clima">
-                <option value="optima">Óptima</option>
-                <option value="viento_leve">Viento leve</option>
-                <option value="nublado">Nublado</option>
-                <option value="calor">Calor intenso</option>
-              </select>
-            </div>
-            <div class="form-row">
-              <label>Observación</label>
-              <input type="text" id="observacion" placeholder="Opcional">
-            </div>
-
-            <button class="btn btn-green" id="btn-guardar" onclick="guardar(this)" style="margin-top:10px;width:100%;">
-              <i data-lucide="save"></i> Registrar
-            </button>
-            <div id="mensaje"></div>
+            <div id="mensaje" style="margin-top:4px;"></div>
           </div>
 
           <!-- Botón Ver carencia -->

@@ -117,13 +117,14 @@ router.post('/egreso', async (req, res) => {
       } else {
         // 2b. Pago contado: ingreso directo en Caja
         await new sql.Request(transaction)
-          .input('concepto',     sql.NVarChar,      `Venta mercadería${compradorNombre ? ' a ' + compradorNombre : ''}`)
-          .input('monto',        sql.Decimal(12,2), total)
-          .input('forma_pago_id',sql.Int,           forma_pago_id || null)
-          .input('temporada_id', sql.Int,           temporada_id || null)
-          .input('observacion',  sql.NVarChar,      observacion || '')
-          .query(`INSERT INTO Caja (tipo, concepto, monto, forma_pago_id, temporada_id, observacion)
-                  VALUES ('ingreso', @concepto, @monto, @forma_pago_id, @temporada_id, @observacion)`);
+          .input('concepto',        sql.NVarChar,      `Venta mercadería${compradorNombre ? ' a ' + compradorNombre : ''}`)
+          .input('monto',           sql.Decimal(12,2), total)
+          .input('forma_pago_id',   sql.Int,           forma_pago_id || null)
+          .input('temporada_id',    sql.Int,           temporada_id || null)
+          .input('observacion',     sql.NVarChar,      observacion || '')
+          .input('usuario_nombre',  sql.NVarChar,      req.user ? req.user.nombre : null)
+          .query(`INSERT INTO Caja (tipo, concepto, monto, forma_pago_id, temporada_id, observacion, usuario_nombre)
+                  VALUES ('ingreso', @concepto, @monto, @forma_pago_id, @temporada_id, @observacion, @usuario_nombre)`);
       }
     }
 
@@ -287,6 +288,9 @@ router.get('/historial', async (req, res) => {
         sm.fecha,
         NULL                        AS variedad,
         NULL                        AS cliente_id,
+        'cobrada'                   AS estado_cobro,
+        NULL                        AS numero_remito,
+        fp2.nombre                  AS forma_pago,
         NULL                        AS deposito,
         sm.parcela_id,
         l2.nombre                   AS parcela,
@@ -297,8 +301,9 @@ router.get('/historial', async (req, res) => {
         sm.usuario_id,
         u2.nombre                   AS usuario
       FROM StockMercaderia sm
-      LEFT JOIN Parcelas       l2    ON sm.parcela_id      = l2.id
-      LEFT JOIN Temporadas  t2    ON sm.temporada_id = t2.id
+      LEFT JOIN Parcelas    l2    ON sm.parcela_id      = l2.id
+      LEFT JOIN Temporadas  t2    ON sm.temporada_id    = t2.id
+      LEFT JOIN FormasPago  fp2   ON sm.forma_pago_id   = fp2.id
       LEFT JOIN Juntada     jref2 ON sm.juntada_id   = jref2.id AND sm.juntador_id IS NULL
       LEFT JOIN Juntadores  ju2   ON COALESCE(sm.juntador_id, jref2.juntador_id) = ju2.id
       LEFT JOIN Usuarios    u2    ON sm.usuario_id   = u2.id
@@ -310,6 +315,9 @@ router.get('/historial', async (req, res) => {
              m.comprador, m.destino_venta, m.observacion, m.fecha,
              m.variedad,
              m.cliente_id,
+             m.estado_cobro,
+             m.numero_remito,
+             fp.nombre AS forma_pago,
              d.nombre  AS deposito,
              m.parcela_id,
              l.nombre AS parcela,
@@ -320,9 +328,10 @@ router.get('/historial', async (req, res) => {
              m.usuario_id,
              u.nombre  AS usuario
       FROM MovimientosDeposito m
-      LEFT JOIN Depositos  d    ON m.deposito_id  = d.id
-      LEFT JOIN Parcelas      l    ON m.parcela_id      = l.id
-      LEFT JOIN Temporadas t    ON m.temporada_id = t.id
+      LEFT JOIN Depositos   d    ON m.deposito_id   = d.id
+      LEFT JOIN Parcelas    l    ON m.parcela_id     = l.id
+      LEFT JOIN Temporadas  t    ON m.temporada_id   = t.id
+      LEFT JOIN FormasPago  fp   ON m.forma_pago_id  = fp.id
       LEFT JOIN Juntada    jref ON m.juntada_id   = jref.id AND m.juntador_id IS NULL
       LEFT JOIN Juntadores ju   ON COALESCE(m.juntador_id, jref.juntador_id) = ju.id
       LEFT JOIN Usuarios   u    ON m.usuario_id   = u.id
