@@ -169,35 +169,7 @@
     }
     .merc-hist-header span { font-weight: 600; font-size: 14px; }
 
-    /* ── Modales ── */
-    .modal-overlay {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,.45); z-index: 1000;
-      display: none; align-items: center;
-      justify-content: center; padding: 16px;
-    }
-    .modal-overlay.open { display: flex; }
-    .modal-card {
-      background: #fff; border-radius: 12px;
-      width: 100%; max-width: 500px;
-      box-shadow: 0 8px 32px rgba(0,0,0,.2); overflow: hidden;
-      max-height: 90vh; overflow-y: auto;
-    }
-    .modal-header {
-      display: flex; align-items: center;
-      justify-content: space-between;
-      padding: 14px 20px; border-bottom: 1px solid var(--borde);
-      background: #f8f9fa; position: sticky; top: 0;
-    }
-    .modal-header h3 { margin: 0; font-size: 15px; }
-    .modal-close {
-      background: none; border: none; cursor: pointer;
-      color: var(--texto-suave); display: flex;
-      padding: 4px; border-radius: 4px; line-height: 1;
-    }
-    .modal-close:hover { background: var(--fondo-dark); color: var(--texto); }
-    .modal-close svg { width: 18px; height: 18px; }
-    .modal-body { padding: 20px; }
+    /* ── Modals use .modal-overlay + .modal-box + .btn-cerrar from cosecha.css ── */
 
     /* ── btn-sm ── */
     .btn-sm { padding: 6px 12px !important; font-size: 12px !important; }
@@ -494,12 +466,8 @@
 
 <!-- ── MODAL: REGISTRAR INGRESO ── -->
 <div id="modal-ingreso-merc" class="modal-overlay" onclick="closeOnBackdropMerc(event,'modal-ingreso-merc')">
-  <div class="modal-card">
-    <div class="modal-header">
-      <h3><i data-lucide="package-plus" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i> Registrar Ingreso a Depósito</h3>
-      <button class="modal-close" onclick="closeIngresoModal()"><i data-lucide="x"></i></button>
-    </div>
-    <div class="modal-body">
+  <div class="modal-box">
+    <h3><i data-lucide="package-plus" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i> Registrar Ingreso a Depósito</h3>
       <div class="form-row">
         <label>Temporada</label>
         <select id="ing-temporada" onchange="filtrarParcelasPorTemporada('ing-parcela', this.value)">
@@ -530,18 +498,14 @@
         <i data-lucide="package-plus"></i> Registrar ingreso al depósito
       </button>
       <div id="msg-ingreso"></div>
-    </div>
+      <button class="btn-cerrar" onclick="closeIngresoModal()">Cerrar</button>
   </div>
 </div>
 
 <!-- ── MODAL: REGISTRAR EGRESO ── -->
 <div id="modal-egreso-merc" class="modal-overlay" onclick="closeOnBackdropMerc(event,'modal-egreso-merc')">
-  <div class="modal-card">
-    <div class="modal-header">
-      <h3><i data-lucide="minus" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i> Registrar Egreso</h3>
-      <button class="modal-close" onclick="closeEgresoModal()"><i data-lucide="x"></i></button>
-    </div>
-    <div class="modal-body">
+  <div class="modal-box">
+    <h3><i data-lucide="minus" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i> Registrar Egreso</h3>
       <div class="dep-select-wrap">
         <div class="form-row" style="margin-bottom:0;">
           <label>Depósito origen</label>
@@ -573,18 +537,14 @@
         <i data-lucide="arrow-up-from-line"></i> Registrar egreso
       </button>
       <div id="msg-venta"></div>
-    </div>
+      <button class="btn-cerrar" onclick="closeEgresoModal()">Cerrar</button>
   </div>
 </div>
 
 <!-- ── MODAL: REGISTRAR DESCARTE ── -->
 <div id="modal-descarte-merc" class="modal-overlay" onclick="closeOnBackdropMerc(event,'modal-descarte-merc')">
-  <div class="modal-card">
-    <div class="modal-header">
-      <h3><i data-lucide="trash-2" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i> Registrar Descarte</h3>
-      <button class="modal-close" onclick="closeDescarteModal()"><i data-lucide="x"></i></button>
-    </div>
-    <div class="modal-body">
+  <div class="modal-box">
+    <h3><i data-lucide="trash-2" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i> Registrar Descarte</h3>
       <div class="form-row">
         <label>Origen</label>
         <select id="desc-origen" onchange="toggleOrigenDescarte()">
@@ -638,7 +598,7 @@
         Registrar descarte
       </button>
       <div id="msg-descarte"></div>
-    </div>
+      <button class="btn-cerrar" onclick="closeDescarteModal()">Cerrar</button>
   </div>
 </div>
 

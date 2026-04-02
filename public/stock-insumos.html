@@ -192,58 +192,10 @@
     }
     .hist-header span { font-weight: 600; font-size: 14px; }
 
-    /* ── Modal egreso ── */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.45);
-      z-index: 1000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-    }
-    .modal-card {
-      background: #fff;
-      border-radius: 12px;
-      width: 100%;
-      max-width: 460px;
-      box-shadow: 0 8px 32px rgba(0,0,0,.2);
-      overflow: hidden;
-    }
-    .modal-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 20px;
-      border-bottom: 1px solid var(--borde);
-      background: #f8f9fa;
-    }
-    .modal-header h3 { margin: 0; font-size: 15px; }
-    .modal-close {
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: var(--texto-suave);
-      display: flex;
-      padding: 4px;
-      border-radius: 4px;
-      line-height: 1;
-    }
-    .modal-close:hover { background: var(--fondo-dark); color: var(--texto); }
-    .modal-close svg { width: 18px; height: 18px; }
-    .modal-body { padding: 20px; }
+    /* ── Modals use .modal-overlay + .modal-box + .btn-cerrar from cosecha.css ── */
 
-    .btn-icon-xs { width:24px; height:24px; border:1px solid var(--borde); border-radius:4px; background:#fff; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; color:var(--texto-suave); }
-    .btn-icon-xs:hover { border-color:var(--verde); color:var(--verde); background:var(--verde-suave); }
-    /* ── Modal editar mov ── */
-    #modal-editar-mov { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:200; align-items:center; justify-content:center; }
-    #modal-editar-mov.open { display:flex; }
-    .editar-mov-box { background:#fff; border-radius:12px; padding:22px; width:90%; max-width:360px; box-shadow:0 8px 32px rgba(0,0,0,.12); }
-    .editar-mov-box h4 { margin:0 0 12px; font-size:15px; font-weight:700; color:var(--verde); }
-    .editar-mov-box label { font-size:11px; font-weight:600; color:#64748B; text-transform:uppercase; letter-spacing:.4px; display:block; margin-bottom:3px; }
-    .editar-mov-box textarea { width:100%; padding:7px 9px; font-size:13px; border:1px solid #E2E8F0; border-radius:6px; resize:vertical; box-sizing:border-box; font-family:inherit; outline:none; }
-    .editar-mov-box textarea:focus { border-color:var(--verde); }
+    /* btn-icon / btn-icon-danger defined in cosecha.css */
+    /* ── Modal editar mov — uses .modal-overlay + .modal-box from cosecha.css ── */
     /* ── Estado almacenes ── */
     .ins-almacenes { margin-bottom: 14px; }
     .ins-almacenes-title { font-size: 12px; font-weight: 600; color: var(--texto-suave); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
@@ -467,7 +419,7 @@
                   <th>Parcela</th>
                   <th>Depósito</th>
                   <th>Usuario</th>
-                  <th style="width:36px;"></th>
+                  <th style="width:36px;">Acciones</th>
                 </tr>
               </thead>
               <tbody id="tbody-historial">
@@ -494,13 +446,9 @@
 </div>
 
 <!-- ── MODAL: REGISTRAR EGRESO ── -->
-<div id="modal-egreso" class="modal-overlay" style="display:none;" onclick="closeOnBackdrop(event)">
-  <div class="modal-card">
-    <div class="modal-header">
-      <h3>Registrar Egreso Manual</h3>
-      <button class="modal-close" onclick="closeEgresoModal()"><i data-lucide="x"></i></button>
-    </div>
-    <div class="modal-body">
+<div id="modal-egreso" class="modal-overlay" onclick="closeOnBackdrop(event)">
+  <div class="modal-box">
+    <h3>Registrar Egreso Manual</h3>
       <div class="form-row">
         <label>Producto</label>
         <select id="egr-producto" onchange="cargarStockProducto()">
@@ -535,18 +483,14 @@
         Registrar egreso
       </button>
       <div id="msg-egreso"></div>
-    </div>
+      <button class="btn-cerrar" onclick="closeEgresoModal()">Cerrar</button>
   </div>
 </div>
 
 <!-- ── MODAL: AGREGAR INSUMO (ingreso manual) ── -->
-<div id="modal-ingreso-manual" class="modal-overlay" style="display:none;" onclick="closeIngresoManualOnBackdrop(event)">
-  <div class="modal-card">
-    <div class="modal-header">
-      <h3>Agregar Insumo</h3>
-      <button class="modal-close" onclick="closeIngresoManualModal()"><i data-lucide="x"></i></button>
-    </div>
-    <div class="modal-body">
+<div id="modal-ingreso-manual" class="modal-overlay" onclick="closeIngresoManualOnBackdrop(event)">
+  <div class="modal-box">
+    <h3>Agregar Insumo</h3>
       <div class="form-row">
         <label>Depósito destino *</label>
         <select id="im-deposito">
@@ -575,7 +519,7 @@
         Agregar Insumo
       </button>
       <div id="msg-ingreso-manual"></div>
-    </div>
+      <button class="btn-cerrar" onclick="closeIngresoManualModal()">Cerrar</button>
   </div>
 </div>
 
@@ -610,11 +554,11 @@
     document.getElementById('im-costo').value = '';
     document.getElementById('im-obs').value = '';
     document.getElementById('msg-ingreso-manual').innerHTML = '';
-    document.getElementById('modal-ingreso-manual').style.display = 'flex';
+    document.getElementById('modal-ingreso-manual').classList.add('open');
     lucide.createIcons();
   }
   function closeIngresoManualModal() {
-    document.getElementById('modal-ingreso-manual').style.display = 'none';
+    document.getElementById('modal-ingreso-manual').classList.remove('open');
   }
   function closeIngresoManualOnBackdrop(e) {
     if (e.target === document.getElementById('modal-ingreso-manual')) closeIngresoManualModal();
@@ -655,11 +599,11 @@
 
   /* ── Modal egreso ── */
   function openEgresoModal() {
-    document.getElementById('modal-egreso').style.display = 'flex';
+    document.getElementById('modal-egreso').classList.add('open');
     lucide.createIcons();
   }
   function closeEgresoModal() {
-    document.getElementById('modal-egreso').style.display = 'none';
+    document.getElementById('modal-egreso').classList.remove('open');
   }
   function closeOnBackdrop(e) {
     if (e.target === document.getElementById('modal-egreso')) closeEgresoModal();
@@ -752,9 +696,9 @@
         '<td style="font-size:12px;">' + (p.proveedor || 'Sin proveedor') + '</td>' +
         '<td style="font-size:12px;color:var(--texto-suave);">' + (p.deposito || '—') + '</td>' +
         '<td style="white-space:nowrap;text-align:center;">' +
-          '<button class="btn-icon-xs" onclick="verDetalleProducto('+p.producto_id+')" title="Ver detalles del producto"><i data-lucide="eye" style="width:13px;height:13px;"></i></button> ' +
-          '<button class="btn-icon-xs" onclick="editarProducto('+p.producto_id+')" title="Editar producto"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button> ' +
-          '<button class="btn-icon-xs" style="border-color:#ccc;color:#aaa;cursor:not-allowed;opacity:.5;" title="Activar/Desactivar desde Inventario" disabled><i data-lucide="power" style="width:12px;height:12px;"></i></button>' +
+          '<button class="btn-icon" onclick="verDetalleProducto('+p.producto_id+')" title="Ver detalles del producto"><i data-lucide="eye"></i></button> ' +
+          '<button class="btn-icon" onclick="editarProducto('+p.producto_id+')" title="Editar producto"><i data-lucide="pencil"></i></button> ' +
+          '<button class="btn-icon" style="opacity:.4;cursor:not-allowed;" title="Activar/Desactivar desde Inventario" disabled><i data-lucide="power"></i></button>' +
         '</td>' +
         '</tr>';
     }).join('');
@@ -1103,7 +1047,7 @@
             '<td style="font-size:12px;">' + (m.deposito_nombre || '—') + '</td>' +
             '<td style="font-size:12px;color:var(--texto-suave);">' + (m.usuario || '—') + '</td>' +
             '<td style="text-align:center;">' + (_puedeEditarMov
-              ? '<button class="btn-icon-xs" onclick="abrirEditarMov('+m.id+',\''+((m.observacion||'').replace(/'/g,'\\\''))+'\')" title="Editar observación"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button>'
+              ? '<button class="btn-icon" onclick="abrirEditarMov('+m.id+',\''+((m.observacion||'').replace(/'/g,'\\\''))+'\')" title="Editar observación"><i data-lucide="pencil"></i></button>'
               : '') + '</td>' +
             '</tr>';
         }).join('');
@@ -1208,9 +1152,9 @@
             '<td style="padding:7px 10px;font-size:11px;">' + (m.usuario || '—') + '</td>' +
             '<td style="padding:7px 10px;font-size:11px;color:var(--texto-suave);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (m.observacion || '') + '</td>' +
             '<td style="padding:7px 10px;white-space:nowrap;text-align:center;">' +
-              '<button class="btn-icon-xs" onclick="'+eyeClick+'" title="Ver detalles"><i data-lucide="eye" style="width:13px;height:13px;"></i></button> ' +
-              '<button class="btn-icon-xs" onclick="'+pencilClick+'" title="Editar"><i data-lucide="pencil" style="width:12px;height:12px;"></i></button> ' +
-              '<button class="btn-icon-xs" style="border-color:#ccc;color:#aaa;cursor:not-allowed;opacity:.5;" title="Activar/Desactivar desde Inventario" disabled><i data-lucide="power" style="width:12px;height:12px;"></i></button>' +
+              '<button class="btn-icon" onclick="'+eyeClick+'" title="Ver detalles"><i data-lucide="eye"></i></button> ' +
+              '<button class="btn-icon" onclick="'+pencilClick+'" title="Editar"><i data-lucide="pencil"></i></button> ' +
+              '<button class="btn-icon" style="opacity:.4;cursor:not-allowed;" title="Activar/Desactivar desde Inventario" disabled><i data-lucide="power"></i></button>' +
             '</td>' +
           '</tr>';
         }).join('');
@@ -1251,15 +1195,15 @@
 </script>
 
 <!-- MODAL EDITAR MOVIMIENTO -->
-<div id="modal-editar-mov">
-  <div class="editar-mov-box">
-    <h4>Editar observación</h4>
+<div id="modal-editar-mov" class="modal-overlay">
+  <div class="modal-box">
+    <h3>Editar observación</h3>
     <input type="hidden" id="edit-mov-id">
     <label>Observación</label>
-    <textarea id="edit-mov-obs" rows="3"></textarea>
+    <textarea id="edit-mov-obs" rows="3" style="width:100%;padding:7px 9px;font-size:13px;border:1px solid var(--borde);border-radius:6px;resize:vertical;box-sizing:border-box;font-family:inherit;outline:none;"></textarea>
     <div id="edit-mov-msg" style="font-size:12px;margin-top:5px;"></div>
     <div style="display:flex;gap:8px;margin-top:12px;">
-      <button class="btn btn-secondary" style="flex:1;" onclick="cerrarEditarMov()">Cancelar</button>
+      <button class="btn-cerrar" style="flex:1;" onclick="cerrarEditarMov()">Cancelar</button>
       <button class="btn btn-primary" style="flex:1;" onclick="guardarEditarMov(this)">Guardar</button>
     </div>
   </div>
