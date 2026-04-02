@@ -130,6 +130,29 @@
     .alerta-desc  { color: var(--texto-suave); font-size: 12px; margin-top: 2px; }
     .no-alertas { color: var(--texto-suave); font-size: 13px; text-align: center; padding: 16px 0; display: flex; align-items: center; justify-content: center; gap: 6px; }
 
+    /* ── Notification badge ── */
+    .notif-icon { position:relative; cursor:pointer; display:inline-flex; }
+    .notif-badge {
+      position:absolute; top:-5px; right:-7px;
+      background:#DC2626; color:#fff; font-size:9px; font-weight:700;
+      min-width:16px; height:16px; border-radius:8px;
+      display:flex; align-items:center; justify-content:center;
+      padding:0 4px; box-shadow:0 1px 3px rgba(0,0,0,.2);
+      line-height:1;
+    }
+    .notif-badge:empty { display:none; }
+
+    /* ── Grupos de alertas ── */
+    .alerta-grupo { margin-bottom:10px; }
+    .alerta-grupo:last-child { margin-bottom:0; }
+    .alerta-grupo-header {
+      font-size:10px; font-weight:700; text-transform:uppercase;
+      letter-spacing:.6px; color:var(--texto-suave); margin-bottom:4px;
+      padding-bottom:3px; border-bottom:1px solid var(--borde);
+      display:flex; align-items:center; gap:6px;
+    }
+    .alerta-grupo-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+
     /* ── Flujo del día ── */
     #flujo-dia { padding: 12px 20px 4px; border-bottom: 1px solid #f0f0f0; display: none; }
 
@@ -237,7 +260,13 @@
         <div class="card">
           <div class="card-header">
             <span class="card-title">Alertas</span>
-            <span id="alertas-count" style="font-size:12px;color:var(--texto-suave);"></span>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span id="alertas-count" style="font-size:12px;color:var(--texto-suave);"></span>
+              <span class="notif-icon" id="notif-icon" title="Alertas activas">
+                <i data-lucide="bell" style="width:18px;height:18px;color:var(--texto-suave);"></i>
+                <span class="notif-badge" id="notif-badge"></span>
+              </span>
+            </div>
           </div>
           <div class="card-body" style="padding:0 16px 12px;" id="alertas-panel">
             <div class="no-alertas">Sin alertas activas</div>
@@ -512,39 +541,75 @@ function renderDashboard(d) {
     }).join('');
   }
 
-  // ── Panel alertas ──
+  // ── Panel alertas (agrupadas) ──
   var a = d.alertas;
   var total = a.carencia.length + a.stock_bajo.length + a.cheques_vencer.length;
+
+  // Notificación badge
+  var badge = document.getElementById('notif-badge');
+  if (badge) badge.textContent = total > 0 ? total : '';
+  var notifIcon = document.getElementById('notif-icon');
+  if (notifIcon) {
+    var bellIcon = notifIcon.querySelector('i');
+    if (bellIcon) bellIcon.style.color = total > 0 ? '#DC2626' : 'var(--texto-suave)';
+  }
+
   var alertasCount = document.getElementById('alertas-count');
   if (alertasCount) alertasCount.textContent = total > 0 ? total + ' activa' + (total !== 1 ? 's' : '') : '';
 
   var panel = document.getElementById('alertas-panel');
   if (total === 0) {
-    if (panel) panel.innerHTML = '';
+    if (panel) panel.innerHTML = '<div class="no-alertas"><i data-lucide="check-circle" style="width:14px;height:14px;color:var(--sem-verde);"></i> Sin alertas activas</div>';
     return;
   }
+
+  // Separar stock_bajo en insumos vs depósitos llenos
+  var alertasInsumos = a.stock_bajo.filter(function(s) { return true; }); // todos son insumos
+  // Agregar alertas de depósitos casi llenos desde datos cargados
   var html = '';
-  a.carencia.forEach(function(c) {
-    html += '<div class="alerta-v2">' +
-      '<div class="alerta-bar alerta-bar--red"></div>' +
-      '<div><div class="alerta-title">Carencia &middot; ' + c.parcela + '</div>' +
-      '<div class="alerta-desc">' + c.producto + ' — libre: ' + fmtFecha(c.fecha_libre) + '</div></div>' +
-      '</div>';
-  });
-  a.stock_bajo.forEach(function(s) {
-    html += '<div class="alerta-v2">' +
-      '<div class="alerta-bar alerta-bar--orange"></div>' +
-      '<div><div class="alerta-title">Stock bajo &middot; ' + s.nombre + '</div>' +
-      '<div class="alerta-desc">' + (s.presentacion || s.tipo) + ' — ' + parseFloat(s.stock_actual || 0) + ' unidades</div></div>' +
-      '</div>';
-  });
-  a.cheques_vencer.forEach(function(c) {
-    html += '<div class="alerta-v2">' +
-      '<div class="alerta-bar alerta-bar--blue"></div>' +
-      '<div><div class="alerta-title">Cheque vence ' + fmtFecha(c.fecha_vencimiento) + '</div>' +
-      '<div class="alerta-desc">' + (c.banco || '-') + ' · ' + fmtPeso(c.monto) + (c.proveedor ? ' · ' + c.proveedor : '') + '</div></div>' +
-      '</div>';
-  });
+
+  // Grupo: Stock bajo de insumos
+  if (alertasInsumos.length) {
+    html += '<div class="alerta-grupo">' +
+      '<div class="alerta-grupo-header"><div class="alerta-grupo-dot" style="background:#F59E0B;"></div>Stock bajo de insumos (' + alertasInsumos.length + ')</div>';
+    alertasInsumos.forEach(function(s) {
+      html += '<div class="alerta-v2">' +
+        '<div class="alerta-bar alerta-bar--orange"></div>' +
+        '<div><div class="alerta-title">' + s.nombre + '</div>' +
+        '<div class="alerta-desc">' + (s.presentacion || s.tipo) + ' — ' + parseFloat(s.stock_actual || 0) + ' unidades</div></div>' +
+        '</div>';
+    });
+    html += '</div>';
+  }
+
+  // Grupo: Alertas de carencia
+  if (a.carencia.length) {
+    html += '<div class="alerta-grupo">' +
+      '<div class="alerta-grupo-header"><div class="alerta-grupo-dot" style="background:#D32F2F;"></div>Carencia activa (' + a.carencia.length + ')</div>';
+    a.carencia.forEach(function(c) {
+      html += '<div class="alerta-v2">' +
+        '<div class="alerta-bar alerta-bar--red"></div>' +
+        '<div><div class="alerta-title">' + c.parcela + '</div>' +
+        '<div class="alerta-desc">' + c.producto + ' — libre: ' + fmtFecha(c.fecha_libre) + '</div></div>' +
+        '</div>';
+    });
+    html += '</div>';
+  }
+
+  // Grupo: Cheques por vencer
+  if (a.cheques_vencer.length) {
+    html += '<div class="alerta-grupo">' +
+      '<div class="alerta-grupo-header"><div class="alerta-grupo-dot" style="background:#3B82F6;"></div>Cheques por vencer (' + a.cheques_vencer.length + ')</div>';
+    a.cheques_vencer.forEach(function(c) {
+      html += '<div class="alerta-v2">' +
+        '<div class="alerta-bar alerta-bar--blue"></div>' +
+        '<div><div class="alerta-title">Vence ' + fmtFecha(c.fecha_vencimiento) + '</div>' +
+        '<div class="alerta-desc">' + (c.banco || '-') + ' · ' + fmtPeso(c.monto) + (c.proveedor ? ' · ' + c.proveedor : '') + '</div></div>' +
+        '</div>';
+    });
+    html += '</div>';
+  }
+
   panel.innerHTML = html;
 }
 
@@ -665,6 +730,23 @@ function cargarEtapasDashboard() {
     lucide.createIcons();
   }).catch(function(){});
 
+  // Estado depósito insumos
+  fetch('/api/depositos/ocupacion?tipo_deposito=insumos').then(function(r){ return r.json(); }).then(function(data){
+    if (!data || !data.length) return;
+    var dep = data[0];
+    var ocup = parseFloat(dep.ocupado_kg) || 0;
+    var cap = parseFloat(dep.capacidad_kg) || 0;
+    var pct = cap > 0 ? Math.min(100, Math.round(ocup / cap * 100)) : 0;
+    var color = pct > 85 ? '#c0392b' : pct > 60 ? '#f59e0b' : '#2d6a4f';
+    var row = document.getElementById('kpis-etapas');
+    row.style.display = '';
+    row.innerHTML += '<div class="kpi" style="border-top:3px solid '+color+';">' +
+      '<div class="kpi-label">Insumos</div>' +
+      '<div class="kpi-value" style="color:'+color+';font-size:22px;">'+pct+'%</div>' +
+      '<div class="kpi-sub" style="font-family:\'JetBrains Mono\',monospace;">'+fmt(ocup)+' / '+fmt(cap)+' kg</div>' +
+    '</div>';
+  }).catch(function(){});
+
   // Cajones en circulación
   fetch('/api/depositos/cajones-circulacion').then(function(r){ return r.json(); }).then(function(data){
     if (!data.length) return;
@@ -707,11 +789,13 @@ function cargarDepositos() {
         panel.innerHTML = '<div class="no-dep">Sin datos de depósitos</div>';
         return;
       }
+      var llenos = [];
       panel.innerHTML = data.map(function(dep) {
         var ocup = parseFloat(dep.ocupado_kg) || 0;
         var cap  = parseFloat(dep.capacidad_kg) || 0;
         var pct  = dep.porcentaje != null ? Math.round(dep.porcentaje) : (cap > 0 ? Math.min(100, Math.round(ocup / cap * 100)) : 0);
         var fillClass = pct > 85 ? 'dep-fill--full' : pct > 60 ? 'dep-fill--mid' : 'dep-fill--ok';
+        if (pct > 80) llenos.push({ nombre: dep.nombre, pct: pct, ocup: ocup, cap: cap });
         return '<div class="dep-item">' +
           '<div class="dep-header">' +
             '<span class="dep-nombre">' + dep.nombre + '</span>' +
@@ -721,6 +805,27 @@ function cargarDepositos() {
           '<div class="dep-sub">' + fmt(ocup) + ' / ' + fmt(cap) + ' kg</div>' +
         '</div>';
       }).join('');
+      // Inyectar alertas de almacén casi lleno
+      if (llenos.length) {
+        var ap = document.getElementById('alertas-panel');
+        if (ap) {
+          var grupoHtml = '<div class="alerta-grupo">' +
+            '<div class="alerta-grupo-header"><div class="alerta-grupo-dot" style="background:#c0392b;"></div>Almacén casi lleno (' + llenos.length + ')</div>';
+          llenos.forEach(function(d) {
+            grupoHtml += '<div class="alerta-v2"><div class="alerta-bar alerta-bar--red"></div>' +
+              '<div><div class="alerta-title">' + d.nombre + ' — ' + d.pct + '%</div>' +
+              '<div class="alerta-desc">' + fmt(d.ocup) + ' / ' + fmt(d.cap) + ' kg</div></div></div>';
+          });
+          grupoHtml += '</div>';
+          ap.innerHTML = grupoHtml + ap.innerHTML;
+          // Actualizar badge
+          var badge = document.getElementById('notif-badge');
+          if (badge) {
+            var prev = parseInt(badge.textContent) || 0;
+            badge.textContent = prev + llenos.length;
+          }
+        }
+      }
     })
     .catch(function() {
       var panel = document.getElementById('depositos-panel');
