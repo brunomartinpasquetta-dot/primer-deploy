@@ -424,11 +424,11 @@
           <h3>Registros de hoy</h3>
           <small id="desp-hist-contador"></small>
           <div style="margin-left:auto;display:flex;gap:8px;">
-            <button class="ins-btn ins-btn-gray" onclick="abrirHistorialCompleto()" style="font-size:11px;padding:5px 10px;">
+            <button class="ins-btn ins-btn-gray" onclick="mostrarTabDesp('historial')" style="font-size:11px;padding:5px 10px;">
               <i data-lucide="list" style="width:12px;height:12px;"></i> Historial
             </button>
-            <button class="ins-btn ins-btn-primary" onclick="abrirTotalesDespalillador()" style="font-size:11px;padding:5px 10px;">
-              <i data-lucide="bar-chart-2" style="width:12px;height:12px;"></i> Totales campaña
+            <button class="ins-btn ins-btn-primary" onclick="mostrarTabDesp('totales')" style="font-size:11px;padding:5px 10px;">
+              <i data-lucide="bar-chart-2" style="width:12px;height:12px;"></i> Totales x Despalillador
             </button>
           </div>
         </div>
@@ -449,10 +449,11 @@
                 <th>Parcela</th>
                 <th>Depósito</th>
                 <th>Usuario</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody id="tbody-desp-hoy">
-              <tr><td colspan="8" class="empty">Cargando...</td></tr>
+              <tr><td colspan="9" class="empty">Cargando...</td></tr>
             </tbody>
           </table>
         </div>
@@ -462,6 +463,57 @@
       </div><!-- /columna derecha -->
 
       </div><!-- /layout-desp -->
+
+      <!-- ── TABS HISTORIAL / TOTALES (inline) ── -->
+      <div class="tabs" style="margin-top:16px;">
+        <button class="tab active" onclick="mostrarTabDesp('historial')">Historial</button>
+        <button class="tab" onclick="mostrarTabDesp('totales')">Totales x Despalillador</button>
+      </div>
+      <div id="tab-historial-desp" class="tab-content active">
+        <div class="card" style="margin-top:0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+            <h3 style="margin:0;font-size:15px;">Historial completo de despalillado</h3>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input type="date" id="hist-desde" onchange="cargarHistorialInline()" style="height:32px;padding:0 8px;border:1px solid var(--borde);border-radius:6px;font-size:12px;">
+              <input type="date" id="hist-hasta" onchange="cargarHistorialInline()" style="height:32px;padding:0 8px;border:1px solid var(--borde);border-radius:6px;font-size:12px;">
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:13px;">
+              <thead><tr style="background:var(--fondo-dark);">
+                <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">#</th>
+                <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Despalillador</th>
+                <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Fecha/Hora</th>
+                <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Parcela</th>
+                <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Depósito</th>
+                <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:right;color:var(--texto-suave);">Kg</th>
+                <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:right;color:var(--texto-suave);">Merma</th>
+                <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Usuario</th>
+                <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:center;color:var(--texto-suave);">Acciones</th>
+              </tr></thead>
+              <tbody id="tbody-hist-completo"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div id="tab-totales-desp" class="tab-content">
+        <div class="card" style="margin-top:0;">
+          <h3 style="margin:0 0 12px;font-size:15px;">Totales campaña — por despalillador</h3>
+          <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:13px;">
+              <thead><tr style="background:var(--fondo-dark);">
+                <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Despalillador</th>
+                <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:center;color:var(--texto-suave);">Registros</th>
+                <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:right;color:var(--texto-suave);">KG Total</th>
+                <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:right;color:var(--texto-suave);">Merma KG</th>
+                <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:right;color:var(--texto-suave);">Merma %</th>
+                <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Últ. registro</th>
+              </tr></thead>
+              <tbody id="tbody-totales-desp"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
 
     </div>
   </div>
@@ -908,13 +960,62 @@
     {label:'Tipo',campo:'tipo'}
   ];
 
+  function renderDespHoy(data) {
+    var tbody = document.getElementById('tbody-desp-hoy');
+    if (!data || !data.length) {
+      tbody.innerHTML = '<tr><td colspan="9" class="empty">Sin movimientos</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(function(m) {
+      var esIngreso = m.tipo === 'ingreso';
+      var esPendiente = m.tipo === 'pendiente_despalillado';
+      var bg = esPendiente ? 'background:#fffbeb;' : esIngreso ? 'background:#f0faf0;' : 'background:#fff5f5;';
+      var colorKg = esPendiente ? 'color:#b45309;font-weight:700;' : esIngreso ? 'color:#2d6a4f;font-weight:700;' : 'color:#c0392b;font-weight:700;';
+      var signo = esIngreso ? '+' : esPendiente ? '~' : '-';
+      var tipoBadge = esPendiente
+        ? '<span class="badge" style="background:#fef3c7;color:#92400e;">Pendiente</span>'
+        : esIngreso
+          ? '<span class="badge" style="background:var(--sem-verde-bg);color:var(--sem-verde);">Ingreso</span>'
+          : '<span class="badge" style="background:var(--sem-rojo-bg);color:var(--sem-rojo);">Egreso</span>';
+      var fmt = function(n) { return parseFloat(n||0).toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:1}); };
+      var chip = function(id) { if (!id && id !== 0) return ''; return ' <span style="font-family:\'JetBrains Mono\',monospace;font-size:10px;background:var(--fondo-dark);border:1px solid var(--borde);border-radius:4px;padding:1px 4px;opacity:.75;">#' + id + '</span>'; };
+      var jid = function(jid) { if (!jid) return '—'; return '<span style="font-family:\'JetBrains Mono\',monospace;font-size:11px;background:var(--fondo-dark);border:1px solid var(--borde);border-radius:4px;padding:1px 5px;">#' + jid + '</span>'; };
+      var fmtF = function(iso) { if (!iso) return '—'; var d = new Date(iso); return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear() + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); };
+      var anulada = m.anulada || m.estado === 'anulada';
+      var accionTd;
+      if (anulada) {
+        accionTd = '<td style="text-align:center;"><span class="badge-anulada">Anulada</span></td>';
+      } else {
+        accionTd = '<td style="text-align:center;"><button class="btn-icon-danger" title="Anular" onclick="anularDespalillado(' + m.desp_id + ')"><i data-lucide="ban"></i></button></td>';
+      }
+      return '<tr style="' + bg + '"' + (anulada ? ' class="row-anulada"' : '') + '>' +
+        '<td style="text-align:center;">' + jid(m.juntada_id) + '</td>' +
+        '<td style="font-size:13px;">' + (m.cosechero || '—') + chip(m.juntador_id) + '</td>' +
+        '<td style="font-size:12px;white-space:nowrap;">' + fmtF(m.fecha) + '</td>' +
+        '<td>' + tipoBadge + '</td>' +
+        '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;' + colorKg + '">' + signo + fmt(m.kilos) + ' kg</td>' +
+        '<td style="font-size:12px;">' + (m.lote || '—') + '</td>' +
+        '<td style="font-size:12px;">' + (m.deposito || m.destino_venta || '—') + '</td>' +
+        '<td style="font-size:12px;">' + (m.usuario || '—') + chip(m.usuario_id) + '</td>' +
+        accionTd +
+      '</tr>';
+    }).join('');
+    lucide.createIcons();
+  }
+
   function filtrarDesp() {
     var q = (document.getElementById('desp-buscar').value || '').trim();
-    filtrarMovimientosGrid('tbody-desp-hoy', _despData, q);
+    if (!q) { renderDespHoy(_despData); return; }
+    var filtrado = _despData.filter(function(m) {
+      return _despCols.some(function(col) {
+        return (m[col.campo] || '').toString().toLowerCase().indexOf(q.toLowerCase()) >= 0;
+      });
+    });
+    renderDespHoy(filtrado);
   }
   function limpiarFiltrosDesp() {
     document.getElementById('desp-buscar').value = '';
-    renderMovimientosGrid('tbody-desp-hoy', _despData);
+    renderDespHoy(_despData);
   }
 
   function cargarHistorial() {
@@ -924,6 +1025,7 @@
         // Mapear a formato movimientos-grid (igual que juntada)
         var rows = data.map(function(r) {
           return {
+            desp_id:     r.id,
             juntada_id:  r.juntada_id,
             cosechero:   r.despalillador,
             juntador_id: null,
@@ -933,7 +1035,9 @@
             lote:        r.parcela || 'Fresco s/parcela',
             deposito:    r.deposito,
             usuario:     r.usuario,
-            usuario_id:  r.usuario_id
+            usuario_id:  r.usuario_id,
+            anulada:     r.anulada,
+            estado:      r.estado
           };
         });
         _despData = rows;
@@ -956,6 +1060,7 @@
 
         poblarDatalist('desp-opciones', rows, _despCols);
         filtrarDesp();
+        lucide.createIcons();
       });
   }
 
@@ -971,18 +1076,43 @@
       });
   }
 
-  // ── HISTORIAL COMPLETO ────────────────────────────────────────────
+  // ── TAB SWITCHING ──────────────────────────────────────────────────
+  function mostrarTabDesp(tab) {
+    var tabs = document.querySelectorAll('.tabs .tab');
+    tabs.forEach(function(t) { t.classList.remove('active'); });
+    document.getElementById('tab-historial-desp').classList.remove('active');
+    document.getElementById('tab-totales-desp').classList.remove('active');
+    if (tab === 'historial') {
+      tabs[0].classList.add('active');
+      document.getElementById('tab-historial-desp').classList.add('active');
+      cargarHistorialInline();
+    } else {
+      tabs[1].classList.add('active');
+      document.getElementById('tab-totales-desp').classList.add('active');
+      cargarTotalesDespalillador();
+    }
+  }
+
+  // ── ANULAR DESPALILLADO ───────────────────────────────────────────
+  function anularDespalillado(id) {
+    var motivo = prompt('Motivo de anulación:');
+    if (!motivo) return;
+    if (!confirm('¿Anular despalillado #' + id + '? Se revertirán los movimientos de stock y depósito.')) return;
+    fetch('/api/despalillado/' + id + '/anular', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ motivo: motivo })
+    }).then(function(r) { return r.json(); }).then(function(data) {
+      if (data.ok) { cargarHistorial(); if (typeof cargarHistorialInline === 'function') cargarHistorialInline(); }
+      else { alert('Error: ' + (data.error || 'No se pudo anular')); }
+    }).catch(function() { alert('Error de conexión'); });
+  }
+
+  // ── HISTORIAL COMPLETO (INLINE) ──────────────────────────────────
   var _histComplData = [];
-  function abrirHistorialCompleto() {
-    document.getElementById('modal-hist-desp').classList.add('open');
-    cargarHistorialCompleto();
-  }
-  function cerrarHistorialCompleto() {
-    document.getElementById('modal-hist-desp').classList.remove('open');
-  }
-  function cargarHistorialCompleto() {
+  function cargarHistorialInline() {
     var tbody = document.getElementById('tbody-hist-completo');
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--texto-suave);">Cargando...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--texto-suave);">Cargando...</td></tr>';
     var tid = (window.temporadaActiva && window.temporadaActiva.id) || '';
     var desde = document.getElementById('hist-desde').value;
     var hasta  = document.getElementById('hist-hasta').value;
@@ -995,14 +1125,21 @@
       .then(function(data) {
         _histComplData = data;
         if (!data.length) {
-          tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--texto-suave);">Sin registros</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--texto-suave);">Sin registros</td></tr>';
           return;
         }
         var fmtFH = function(iso) { if (!iso) return '—'; var d = new Date(iso); return d.toLocaleDateString('es-AR') + ' ' + d.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}); };
         var mono = "font-family:'JetBrains Mono',monospace;";
         tbody.innerHTML = data.map(function(r) {
           var mermaColor = parseFloat(r.merma_pct) > 5 ? '#c0392b' : '#2d6a4f';
-          return '<tr>' +
+          var anulada = r.anulada || r.estado === 'anulada';
+          var accionTd;
+          if (anulada) {
+            accionTd = '<td style="text-align:center;"><span class="badge-anulada">Anulada</span></td>';
+          } else {
+            accionTd = '<td style="text-align:center;"><button class="btn-icon-danger" title="Anular" onclick="anularDespalillado(' + r.id + ')"><i data-lucide="ban"></i></button></td>';
+          }
+          return '<tr' + (anulada ? ' class="row-anulada"' : '') + '>' +
             '<td style="' + mono + 'font-size:11px;color:var(--texto-suave);">#' + r.id + '</td>' +
             '<td style="font-size:12px;">' + (r.despalillador || '—') + '</td>' +
             '<td style="font-size:12px;">' + fmtFH(r.fecha) + '</td>' +
@@ -1011,23 +1148,17 @@
             '<td style="' + mono + 'text-align:right;font-weight:700;">' + parseFloat(r.kilos||0).toLocaleString('es-AR',{minimumFractionDigits:2}) + ' kg</td>' +
             '<td style="' + mono + 'text-align:right;color:' + mermaColor + ';">' + (r.merma_pct != null ? parseFloat(r.merma_pct).toFixed(1) + '%' : '—') + '</td>' +
             '<td style="font-size:11px;color:var(--texto-suave);">' + (r.usuario || '—') + '</td>' +
+            accionTd +
           '</tr>';
         }).join('');
         lucide.createIcons();
       })
       .catch(function() {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:#c0392b;">Error al cargar</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:#c0392b;">Error al cargar</td></tr>';
       });
   }
 
-  // ── TOTALES POR DESPALILLADOR ─────────────────────────────────────
-  function abrirTotalesDespalillador() {
-    document.getElementById('modal-totales-desp').classList.add('open');
-    cargarTotalesDespalillador();
-  }
-  function cerrarTotalesDespalillador() {
-    document.getElementById('modal-totales-desp').classList.remove('open');
-  }
+  // ── TOTALES POR DESPALILLADOR (INLINE) ────────────────────────────
   function cargarTotalesDespalillador() {
     var tbody = document.getElementById('tbody-totales-desp');
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--texto-suave);">Cargando...</td></tr>';
@@ -1068,60 +1199,9 @@
   // ── INIT ──────────────────────────────────────────────────────────
   cargarPendientes();
   cargarHistorial();
-  cargarTemporadaActiva().then(function() { cargarKpisDespalillado(); });
+  cargarTemporadaActiva().then(function() { cargarKpisDespalillado(); cargarHistorialInline(); });
 </script>
 
-<!-- MODAL HISTORIAL COMPLETO -->
-<div class="modal-overlay" id="modal-hist-desp">
-  <div class="modal-box" style="width:92%;max-width:860px;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
-      <h3 style="margin:0;">Historial completo de despalillado</h3>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <input type="date" id="hist-desde" onchange="cargarHistorialCompleto()" style="height:32px;padding:0 8px;border:1px solid var(--borde);border-radius:6px;font-size:12px;">
-        <input type="date" id="hist-hasta" onchange="cargarHistorialCompleto()" style="height:32px;padding:0 8px;border:1px solid var(--borde);border-radius:6px;font-size:12px;">
-        <button class="btn-cerrar" onclick="cerrarHistorialCompleto()">✕ Cerrar</button>
-      </div>
-    </div>
-    <div style="overflow-x:auto;">
-      <table style="width:100%;border-collapse:collapse;font-size:13px;">
-        <thead><tr style="background:var(--fondo-dark);">
-          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">#</th>
-          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Despalillador</th>
-          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Fecha/Hora</th>
-          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Parcela</th>
-          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Depósito</th>
-          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:right;color:var(--texto-suave);">Kg</th>
-          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:right;color:var(--texto-suave);">Merma</th>
-          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Usuario</th>
-        </tr></thead>
-        <tbody id="tbody-hist-completo"></tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL TOTALES POR DESPALILLADOR -->
-<div class="modal-overlay" id="modal-totales-desp">
-  <div class="modal-box" style="width:90%;max-width:640px;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-      <h3 style="margin:0;">Totales campaña — por despalillador</h3>
-      <button class="btn-cerrar" onclick="cerrarTotalesDespalillador()">✕ Cerrar</button>
-    </div>
-    <div style="overflow-x:auto;">
-      <table style="width:100%;border-collapse:collapse;font-size:13px;">
-        <thead><tr style="background:var(--fondo-dark);">
-          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Despalillador</th>
-          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:center;color:var(--texto-suave);">Registros</th>
-          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:right;color:var(--texto-suave);">KG Total</th>
-          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:right;color:var(--texto-suave);">Merma KG</th>
-          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:right;color:var(--texto-suave);">Merma %</th>
-          <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Últ. registro</th>
-        </tr></thead>
-        <tbody id="tbody-totales-desp"></tbody>
-      </table>
-    </div>
-  </div>
-</div>
 
 </body>
 </html>
