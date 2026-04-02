@@ -386,4 +386,61 @@ router.get('/pendientes-stock', async (req, res) => {
   }
 });
 
+// GET /api/juntada/historial — historial completo filtrable
+router.get('/historial', async (req, res) => {
+  try {
+    const { temporada_id, desde, hasta, juntador_id } = req.query;
+    const pool = await getPool();
+    const dbReq = pool.request();
+    let where = '1=1';
+    if (temporada_id)  { where += ' AND l.temporada_id = @tid';                dbReq.input('tid',   sql.Int,  parseInt(temporada_id)); }
+    if (desde)         { where += ' AND CAST(j.fecha_hora AS DATE) >= @desde'; dbReq.input('desde', sql.Date, desde); }
+    if (hasta)         { where += ' AND CAST(j.fecha_hora AS DATE) <= @hasta'; dbReq.input('hasta', sql.Date, hasta); }
+    if (juntador_id)   { where += ' AND j.juntador_id = @jid';                dbReq.input('jid',   sql.Int,  parseInt(juntador_id)); }
+    const result = await dbReq.query(`
+      SELECT j.id, l.nombre AS parcela,
+             ju.apellido + ', ' + ju.nombre AS cosechero,
+             j.kilos, j.fecha_hora AS fecha, j.juntador_id,
+             j.usuario_id, u.nombre AS usuario,
+             t.nombre AS temporada
+      FROM Juntada j
+      JOIN Parcelas l ON j.parcela_id = l.id
+      JOIN Juntadores ju ON j.juntador_id = ju.id
+      LEFT JOIN Temporadas t ON l.temporada_id = t.id
+      LEFT JOIN Usuarios u ON j.usuario_id = u.id
+      WHERE ${where}
+      ORDER BY j.fecha_hora DESC`);
+    res.json(result.recordset);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/juntada/totales-por-juntador — totales campaña activa
+router.get('/totales-por-juntador', async (req, res) => {
+  try {
+    const { temporada_id } = req.query;
+    const pool = await getPool();
+    const dbReq = pool.request();
+    let where = '1=1';
+    if (temporada_id) { where += ' AND l.temporada_id = @tid'; dbReq.input('tid', sql.Int, parseInt(temporada_id)); }
+    const result = await dbReq.query(`
+      SELECT
+        ju.apellido + ', ' + ju.nombre AS cosechero,
+        COUNT(j.id)       AS registros,
+        SUM(j.kilos)      AS kg_total,
+        MIN(j.fecha_hora) AS primera_fecha,
+        MAX(j.fecha_hora) AS ultima_fecha
+      FROM Juntada j
+      JOIN Parcelas l ON j.parcela_id = l.id
+      JOIN Juntadores ju ON j.juntador_id = ju.id
+      WHERE ${where}
+      GROUP BY ju.id, ju.apellido, ju.nombre
+      ORDER BY kg_total DESC`);
+    res.json(result.recordset);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
