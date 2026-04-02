@@ -1,0 +1,206 @@
+PROYECTO: CosechaApp - ERP Gestion de Cultivos
+===============================================
+Desarrollado por: Bruno Pasquetta
+Estado: En desarrollo activo
+Ultima actualizacion: 02/04/2026
+
+CONTEXTO DEL NEGOCIO
+---------------------
+Sistema ERP generico para gestion de cosecha agricola.
+Nombre: CosechaApp — Gestion de Cultivos
+Nicho: Productores pequenos y medianos argentinos sin sistema de gestion
+Aplica a: frutilla, soja, trigo, arandanos, vid, zapallitos, cualquier cultivo
+Usuarios: productores, encargados de campo, operarios
+Dispositivos: celular en campo + PC en oficina/galpon
+
+IDENTIDAD VISUAL
+-----------------
+Nombre: COSECHA (CO blanco, SE #F5A623 dorado, CHA blanco)
+Logo: public/img/logo-icon.png
+Paleta: verde oscuro #2D5016 primario, dorado #F5A623 acento, crema #F7F3EE fondo
+Tipografia: DM Sans + JetBrains Mono (datos)
+CSS compartido: public/cosecha.css
+Diseno: sidebar izquierdo + topbar + contenido principal, responsive
+
+COLORES SEMANTICOS (unicos colores alternativos permitidos):
+- Verde #2d6a4f -> ingreso, positivo, stock OK, activo
+- Rojo #c0392b -> egreso, negativo, error, stock bajo
+- Amarillo #f39c12 -> advertencia, carencia, pendiente
+- Azul #1565c0 -> informacion neutral
+- Gris #666 -> inactivo, secundario
+
+STACK TECNOLOGICO
+------------------
+- Servidor: Node.js v24 + Express (puerto 3000)
+- Base de datos: SQL Server (Docker, puerto 1433)
+- WebSocket: balanza RS232 (libreria ws)
+- Frontend: HTML + JS vanilla + cosecha.css
+- Entorno desarrollo: Mac con VS Code + Claude Code
+- Entorno produccion: PC Windows en el galpon
+
+CREDENCIALES — SOLO VIA .env (nunca hardcodeadas)
+---------------------------------------------------
+- DB_SERVER=localhost
+- DB_PORT=1433
+- DB_NAME=CosechaFrutilla
+- DB_USER=sa
+- DB_PASSWORD=Frutilla2026!
+- JWT_SECRET=<en .env local>
+- .env esta en .gitignore — .env.example en el repo
+
+COMO INICIAR EL SISTEMA
+------------------------
+1. Abrir Docker Desktop
+2. cd ~/cosecha-app && node server/index.js
+3. Abrir http://localhost:3000
+Puerto ocupado: kill -9 $(lsof -t -i:3000)
+Claude Code: cd ~/cosecha-app && claude --dangerously-skip-permissions
+
+BASE DE DATOS — TABLAS PRINCIPALES
+------------------------------------
+Aplicaciones, AuditoriaCompras, AuditoriaVentas, Caja, CategoriasGasto,
+Cheques, Clientes, Compras, ComprasDetalle, Configuracion,
+CuentaCorrienteClientes, CuentaCorrienteProveedores,
+Depositos, Despalillado, FormasPago, Gastos,
+Juntada, JuntadaDestino, Juntadores, Lotes,
+MovimientosDeposito, Pagos, Parcelas, Personal,
+PrecioHistorico, Productos, Proveedores,
+Remitos, RemitoItems,
+StockInsumos, StockMercaderia,
+Temporadas, Usuarios, VentaEmbalaje
+
+INDICES: 36+ indices secundarios en FK de alta frecuencia
+CHECK CONSTRAINT: CK_StockMercaderia_tipo activo
+
+TIPOS VALIDOS POR TABLA:
+- StockMercaderia.tipo: 'ingreso' | 'egreso_venta'
+- MovimientosDeposito.tipo: 'ingreso' | 'egreso_venta' | 'egreso_descarte'
+- Juntada.destino: 'deposito' | 'descarte' | 'venta_directa' | 'mixto'
+
+ARQUITECTURA DE MODULOS
+------------------------
+CAMPO: Cosecha (juntada.html), Despalillado, Aplicaciones
+STOCK: Stock Insumos, Stock Mercaderia, Depositos
+COMERCIAL: Compras, Proveedores, Clientes, Cta. Proveedores, Cta. Clientes, Ventas
+ADMINISTRACION: Caja, Cheques, Pagos, Gastos, Reportes, Balance, Personal
+CONFIGURACION: Temporadas/Campanas, Lotes, Trabajadores, Productos, Usuarios
+MERCADO: Dolar, Pizarra Rosario, Frutilla, Simulador
+
+REGLAS DE CAMPANA
+------------------
+- Solo UNA campana activa a la vez
+- Al activar una campana se desactiva la actual automaticamente
+- TODOS los modulos precargan la temporada activa automaticamente en sus selectores
+- Patron: fetch('/api/temporadas/activa') -> setear select -> disparar evento change
+
+LOGICA DE NEGOCIO — REGLAS INAMOVIBLES
+----------------------------------------
+1. VENTA -> INGRESO en Caja + EGRESO en MovimientosDeposito + EGRESO en StockMercaderia
+2. DESCARTE -> EGRESO en MovimientosDeposito (tipo='egreso_descarte') — NO mueve Caja
+3. COMPRA efectivo -> EGRESO automatico en Caja dentro de la misma transaccion
+4. COMPRA CC -> debito en CuentaCorrienteProveedores
+5. INGRESO deposito -> INSERT MovimientosDeposito + UPDATE StockMercaderia
+6. JUNTADA -> destino obligatorio: 'deposito', 'descarte', 'venta_directa' o 'mixto'
+   - Suma de kilos asignados debe == kilos cosechados (tolerancia +-0.01)
+   - Cosechero obligatorio antes de registrar
+   - Permite destino mixto: parte deposito + parte descarte en una sola transaccion
+7. ANULACION -> NUNCA eliminar registros. Soft-delete con estado='anulada'.
+   Reversion completa: stock, caja, cuenta corriente en una transaccion.
+   Registrar motivo + audit trail completo.
+
+BALANCE: cosechado = en deposito + vendido + descartado
+
+PATRONES UI ESTABLECIDOS
+-------------------------
+- Layout dos columnas: formulario (220px) + tabla/historial (1fr)
+- Gap entre columnas: 16px
+- En mobile (<900px): una sola columna
+- Historial/movimientos siempre visible en panel derecho — NO como pestana
+- Formularios colapsables: lista visible primero, form colapsado por defecto
+- KPI cards arriba del contenido principal
+- Filtros de temporada siempre precargan la activa
+- Iconos grillas: eye=ver, pencil=editar, power-off=activar/desactivar, ban=anular
+
+MODULOS DE COTIZACIONES
+------------------------
+- Dolar: dolarapi.com (blue, oficial, MEP, CCL) — cache 30min
+- Granos Rosario: MAGYP FOB — cache 60min
+- Frutilla: scraping preciosdelcentral.com — cache 60min
+
+SISTEMA DE AUDITORIA (implementado 02/04/2026)
+-------------------------------------------------
+Tablas: AuditoriaCompras, AuditoriaVentas
+Campos: (movimiento_id, accion, campo, valor_anterior, valor_nuevo, usuario_id, usuario_nombre, fecha_hora)
+
+Compras: PATCH con auditoria campo-por-campo, POST /:id/anular (revierte stock+caja+CC)
+Ventas: via stock-mercaderia.js — PATCH /historial/:id/auditado, POST /historial/:id/anular
+
+Columna 'estado' NVARCHAR(20) DEFAULT 'confirmada' en: Compras, StockMercaderia, MovimientosDeposito
+Filas anuladas: opacity:0.5, line-through, badge roja "Anulada"
+Frontend: boton "Auditoria" en barra filtros, modal con tabla + filtros tipo/busqueda
+
+AUTO-REMITO (implementado 02/04/2026)
+--------------------------------------
+Patron: NO-REM001, NO-REM002, NO-REM003...
+Si el usuario no completa remito, se genera automaticamente.
+Busca ultimo NO-REM% + 1 con padStart(3, '0').
+Ventas: remitos gestionados via tabla Remitos + RemitoItems.
+
+FLUJOS DE MERCADERIA
+---------------------
+- Flujo A — Fresco directo: juntada -> deposito (requiere_despalillado=0) -> StockMercaderia inmediato
+- Flujo B — Camara fria: juntada -> stock_pendiente=1 -> despalillado -> StockMercaderia
+- Flujo C — Fresco despalillado: deposito con requiere_despalillado=1
+
+EMBALAJE EN VENTAS
+-------------------
+Tabla VentaEmbalaje (movimiento_id FK, producto_id FK, cantidad, costo_unitario, costo_total, retornable, cantidad_devuelta)
+Retornables: descuentan stock al salir, se reponen con POST /api/depositos/devolucion-embalaje
+KPI "Cajones en circulacion" visible cuando hay retornables pendientes
+
+FILTROS UNIFICADOS — PATRON OBLIGATORIO
+-----------------------------------------
+Todos los modulos con grilla usan .filtros-barra con input unico + datalist.
+Helpers utils.js: poblarDatalist(), matchFiltro()
+Filtrado SIEMPRE client-side sobre array en memoria.
+Solo select de temporada si dispara re-fetch.
+
+DASHBOARD EJECUTIVO
+--------------------
+Hero bar verde: temporada + Dolar Blue + Frutilla Hoy/kg
+3 KPI cards (Hoy): Cosecha Hoy, En Camara, Saldo Caja
+2 cards campana: Total Cosechado, Vendido Total con barra progreso
+Split 60/40: Ultimos Registros + Flujo dia | Estado Depositos + Alertas
+Alertas: carencia, stock bajo, cheques por vencer, stock en transito
+
+ACCESOS RAPIDOS (implementado 02/04/2026)
+-------------------------------------------
+Compras: "Nuevo proveedor" -> proveedores.html?nuevo=1, "Nuevo insumo" -> productos.html?nuevo=1
+Ventas: "Nuevo cliente" -> clientes.html?nuevo=1
+Patron ?nuevo=1: las paginas destino abren el formulario automaticamente
+
+AGENTES CUSTOM (.claude/agents/)
+----------------------------------
+4 agentes: visual-consistency, scope-guard, work-standards, business-context
+Invocacion: manual via /agents (settings.json no soporta autoInvokeAgents)
+
+BACKLOG DE MEJORAS (no ejecutar sin instruccion explicita)
+-----------------------------------------------------------
+M01. Roles y permisos de usuario
+M02. Backup automatico de BD
+M03. Exportacion Excel/PDF en todos los modulos
+M04. Paginacion server-side para grillas grandes
+M05. Validacion backend en todos los endpoints
+M06. Logs de acceso y request logging
+M07. Rate limiting
+M08. Cierre de periodo financiero
+M09. Conectar balanza RS232
+M10. Script instalacion PC Windows
+M11. Modo offline PWA
+M12. Deploy Railway/Azure para demos
+M13. Tabla maestra de Cultivos
+M14. Mejoras en Lotes — ubicacion/GPS
+M15. Auditoria en TODOS los modulos (solo compras/ventas implementado)
+M16. Soft-delete universal (solo compras/ventas implementado)
+M17. Transacciones SQL en cheques, pagos, gastos
+M18. Sanitizacion HTML — reemplazar innerHTML por textContent
