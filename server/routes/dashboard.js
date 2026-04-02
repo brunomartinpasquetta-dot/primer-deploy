@@ -121,7 +121,7 @@ router.get('/', async (req, res) => {
     }
 
     // ── Alertas ─────────────────────────────────────────────────
-    const [alertasCarencia, stockBajo, chequesVencer] = await Promise.all([
+    const [alertasCarencia, stockBajo, chequesVencer, enTransito] = await Promise.all([
       pool.request().query(`
         SELECT TOP 10 parcela, producto, fecha_libre
         FROM VistaCariencia
@@ -144,12 +144,22 @@ router.get('/', async (req, res) => {
           AND c.fecha_vencimiento <= DATEADD(day, 7, CAST(GETDATE() AS DATE))
           AND c.fecha_vencimiento >= CAST(GETDATE() AS DATE)
         ORDER BY c.fecha_vencimiento ASC`),
+
+      pool.request().query(`
+        SELECT j.id, j.kilos, l.nombre AS parcela, d.nombre AS deposito,
+               ju.apellido + ', ' + ju.nombre AS juntador, j.fecha_hora
+        FROM Juntada j
+        JOIN Parcelas l ON j.parcela_id = l.id
+        JOIN Juntadores ju ON j.juntador_id = ju.id
+        LEFT JOIN Depositos d ON j.deposito_id = d.id
+        WHERE j.stock_pendiente = 1
+        ORDER BY j.fecha_hora ASC`),
     ]);
 
     const f = flujoHoy.recordset[0];
     res.json({
       temporada,
-      temporadas_activas: activas,   // siempre presente; el frontend usa .length para decidir vista
+      temporadas_activas: activas,
       hoy: {
         kilos_cosechados:  parseFloat(juntadaHoy.recordset[0].kilos_hoy),
         kilos_despalillados: parseFloat(despalilladoHoy.recordset[0].kilos_hoy),
@@ -169,6 +179,7 @@ router.get('/', async (req, res) => {
         carencia:       alertasCarencia.recordset,
         stock_bajo:     stockBajo.recordset,
         cheques_vencer: chequesVencer.recordset,
+        en_transito:    enTransito.recordset,
       },
     });
   } catch (err) {

@@ -543,7 +543,8 @@ function renderDashboard(d) {
 
   // ── Panel alertas (agrupadas) ──
   var a = d.alertas;
-  var total = a.carencia.length + a.stock_bajo.length + a.cheques_vencer.length;
+  var enTransito = a.en_transito || [];
+  var total = a.carencia.length + a.stock_bajo.length + a.cheques_vencer.length + enTransito.length;
 
   // Notificación badge
   var badge = document.getElementById('notif-badge');
@@ -605,6 +606,20 @@ function renderDashboard(d) {
         '<div class="alerta-bar alerta-bar--blue"></div>' +
         '<div><div class="alerta-title">Vence ' + fmtFecha(c.fecha_vencimiento) + '</div>' +
         '<div class="alerta-desc">' + (c.banco || '-') + ' · ' + fmtPeso(c.monto) + (c.proveedor ? ' · ' + c.proveedor : '') + '</div></div>' +
+        '</div>';
+    });
+    html += '</div>';
+  }
+
+  // Grupo: Stock en tránsito (pendiente despalillado)
+  if (enTransito.length) {
+    html += '<div class="alerta-grupo">' +
+      '<div class="alerta-grupo-header"><div class="alerta-grupo-dot" style="background:#856404;"></div>Stock en tránsito (' + enTransito.length + ')</div>';
+    enTransito.forEach(function(j) {
+      html += '<div class="alerta-v2">' +
+        '<div class="alerta-bar alerta-bar--orange"></div>' +
+        '<div><div class="alerta-title">' + (j.parcela || '—') + ' — ' + parseFloat(j.kilos).toLocaleString('es-AR') + ' kg</div>' +
+        '<div class="alerta-desc">' + (j.deposito || 'Sin depósito') + ' · ' + (j.juntador || '') + '</div></div>' +
         '</div>';
     });
     html += '</div>';
