@@ -49,6 +49,10 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   const { temporada_id, parcela_id, categoria_id, concepto, monto,
           fecha, forma_pago_id, proveedor_id, observacion } = req.body;
+  if (!temporada_id) return res.status(400).json({ error: 'Temporada es obligatoria' });
+  if (!categoria_id) return res.status(400).json({ error: 'Categoría es obligatoria' });
+  if (!concepto) return res.status(400).json({ error: 'Concepto es obligatorio' });
+  if (!monto || parseFloat(monto) <= 0) return res.status(400).json({ error: 'Monto debe ser mayor a 0' });
   const pool = await getPool();
   const transaction = new sql.Transaction(pool);
   try {

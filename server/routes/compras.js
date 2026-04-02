@@ -53,8 +53,12 @@ router.get('/:id/detalle', async (req, res) => {
 // POST /api/compras — registrar compra completa
 router.post('/', async (req, res) => {
   const { proveedor_id, temporada_id, fecha, observacion, forma_pago_id, deposito_id, items, numero_remito } = req.body;
-  if (!items || items.length === 0) {
-    return res.status(400).json({ error: 'La compra debe tener al menos un item' });
+  if (!proveedor_id) return res.status(400).json({ error: 'Proveedor es obligatorio' });
+  if (!items || items.length === 0) return res.status(400).json({ error: 'La compra debe tener al menos un item' });
+  for (const it of items) {
+    if (!it.producto_id) return res.status(400).json({ error: 'Cada item requiere producto' });
+    if (!it.cantidad || parseFloat(it.cantidad) <= 0) return res.status(400).json({ error: 'Cantidad debe ser mayor a 0' });
+    if (!it.precio_unit || parseFloat(it.precio_unit) <= 0) return res.status(400).json({ error: 'Precio unitario debe ser mayor a 0' });
   }
   const pool = await getPool();
   const transaction = new sql.Transaction(pool);

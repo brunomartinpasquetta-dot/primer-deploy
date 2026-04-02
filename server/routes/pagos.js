@@ -51,9 +51,8 @@ router.get('/juntador/:id', async (req, res) => {
 
 router.post('/anticipo', async (req, res) => {
   const { juntador_id, monto, observacion } = req.body;
-  if (!juntador_id || !monto) {
-    return res.status(400).json({ error: 'Juntador y monto son obligatorios' });
-  }
+  if (!juntador_id) return res.status(400).json({ error: 'Juntador es obligatorio' });
+  if (!monto || parseFloat(monto) <= 0) return res.status(400).json({ error: 'Monto debe ser mayor a 0' });
   const pool = await getPool();
   const transaction = new sql.Transaction(pool);
   try {
@@ -153,6 +152,8 @@ router.get('/precio/:temporada_id', async (req, res) => {
 
 router.post('/precio', async (req, res) => {
   const { temporada_id, precio_kilo, destino, fecha_desde } = req.body;
+  if (!temporada_id) return res.status(400).json({ error: 'Temporada es obligatoria' });
+  if (!precio_kilo || parseFloat(precio_kilo) <= 0) return res.status(400).json({ error: 'Precio por kilo debe ser mayor a 0' });
   const pool = await getPool();
   const transaction = new sql.Transaction(pool);
   try {

@@ -82,6 +82,7 @@ router.post('/', async (req, res) => {
   const { tipo, tipo_cheque, numero, banco, emisor, receptor, monto,
           fecha_emision, fecha_vencimiento, proveedor_id, cliente_id,
           origen, observacion, id_echeq, cbu_origen, cuit_emisor } = req.body;
+  if (!tipo || !['emitido', 'recibido'].includes(tipo)) return res.status(400).json({ error: 'Tipo debe ser emitido o recibido' });
   if (!monto || parseFloat(monto) <= 0) return res.status(400).json({ error: 'Monto inválido' });
   if (!fecha_vencimiento) return res.status(400).json({ error: 'Fecha de vencimiento requerida' });
 

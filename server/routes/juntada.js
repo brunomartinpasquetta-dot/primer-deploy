@@ -11,6 +11,8 @@ const { getPool, sql } = require('../db');
 router.post('/', async (req, res) => {
   try {
     const { parcela_id, juntador_id, kilos, operador, observacion, destinos } = req.body;
+    if (!parcela_id || !juntador_id) return res.status(400).json({ error: 'Parcela y juntador son obligatorios' });
+    if (!kilos || parseFloat(kilos) <= 0) return res.status(400).json({ error: 'Kilos debe ser mayor a 0' });
     const pool = await getPool();
 
     const parcelaResult = await pool.request()
