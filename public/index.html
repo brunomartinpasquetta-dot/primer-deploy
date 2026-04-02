@@ -49,8 +49,8 @@
 
     /* ── KPI rows ── */
     .kpi-row-4, .kpi-row-3, .kpi-row-2 { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
-    .kpi-row-4 .kpi, .kpi-row-3 .kpi { flex: 0 0 auto; min-width: 110px; }
-    .kpi-row-2 .kpi { flex: 0 0 auto; min-width: 150px; }
+    .kpi-row-4 .kpi, .kpi-row-3 .kpi { flex: 1 1 0; min-width: 80px; }
+    .kpi-row-2 .kpi { flex: 1 1 0; min-width: 80px; }
     @media (max-width: 480px) {
       .kpi-row-4 .kpi, .kpi-row-3 .kpi, .kpi-row-2 .kpi { flex: 1 1 calc(50% - 4px); min-width: 0; }
     }
@@ -58,13 +58,13 @@
     /* ── KPI Cards ── */
     .kpi {
       background: #fff;
-      border-radius: 10px;
-      padding: 12px 14px;
+      border-radius: 8px;
+      padding: 8px 10px;
       box-shadow: 0 1px 6px rgba(0,0,0,.06);
       border: 1px solid rgba(0,0,0,.06);
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      gap: 1px;
     }
     .kpi--acento { border: 2px solid var(--acento) !important; }
     .kpi-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 2px; }
@@ -77,7 +77,7 @@
     .kpi-icon--alerta  { background: #fde8e8; color: #c0392b; }
     .kpi-icon--ok      { background: #e8f5e2; color: #16a34a; }
     .kpi-icon--warn    { background: #fff3cd; color: #856404; }
-    .kpi-value { font-size: 20px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--texto); line-height: 1.15; }
+    .kpi-value { font-size: 17px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--texto); line-height: 1.15; }
     .kpi-sub   { font-size: 11px; color: var(--texto-suave); }
     .kpi-value.red   { color: #DC2626; }
     .kpi-value.green { color: #16A34A; }
@@ -91,6 +91,10 @@
     /* ── Split 60/40 ── */
     .dash-split { display: grid; grid-template-columns: 3fr 2fr; gap: 16px; }
     @media (max-width: 900px) { .dash-split { grid-template-columns: 1fr; } }
+
+    /* ── Layout principal: KPIs izq + depósitos/alertas der ── */
+    .dash-main-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; align-items: start; }
+    @media (max-width: 900px) { .dash-main-row { grid-template-columns: 1fr; } }
 
     /* ── Tabla registros ── */
     #tabla-registros-dia thead th {
@@ -196,46 +200,50 @@
       <!-- Hero: temporada + cotizaciones -->
       <div id="temporada-banner"></div>
 
-      <!-- KPIs hoy (4 cards) -->
-      <div class="section-label">Hoy</div>
-      <div class="kpi-row-4" id="kpis-hoy">
-        <div class="kpi"><div class="kpi-label">Cosecha hoy</div><div class="kpi-value" id="kpi-cosecha-hoy">—</div><div class="kpi-sub" id="kpi-cosecha-sub">kg</div></div>
-        <div class="kpi"><div class="kpi-label">En cámara</div><div class="kpi-value" id="kpi-camara-hoy">—</div><div class="kpi-sub">kg disponibles</div></div>
-        <div class="kpi kpi--acento"><div class="kpi-label">Saldo caja</div><div class="kpi-value" id="kpi-caja-hoy">—</div></div>
-        <div class="kpi" id="kpi-merma-card" style="display:none;"><div class="kpi-label">Merma hoy</div><div class="kpi-value red" id="kpi-merma-val">—</div><div class="kpi-sub" id="kpi-merma-sub">— %</div></div>
-      </div>
+      <!-- ── Fila principal: KPIs | Depósitos | Alertas ── -->
+      <div class="dash-main-row">
 
-      <!-- Estado del stock: etapas + cajones -->
-      <div class="section-label">Estado del stock</div>
-      <div class="kpi-row-4" id="kpis-etapas" style="display:none;"></div>
+        <!-- COL 1: KPIs -->
+        <div>
+          <div class="section-label">Hoy</div>
+          <div class="kpi-row-4" id="kpis-hoy" style="gap:6px;">
+            <div class="kpi"><div class="kpi-label">Cosecha hoy</div><div class="kpi-value" id="kpi-cosecha-hoy">—</div><div class="kpi-sub" id="kpi-cosecha-sub">kg</div></div>
+            <div class="kpi"><div class="kpi-label">En cámara</div><div class="kpi-value" id="kpi-camara-hoy">—</div><div class="kpi-sub">kg disponibles</div></div>
+            <div class="kpi kpi--acento"><div class="kpi-label">Saldo caja</div><div class="kpi-value" id="kpi-caja-hoy">—</div></div>
+            <div class="kpi" id="kpi-merma-card" style="display:none;"><div class="kpi-label">Merma hoy</div><div class="kpi-value red" id="kpi-merma-val">—</div><div class="kpi-sub" id="kpi-merma-sub">— %</div></div>
+          </div>
 
-      <!-- KPIs temporada (2 cards) -->
-      <div class="section-label" id="label-temporada-stats">Temporada</div>
-      <div class="kpi-row-2" id="kpis-temporada">
-        <div class="kpi"><div class="kpi-label">Total cosechado</div><div class="kpi-value">—</div><div class="kpi-sub">total temporada</div></div>
-        <div class="kpi"><div class="kpi-label">Vendido total</div><div class="kpi-value">—</div><div class="kpi-sub">total temporada</div></div>
-      </div>
+          <div class="section-label">Estado del stock</div>
+          <div class="kpi-row-4" id="kpis-etapas" style="display:none;gap:6px;"></div>
 
-      <!-- Split 60/40: depósitos + alertas -->
-      <div class="dash-split">
+          <div class="section-label" id="label-temporada-stats">Campaña</div>
+          <div class="kpi-row-2" id="kpis-temporada" style="gap:6px;">
+            <div class="kpi"><div class="kpi-label">Total cosechado</div><div class="kpi-value">—</div><div class="kpi-sub">kg total temporada</div></div>
+            <div class="kpi"><div class="kpi-label">Vendido total</div><div class="kpi-value">—</div><div class="kpi-sub">kg total temporada</div></div>
+          </div>
+        </div>
+
+        <!-- COL 2: Depósitos -->
         <div class="card">
           <div class="card-header">
             <span class="card-title">Estado de depósitos</span>
           </div>
-          <div class="card-body" style="padding:0 20px 12px;" id="depositos-panel">
+          <div class="card-body" style="padding:0 16px 12px;" id="depositos-panel">
             <div class="no-dep">Cargando...</div>
           </div>
         </div>
 
+        <!-- COL 3: Alertas -->
         <div class="card">
           <div class="card-header">
             <span class="card-title">Alertas</span>
             <span id="alertas-count" style="font-size:12px;color:var(--texto-suave);"></span>
           </div>
-          <div class="card-body" style="padding:0 20px 12px;" id="alertas-panel">
+          <div class="card-body" style="padding:0 16px 12px;" id="alertas-panel">
             <div class="no-alertas">Sin alertas activas</div>
           </div>
         </div>
+
       </div>
 
       <!-- Split 60/40: registros cosecha + registros aplicaciones -->
