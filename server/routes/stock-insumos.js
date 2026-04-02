@@ -58,6 +58,8 @@ router.get('/', async (req, res) => {
 // cantidad = unidades compradas; se multiplica por contenido_litros del producto
 router.post('/compra', async (req, res) => {
   const { producto_id, cantidad, costo_total, proveedor, observacion, deposito_id, fecha_vencimiento } = req.body;
+  if (!producto_id) return res.status(400).json({ error: 'Producto es obligatorio' });
+  if (!cantidad || parseFloat(cantidad) <= 0) return res.status(400).json({ error: 'Cantidad debe ser mayor a 0' });
   const uid = req.user ? req.user.id : null;
   const pool = await getPool();
   const transaction = new sql.Transaction(pool);
@@ -96,7 +98,8 @@ router.post('/compra', async (req, res) => {
 // Registrar ingreso manual (sin compra)
 router.post('/ingreso-manual', async (req, res) => {
   const { producto_id, cantidad, costo_total, observacion, deposito_id } = req.body;
-  if (!producto_id || !cantidad) return res.status(400).json({ error: 'Producto y cantidad son obligatorios' });
+  if (!producto_id) return res.status(400).json({ error: 'Producto es obligatorio' });
+  if (!cantidad || parseFloat(cantidad) <= 0) return res.status(400).json({ error: 'Cantidad debe ser mayor a 0' });
   const uid = req.user ? req.user.id : null;
   const pool = await getPool();
   const transaction = new sql.Transaction(pool);
@@ -126,6 +129,8 @@ router.post('/ingreso-manual', async (req, res) => {
 // Registrar aplicacion (egreso de stock)
 router.post('/aplicacion', async (req, res) => {
   const { producto_id, cantidad, parcela_id, empleado_id, observacion } = req.body;
+  if (!producto_id) return res.status(400).json({ error: 'Producto es obligatorio' });
+  if (!cantidad || parseFloat(cantidad) <= 0) return res.status(400).json({ error: 'Cantidad debe ser mayor a 0' });
   const uid = req.user ? req.user.id : null;
   const pool = await getPool();
   const transaction = new sql.Transaction(pool);
@@ -163,7 +168,8 @@ router.post('/aplicacion', async (req, res) => {
 // Registrar egreso manual (vencimiento, pérdida, merma)
 router.post('/egreso', async (req, res) => {
   const { producto_id, cantidad, motivo, parcela_id, observacion } = req.body;
-  if (!producto_id || !cantidad) return res.status(400).json({ error: 'Producto y cantidad son obligatorios' });
+  if (!producto_id) return res.status(400).json({ error: 'Producto es obligatorio' });
+  if (!cantidad || parseFloat(cantidad) <= 0) return res.status(400).json({ error: 'Cantidad debe ser mayor a 0' });
   const uid = req.user ? req.user.id : null;
   const pool = await getPool();
   const transaction = new sql.Transaction(pool);

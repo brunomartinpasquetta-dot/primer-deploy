@@ -39,6 +39,8 @@ router.get('/pendientes', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { parcela_id, despalillador_id, kilos, operador, juntada_id, juntada_destino_id } = req.body;
+    if (!despalillador_id) return res.status(400).json({ error: 'Despalillador es obligatorio' });
+    if (!kilos || parseFloat(kilos) <= 0) return res.status(400).json({ error: 'Kilos debe ser mayor a 0' });
     const pool = await getPool();
 
     if (juntada_id) {

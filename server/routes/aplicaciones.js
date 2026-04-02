@@ -54,9 +54,8 @@ router.post('/', async (req, res) => {
           unidad_aplicacion, metodo, condicion_climatica, dosis_por_hectarea,
           carencia_dias, observacion } = req.body;
 
-  if (!parcela_id || !producto_id || !cantidad_usada) {
-    return res.status(400).json({ error: 'Parcela, producto y cantidad son obligatorios' });
-  }
+  if (!parcela_id || !producto_id) return res.status(400).json({ error: 'Parcela y producto son obligatorios' });
+  if (!cantidad_usada || parseFloat(cantidad_usada) <= 0) return res.status(400).json({ error: 'Cantidad debe ser mayor a 0' });
 
   const pool = await getPool();
   const transaction = new sql.Transaction(pool);

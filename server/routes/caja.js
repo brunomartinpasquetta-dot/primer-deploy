@@ -68,6 +68,7 @@ router.post('/', async (req, res) => {
 
     if (!tipo || !['ingreso','egreso'].includes(tipo))
       return res.status(400).json({ error: 'tipo debe ser ingreso o egreso' });
+    if (!concepto) return res.status(400).json({ error: 'Concepto es obligatorio' });
     if (!monto || parseFloat(monto) <= 0)
       return res.status(400).json({ error: 'Monto inválido' });
 
