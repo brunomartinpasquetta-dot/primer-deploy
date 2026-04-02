@@ -610,7 +610,7 @@
     if (desde) params.push('desde=' + desde);
     if (hasta) params.push('hasta=' + hasta);
     var url = '/api/compras' + (params.length ? '?' + params.join('&') : '');
-    fetch(url).then(function(r){return r.json();}).then(function(data){
+    return fetch(url).then(function(r){return r.json();}).then(function(data){
       _historialData = data;
       poblarDatalist('compras-opciones', data, _comprasCols);
       filtrarTabla();
@@ -740,26 +740,25 @@
   document.getElementById('fecha').value = hoy;
   cargarDatos().then(function() {
     agregarItem();
-    cargarHistorial();
-    if (new URLSearchParams(location.search).get('nuevo') === '1') {
-      document.getElementById('form-nuevo').classList.add('visible');
-    }
-    var verId = new URLSearchParams(location.search).get('ver');
-    if (verId) {
-      // Buscar la compra en el historial cargado y abrir detalle
-      var compra = _historialData.find(function(c) { return c.id == verId; });
-      if (compra) {
-        verDetalle(compra.id, compra.proveedor||'', formatFechaHora(compra.fecha), compra.forma_pago||'—', compra.observacion||'');
-      } else {
-        // Si no está en los datos cargados, abrir directo por ID
-        verDetalle(parseInt(verId), '—', '—', '—', '');
+    cargarHistorial().then(function() {
+      if (new URLSearchParams(location.search).get('nuevo') === '1') {
+        document.getElementById('form-nuevo').classList.add('visible');
       }
-    }
-    var editarId = new URLSearchParams(location.search).get('editar');
-    if (editarId) {
-      var comp = _historialData.find(function(c) { return c.id == editarId; });
-      if (comp) abrirEditarCompra(comp.id, comp.observacion||'', comp.numero_remito||'');
-    }
+      var verId = new URLSearchParams(location.search).get('ver');
+      if (verId) {
+        var compra = _historialData.find(function(c) { return c.id == verId; });
+        if (compra) {
+          verDetalle(compra.id, compra.proveedor||'', formatFechaHora(compra.fecha), compra.forma_pago||'—', compra.observacion||'');
+        } else {
+          verDetalle(parseInt(verId), '—', '—', '—', '');
+        }
+      }
+      var editarId = new URLSearchParams(location.search).get('editar');
+      if (editarId) {
+        var comp = _historialData.find(function(c) { return c.id == editarId; });
+        if (comp) abrirEditarCompra(comp.id, comp.observacion||'', comp.numero_remito||'');
+      }
+    });
   });
   cargarTemporadaActiva();
 </script>

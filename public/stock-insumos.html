@@ -1125,6 +1125,32 @@
     location.href = 'productos.html?editar=' + id;
   }
 
+  // Acciones de movimientos
+  var _movData = [];
+  function _findMov(id) { return _movData.find(function(m){ return m.id == id; }); }
+  function verMovimiento(id) {
+    var m = _findMov(id);
+    if (!m) return;
+    if (m.tipo === 'compra' && m.compra_id) {
+      location.href = 'compras.html?ver=' + m.compra_id;
+    } else if (m.tipo === 'aplicacion' && m.aplicacion_id) {
+      location.href = 'aplicaciones.html?ver=' + m.aplicacion_id;
+    } else {
+      alert((m.producto || '') + ' — ' + (m.observacion || 'Sin observación'));
+    }
+  }
+  function editarMovimiento(id) {
+    var m = _findMov(id);
+    if (!m) return;
+    if (m.tipo === 'compra' && m.compra_id) {
+      location.href = 'compras.html?editar=' + m.compra_id;
+    } else if (m.tipo === 'aplicacion' && m.aplicacion_id) {
+      location.href = 'aplicaciones.html?editar=' + m.aplicacion_id;
+    } else {
+      abrirEditarMov(m.id, m.observacion || '');
+    }
+  }
+
   cargarStock();
   cargarEgresoInit();
   cargarTemporadaActiva();
@@ -1157,6 +1183,7 @@
           merma:'#fff3cd;color:#856404', vencimiento:'#fff3cd;color:#856404',
           perdida:'#fde8e8;color:#c0392b'
         };
+        _movData = data;
         tbody.innerHTML = data.slice(0, 60).map(function(m) {
           var esIngreso = m.tipo === 'compra' || m.tipo === 'ingreso_manual';
           var cant = parseFloat(m.cantidad || 0);
@@ -1168,18 +1195,8 @@
           var rowBg = esIngreso ? '' : 'background:#fff9f9;';
           var remito = m.numero_remito || '—';
           // Botones según tipo de movimiento
-          var eyeClick = '', pencilClick = '';
-          if (m.tipo === 'compra' && m.compra_id) {
-            eyeClick = 'location.href="compras.html?ver='+m.compra_id+'"';
-            pencilClick = 'location.href="compras.html?editar='+m.compra_id+'"';
-          } else if (m.tipo === 'aplicacion' && m.aplicacion_id) {
-            eyeClick = 'location.href="aplicaciones.html?ver='+m.aplicacion_id+'"';
-            pencilClick = 'location.href="aplicaciones.html?editar='+m.aplicacion_id+'"';
-          } else {
-            var obsEsc = (m.observacion||'').replace(/'/g,"\\'");
-            eyeClick = 'alert("'+(label)+': '+(m.producto||'')+' — '+(m.observacion||'Sin observación').replace(/"/g,'')+'")';;
-            pencilClick = 'abrirEditarMov('+m.id+',\''+obsEsc+'\')';
-          }
+          var eyeClick = 'verMovimiento('+m.id+')';
+          var pencilClick = 'editarMovimiento('+m.id+')';
           return '<tr style="border-bottom:1px solid var(--borde);' + rowBg + '">' +
             '<td style="padding:7px 10px;font-size:11px;font-weight:600;color:var(--verde);">' + remito + '</td>' +
             '<td style="padding:7px 10px;white-space:nowrap;font-size:11px;color:var(--texto-suave);">' + fecha + '</td>' +
