@@ -79,16 +79,19 @@ router.get('/', async (req, res) => {
 
 // ── Registrar cheque ────────────────────────────────────────────
 router.post('/', async (req, res) => {
-  try {
-    const { tipo, tipo_cheque, numero, banco, emisor, receptor, monto,
-            fecha_emision, fecha_vencimiento, proveedor_id, cliente_id,
-            origen, observacion, id_echeq, cbu_origen, cuit_emisor } = req.body;
-    if (!monto || parseFloat(monto) <= 0) return res.status(400).json({ error: 'Monto inválido' });
-    if (!fecha_vencimiento) return res.status(400).json({ error: 'Fecha de vencimiento requerida' });
+  const { tipo, tipo_cheque, numero, banco, emisor, receptor, monto,
+          fecha_emision, fecha_vencimiento, proveedor_id, cliente_id,
+          origen, observacion, id_echeq, cbu_origen, cuit_emisor } = req.body;
+  if (!monto || parseFloat(monto) <= 0) return res.status(400).json({ error: 'Monto inválido' });
+  if (!fecha_vencimiento) return res.status(400).json({ error: 'Fecha de vencimiento requerida' });
 
-    const estadoInicial = tipo === 'emitido' ? 'entregado' : 'en_cartera';
-    const pool = await getPool();
-    const result = await pool.request()
+  const estadoInicial = tipo === 'emitido' ? 'entregado' : 'en_cartera';
+  const pool = await getPool();
+  const transaction = new sql.Transaction(pool);
+  try {
+    await transaction.begin();
+
+    const result = await new sql.Request(transaction)
       .input('tipo',              sql.NVarChar,      tipo)
       .input('tipo_cheque',       sql.NVarChar,      tipo_cheque    || 'fisico')
       .input('numero',            sql.NVarChar,      numero         || '')
@@ -118,51 +121,58 @@ router.post('/', async (req, res) => {
     const chequeId = result.recordset[0].id;
 
     // Log creation movement
-    await pool.request()
+    await new sql.Request(transaction)
       .input('cheque_id',   sql.Int,       chequeId)
       .input('tipo',        sql.NVarChar,  'creado')
       .input('descripcion', sql.NVarChar,  `Cheque registrado en estado: ${estadoInicial}`)
       .query(`INSERT INTO ChequeMovimientos (cheque_id, tipo, descripcion)
               VALUES (@cheque_id, @tipo, @descripcion)`);
 
+    await transaction.commit();
     res.json({ ok: true, id: chequeId });
   } catch (err) {
+    await transaction.rollback();
     res.status(500).json({ error: err.message });
   }
 });
 
 // ── Depositar (recibido: en_cartera → depositado) ──────────────
 router.post('/:id/depositar', async (req, res) => {
+  const chequeId = parseInt(req.params.id);
+  const { descripcion } = req.body;
+  const pool = await getPool();
+
+  const actual = await pool.request()
+    .input('id', sql.Int, chequeId)
+    .query('SELECT estado, tipo FROM Cheques WHERE id = @id');
+  if (!actual.recordset.length) return res.status(404).json({ error: 'Cheque no encontrado' });
+
+  const { estado, tipo } = actual.recordset[0];
+  const trans = tipo === 'emitido' ? TRANSICIONES_EMITIDO : TRANSICIONES_RECIBIDO;
+  if (!trans[estado] || !trans[estado].includes('depositado')) {
+    return res.status(400).json({ error: `No se puede depositar desde estado "${estado}"` });
+  }
+
+  const transaction = new sql.Transaction(pool);
   try {
-    const chequeId = parseInt(req.params.id);
-    const { descripcion } = req.body;
-    const pool = await getPool();
+    await transaction.begin();
 
-    const actual = await pool.request()
-      .input('id', sql.Int, chequeId)
-      .query('SELECT estado, tipo FROM Cheques WHERE id = @id');
-    if (!actual.recordset.length) return res.status(404).json({ error: 'Cheque no encontrado' });
-
-    const { estado, tipo } = actual.recordset[0];
-    const trans = tipo === 'emitido' ? TRANSICIONES_EMITIDO : TRANSICIONES_RECIBIDO;
-    if (!trans[estado] || !trans[estado].includes('depositado')) {
-      return res.status(400).json({ error: `No se puede depositar desde estado "${estado}"` });
-    }
-
-    await pool.request()
+    await new sql.Request(transaction)
       .input('id',    sql.Int,      chequeId)
       .input('estado', sql.NVarChar, 'depositado')
       .query('UPDATE Cheques SET estado = @estado WHERE id = @id');
 
-    await pool.request()
+    await new sql.Request(transaction)
       .input('cheque_id',   sql.Int,      chequeId)
       .input('tipo',        sql.NVarChar, 'deposito')
       .input('descripcion', sql.NVarChar, descripcion || 'Depositado en banco')
       .query(`INSERT INTO ChequeMovimientos (cheque_id, tipo, descripcion)
               VALUES (@cheque_id, @tipo, @descripcion)`);
 
+    await transaction.commit();
     res.json({ ok: true });
   } catch (err) {
+    await transaction.rollback();
     res.status(500).json({ error: err.message });
   }
 });
@@ -232,70 +242,80 @@ router.post('/:id/acreditar', async (req, res) => {
 
 // ── Rechazar ────────────────────────────────────────────────────
 router.post('/:id/rechazar', async (req, res) => {
+  const chequeId = parseInt(req.params.id);
+  const { descripcion } = req.body;
+  const pool = await getPool();
+
+  const actual = await pool.request()
+    .input('id', sql.Int, chequeId)
+    .query('SELECT estado, tipo FROM Cheques WHERE id = @id');
+  if (!actual.recordset.length) return res.status(404).json({ error: 'Cheque no encontrado' });
+
+  const { estado, tipo } = actual.recordset[0];
+  const trans = tipo === 'emitido' ? TRANSICIONES_EMITIDO : TRANSICIONES_RECIBIDO;
+  if (!trans[estado] || !trans[estado].includes('rechazado')) {
+    return res.status(400).json({ error: `No se puede rechazar desde estado "${estado}"` });
+  }
+
+  const transaction = new sql.Transaction(pool);
   try {
-    const chequeId = parseInt(req.params.id);
-    const { descripcion } = req.body;
-    const pool = await getPool();
+    await transaction.begin();
 
-    const actual = await pool.request()
-      .input('id', sql.Int, chequeId)
-      .query('SELECT estado, tipo FROM Cheques WHERE id = @id');
-    if (!actual.recordset.length) return res.status(404).json({ error: 'Cheque no encontrado' });
-
-    const { estado, tipo } = actual.recordset[0];
-    const trans = tipo === 'emitido' ? TRANSICIONES_EMITIDO : TRANSICIONES_RECIBIDO;
-    if (!trans[estado] || !trans[estado].includes('rechazado')) {
-      return res.status(400).json({ error: `No se puede rechazar desde estado "${estado}"` });
-    }
-
-    await pool.request()
+    await new sql.Request(transaction)
       .input('id',     sql.Int,      chequeId)
       .input('estado', sql.NVarChar, 'rechazado')
       .query('UPDATE Cheques SET estado = @estado WHERE id = @id');
 
-    await pool.request()
+    await new sql.Request(transaction)
       .input('cheque_id',   sql.Int,      chequeId)
       .input('tipo',        sql.NVarChar, 'rechazo')
       .input('descripcion', sql.NVarChar, descripcion || 'Cheque rechazado')
       .query(`INSERT INTO ChequeMovimientos (cheque_id, tipo, descripcion)
               VALUES (@cheque_id, @tipo, @descripcion)`);
 
+    await transaction.commit();
     res.json({ ok: true });
   } catch (err) {
+    await transaction.rollback();
     res.status(500).json({ error: err.message });
   }
 });
 
 // ── Endosar (transferir a tercero) ──────────────────────────────
 router.post('/:id/endosar', async (req, res) => {
+  const chequeId = parseInt(req.params.id);
+  const { descripcion } = req.body;
+  const pool = await getPool();
+
+  const actual = await pool.request()
+    .input('id', sql.Int, chequeId)
+    .query('SELECT estado, tipo FROM Cheques WHERE id = @id');
+  if (!actual.recordset.length) return res.status(404).json({ error: 'Cheque no encontrado' });
+
+  const { estado, tipo } = actual.recordset[0];
+  if (tipo !== 'recibido') return res.status(400).json({ error: 'Solo se pueden endosar cheques recibidos' });
+  if (estado !== 'en_cartera') return res.status(400).json({ error: `Solo se puede endosar desde "en_cartera". Estado actual: "${estado}"` });
+
+  const transaction = new sql.Transaction(pool);
   try {
-    const chequeId = parseInt(req.params.id);
-    const { descripcion } = req.body;
-    const pool = await getPool();
+    await transaction.begin();
 
-    const actual = await pool.request()
-      .input('id', sql.Int, chequeId)
-      .query('SELECT estado, tipo FROM Cheques WHERE id = @id');
-    if (!actual.recordset.length) return res.status(404).json({ error: 'Cheque no encontrado' });
-
-    const { estado, tipo } = actual.recordset[0];
-    if (tipo !== 'recibido') return res.status(400).json({ error: 'Solo se pueden endosar cheques recibidos' });
-    if (estado !== 'en_cartera') return res.status(400).json({ error: `Solo se puede endosar desde "en_cartera". Estado actual: "${estado}"` });
-
-    await pool.request()
+    await new sql.Request(transaction)
       .input('id',     sql.Int,      chequeId)
       .input('estado', sql.NVarChar, 'endosado')
       .query('UPDATE Cheques SET estado = @estado WHERE id = @id');
 
-    await pool.request()
+    await new sql.Request(transaction)
       .input('cheque_id',   sql.Int,      chequeId)
       .input('tipo',        sql.NVarChar, 'endoso')
       .input('descripcion', sql.NVarChar, descripcion || 'Cheque endosado a tercero')
       .query(`INSERT INTO ChequeMovimientos (cheque_id, tipo, descripcion)
               VALUES (@cheque_id, @tipo, @descripcion)`);
 
+    await transaction.commit();
     res.json({ ok: true });
   } catch (err) {
+    await transaction.rollback();
     res.status(500).json({ error: err.message });
   }
 });
