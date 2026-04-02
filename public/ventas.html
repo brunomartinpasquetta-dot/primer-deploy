@@ -89,6 +89,8 @@
     /* btn embalaje en tabla */
     .btn-emb { display:inline-flex; align-items:center; gap:3px; padding:3px 8px; border-radius:6px; border:1px solid var(--borde); background:#fff; font-size:11px; cursor:pointer; color:var(--texto-suave); }
     .btn-emb:hover { background:var(--fondo-dark); color:var(--texto); }
+    .card table th { padding:6px 6px; font-size:11px; }
+    .card table td { padding:4px 6px; font-size:11px; }
     .btn-emb.tiene-ret { border-color:#7c3aed; color:#7c3aed; background:#f9f5ff; }
     @media (max-width:600px) { .vta-kpis { grid-template-columns:1fr 1fr; } .three-col { grid-template-columns:1fr 1fr; } }
     @media (max-width:400px) { .vta-kpis { grid-template-columns:1fr; } }
@@ -259,7 +261,7 @@
       <div class="card">
         <table>
           <thead>
-            <tr><th>#</th><th>Fecha</th><th>Cliente</th><th>Variedad</th><th>Kg</th><th>$/Kg</th><th>Total</th><th>Estado</th><th></th></tr>
+            <tr><th>#</th><th>Fecha</th><th>Depósito</th><th>Variedad</th><th>Cliente</th><th>Kg</th><th>Precio/Kg</th><th>Total</th><th>Estado</th><th>Embalaje</th><th>CC</th><th>Usuario</th></tr>
           </thead>
           <tbody id="tbody-historial">
             <tr><td colspan="12" class="empty">Cargando...</td></tr>
@@ -718,46 +720,45 @@
     var tbody = document.getElementById('tbody-historial');
     var tfoot = document.getElementById('tfoot-historial');
     if (!data.length) {
-      tbody.innerHTML = '<tr><td colspan="9" class="empty">Sin ventas registradas</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="12" class="empty">Sin ventas registradas</td></tr>';
       tfoot.innerHTML = ''; return;
     }
     var totalKg = 0, totalPesos = 0;
     var mono = "font-family:'JetBrains Mono',monospace;";
+    var s = "font-size:11px;padding:4px 6px;";
     tbody.innerHTML = data.map(function(v) {
       var kg = parseFloat(v.kilos) || 0;
       var precio = parseFloat(v.precio_kilo) || 0;
       var total = parseFloat(v.total) || 0;
       totalKg += kg; totalPesos += total;
       var movId = v.movimiento_id || v.id;
-      // Acciones compactas
-      var acciones = '';
-      if (movId) {
-        acciones += '<button style="background:none;border:none;cursor:pointer;color:var(--texto-suave);padding:2px;" title="Embalaje" onclick="abrirModalEmbalaje('+movId+',\''+(v.comprador||'').replace(/'/g,"\\'")+'\')">' +
-          '<i data-lucide="package" style="width:14px;height:14px;"></i></button>';
-      }
-      if (v.cliente_id) {
-        acciones += '<button style="background:none;border:none;cursor:pointer;color:var(--texto-suave);padding:2px;" title="Ver CC" onclick="verCCCli('+v.cliente_id+',\''+(v.comprador||'').replace(/'/g,"\\'")+'\')">' +
-          '<i data-lucide="receipt" style="width:14px;height:14px;"></i></button>';
-      }
+      var btnEmb = movId
+        ? '<button class="btn-emb" onclick="abrirModalEmbalaje('+movId+',\''+
+            (v.comprador||'').replace(/'/g,"\\'")+'\')" title="Ver embalaje">' +
+            '<i data-lucide="package" style="width:12px;height:12px;"></i> Embalaje</button>'
+        : '—';
       return '<tr>' +
-        '<td style="'+mono+'color:var(--texto-suave);font-size:11px;">#' + (v.id || '-') +
+        '<td style="'+s+mono+'color:var(--texto-suave);">#' + (v.id || '-') +
           (v.numero_remito ? '<br><span style="font-size:10px;color:var(--verde);">' + v.numero_remito + '</span>' : '') + '</td>' +
-        '<td style="font-size:12px;white-space:nowrap;">' + formatFechaHora(v.fecha) + '</td>' +
-        '<td style="font-size:12px;">' + (v.comprador || '-') + '</td>' +
-        '<td style="font-size:12px;">' + (v.variedad || '-') + '</td>' +
-        '<td style="'+mono+'text-align:right;">' + kg.toLocaleString('es-AR', { minimumFractionDigits: 2 }) + '</td>' +
-        '<td style="'+mono+'text-align:right;">' + (precio > 0 ? '$' + precio.toLocaleString('es-AR') : '-') + '</td>' +
-        '<td style="'+mono+'text-align:right;font-weight:700;">' + (total > 0 ? '$' + total.toLocaleString('es-AR') : '-') + '</td>' +
-        '<td>' + estadoBadge(v.estado_cobro, v.forma_pago) + '</td>' +
-        '<td style="white-space:nowrap;">' + (acciones || '—') + '</td>' +
+        '<td style="'+s+'white-space:nowrap;">' + formatFechaHora(v.fecha) + '</td>' +
+        '<td style="'+s+'">' + (v.deposito || '<em style="color:var(--texto-suave)">Directa</em>') + '</td>' +
+        '<td style="'+s+'">' + (v.variedad || '-') + '</td>' +
+        '<td style="'+s+'">' + (v.comprador || '-') + '</td>' +
+        '<td style="'+s+mono+'">' + kg.toLocaleString('es-AR', { minimumFractionDigits: 2 }) + ' kg</td>' +
+        '<td style="'+s+mono+'">' + (precio > 0 ? '$' + precio.toLocaleString('es-AR', { minimumFractionDigits: 2 }) : '-') + '</td>' +
+        '<td style="'+s+mono+'font-weight:700;">' + (total > 0 ? '$' + total.toLocaleString('es-AR', { minimumFractionDigits: 2 }) : '-') + '</td>' +
+        '<td style="'+s+'">' + estadoBadge(v.estado_cobro, v.forma_pago) + '</td>' +
+        '<td style="'+s+'">' + btnEmb + '</td>' +
+        '<td style="'+s+'">' + (v.cliente_id ? '<button style="background:none;border:none;cursor:pointer;color:var(--texto-suave);padding:2px 4px;" title="Ver CC cliente" onclick="verCCCli('+v.cliente_id+',\''+(v.comprador||'').replace(/\'/g,"\\'")+'\')"><i data-lucide="landmark" style="width:14px;height:14px;"></i></button>' : '—') + '</td>' +
+        '<td style="'+s+'color:var(--texto-suave);">' + (v.usuario || '-') + '</td>' +
         '</tr>';
     }).join('');
     tfoot.innerHTML = '<tr style="background:var(--fondo-dark);font-weight:700;">' +
-      '<td colspan="4" style="padding:10px 12px;">TOTALES</td>' +
-      '<td style="padding:10px 12px;'+mono+'text-align:right;">' + totalKg.toLocaleString('es-AR', { minimumFractionDigits: 2 }) + ' kg</td>' +
+      '<td colspan="5" style="padding:6px 8px;font-size:11px;">TOTALES</td>' +
+      '<td style="padding:6px 8px;'+mono+'font-size:11px;">' + totalKg.toLocaleString('es-AR', { minimumFractionDigits: 2 }) + ' kg</td>' +
       '<td></td>' +
-      '<td style="padding:10px 12px;'+mono+'text-align:right;">$' + totalPesos.toLocaleString('es-AR', { minimumFractionDigits: 2 }) + '</td>' +
-      '<td colspan="2"></td>' +
+      '<td style="padding:6px 8px;'+mono+'font-size:11px;">$' + totalPesos.toLocaleString('es-AR', { minimumFractionDigits: 2 }) + '</td>' +
+      '<td colspan="4"></td>' +
       '</tr>';
     lucide.createIcons();
   }
