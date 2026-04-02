@@ -140,7 +140,12 @@
           <div class="content-title">Ventas</div>
           <div class="content-sub">Registro de ventas de mercadería</div>
         </div>
-        <button class="btn btn-primary" style="width:auto;margin:0;" onclick="toggleForm()"><i data-lucide="shopping-cart" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>+ Nueva venta</button>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <a href="clientes.html?nuevo=1" class="btn btn-secondary" style="text-decoration:none;width:auto;margin:0;display:inline-flex;align-items:center;gap:5px;" title="Crear nuevo cliente">
+            <i data-lucide="user-plus" style="width:14px;height:14px;"></i> Nuevo cliente
+          </a>
+          <button class="btn btn-primary" style="width:auto;margin:0;" onclick="toggleForm()"><i data-lucide="shopping-cart" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>+ Nueva venta</button>
+        </div>
       </div>
 
       <!-- ── KPI Cards ── -->
@@ -254,13 +259,14 @@
         <input type="date" id="filtro-desde" onchange="cargarHistorial()" title="Desde" style="max-width:120px;font-size:11px;height:30px;padding:2px 4px;">
         <input type="date" id="filtro-hasta" onchange="cargarHistorial()" title="Hasta" style="max-width:120px;font-size:11px;height:30px;padding:2px 4px;">
         <button class="fb-limpiar" onclick="limpiarFiltrosVentas()" style="font-size:11px;padding:4px 8px;">✕</button>
+        <button class="btn-icon" onclick="abrirAuditoriaVentas()" title="Auditoría de ventas" style="margin-left:auto;gap:4px;width:auto;padding:0 8px;font-size:11px;font-weight:600;color:#64748B;"><i data-lucide="clipboard-list" style="width:14px;height:14px;"></i> Auditoría</button>
       </div>
 
       <!-- ── Tabla historial ── -->
       <div class="card">
         <table>
           <thead>
-            <tr><th>Remito</th><th>Fecha</th><th>Depósito</th><th>Variedad</th><th>Cliente</th><th>Kg</th><th>Precio/Kg</th><th>Total</th><th>Estado</th><th>Usuario</th><th></th></tr>
+            <tr><th>Remito</th><th>Fecha</th><th>Depósito</th><th>Variedad</th><th>Cliente</th><th>Kg</th><th>Precio/Kg</th><th>Total</th><th>Estado</th><th>Usuario</th><th>Acciones</th></tr>
           </thead>
           <tbody id="tbody-historial">
             <tr><td colspan="11" class="empty">Cargando...</td></tr>
@@ -729,8 +735,10 @@
       var kg = parseFloat(v.kilos) || 0;
       var precio = parseFloat(v.precio_kilo) || 0;
       var total = parseFloat(v.total) || 0;
-      totalKg += kg; totalPesos += total;
-      return '<tr>' +
+      var esAnulada = v.estado === 'anulada';
+      if (!esAnulada) { totalKg += kg; totalPesos += total; }
+      var rowStyle = esAnulada ? ' style="opacity:.5;text-decoration:line-through;"' : '';
+      return '<tr' + rowStyle + '>' +
         '<td style="'+s+mono+'color:var(--verde);font-weight:600;">' + (v.numero_remito || '#' + (v.id || '-')) + '</td>' +
         '<td style="'+s+'white-space:nowrap;">' + formatFechaHora(v.fecha) + '</td>' +
         '<td style="'+s+'">' + (v.deposito || '<em style="color:var(--texto-suave)">Directa</em>') + '</td>' +
@@ -739,11 +747,13 @@
         '<td style="'+s+mono+'">' + kg.toLocaleString('es-AR', { minimumFractionDigits: 2 }) + ' kg</td>' +
         '<td style="'+s+mono+'">' + (precio > 0 ? '$' + precio.toLocaleString('es-AR', { minimumFractionDigits: 2 }) : '-') + '</td>' +
         '<td style="'+s+mono+'font-weight:700;">' + (total > 0 ? '$' + total.toLocaleString('es-AR', { minimumFractionDigits: 2 }) : '-') + '</td>' +
-        '<td style="'+s+'">' + estadoBadge(v.estado_cobro, v.forma_pago) + '</td>' +
+        '<td style="'+s+'">' + (esAnulada ? '<span style="background:#fde8e8;color:#c0392b;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;">Anulada</span>' : estadoBadge(v.estado_cobro, v.forma_pago)) + '</td>' +
         '<td style="'+s+'color:var(--texto-suave);">' + (v.usuario || '-') + '</td>' +
         '<td style="'+s+'white-space:nowrap;">' +
-          '<button style="background:none;border:none;cursor:pointer;color:var(--texto-suave);padding:2px 4px;" title="Ver detalles de la venta" onclick="verDetalleVenta('+idx+')"><i data-lucide="eye" style="width:15px;height:15px;"></i></button>' +
-          '<button style="background:none;border:none;cursor:pointer;color:var(--texto-suave);padding:2px 4px;" title="Editar" onclick="abrirEditarVenta('+idx+')"><i data-lucide="pencil" style="width:13px;height:13px;"></i></button>' +
+          '<button style="background:none;border:none;cursor:pointer;color:var(--texto-suave);padding:2px 4px;" title="Ver detalles" onclick="verDetalleVenta('+idx+')"><i data-lucide="eye" style="width:15px;height:15px;"></i></button>' +
+          (esAnulada ? '' :
+            '<button style="background:none;border:none;cursor:pointer;color:var(--texto-suave);padding:2px 4px;" title="Editar" onclick="abrirEditarVenta('+idx+')"><i data-lucide="pencil" style="width:13px;height:13px;"></i></button>' +
+            '<button style="background:none;border:none;cursor:pointer;color:#c0392b;padding:2px 4px;" title="Anular venta" onclick="anularVenta('+idx+')"><i data-lucide="ban" style="width:13px;height:13px;"></i></button>') +
         '</td>' +
         '</tr>';
     }).join('');
@@ -986,6 +996,65 @@
   }
 
   /* ── Editar venta ── */
+  // ── Auditoría ventas ──
+  var _auditVData = [];
+  function abrirAuditoriaVentas() {
+    document.getElementById('modal-auditoria-ventas').classList.add('open');
+    cargarAuditoriaVentas();
+  }
+  function cargarAuditoriaVentas() {
+    var tipo = document.getElementById('audit-v-tipo').value;
+    fetch('/api/stock-mercaderia/auditoria').then(function(r){ return r.json(); }).then(function(data){
+      _auditVData = data;
+      if (tipo) _auditVData = _auditVData.filter(function(a){ return a.accion === tipo; });
+      filtrarAuditoriaVentas();
+    }).catch(function(){
+      document.getElementById('audit-v-tbody').innerHTML = '<tr><td colspan="7" style="text-align:center;color:#EF4444;padding:16px;">Error al cargar</td></tr>';
+    });
+  }
+  function filtrarAuditoriaVentas() {
+    var q = (document.getElementById('audit-v-buscar').value || '').toLowerCase();
+    var data = q ? _auditVData.filter(function(a){
+      return (a.campo||'').toLowerCase().includes(q) || (a.valor_nuevo||'').toLowerCase().includes(q) || (a.usuario_nombre||'').toLowerCase().includes(q) || String(a.movimiento_id).includes(q);
+    }) : _auditVData;
+    var tbody = document.getElementById('audit-v-tbody');
+    if (!data.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#94A3B8;padding:16px;">Sin registros de auditoría</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.slice(0, 50).map(function(a){
+      var accionBadge = a.accion === 'anulacion'
+        ? '<span style="background:#fde8e8;color:#c0392b;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;">Anulación</span>'
+        : '<span style="background:#E0F2FE;color:#0369A1;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;">Edición</span>';
+      return '<tr style="border-bottom:1px solid #F1F5F9;">' +
+        '<td style="padding:6px 8px;white-space:nowrap;font-size:11px;">' + formatFechaHora(a.fecha_hora) + '</td>' +
+        '<td style="padding:6px 8px;font-weight:600;color:var(--verde);">#' + a.movimiento_id + '</td>' +
+        '<td style="padding:6px 8px;">' + accionBadge + '</td>' +
+        '<td style="padding:6px 8px;font-size:11px;">' + (a.campo || '—') + '</td>' +
+        '<td style="padding:6px 8px;font-size:11px;color:#94A3B8;max-width:100px;overflow:hidden;text-overflow:ellipsis;">' + (a.valor_anterior || '—') + '</td>' +
+        '<td style="padding:6px 8px;font-size:11px;font-weight:600;max-width:100px;overflow:hidden;text-overflow:ellipsis;">' + (a.valor_nuevo || '—') + '</td>' +
+        '<td style="padding:6px 8px;font-size:11px;color:#64748B;">' + (a.usuario_nombre || '—') + '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  function anularVenta(idx) {
+    var v = _historialVentas[idx];
+    if (!v) return;
+    var movId = v.movimiento_id || v.id;
+    var motivo = prompt('Motivo de anulación (obligatorio):');
+    if (!motivo) return;
+    if (!confirm('¿Anular venta #' + movId + '? Se revertirán los movimientos financieros. Esta acción no se puede deshacer.')) return;
+    fetch('/api/stock-mercaderia/historial/' + movId + '/anular', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ motivo: motivo })
+    }).then(function(r){ return r.json(); }).then(function(data){
+      if (data.ok) { cargarHistorial(); }
+      else { alert('Error: ' + (data.error || 'No se pudo anular')); }
+    }).catch(function(){ alert('Error de conexión'); });
+  }
+
   function abrirEditarVenta(idx) {
     var v = _historialVentas[idx];
     if (!v) return;
@@ -1056,6 +1125,28 @@
 </script>
 
 <!-- MODAL EDITAR VENTA -->
+<!-- ── MODAL AUDITORÍA VENTAS ── -->
+<div class="modal-overlay" id="modal-auditoria-ventas">
+  <div style="background:#fff;border-radius:14px;padding:24px;width:90%;max-width:650px;max-height:85vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.15);">
+    <h3 style="margin-bottom:14px;color:var(--verde);font-size:17px;">Auditoría de ventas</h3>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+      <select id="audit-v-tipo" onchange="cargarAuditoriaVentas()" style="height:30px;font-size:12px;padding:2px 8px;border:1px solid #E2E8F0;border-radius:6px;">
+        <option value="">Todas las acciones</option>
+        <option value="edicion">Ediciones</option>
+        <option value="anulacion">Anulaciones</option>
+      </select>
+      <input type="search" id="audit-v-buscar" placeholder="Buscar..." oninput="filtrarAuditoriaVentas()" style="height:30px;font-size:12px;padding:2px 8px;border:1px solid #E2E8F0;border-radius:6px;width:140px;">
+    </div>
+    <div style="max-height:50vh;overflow-y:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead><tr style="background:#F8FAFC;"><th style="padding:6px 8px;text-align:left;font-size:11px;font-weight:600;color:#64748B;text-transform:uppercase;">Fecha</th><th style="padding:6px 8px;text-align:left;font-size:11px;font-weight:600;color:#64748B;text-transform:uppercase;">Mov.</th><th style="padding:6px 8px;text-align:left;font-size:11px;font-weight:600;color:#64748B;text-transform:uppercase;">Acción</th><th style="padding:6px 8px;text-align:left;font-size:11px;font-weight:600;color:#64748B;text-transform:uppercase;">Campo</th><th style="padding:6px 8px;text-align:left;font-size:11px;font-weight:600;color:#64748B;text-transform:uppercase;">Anterior</th><th style="padding:6px 8px;text-align:left;font-size:11px;font-weight:600;color:#64748B;text-transform:uppercase;">Nuevo</th><th style="padding:6px 8px;text-align:left;font-size:11px;font-weight:600;color:#64748B;text-transform:uppercase;">Usuario</th></tr></thead>
+        <tbody id="audit-v-tbody"><tr><td colspan="7" style="text-align:center;color:#94A3B8;padding:16px;">Cargando...</td></tr></tbody>
+      </table>
+    </div>
+    <button style="background:#F8FAFC;color:#475569;border:1.5px solid #E2E8F0;border-radius:7px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;margin-top:14px;width:100%;" onclick="document.getElementById('modal-auditoria-ventas').classList.remove('open')">Cerrar</button>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-edit-venta" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;">
   <div style="background:#fff;border-radius:14px;padding:24px;width:90%;max-width:500px;max-height:85vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.15);">
     <h3 style="margin-bottom:14px;color:var(--verde);font-size:17px;">Editar venta</h3>
