@@ -289,6 +289,7 @@ router.get('/historial', async (req, res) => {
         NULL                        AS variedad,
         NULL                        AS cliente_id,
         'cobrada'                   AS estado_cobro,
+        sm.estado,
         NULL                        AS numero_remito,
         fp2.nombre                  AS forma_pago,
         NULL                        AS deposito,
@@ -316,6 +317,7 @@ router.get('/historial', async (req, res) => {
              m.variedad,
              m.cliente_id,
              m.estado_cobro,
+             m.estado,
              m.numero_remito,
              fp.nombre AS forma_pago,
              d.nombre  AS deposito,
@@ -436,6 +438,144 @@ router.patch('/historial/:id', async (req, res) => {
     await r.query('UPDATE MovimientosDeposito SET ' + sets.join(', ') + ' WHERE id = @id');
     res.json({ ok: true });
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /auditoria — historial de auditoría de ventas
+router.get('/auditoria', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const result = await pool.request()
+      .query('SELECT TOP 100 * FROM AuditoriaVentas ORDER BY fecha_hora DESC');
+    res.json(result.recordset);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /historial/:id/anular — anular venta (MovimientosDeposito)
+router.post('/historial/:id/anular', async (req, res) => {
+  const pool = await getPool();
+  const transaction = new sql.Transaction(pool);
+  try {
+    await transaction.begin();
+    const movId = parseInt(req.params.id);
+    const uid = req.user ? req.user.id : null;
+    const uname = req.user ? req.user.nombre : null;
+    const motivo = req.body.motivo || 'Anulación manual';
+
+    // Verificar que existe y es una venta confirmada
+    const mov = await new sql.Request(transaction)
+      .input('id', sql.Int, movId)
+      .query('SELECT id, tipo, kilos, precio_kilo, cliente_id, forma_pago_id, temporada_id, estado FROM MovimientosDeposito WHERE id = @id');
+    if (!mov.recordset.length) { await transaction.rollback(); return res.status(404).json({ error: 'Movimiento no encontrado' }); }
+    const m = mov.recordset[0];
+    if (m.estado === 'anulada') { await transaction.rollback(); return res.status(400).json({ error: 'Ya está anulado' }); }
+
+    const total = parseFloat(m.kilos) * (parseFloat(m.precio_kilo) || 0);
+
+    // 1. Revertir Caja (insertar egreso para compensar el ingreso original)
+    if (total > 0) {
+      // Verificar si fue CC o caja
+      const ccExists = await new sql.Request(transaction)
+        .input('sm_id', sql.Int, movId)
+        .query('SELECT id FROM CuentaCorrienteClientes WHERE stock_mercaderia_id = @sm_id');
+
+      if (ccExists.recordset.length > 0) {
+        await new sql.Request(transaction)
+          .input('cliente_id', sql.Int, m.cliente_id)
+          .input('monto', sql.Decimal(12,2), total)
+          .input('sm_id', sql.Int, movId)
+          .query(`INSERT INTO CuentaCorrienteClientes (cliente_id, tipo, monto, stock_mercaderia_id, observacion, fecha_hora)
+                  VALUES (@cliente_id, 'credito', @monto, @sm_id, 'Anulación venta #' + CAST(@sm_id AS VARCHAR), GETDATE())`);
+      } else {
+        await new sql.Request(transaction)
+          .input('monto', sql.Decimal(12,2), total)
+          .input('mov_id', sql.Int, movId)
+          .input('uname', sql.NVarChar, uname)
+          .query(`INSERT INTO Caja (tipo, concepto, monto, usuario_nombre)
+                  VALUES ('egreso', 'Anulación venta #' + CAST(@mov_id AS VARCHAR), @monto, @uname)`);
+      }
+    }
+
+    // 2. Marcar como anulada
+    await new sql.Request(transaction)
+      .input('id', sql.Int, movId)
+      .query("UPDATE MovimientosDeposito SET estado = 'anulada' WHERE id = @id");
+
+    // 3. Auditoría
+    await new sql.Request(transaction)
+      .input('movimiento_id', sql.Int, movId)
+      .input('usuario_id', sql.Int, uid)
+      .input('usuario_nombre', sql.NVarChar, uname)
+      .input('motivo', sql.NVarChar, motivo)
+      .query(`INSERT INTO AuditoriaVentas (movimiento_id, tabla_origen, accion, campo, valor_anterior, valor_nuevo, usuario_id, usuario_nombre, fecha_hora)
+              VALUES (@movimiento_id, 'MovimientosDeposito', 'anulacion', 'estado', 'confirmada', 'anulada — ' + @motivo, @usuario_id, @usuario_nombre, GETDATE())`);
+
+    await transaction.commit();
+    res.json({ ok: true });
+  } catch (err) {
+    await transaction.rollback();
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PATCH /historial/:id — editar venta con auditoría
+router.patch('/historial/:id/auditado', async (req, res) => {
+  const pool = await getPool();
+  const transaction = new sql.Transaction(pool);
+  try {
+    await transaction.begin();
+    const movId = parseInt(req.params.id);
+    const uid = req.user ? req.user.id : null;
+    const uname = req.user ? req.user.nombre : null;
+    const { observacion, numero_remito, fecha, forma_pago_id, precio_kilo, comprador, estado_cobro } = req.body;
+
+    const prev = await new sql.Request(transaction)
+      .input('id', sql.Int, movId)
+      .query('SELECT observacion, numero_remito, fecha, forma_pago_id, precio_kilo, comprador, estado_cobro FROM MovimientosDeposito WHERE id = @id');
+    if (!prev.recordset.length) { await transaction.rollback(); return res.status(404).json({ error: 'No encontrado' }); }
+    const old = prev.recordset[0];
+
+    const r = new sql.Request(transaction).input('id', sql.Int, movId);
+    const sets = [];
+    const cambios = [];
+
+    const check = (field, sqlType, val, colName, setExpr) => {
+      if (val !== undefined && String(val || '') !== String(old[field] || '')) {
+        sets.push(setExpr);
+        cambios.push({ campo: field, anterior: old[field], nuevo: val });
+      }
+    };
+
+    if (observacion !== undefined && (observacion||'') !== (old.observacion||''))   { sets.push('observacion = @obs');     r.input('obs',   sql.NVarChar, observacion||'');       cambios.push({campo:'observacion',anterior:old.observacion,nuevo:observacion}); }
+    if (numero_remito !== undefined && (numero_remito||'') !== (old.numero_remito||'')) { sets.push('numero_remito = @rem');   r.input('rem',   sql.NVarChar, numero_remito||null);  cambios.push({campo:'numero_remito',anterior:old.numero_remito,nuevo:numero_remito}); }
+    if (fecha !== undefined)         { sets.push('fecha = @fecha');         r.input('fecha', sql.DateTime, new Date(fecha));    cambios.push({campo:'fecha',anterior:old.fecha,nuevo:fecha}); }
+    if (forma_pago_id !== undefined && forma_pago_id !== old.forma_pago_id) { sets.push('forma_pago_id = @fpid'); r.input('fpid', sql.Int, forma_pago_id||null); cambios.push({campo:'forma_pago_id',anterior:old.forma_pago_id,nuevo:forma_pago_id}); }
+    if (precio_kilo !== undefined)   { sets.push('precio_kilo = @pk');     r.input('pk',   sql.Decimal(10,2), parseFloat(precio_kilo)||0); cambios.push({campo:'precio_kilo',anterior:old.precio_kilo,nuevo:precio_kilo}); }
+    if (comprador !== undefined && (comprador||'') !== (old.comprador||''))     { sets.push('comprador = @comp');     r.input('comp', sql.NVarChar, comprador||null); cambios.push({campo:'comprador',anterior:old.comprador,nuevo:comprador}); }
+    if (estado_cobro !== undefined && (estado_cobro||'') !== (old.estado_cobro||'')) { sets.push('estado_cobro = @ec');   r.input('ec',   sql.NVarChar, estado_cobro||null); cambios.push({campo:'estado_cobro',anterior:old.estado_cobro,nuevo:estado_cobro}); }
+
+    if (!sets.length) { await transaction.rollback(); return res.json({ ok: true }); }
+    await r.query('UPDATE MovimientosDeposito SET ' + sets.join(', ') + ' WHERE id = @id');
+
+    for (const c of cambios) {
+      await new sql.Request(transaction)
+        .input('movimiento_id', sql.Int, movId)
+        .input('campo', sql.NVarChar, c.campo)
+        .input('anterior', sql.NVarChar, c.anterior != null ? String(c.anterior) : null)
+        .input('nuevo', sql.NVarChar, c.nuevo != null ? String(c.nuevo) : null)
+        .input('usuario_id', sql.Int, uid)
+        .input('usuario_nombre', sql.NVarChar, uname)
+        .query(`INSERT INTO AuditoriaVentas (movimiento_id, tabla_origen, accion, campo, valor_anterior, valor_nuevo, usuario_id, usuario_nombre, fecha_hora)
+                VALUES (@movimiento_id, 'MovimientosDeposito', 'edicion', @campo, @anterior, @nuevo, @usuario_id, @usuario_nombre, GETDATE())`);
+    }
+
+    await transaction.commit();
+    res.json({ ok: true });
+  } catch (err) {
+    await transaction.rollback();
     res.status(500).json({ error: err.message });
   }
 });
