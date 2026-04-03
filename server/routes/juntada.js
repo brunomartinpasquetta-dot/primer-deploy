@@ -2,6 +2,360 @@ const express = require('express');
 const router = express.Router();
 const { getPool, sql } = require('../db');
 
+// ══════════════════════════════════════════════════════════════════════
+// ENDPOINTS LOTES (flujo: crear lote → agregar juntadas → cerrar lote)
+// ══════════════════════════════════════════════════════════════════════
+
+// GET /api/juntada/lotes — lotes abiertos y en curso
+router.get('/lotes', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const result = await pool.request().query(`
+      SELECT l.id, l.codigo_interno, l.kilos, l.estado, l.fecha_inicio, l.fecha_fin,
+             l.deposito_id, d.nombre AS deposito, l.parcela_id,
+             ISNULL((SELECT SUM(j.kilos) FROM Juntada j WHERE j.lote_id = l.id AND j.estado = 'confirmada'), 0) AS kg_juntadas,
+             ISNULL((SELECT COUNT(*) FROM Juntada j WHERE j.lote_id = l.id AND j.estado = 'confirmada'), 0) AS cant_juntadas
+      FROM LotesMercaderia l
+      LEFT JOIN Depositos d ON d.id = l.deposito_id
+      WHERE l.estado IN ('abierto', 'en_cosecha')
+      ORDER BY l.fecha_inicio DESC
+    `);
+    res.json(result.recordset);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/juntada/crear-lote — crear nuevo lote
+router.post('/crear-lote', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const uid = req.user ? req.user.id : null;
+    // Obtener temporada activa
+    const tRes = await pool.request().query("SELECT TOP 1 id FROM Temporadas WHERE activa = 1");
+    if (!tRes.recordset.length) return res.status(400).json({ error: 'No hay temporada activa' });
+    const temporada_id = tRes.recordset[0].id;
+    // Generar código interno
+    const now = new Date();
+    const fecha = now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0');
+    const seqRes = await pool.request()
+      .input('temporada_id', sql.Int, temporada_id)
+      .query("SELECT COUNT(*) AS cnt FROM LotesMercaderia WHERE temporada_id = @temporada_id AND codigo_interno LIKE 'L' + @fecha + '%'", { fecha });
+    // Simpler: count today's lotes
+    const countRes = await pool.request().query(`SELECT COUNT(*) AS cnt FROM LotesMercaderia WHERE CAST(fecha_inicio AS DATE) = CAST(GETDATE() AS DATE)`);
+    const seq = (countRes.recordset[0].cnt || 0) + 1;
+    const codigo = 'L' + fecha + '-' + String(seq).padStart(3, '0');
+
+    const result = await pool.request()
+      .input('codigo_interno', sql.NVarChar, codigo)
+      .input('temporada_id', sql.Int, temporada_id)
+      .input('usuario_id', sql.Int, uid)
+      .query(`
+        INSERT INTO LotesMercaderia (codigo_interno, temporada_id, kilos, etapa, estado, fecha_inicio, usuario_id)
+        VALUES (@codigo_interno, @temporada_id, 0, 'cosecha', 'abierto', GETDATE(), @usuario_id);
+        SELECT SCOPE_IDENTITY() AS id
+      `);
+    res.json({ ok: true, id: result.recordset[0].id, codigo_interno: codigo });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/juntada/lote/:id/cosecheros — cosecheros asignados al lote
+router.get('/lote/:id/cosecheros', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const result = await pool.request()
+      .input('lote_id', sql.Int, req.params.id)
+      .query(`
+        SELECT lc.juntador_id, j.apellido + ', ' + j.nombre AS nombre
+        FROM LoteCosecheros lc
+        JOIN Juntadores j ON j.id = lc.juntador_id
+        WHERE lc.lote_id = @lote_id
+        ORDER BY lc.fecha_asignacion
+      `);
+    res.json(result.recordset);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/juntada/lote/:id/cosechero — agregar cosechero al lote
+router.post('/lote/:id/cosechero', async (req, res) => {
+  try {
+    const { juntador_id } = req.body;
+    if (!juntador_id) return res.status(400).json({ error: 'Cosechero obligatorio' });
+    const pool = await getPool();
+    await pool.request()
+      .input('lote_id', sql.Int, req.params.id)
+      .input('juntador_id', sql.Int, juntador_id)
+      .query(`
+        IF NOT EXISTS (SELECT 1 FROM LoteCosecheros WHERE lote_id = @lote_id AND juntador_id = @juntador_id)
+          INSERT INTO LoteCosecheros (lote_id, juntador_id) VALUES (@lote_id, @juntador_id)
+      `);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// DELETE /api/juntada/lote/:id/cosechero/:juntador_id — quitar cosechero del lote
+router.delete('/lote/:id/cosechero/:juntador_id', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const lote_id = parseInt(req.params.id);
+    const juntador_id = parseInt(req.params.juntador_id);
+    // Verificar que no tenga juntadas activas
+    const jRes = await pool.request()
+      .input('lote_id', sql.Int, lote_id)
+      .input('juntador_id', sql.Int, juntador_id)
+      .query("SELECT COUNT(*) AS cnt FROM Juntada WHERE lote_id = @lote_id AND juntador_id = @juntador_id AND estado = 'confirmada'");
+    if (jRes.recordset[0].cnt > 0)
+      return res.status(400).json({ error: 'No se puede quitar: tiene juntadas registradas. Anulá las juntadas primero.' });
+    await pool.request()
+      .input('lote_id', sql.Int, lote_id)
+      .input('juntador_id', sql.Int, juntador_id)
+      .query("DELETE FROM LoteCosecheros WHERE lote_id = @lote_id AND juntador_id = @juntador_id");
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/juntada/parcela/:id/carencia-activa — verificar carencia SENASA
+router.get('/parcela/:id/carencia-activa', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const result = await pool.request()
+      .input('parcela_id', sql.Int, req.params.id)
+      .query(`
+        SELECT TOP 1 a.id, p.nombre AS producto, a.carencia_dias,
+               CAST(a.fecha_hora AS DATE) AS fecha_aplicacion,
+               CAST(DATEADD(day, a.carencia_dias, a.fecha_hora) AS DATE) AS fecha_liberacion,
+               DATEDIFF(day, GETDATE(), DATEADD(day, a.carencia_dias, a.fecha_hora)) AS dias_restantes
+        FROM Aplicaciones a
+        JOIN Productos p ON p.id = a.producto_id
+        WHERE a.parcela_id = @parcela_id
+          AND a.estado = 'confirmada'
+          AND a.carencia_dias IS NOT NULL
+          AND a.carencia_dias > 0
+          AND DATEADD(day, a.carencia_dias, a.fecha_hora) > GETDATE()
+        ORDER BY DATEADD(day, a.carencia_dias, a.fecha_hora) DESC
+      `);
+    if (result.recordset.length) {
+      const r = result.recordset[0];
+      res.json({ tiene_carencia: true, producto: r.producto, dias_restantes: r.dias_restantes, fecha_liberacion: r.fecha_liberacion });
+    } else {
+      res.json({ tiene_carencia: false });
+    }
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/juntada/lote/:id/registros — juntadas del lote
+router.get('/lote/:id/registros', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const result = await pool.request()
+      .input('lote_id', sql.Int, req.params.id)
+      .query(`
+        SELECT j.id, j.juntador_id, j.parcela_id, j.kilos, j.fecha_hora, j.estado, j.usuario_id,
+               ISNULL(jun.apellido + ', ' + jun.nombre, 'Desconocido') AS cosechero,
+               p.nombre AS parcela,
+               u.nombre AS usuario
+        FROM Juntada j
+        LEFT JOIN Juntadores jun ON jun.id = j.juntador_id
+        LEFT JOIN Parcelas p ON p.id = j.parcela_id
+        LEFT JOIN Usuarios u ON u.id = j.usuario_id
+        WHERE j.lote_id = @lote_id
+        ORDER BY j.fecha_hora DESC
+      `);
+    res.json(result.recordset);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/juntada/lote/:id/registrar — agregar juntada al lote
+router.post('/lote/:id/registrar', async (req, res) => {
+  try {
+    const { juntador_id, parcela_id, kilos, carencia_advertida } = req.body;
+    if (!juntador_id || !parcela_id || !kilos || parseFloat(kilos) <= 0)
+      return res.status(400).json({ error: 'Cosechero, parcela y kilos son obligatorios' });
+    const pool = await getPool();
+    const uid = req.user ? req.user.id : null;
+    const lote_id = parseInt(req.params.id);
+
+    // Verificar lote existe y está abierto
+    const loteRes = await pool.request().input('id', sql.Int, lote_id)
+      .query("SELECT id, estado FROM LotesMercaderia WHERE id = @id");
+    if (!loteRes.recordset.length) return res.status(404).json({ error: 'Lote no encontrado' });
+    if (!['abierto', 'en_cosecha'].includes(loteRes.recordset[0].estado))
+      return res.status(400).json({ error: 'El lote no está abierto' });
+
+    // Insertar juntada vinculada al lote
+    await pool.request()
+      .input('parcela_id', sql.Int, parcela_id)
+      .input('juntador_id', sql.Int, juntador_id)
+      .input('kilos', sql.Decimal(10,3), parseFloat(kilos))
+      .input('usuario_id', sql.Int, uid)
+      .input('lote_id', sql.Int, lote_id)
+      .input('carencia_advertida', sql.Bit, carencia_advertida ? 1 : 0)
+      .query(`
+        INSERT INTO Juntada (parcela_id, juntador_id, kilos, fecha_hora, usuario_id, estado, stock_pendiente, lote_id, carencia_advertida)
+        VALUES (@parcela_id, @juntador_id, @kilos, GETDATE(), @usuario_id, 'confirmada', 0, @lote_id, @carencia_advertida)
+      `);
+
+    // Actualizar kilos del lote y estado
+    await pool.request().input('lote_id', sql.Int, lote_id).query(`
+      UPDATE LotesMercaderia
+      SET kilos = ISNULL((SELECT SUM(kilos) FROM Juntada WHERE lote_id = @lote_id AND estado = 'confirmada'), 0),
+          estado = 'en_cosecha'
+      WHERE id = @lote_id
+    `);
+
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// PUT /api/juntada/lote-registro/:id — editar juntada con audit trail
+router.put('/lote-registro/:id', async (req, res) => {
+  try {
+    const { kilos, parcela_id, motivo } = req.body;
+    if (!motivo) return res.status(400).json({ error: 'Motivo obligatorio' });
+    if (kilos !== undefined && (!kilos || parseFloat(kilos) <= 0)) return res.status(400).json({ error: 'Kilos debe ser mayor a 0' });
+    const pool = await getPool();
+    const uid = req.user ? req.user.id : null;
+    const id = parseInt(req.params.id);
+
+    const prev = await pool.request().input('id', sql.Int, id)
+      .query("SELECT kilos, lote_id, parcela_id FROM Juntada WHERE id = @id");
+    if (!prev.recordset.length) return res.status(404).json({ error: 'Registro no encontrado' });
+    const kilosAnterior = prev.recordset[0].kilos;
+    const parcelaAnterior = prev.recordset[0].parcela_id;
+    const lote_id = prev.recordset[0].lote_id;
+
+    // Editar kilos si se envió
+    if (kilos !== undefined) {
+      await pool.request()
+        .input('id', sql.Int, id)
+        .input('kilos', sql.Decimal(10,3), parseFloat(kilos))
+        .query("UPDATE Juntada SET kilos = @kilos WHERE id = @id");
+
+      await pool.request()
+        .input('tabla', sql.NVarChar, 'Juntada').input('registro_id', sql.Int, id)
+        .input('campo', sql.NVarChar, 'kilos')
+        .input('valor_anterior', sql.NVarChar, String(kilosAnterior))
+        .input('valor_nuevo', sql.NVarChar, String(kilos))
+        .input('usuario_id', sql.Int, uid).input('motivo', sql.NVarChar, motivo)
+        .query(`INSERT INTO EdicionesHistorial (tabla, registro_id, campo, valor_anterior, valor_nuevo, usuario_id, fecha_hora, motivo)
+                VALUES (@tabla, @registro_id, @campo, @valor_anterior, @valor_nuevo, @usuario_id, GETDATE(), @motivo)`);
+    }
+
+    // Editar parcela si se envió y cambió
+    if (parcela_id !== undefined && parseInt(parcela_id) !== parcelaAnterior) {
+      // Get nombres para audit trail
+      const nombresRes = await pool.request()
+        .input('ant', sql.Int, parcelaAnterior)
+        .input('nueva', sql.Int, parseInt(parcela_id))
+        .query(`SELECT id, nombre FROM Parcelas WHERE id IN (@ant, @nueva)`);
+      const nombres = {};
+      nombresRes.recordset.forEach(function(r) { nombres[r.id] = r.nombre; });
+
+      await pool.request()
+        .input('id', sql.Int, id)
+        .input('parcela_id', sql.Int, parseInt(parcela_id))
+        .query("UPDATE Juntada SET parcela_id = @parcela_id WHERE id = @id");
+
+      await pool.request()
+        .input('tabla', sql.NVarChar, 'Juntada').input('registro_id', sql.Int, id)
+        .input('campo', sql.NVarChar, 'parcela')
+        .input('valor_anterior', sql.NVarChar, nombres[parcelaAnterior] || String(parcelaAnterior))
+        .input('valor_nuevo', sql.NVarChar, nombres[parseInt(parcela_id)] || String(parcela_id))
+        .input('usuario_id', sql.Int, uid).input('motivo', sql.NVarChar, motivo)
+        .query(`INSERT INTO EdicionesHistorial (tabla, registro_id, campo, valor_anterior, valor_nuevo, usuario_id, fecha_hora, motivo)
+                VALUES (@tabla, @registro_id, @campo, @valor_anterior, @valor_nuevo, @usuario_id, GETDATE(), @motivo)`);
+    }
+
+    // Update lote kilos
+    if (lote_id && kilos !== undefined) {
+      await pool.request().input('lote_id', sql.Int, lote_id).query(`
+        UPDATE LotesMercaderia SET kilos = ISNULL((SELECT SUM(kilos) FROM Juntada WHERE lote_id = @lote_id AND estado = 'confirmada'), 0) WHERE id = @lote_id
+      `);
+    }
+
+    res.json({ ok: true, kilos_anterior: kilosAnterior, kilos_nuevo: kilos || kilosAnterior });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/juntada/lote-registro/:id/anular — anular juntada del lote
+router.post('/lote-registro/:id/anular', async (req, res) => {
+  try {
+    const { motivo } = req.body;
+    if (!motivo) return res.status(400).json({ error: 'Motivo obligatorio' });
+    const pool = await getPool();
+    const uid = req.user ? req.user.id : null;
+    const id = parseInt(req.params.id);
+
+    const prev = await pool.request().input('id', sql.Int, id)
+      .query("SELECT kilos, lote_id, estado FROM Juntada WHERE id = @id");
+    if (!prev.recordset.length) return res.status(404).json({ error: 'Registro no encontrado' });
+    if (prev.recordset[0].estado === 'anulada') return res.status(400).json({ error: 'Ya está anulada' });
+    const lote_id = prev.recordset[0].lote_id;
+
+    await pool.request().input('id', sql.Int, id)
+      .query("UPDATE Juntada SET estado = 'anulada' WHERE id = @id");
+
+    // Audit trail
+    await pool.request()
+      .input('tabla', sql.NVarChar, 'Juntada')
+      .input('registro_id', sql.Int, id)
+      .input('campo', sql.NVarChar, 'estado')
+      .input('valor_anterior', sql.NVarChar, 'confirmada')
+      .input('valor_nuevo', sql.NVarChar, 'anulada')
+      .input('usuario_id', sql.Int, uid)
+      .input('motivo', sql.NVarChar, motivo)
+      .query(`INSERT INTO EdicionesHistorial (tabla, registro_id, campo, valor_anterior, valor_nuevo, usuario_id, fecha_hora, motivo)
+              VALUES (@tabla, @registro_id, @campo, @valor_anterior, @valor_nuevo, @usuario_id, GETDATE(), @motivo)`);
+
+    // Update lote kilos
+    if (lote_id) {
+      await pool.request().input('lote_id', sql.Int, lote_id).query(`
+        UPDATE LotesMercaderia SET kilos = ISNULL((SELECT SUM(kilos) FROM Juntada WHERE lote_id = @lote_id AND estado = 'confirmada'), 0) WHERE id = @lote_id
+      `);
+    }
+
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/juntada/lote/:id/cerrar — cerrar lote y mandar a depósito
+router.post('/lote/:id/cerrar', async (req, res) => {
+  try {
+    const { deposito_id } = req.body;
+    if (!deposito_id) return res.status(400).json({ error: 'Seleccioná un depósito' });
+    const pool = await getPool();
+    const lote_id = parseInt(req.params.id);
+
+    // Verificar que tiene juntadas
+    const jRes = await pool.request().input('lote_id', sql.Int, lote_id)
+      .query("SELECT COUNT(*) AS cnt, SUM(kilos) AS total FROM Juntada WHERE lote_id = @lote_id AND estado = 'confirmada'");
+    if (!jRes.recordset[0].cnt) return res.status(400).json({ error: 'El lote no tiene juntadas' });
+
+    await pool.request()
+      .input('id', sql.Int, lote_id)
+      .input('deposito_id', sql.Int, deposito_id)
+      .input('kilos', sql.Decimal(10,3), parseFloat(jRes.recordset[0].total))
+      .query(`
+        UPDATE LotesMercaderia
+        SET estado = 'cerrado', deposito_id = @deposito_id, deposito_actual_id = @deposito_id, kilos = @kilos, fecha_fin = GETDATE()
+        WHERE id = @id
+      `);
+
+    res.json({ ok: true, kilos: jRes.recordset[0].total });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/juntada/depositos-cosecha — depósitos para mandar lotes
+router.get('/depositos-cosecha', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const result = await pool.request().query("SELECT id, nombre FROM Depositos WHERE activo = 1 AND tipo_deposito IN ('fruta_fresca','mercaderia') ORDER BY nombre");
+    res.json(result.recordset);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ══════════════════════════════════════════════════════════════════════
+// ENDPOINTS LEGACY (registro directo sin lotes)
+// ══════════════════════════════════════════════════════════════════════
+
 // POST /api/juntada
 // Body: { parcela_id, juntador_id, kilos, operador?, observacion?,
 //         destinos?: [{ tipo, kilos, deposito_id?, precio_kilo?, comprador?, motivo? }] }
@@ -358,13 +712,16 @@ router.get('/destinos-hoy', async (req, res) => {
                 ju.apellido + ', ' + ju.nombre AS cosechero,
                 j.usuario_id,
                 u.nombre AS usuario,
-                j.estado
+                j.estado,
+                j.lote_id,
+                lm.codigo_interno AS lote_codigo
               FROM JuntadaDestino jd
               JOIN Juntada    j  ON jd.juntada_id = j.id
               JOIN Parcelas   l  ON j.parcela_id  = l.id
               JOIN Juntadores ju ON j.juntador_id = ju.id
               LEFT JOIN Depositos d  ON jd.deposito_id = d.id
               LEFT JOIN Usuarios  u  ON j.usuario_id   = u.id
+              LEFT JOIN LotesMercaderia lm ON j.lote_id = lm.id
               WHERE CAST(j.fecha_hora AS DATE) = CAST(GETDATE() AS DATE)
               ORDER BY j.fecha_hora DESC`);
     res.json(result.recordset);
@@ -408,12 +765,14 @@ router.get('/historial', async (req, res) => {
              ju.apellido + ', ' + ju.nombre AS cosechero,
              j.kilos, j.fecha_hora AS fecha, j.juntador_id,
              j.usuario_id, u.nombre AS usuario,
-             t.nombre AS temporada, j.estado
+             t.nombre AS temporada, j.estado,
+             lm.codigo_interno AS lote_codigo
       FROM Juntada j
       JOIN Parcelas l ON j.parcela_id = l.id
       JOIN Juntadores ju ON j.juntador_id = ju.id
       LEFT JOIN Temporadas t ON l.temporada_id = t.id
       LEFT JOIN Usuarios u ON j.usuario_id = u.id
+      LEFT JOIN LotesMercaderia lm ON j.lote_id = lm.id
       WHERE ${where}
       ORDER BY j.fecha_hora DESC`);
     res.json(result.recordset);
@@ -443,6 +802,71 @@ router.get('/totales-por-juntador', async (req, res) => {
       WHERE ${where}
       GROUP BY ju.id, ju.apellido, ju.nombre
       ORDER BY kg_total DESC`);
+    res.json(result.recordset);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/juntada/auditoria — ediciones y anulaciones
+router.get('/auditoria', async (req, res) => {
+  try {
+    const { temporada_id, desde, hasta } = req.query;
+    const pool = await getPool();
+    const dbReq = pool.request();
+    let where = "eh.tabla IN ('Juntada','LotesMercaderia')";
+    if (temporada_id) { where += ' AND t.id = @tid'; dbReq.input('tid', sql.Int, parseInt(temporada_id)); }
+    if (desde) { where += ' AND CAST(eh.fecha_hora AS DATE) >= @desde'; dbReq.input('desde', sql.Date, desde); }
+    if (hasta) { where += ' AND CAST(eh.fecha_hora AS DATE) <= @hasta'; dbReq.input('hasta', sql.Date, hasta); }
+    const result = await dbReq.query(`
+      SELECT eh.id, eh.tabla, eh.registro_id, eh.campo,
+             eh.valor_anterior, eh.valor_nuevo, eh.motivo,
+             eh.fecha_hora, u.nombre AS usuario,
+             CASE eh.tabla
+               WHEN 'Juntada' THEN ju.apellido + ', ' + ju.nombre
+               ELSE NULL
+             END AS trabajador,
+             CASE eh.tabla
+               WHEN 'Juntada' THEN lm.codigo_interno
+               WHEN 'LotesMercaderia' THEN lm2.codigo_interno
+               ELSE NULL
+             END AS lote_codigo
+      FROM EdicionesHistorial eh
+      LEFT JOIN Usuarios u ON eh.usuario_id = u.id
+      LEFT JOIN Juntada j ON eh.tabla = 'Juntada' AND eh.registro_id = j.id
+      LEFT JOIN Juntadores ju ON j.juntador_id = ju.id
+      LEFT JOIN LotesMercaderia lm ON j.lote_id = lm.id
+      LEFT JOIN LotesMercaderia lm2 ON eh.tabla = 'LotesMercaderia' AND eh.registro_id = lm2.id
+      LEFT JOIN Parcelas p ON j.parcela_id = p.id
+      LEFT JOIN Temporadas t ON p.temporada_id = t.id
+      WHERE ${where}
+      ORDER BY eh.fecha_hora DESC`);
+    res.json(result.recordset);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/juntada/totales-por-lote — totales agrupados por lote
+router.get('/totales-por-lote', async (req, res) => {
+  try {
+    const { temporada_id } = req.query;
+    const pool = await getPool();
+    const dbReq = pool.request();
+    let where = "j.estado != 'anulada' AND j.lote_id IS NOT NULL";
+    if (temporada_id) { where += ' AND lm.temporada_id = @tid'; dbReq.input('tid', sql.Int, parseInt(temporada_id)); }
+    const result = await dbReq.query(`
+      SELECT lm.id AS lote_id, lm.codigo_interno AS lote,
+             lm.estado, lm.fecha_inicio,
+             ju.apellido + ', ' + ju.nombre AS cosechero,
+             COUNT(j.id) AS registros,
+             SUM(j.kilos) AS kg_total
+      FROM Juntada j
+      JOIN LotesMercaderia lm ON j.lote_id = lm.id
+      JOIN Juntadores ju ON j.juntador_id = ju.id
+      WHERE ${where}
+      GROUP BY lm.id, lm.codigo_interno, lm.estado, lm.fecha_inicio, ju.id, ju.apellido, ju.nombre
+      ORDER BY lm.fecha_inicio DESC, kg_total DESC`);
     res.json(result.recordset);
   } catch (err) {
     res.status(500).json({ error: err.message });
