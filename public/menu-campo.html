@@ -16,7 +16,7 @@
   <!-- ── SIDEBAR ── -->
   <aside class="sidebar">
     <div class="sidebar-brand">
-      <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div>
+      <img src="img/logo-icon.png" class="brand-icon"><div class="brand-info"><span class="brand-name">CO<em>SE</em>CHA</span><span class="brand-sub">SISTEMA DE CULTIVOS</span></div>
     </div>
     <nav class="sidebar-nav">
       <a href="index.html" class="nav-item">
@@ -31,6 +31,9 @@
       </a>
       <a href="aplicaciones.html" class="nav-item">
         <span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones
+      </a>
+      <a href="clasificacion-embalaje.html" class="nav-item">
+        <span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje
       </a>
       <div class="nav-section">Sistema</div>
       <a href="menu-stock.html" class="nav-item">
@@ -49,14 +52,14 @@
         <span class="nav-icon"><i data-lucide="settings"></i></span> Configuración
       </a>
     </nav>
-    <div class="sidebar-footer">Sistema Agrícola v2</div>
+    <div class="sidebar-footer">Cosecha · Sistema de Cultivos</div>
   </aside>
 
   <!-- ── MAIN ── -->
   <div class="main">
     <header class="topbar">
       <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
-        <img src="img/logo-icon.png" style="height:44px; width:44px; border-radius:10px;"><div style="margin-left:10px; display:flex; flex-direction:column; justify-content:center; line-height:1.1;"><span style="color:white; font-weight:700; font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span><span style="color:rgba(255,255,255,0.5); font-size:10px; letter-spacing:1.5px; margin-top:2px;">SISTEMA DE CULTIVOS</span></div><span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
+        <img src="img/logo-icon.png" class="brand-icon"><div class="brand-info"><span class="brand-name">CO<em>SE</em>CHA</span><span class="brand-sub">SISTEMA DE CULTIVOS</span></div><span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
       </div>
       <div class="topbar-right">
         <span class="topbar-date" id="topbar-date"></span>
@@ -85,6 +88,11 @@
           <span class="action-card-icon"><i data-lucide="droplets"></i></span>
           <span class="action-card-label">Aplicaciones</span>
           <span class="action-card-sub">Fitosanitarios y carencias</span>
+        </a>
+        <a href="clasificacion-embalaje.html" class="action-card" data-tooltip="Clasificar fruta por categoría y embalar para despacho">
+          <span class="action-card-icon"><i data-lucide="layers"></i></span>
+          <span class="action-card-label">Clasif. + Embalaje</span>
+          <span class="action-card-sub">Clasificación y etiquetado</span>
         </a>
       </div>
 

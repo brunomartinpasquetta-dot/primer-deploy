@@ -101,16 +101,51 @@ input, select, textarea {
 }
 
 .sidebar-brand {
-  padding: 24px 20px;
+  padding: 20px 16px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
+  gap: 12px;
   background: transparent;
-  background-color: transparent;
   border: none;
-  border-bottom: none;
-  box-shadow: none;
-  outline: none;
+}
+
+.brand-icon {
+  height: 44px;
+  width: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255,255,255,0.2);
+  flex-shrink: 0;
+}
+
+.brand-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1.2;
+  min-width: 0;
+}
+
+.brand-name {
+  color: white;
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: 0.5px;
+}
+
+.brand-name em {
+  color: #D32F2F;
+  font-style: normal;
+}
+
+.brand-sub {
+  color: rgba(255,255,255,0.45);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-top: 2px;
+  font-weight: 500;
 }
 
 .brand-logo {
@@ -124,15 +159,6 @@ input, select, textarea {
 .brand-logo em {
   color: var(--trigo-light);
   font-style: normal;
-}
-
-.brand-sub {
-  font-size: 10.5px;
-  color: rgba(255,255,255,.38);
-  margin-top: 3px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  font-weight: 600;
 }
 
 .sidebar-nav {

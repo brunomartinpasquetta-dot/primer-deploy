@@ -1,0 +1,99 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - generic [ref=e6]:
+        - generic [ref=e7]: COSECHA
+        - generic [ref=e8]: SISTEMA DE CULTIVOS
+    - navigation [ref=e9]:
+      - link "Dashboard" [ref=e10] [cursor=pointer]:
+        - /url: index.html
+        - img [ref=e12]
+        - text: Dashboard
+      - generic [ref=e17]: Campo
+      - link "Cosecha" [ref=e18] [cursor=pointer]:
+        - /url: juntada.html
+        - img [ref=e20]
+        - text: Cosecha
+      - link "Despalillado" [ref=e29] [cursor=pointer]:
+        - /url: despalillado.html
+        - img [ref=e31]
+        - text: Despalillado
+      - link "Aplicaciones" [ref=e37] [cursor=pointer]:
+        - /url: aplicaciones.html
+        - img [ref=e39]
+        - text: Aplicaciones
+      - generic [ref=e42]: Sistema
+      - link "Stock" [ref=e43] [cursor=pointer]:
+        - /url: menu-stock.html
+        - img [ref=e45]
+        - text: Stock
+      - link "Comercial" [ref=e49] [cursor=pointer]:
+        - /url: menu-comercial.html
+        - img [ref=e51]
+        - text: Comercial
+      - link "Administración" [ref=e56] [cursor=pointer]:
+        - /url: menu-admin.html
+        - img [ref=e58]
+        - text: Administración
+      - link "Mercado" [ref=e60] [cursor=pointer]:
+        - /url: mercado.html
+        - img [ref=e62]
+        - text: Mercado
+      - link "Configuración" [ref=e65] [cursor=pointer]:
+        - /url: menu-config.html
+        - img [ref=e67]
+        - text: Configuración
+    - generic [ref=e70]:
+      - generic [ref=e71]: Administrador · administrador
+      - button "Cerrar sesión" [ref=e72] [cursor=pointer]
+  - generic [ref=e73]:
+    - banner [ref=e74]:
+      - generic [ref=e75]:
+        - img [ref=e76]
+        - generic [ref=e77]:
+          - generic [ref=e78]: COSECHA
+          - generic [ref=e79]: SISTEMA DE CULTIVOS
+        - generic [ref=e80]: 🌱 undefined · Día undefined
+      - generic [ref=e81]:
+        - generic [ref=e82] [cursor=pointer]:
+          - img [ref=e83]
+          - text: Administrador
+        - generic [ref=e86]: martes, 31 de marzo
+    - generic [ref=e87]:
+      - generic [ref=e88]:
+        - generic [ref=e89]: Dashboard
+        - generic [ref=e91]: Error al cargar
+      - generic [ref=e92]: Hoy
+      - generic [ref=e94]: ⚠️ Failed to connect to localhost:1433 - Could not connect (sequence)
+      - generic [ref=e95]: Estado del stock
+      - generic [ref=e96]: Temporada
+      - generic [ref=e97]:
+        - generic [ref=e98]:
+          - generic [ref=e99]: Total cosechado
+          - generic [ref=e100]: —
+          - generic [ref=e101]: total temporada
+        - generic [ref=e102]:
+          - generic [ref=e103]: Vendido total
+          - generic [ref=e104]: —
+          - generic [ref=e105]: total temporada
+      - generic [ref=e106]:
+        - generic [ref=e107]:
+          - generic [ref=e108]:
+            - generic [ref=e109]: Últimos registros del día
+            - link "+ Nuevo registro" [ref=e110] [cursor=pointer]:
+              - /url: juntada.html
+          - table [ref=e112]:
+            - rowgroup [ref=e113]:
+              - row "Hora Cosechador Parcela Kilos Destino" [ref=e114]:
+                - columnheader "Hora" [ref=e115]
+                - columnheader "Cosechador" [ref=e116]
+                - columnheader "Parcela" [ref=e117]
+                - columnheader "Kilos" [ref=e118]
+                - columnheader "Destino" [ref=e119]
+            - rowgroup [ref=e120]:
+              - row "Cargando..." [ref=e121]:
+                - cell "Cargando..." [ref=e122]
+        - generic [ref=e123]:
+          - generic [ref=e125]: Estado de depósitos
+          - generic [ref=e127]: Sin datos de depósitos

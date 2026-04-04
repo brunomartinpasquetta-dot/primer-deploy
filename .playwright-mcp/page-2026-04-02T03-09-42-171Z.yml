@@ -1,0 +1,183 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - generic [ref=e6]:
+        - generic [ref=e7]: COSECHA
+        - generic [ref=e8]: SISTEMA DE CULTIVOS
+    - navigation [ref=e9]:
+      - link "Dashboard" [ref=e10] [cursor=pointer]:
+        - /url: index.html
+        - img [ref=e12]
+        - text: Dashboard
+      - generic [ref=e17]: Campo
+      - link "Cosecha" [ref=e18] [cursor=pointer]:
+        - /url: juntada.html
+        - img [ref=e20]
+        - text: Cosecha
+      - link "Despalillado" [ref=e29] [cursor=pointer]:
+        - /url: despalillado.html
+        - img [ref=e31]
+        - text: Despalillado
+      - link "Aplicaciones" [ref=e37] [cursor=pointer]:
+        - /url: aplicaciones.html
+        - img [ref=e39]
+        - text: Aplicaciones
+      - generic [ref=e42]: Sistema
+      - link "Stock" [ref=e43] [cursor=pointer]:
+        - /url: menu-stock.html
+        - img [ref=e45]
+        - text: Stock
+      - link "Comercial" [ref=e49] [cursor=pointer]:
+        - /url: menu-comercial.html
+        - img [ref=e51]
+        - text: Comercial
+      - link "Administración" [ref=e56] [cursor=pointer]:
+        - /url: menu-admin.html
+        - img [ref=e58]
+        - text: Administración
+      - link "Mercado" [ref=e60] [cursor=pointer]:
+        - /url: mercado.html
+        - img [ref=e62]
+        - text: Mercado
+      - link "Configuración" [ref=e65] [cursor=pointer]:
+        - /url: menu-config.html
+        - img [ref=e67]
+        - text: Configuración
+    - generic [ref=e70]:
+      - generic [ref=e71]: Administrador · administrador
+      - button "Cerrar sesión" [ref=e72] [cursor=pointer]
+  - generic [ref=e73]:
+    - banner [ref=e74]:
+      - generic [ref=e75]:
+        - img [ref=e76]
+        - generic [ref=e77]:
+          - generic [ref=e78]: COSECHA
+          - generic [ref=e79]: SISTEMA DE CULTIVOS
+        - generic [ref=e80]: 🌱 Campaña FIX 2026 · Día 3
+      - generic [ref=e81]:
+        - generic [ref=e82] [cursor=pointer]:
+          - img [ref=e83]
+          - text: Administrador
+        - generic [ref=e86]: jueves, 2 de abril
+    - generic [ref=e87]:
+      - generic [ref=e88]:
+        - generic [ref=e89]: Dashboard
+        - generic [ref=e90]:
+          - generic [ref=e91]: 2 de abril de 2026
+          - generic [ref=e92]: "Última actualización: 12:09 a. m."
+      - generic [ref=e94]:
+        - generic [ref=e95]:
+          - generic [ref=e97]: Campaña FIX 2026
+          - generic [ref=e98]: Frutilla
+          - generic [ref=e99]: Día 3
+          - link "Cambiar campaña →" [ref=e100] [cursor=pointer]:
+            - /url: temporadas.html
+        - generic [ref=e101]:
+          - generic [ref=e102]:
+            - generic [ref=e103]: Dólar Blue
+            - generic [ref=e104]: $---
+          - generic [ref=e106]:
+            - generic [ref=e107]: Frutilla hoy
+            - generic [ref=e108]: $---
+      - generic [ref=e109]: Hoy
+      - generic [ref=e110]:
+        - generic [ref=e111]:
+          - generic [ref=e112]:
+            - generic [ref=e113]: Cosecha hoy
+            - img [ref=e115]
+          - generic [ref=e124]: "0"
+          - generic [ref=e125]: 0 cosechadores activos
+        - generic [ref=e126]:
+          - generic [ref=e127]:
+            - generic [ref=e128]: En cámara
+            - img [ref=e130]
+          - generic [ref=e133]: 386,7
+          - generic [ref=e134]: kg disponibles
+        - generic [ref=e135]:
+          - generic [ref=e136]:
+            - generic [ref=e137]: Saldo caja
+            - img [ref=e139]
+          - generic [ref=e142]: "-$ 17.740.700"
+          - generic [ref=e143]: ≈ USD -12.627
+      - generic [ref=e144]: Estado del stock
+      - generic [ref=e145]:
+        - generic [ref=e146]:
+          - generic [ref=e147]: Pendiente desp.
+          - generic [ref=e148]: 2 lot.
+          - generic [ref=e149]: 155 kg
+        - generic [ref=e150]:
+          - generic [ref=e151]: Fresco
+          - generic [ref=e152]: 6 lot.
+          - generic [ref=e153]: 518 kg
+        - generic [ref=e154]:
+          - generic [ref=e155]: Despalillado
+          - generic [ref=e156]: 2 lot.
+          - generic [ref=e157]: 173 kg
+      - generic [ref=e158]: Campaña · Campaña FIX 2026
+      - generic [ref=e159]:
+        - generic [ref=e160]:
+          - generic [ref=e161]:
+            - generic [ref=e162]: Total cosechado
+            - img [ref=e164]
+          - generic [ref=e173]: 846,1
+          - generic [ref=e174]: kg total temporada
+        - generic [ref=e175]:
+          - generic [ref=e176]:
+            - generic [ref=e177]: Vendido total
+            - img [ref=e179]
+          - generic [ref=e183]: "300"
+          - generic [ref=e184]: kg total temporada
+          - generic [ref=e188]: 35% del cosechado vendido
+      - generic [ref=e189]:
+        - generic [ref=e190]:
+          - generic [ref=e191]:
+            - generic [ref=e192]: Últimos registros del día
+            - link "+ Nuevo registro" [ref=e193] [cursor=pointer]:
+              - /url: juntada.html
+          - table [ref=e195]:
+            - rowgroup [ref=e196]:
+              - row "Hora Cosechador Parcela Kilos Destino" [ref=e197]:
+                - columnheader "Hora" [ref=e198]
+                - columnheader "Cosechador" [ref=e199]
+                - columnheader "Parcela" [ref=e200]
+                - columnheader "Kilos" [ref=e201]
+                - columnheader "Destino" [ref=e202]
+            - rowgroup [ref=e203]:
+              - row "Sin registros hoy" [ref=e204]:
+                - cell "Sin registros hoy" [ref=e205]
+        - generic [ref=e206]:
+          - generic [ref=e208]: Estado de depósitos
+          - generic [ref=e209]:
+            - generic [ref=e210]:
+              - generic [ref=e211]:
+                - generic [ref=e212]: CAMARA DE FRIO 1
+                - generic [ref=e213]: 0%
+              - generic [ref=e215]: 114,5 / 200.000 kg
+            - generic [ref=e216]:
+              - generic [ref=e217]:
+                - generic [ref=e218]: CAMARA DE FRIO 2
+                - generic [ref=e219]: 0%
+              - generic [ref=e221]: 0 / 160.000 kg
+            - generic [ref=e222]:
+              - generic [ref=e223]:
+                - generic [ref=e224]: GALPON FRESCO
+                - generic [ref=e225]: 0%
+              - generic [ref=e227]: 272,2 / 100.000 kg
+          - generic [ref=e228]:
+            - generic [ref=e230]:
+              - generic [ref=e231]: Alertas
+              - generic [ref=e232]: 4 activas
+            - generic [ref=e233]:
+              - generic [ref=e236]:
+                - generic [ref=e237]: Stock bajo · GLIFOSATO
+                - generic [ref=e238]: lt — 0 unidades
+              - generic [ref=e241]:
+                - generic [ref=e242]: Stock bajo · GLIFOSATO
+                - generic [ref=e243]: lt — 0 unidades
+              - generic [ref=e246]:
+                - generic [ref=e247]: Stock bajo · MANGUERAS
+                - generic [ref=e248]: u — 0 unidades
+              - generic [ref=e251]:
+                - generic [ref=e252]: Stock bajo · NUTRIENTES MEGA NUTRICION
+                - generic [ref=e253]: lt — 1 unidades

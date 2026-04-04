@@ -1,0 +1,83 @@
+═══════════════════════════════════════════════════════════════
+REPORTE: MÓDULO DE VENTAS — ESTADO ACTUAL Y CAMBIOS NECESARIOS
+═══════════════════════════════════════════════════════════════
+
+PROBLEMA PRINCIPAL
+──────────────────
+Las ventas hoy se hacen desde depósitos (MovimientosDeposito) sin verificar
+en qué etapa está la fruta. Cualquier mercadería que ingresó a un depósito
+se puede vender, incluyendo fruta que todavía no pasó por clasificación
+ni embalaje.
+
+CÓMO FUNCIONA HOY (MAL)
+────────────────────────
+Endpoint: POST /api/depositos/egreso (depositos.js)
+Frontend: ventas.html
+
+1. El usuario elige un DEPÓSITO
+2. Ve el stock disponible de ese depósito (sum ingresos - sum egresos)
+3. Arma items por "variedad" (texto libre) y kilos
+4. No hay vínculo con LotesMercaderia ni con el pipeline de producción
+5. No se sabe qué lote se está vendiendo ni si está embalado
+
+Stock vendible = MovimientosDeposito WHERE tipo='ingreso' - WHERE tipo LIKE 'egreso%'
+→ Esto incluye fruta guardada temporalmente que NO está lista para venta
+
+CÓMO DEBERÍA FUNCIONAR
+──────────────────────
+Stock vendible = Sub-lotes de LotesMercaderia WHERE etapa='embalado'
+con kilos disponibles (embalados - ya vendidos)
+
+1. El usuario ve sub-lotes embalados (ej: "LOT-001.GR-PIN — Grande Pintona — 50kg — GALPON FRESCO")
+2. Selecciona qué sub-lotes vender y cuántos kilos de cada uno
+3. El sistema vincula la venta al sub-lote → trazabilidad completa por N° lote
+4. Se sigue registrando el egreso en MovimientosDeposito y StockMercaderia
+5. Se sigue generando Remito con RemitoItems
+
+TABLAS INVOLUCRADAS
+───────────────────
+• LotesMercaderia (sub-lotes) → FUENTE de mercadería vendible (etapa='embalado')
+• Remitos → Cabecera de venta (número, cliente, fecha, forma pago, total)
+• RemitoItems → Líneas de venta (AGREGAR sub_lote_id para trazabilidad)
+• MovimientosDeposito → Egreso del depósito (ya existe, mantener)
+• StockMercaderia → Registro paralelo (ya existe, mantener)
+• CuentaCorrienteClientes → Si pago es cuenta corriente (ya existe, mantener)
+• Caja → Si pago es contado (ya existe, mantener)
+• VentaEmbalaje → Embalaje facturado al cliente (ya existe, mantener)
+
+CAMBIOS NECESARIOS
+──────────────────
+
+BACKEND (depositos.js o nuevo archivo ventas.js):
+  1. Nuevo endpoint GET stock vendible: sub-lotes con etapa='embalado',
+     kilos disponibles, categoría, sub-categoría, depósito, código lote
+  2. Modificar POST egreso: recibir sub_lote_id en cada item en vez de
+     variedad libre, validar que etapa='embalado', vincular
+  3. Agregar sub_lote_id a RemitoItems (ALTER TABLE)
+  4. Al vender, actualizar etapa del sub-lote a 'vendido' si se vendió 100%,
+     o 'vendido_parcial' si queda stock
+
+FRONTEND (ventas.html):
+  1. Reemplazar selector de depósito + variedad libre por lista de sub-lotes
+     embalados con filtros (depósito, categoría, parcela)
+  2. Mostrar info del lote: código, categoría, sub-categoría, kg disponibles,
+     depósito actual, fecha embalaje
+  3. Mantener: cliente, forma pago, precio/kilo, embalaje facturable, remito
+
+QUÉ SE MANTIENE IGUAL
+─────────────────────
+• Remitos (cabecera)
+• Formas de pago y cuenta corriente
+• Caja (ingreso por contado)
+• VentaEmbalaje (embalaje facturable al cliente)
+• AuditoriaVentas
+• Anulación con reversiones
+• remitos.html (listado de remitos)
+
+ARCHIVOS A MODIFICAR
+────────────────────
+• server/routes/depositos.js — POST /egreso (o extraer a ventas.js)
+• public/ventas.html — rediseñar formulario
+• Migración SQL: ALTER TABLE RemitoItems ADD sub_lote_id INT REFERENCES LotesMercaderia(id)
+
+═══════════════════════════════════════════════════════════════

@@ -1,0 +1,113 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - generic [ref=e6]:
+        - generic [ref=e7]: COSECHA
+        - generic [ref=e8]: SISTEMA DE CULTIVOS
+    - navigation [ref=e9]:
+      - link "Dashboard" [ref=e10] [cursor=pointer]:
+        - /url: index.html
+        - img [ref=e12]
+        - text: Dashboard
+      - generic [ref=e17]: Campo
+      - link "Cosecha" [ref=e18] [cursor=pointer]:
+        - /url: juntada.html
+        - img [ref=e20]
+        - text: Cosecha
+      - link "Despalillado" [ref=e29] [cursor=pointer]:
+        - /url: despalillado.html
+        - img [ref=e31]
+        - text: Despalillado
+      - link "Aplicaciones" [ref=e37] [cursor=pointer]:
+        - /url: aplicaciones.html
+        - img [ref=e39]
+        - text: Aplicaciones
+      - generic [ref=e42]: Sistema
+      - link "Stock" [ref=e43] [cursor=pointer]:
+        - /url: menu-stock.html
+        - img [ref=e45]
+        - text: Stock
+      - link "Comercial" [ref=e49] [cursor=pointer]:
+        - /url: menu-comercial.html
+        - img [ref=e51]
+        - text: Comercial
+      - link "Administración" [ref=e56] [cursor=pointer]:
+        - /url: menu-admin.html
+        - img [ref=e58]
+        - text: Administración
+      - link "Mercado" [ref=e60] [cursor=pointer]:
+        - /url: mercado.html
+        - img [ref=e62]
+        - text: Mercado
+      - link "Configuración" [ref=e65] [cursor=pointer]:
+        - /url: menu-config.html
+        - img [ref=e67]
+        - text: Configuración
+    - generic [ref=e70]:
+      - generic [ref=e71]: Administrador · administrador
+      - button "Cerrar sesión" [ref=e72] [cursor=pointer]
+  - generic [ref=e73]:
+    - banner [ref=e74]:
+      - generic [ref=e75]:
+        - img [ref=e76]
+        - generic [ref=e77]:
+          - generic [ref=e78]: COSECHA
+          - generic [ref=e79]: SISTEMA DE CULTIVOS
+        - generic [ref=e80]: 🌱 Campaña FIX 2026 · Día 3
+      - generic [ref=e81]:
+        - generic [ref=e82] [cursor=pointer]:
+          - img [ref=e83]
+          - text: Administrador
+        - generic [ref=e86]: jueves, 2 de abril
+    - generic [ref=e87]:
+      - link "← Volver" [ref=e88] [cursor=pointer]:
+        - /url: "#"
+      - generic [ref=e89]:
+        - generic [ref=e90]:
+          - generic [ref=e91]: Clientes
+          - generic [ref=e92]: Gestión de clientes
+        - button "+ Nuevo cliente" [ref=e93] [cursor=pointer]
+      - generic [ref=e94]:
+        - heading "Clientes registrados" [level=2] [ref=e95]
+        - table [ref=e96]:
+          - rowgroup [ref=e97]:
+            - row "Nombre Contacto Teléfono Email" [ref=e98]:
+              - columnheader "Nombre" [ref=e99]
+              - columnheader "Contacto" [ref=e100]
+              - columnheader "Teléfono" [ref=e101]
+              - columnheader "Email" [ref=e102]
+              - columnheader [ref=e103]
+          - rowgroup [ref=e104]:
+            - row "ARTESANA NEGRO PASQUETTA 34253434 NEGRO.PERON@HOTMAIL.COM Editar Ver cuenta Desactivar" [ref=e105]:
+              - cell "ARTESANA" [ref=e106]:
+                - strong [ref=e107]: ARTESANA
+              - cell "NEGRO PASQUETTA" [ref=e108]
+              - cell "34253434" [ref=e109]
+              - cell "NEGRO.PERON@HOTMAIL.COM" [ref=e110]
+              - cell "Editar Ver cuenta Desactivar" [ref=e111]:
+                - button "Editar" [ref=e112] [cursor=pointer]:
+                  - img [ref=e113]
+                  - text: Editar
+                - button "Ver cuenta" [ref=e116] [cursor=pointer]:
+                  - img [ref=e117]
+                  - text: Ver cuenta
+                - button "Desactivar" [ref=e120] [cursor=pointer]:
+                  - img [ref=e121]
+                  - text: Desactivar
+            - row "FRUTILLAS DEL LITORAL GONZALO GONZALEZ 324234234 - Editar Ver cuenta Desactivar" [ref=e125]:
+              - cell "FRUTILLAS DEL LITORAL" [ref=e126]:
+                - strong [ref=e127]: FRUTILLAS DEL LITORAL
+              - cell "GONZALO GONZALEZ" [ref=e128]
+              - cell "324234234" [ref=e129]
+              - cell "-" [ref=e130]
+              - cell "Editar Ver cuenta Desactivar" [ref=e131]:
+                - button "Editar" [ref=e132] [cursor=pointer]:
+                  - img [ref=e133]
+                  - text: Editar
+                - button "Ver cuenta" [ref=e136] [cursor=pointer]:
+                  - img [ref=e137]
+                  - text: Ver cuenta
+                - button "Desactivar" [ref=e140] [cursor=pointer]:
+                  - img [ref=e141]
+                  - text: Desactivar

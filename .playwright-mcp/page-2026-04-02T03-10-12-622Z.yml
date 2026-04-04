@@ -1,0 +1,140 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - img [ref=e5]
+        - generic [ref=e6]:
+          - generic [ref=e7]: COSECHA
+          - generic [ref=e8]: SISTEMA DE CULTIVOS
+      - navigation [ref=e9]:
+        - link "Dashboard" [ref=e10] [cursor=pointer]:
+          - /url: index.html
+          - img [ref=e125]
+          - text: Dashboard
+        - generic [ref=e17]: Campo
+        - link "Cosecha" [ref=e18] [cursor=pointer]:
+          - /url: juntada.html
+          - img [ref=e130]
+          - text: Cosecha
+        - link "Despalillado" [ref=e29] [cursor=pointer]:
+          - /url: despalillado.html
+          - img [ref=e139]
+          - text: Despalillado
+        - link "Aplicaciones" [ref=e37] [cursor=pointer]:
+          - /url: aplicaciones.html
+          - img [ref=e145]
+          - text: Aplicaciones
+        - generic [ref=e42]: Sistema
+        - link "Stock" [ref=e43] [cursor=pointer]:
+          - /url: menu-stock.html
+          - img [ref=e148]
+          - text: Stock
+        - link "Comercial" [ref=e49] [cursor=pointer]:
+          - /url: menu-comercial.html
+          - img [ref=e152]
+          - text: Comercial
+        - link "Administración" [ref=e56] [cursor=pointer]:
+          - /url: menu-admin.html
+          - img [ref=e157]
+          - text: Administración
+        - link "Mercado" [ref=e60] [cursor=pointer]:
+          - /url: mercado.html
+          - img [ref=e159]
+          - text: Mercado
+        - link "Configuración" [ref=e65] [cursor=pointer]:
+          - /url: menu-config.html
+          - img [ref=e162]
+          - text: Configuración
+      - generic [ref=e70]:
+        - generic [ref=e71]: Administrador · administrador
+        - button "Cerrar sesión" [ref=e72] [cursor=pointer]
+    - generic [ref=e73]:
+      - banner [ref=e74]:
+        - generic [ref=e75]:
+          - img [ref=e76]
+          - generic [ref=e77]:
+            - generic [ref=e78]: COSECHA
+            - generic [ref=e79]: SISTEMA DE CULTIVOS
+          - generic [ref=e80]: 🌱 Campaña FIX 2026 · Día 3
+        - generic [ref=e81]:
+          - generic [ref=e82] [cursor=pointer]:
+            - img [ref=e83]
+            - text: Administrador
+          - generic [ref=e86]: jueves, 2 de abril
+      - generic [ref=e87]:
+        - link "← Volver" [ref=e88] [cursor=pointer]:
+          - /url: "#"
+        - generic [ref=e89]:
+          - generic [ref=e90]: Despalillado
+          - generic [ref=e91]: Registrá el proceso de despalillado de la cosecha
+        - generic [ref=e92]:
+          - generic [ref=e93]:
+            - generic [ref=e94]:
+              - button "❄️ Cámara fría" [ref=e95] [cursor=pointer]
+              - button "🌿 Fruta fresca" [ref=e96] [cursor=pointer]
+            - generic [ref=e97]:
+              - generic [ref=e98]:
+                - img [ref=e165]
+                - generic [ref=e102]: "2"
+                - text: pendientes de despalillar
+              - generic [ref=e103]:
+                - generic [ref=e104] [cursor=pointer]:
+                  - generic [ref=e105]:
+                    - generic [ref=e106]: PARCELA NORTE
+                    - generic [ref=e107]: "Cosechero: GONZALES, MARCELO · 30/3, 09:14 p. m."
+                    - generic [ref=e108]: → CAMARA DE FRIO 1
+                  - generic [ref=e109]: 100 kg
+                - generic [ref=e110] [cursor=pointer]:
+                  - generic [ref=e111]:
+                    - generic [ref=e112]: PARCELA NORTE
+                    - generic [ref=e113]: "Cosechero: GOMEZ, MARIA · 30/3, 09:15 p. m."
+                    - generic [ref=e114]: → CAMARA DE FRIO 2
+                  - generic [ref=e115]: 54.923 kg
+          - generic [ref=e116]:
+            - generic [ref=e117]:
+              - generic [ref=e118]: Registros del día
+              - generic [ref=e119]:
+                - button "Historial" [active] [ref=e120] [cursor=pointer]:
+                  - img [ref=e168]
+                  - text: Historial
+                - button "Totales campaña" [ref=e122] [cursor=pointer]:
+                  - img [ref=e169]
+                  - text: Totales campaña
+            - generic [ref=e124]: Sin registros hoy
+  - generic [ref=e171]:
+    - generic [ref=e172]:
+      - heading "Historial completo de despalillado" [level=3] [ref=e173]
+      - generic [ref=e174]:
+        - textbox [ref=e175]
+        - textbox [ref=e176]
+        - button "✕ Cerrar" [ref=e177] [cursor=pointer]
+    - table [ref=e179]:
+      - rowgroup [ref=e180]:
+        - row "# Despalillador Fecha/Hora Parcela Depósito Kg Merma Usuario" [ref=e181]:
+          - columnheader "#" [ref=e182]
+          - columnheader "Despalillador" [ref=e183]
+          - columnheader "Fecha/Hora" [ref=e184]
+          - columnheader "Parcela" [ref=e185]
+          - columnheader "Depósito" [ref=e186]
+          - columnheader "Kg" [ref=e187]
+          - columnheader "Merma" [ref=e188]
+          - columnheader "Usuario" [ref=e189]
+      - rowgroup [ref=e190]:
+        - row "#11 GOMEZ, MARIA 30/3/2026 08:52 p. m. PARCELA NORTE CAMARA DE FRIO 1 70,50 kg 3.4% Administrador" [ref=e191]:
+          - cell "#11" [ref=e192]
+          - cell "GOMEZ, MARIA" [ref=e193]
+          - cell "30/3/2026 08:52 p. m." [ref=e194]
+          - cell "PARCELA NORTE" [ref=e195]
+          - cell "CAMARA DE FRIO 1" [ref=e196]
+          - cell "70,50 kg" [ref=e197]
+          - cell "3.4%" [ref=e198]
+          - cell "Administrador" [ref=e199]
+        - row "#10 GOMEZ, MARIA 30/3/2026 08:44 p. m. PARCELA NORTE CAMARA DE FRIO 1 98,00 kg 2.0% Administrador" [ref=e200]:
+          - cell "#10" [ref=e201]
+          - cell "GOMEZ, MARIA" [ref=e202]
+          - cell "30/3/2026 08:44 p. m." [ref=e203]
+          - cell "PARCELA NORTE" [ref=e204]
+          - cell "CAMARA DE FRIO 1" [ref=e205]
+          - cell "98,00 kg" [ref=e206]
+          - cell "2.0%" [ref=e207]
+          - cell "Administrador" [ref=e208]

@@ -1,0 +1,268 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - generic [ref=e6]:
+        - generic [ref=e7]: COSECHA
+        - generic [ref=e8]: SISTEMA DE CULTIVOS
+    - navigation [ref=e9]:
+      - link "Dashboard" [ref=e10] [cursor=pointer]:
+        - /url: index.html
+        - img [ref=e135]
+        - text: Dashboard
+      - generic [ref=e17]: Campo
+      - link "Cosecha" [ref=e18] [cursor=pointer]:
+        - /url: juntada.html
+        - img [ref=e140]
+        - text: Cosecha
+      - link "Despalillado" [ref=e29] [cursor=pointer]:
+        - /url: despalillado.html
+        - img [ref=e149]
+        - text: Despalillado
+      - link "Aplicaciones" [ref=e37] [cursor=pointer]:
+        - /url: aplicaciones.html
+        - img [ref=e155]
+        - text: Aplicaciones
+      - generic [ref=e42]: Sistema
+      - link "Stock" [ref=e43] [cursor=pointer]:
+        - /url: menu-stock.html
+        - img [ref=e158]
+        - text: Stock
+      - link "Comercial" [ref=e49] [cursor=pointer]:
+        - /url: menu-comercial.html
+        - img [ref=e162]
+        - text: Comercial
+      - link "Administración" [ref=e56] [cursor=pointer]:
+        - /url: menu-admin.html
+        - img [ref=e167]
+        - text: Administración
+      - link "Mercado" [ref=e60] [cursor=pointer]:
+        - /url: mercado.html
+        - img [ref=e169]
+        - text: Mercado
+      - link "Configuración" [ref=e65] [cursor=pointer]:
+        - /url: menu-config.html
+        - img [ref=e172]
+        - text: Configuración
+    - generic [ref=e70]:
+      - generic [ref=e71]: Administrador · administrador
+      - button "Cerrar sesión" [ref=e72] [cursor=pointer]
+  - generic [ref=e73]:
+    - banner [ref=e74]:
+      - generic [ref=e75]:
+        - img [ref=e76]
+        - generic [ref=e77]:
+          - generic [ref=e78]: COSECHA
+          - generic [ref=e79]: SISTEMA DE CULTIVOS
+        - generic [ref=e80]: Cargando...
+      - generic [ref=e81]:
+        - generic [ref=e82] [cursor=pointer]:
+          - img [ref=e83]
+          - text: Administrador
+        - generic [ref=e86]: viernes, 3 de abril
+    - generic [ref=e87]:
+      - link "← Volver" [ref=e88] [cursor=pointer]:
+        - /url: "#"
+      - generic [ref=e89]:
+        - generic [ref=e90]: Despalillado
+        - generic [ref=e91]: Proceso de despalillado por lotes de cosecha
+      - generic [ref=e92]:
+        - generic [ref=e93]:
+          - generic [ref=e94]: Total de hoy
+          - generic [ref=e95]: 264,5 kg
+        - generic [ref=e96]:
+          - generic [ref=e97]: Lotes pendientes
+          - generic [ref=e98]: "4"
+        - generic [ref=e99]:
+          - generic [ref=e100]: Campaña actual
+          - generic [ref=e101]: — kg
+      - generic [ref=e103]:
+        - generic [ref=e105]: Lotes pendientes (4)
+        - generic [ref=e106]:
+          - generic [ref=e175] [cursor=pointer]:
+            - generic [ref=e176]:
+              - generic [ref=e177]:
+                - generic [ref=e178]: L2026-0402-P1010-001
+                - generic [ref=e179]: Pendiente
+              - generic [ref=e180]: 2/4 · GALPON FRESCO
+              - generic [ref=e182]: 0 / 50,9 kg (0%)
+            - generic [ref=e183]: 50,9 kg
+          - generic [ref=e184] [cursor=pointer]:
+            - generic [ref=e185]:
+              - generic [ref=e186]:
+                - generic [ref=e187]: L2026-0402-003
+                - generic [ref=e188]: En curso
+              - generic [ref=e189]: 2/4 · GALPON FRESCO
+              - generic [ref=e192]: 264,5 / 270,1 kg (98%)
+            - generic [ref=e193]: 270,1 kg
+          - generic [ref=e194] [cursor=pointer]:
+            - generic [ref=e195]:
+              - generic [ref=e196]:
+                - generic [ref=e197]: L2026-0402-004
+                - generic [ref=e198]: Pendiente
+              - generic [ref=e199]: 2/4 · GALPON FRESCO
+              - generic [ref=e201]: 0 / 64 kg (0%)
+            - generic [ref=e202]: 64 kg
+          - generic [ref=e203] [cursor=pointer]:
+            - generic [ref=e204]:
+              - generic [ref=e205]:
+                - generic [ref=e206]: L2026-0402-001
+                - generic [ref=e207]: Pendiente
+              - generic [ref=e208]: 2/4 · GALPON FRESCO
+              - generic [ref=e210]: 0 / 42,9 kg (0%)
+            - generic [ref=e211]: 42,9 kg
+      - generic [ref=e108]:
+        - button "Historial" [ref=e109] [cursor=pointer]
+        - button "Totales x Despalillador" [ref=e110] [cursor=pointer]
+        - button "Total x Lote" [ref=e111] [cursor=pointer]
+        - button "Auditoría" [ref=e112] [cursor=pointer]
+      - generic [ref=e114]:
+        - generic [ref=e115]:
+          - heading "Historial completo de despalillado" [level=3] [ref=e116]
+          - generic [ref=e117]:
+            - textbox [ref=e118]
+            - textbox [ref=e119]
+            - searchbox "Buscar..." [ref=e120]
+        - table [ref=e122]:
+          - rowgroup [ref=e123]:
+            - row "# Despalillador Fecha/Hora Lote Kg Usuario Acciones" [ref=e124]:
+              - columnheader "#" [ref=e125]
+              - columnheader "Despalillador" [ref=e126]
+              - columnheader "Fecha/Hora" [ref=e127]
+              - columnheader "Lote" [ref=e128]
+              - columnheader "Kg" [ref=e129]
+              - columnheader "Usuario" [ref=e130]
+              - columnheader "Acciones" [ref=e131]
+          - rowgroup [ref=e132]:
+            - row "#1019 GARCIA, JOSE 3/4/2026 05:06 a. m. - 39,8 kg Administrador" [ref=e212]:
+              - cell "#1019" [ref=e213]
+              - cell "GARCIA, JOSE" [ref=e214]
+              - cell "3/4/2026 05:06 a. m." [ref=e215]
+              - cell "-" [ref=e216]
+              - cell "39,8 kg" [ref=e217]
+              - cell "Administrador" [ref=e218]
+              - cell [ref=e219]:
+                - button "Editar" [ref=e220] [cursor=pointer]:
+                  - img [ref=e221]
+                - button "Anular" [ref=e224] [cursor=pointer]:
+                  - img [ref=e225]
+            - row "#1018 PEREZ, JUAN 3/4/2026 04:53 a. m. - 8 kg Administrador" [ref=e228]:
+              - cell "#1018" [ref=e229]
+              - cell "PEREZ, JUAN" [ref=e230]
+              - cell "3/4/2026 04:53 a. m." [ref=e231]
+              - cell "-" [ref=e232]
+              - cell "8 kg" [ref=e233]
+              - cell "Administrador" [ref=e234]
+              - cell [ref=e235]:
+                - button "Editar" [ref=e236] [cursor=pointer]:
+                  - img [ref=e237]
+                - button "Anular" [ref=e240] [cursor=pointer]:
+                  - img [ref=e241]
+            - row "#1017 GOMEZ, MARIA 3/4/2026 04:53 a. m. - 49,8 kg Administrador" [ref=e244]:
+              - cell "#1017" [ref=e245]
+              - cell "GOMEZ, MARIA" [ref=e246]
+              - cell "3/4/2026 04:53 a. m." [ref=e247]
+              - cell "-" [ref=e248]
+              - cell "49,8 kg" [ref=e249]
+              - cell "Administrador" [ref=e250]
+              - cell [ref=e251]:
+                - button "Editar" [ref=e252] [cursor=pointer]:
+                  - img [ref=e253]
+                - button "Anular" [ref=e256] [cursor=pointer]:
+                  - img [ref=e257]
+            - row "#1016 GOMEZ, MARIA 3/4/2026 01:49 a. m. - 28 kg Administrador" [ref=e260]:
+              - cell "#1016" [ref=e261]
+              - cell "GOMEZ, MARIA" [ref=e262]
+              - cell "3/4/2026 01:49 a. m." [ref=e263]
+              - cell "-" [ref=e264]
+              - cell "28 kg" [ref=e265]
+              - cell "Administrador" [ref=e266]
+              - cell [ref=e267]:
+                - button "Editar" [ref=e268] [cursor=pointer]:
+                  - img [ref=e269]
+                - button "Anular" [ref=e272] [cursor=pointer]:
+                  - img [ref=e273]
+            - row "#1015 FULANITO, COSME 3/4/2026 01:10 a. m. - 12,4 kg Administrador" [ref=e276]:
+              - cell "#1015" [ref=e277]
+              - cell "FULANITO, COSME" [ref=e278]
+              - cell "3/4/2026 01:10 a. m." [ref=e279]
+              - cell "-" [ref=e280]
+              - cell "12,4 kg" [ref=e281]
+              - cell "Administrador" [ref=e282]
+              - cell [ref=e283]:
+                - button "Editar" [ref=e284] [cursor=pointer]:
+                  - img [ref=e285]
+                - button "Anular" [ref=e288] [cursor=pointer]:
+                  - img [ref=e289]
+            - row "#1014 GARCIA, JOSE 3/4/2026 01:10 a. m. - 13,5 kg Administrador" [ref=e292]:
+              - cell "#1014" [ref=e293]
+              - cell "GARCIA, JOSE" [ref=e294]
+              - cell "3/4/2026 01:10 a. m." [ref=e295]
+              - cell "-" [ref=e296]
+              - cell "13,5 kg" [ref=e297]
+              - cell "Administrador" [ref=e298]
+              - cell [ref=e299]:
+                - button "Editar" [ref=e300] [cursor=pointer]:
+                  - img [ref=e301]
+                - button "Anular" [ref=e304] [cursor=pointer]:
+                  - img [ref=e305]
+            - row "#1013 GONZALES, MARCELO 3/4/2026 01:08 a. m. - 12,3 kg Administrador" [ref=e308]:
+              - cell "#1013" [ref=e309]
+              - cell "GONZALES, MARCELO" [ref=e310]
+              - cell "3/4/2026 01:08 a. m." [ref=e311]
+              - cell "-" [ref=e312]
+              - cell "12,3 kg" [ref=e313]
+              - cell "Administrador" [ref=e314]
+              - cell [ref=e315]:
+                - button "Editar" [ref=e316] [cursor=pointer]:
+                  - img [ref=e317]
+                - button "Anular" [ref=e320] [cursor=pointer]:
+                  - img [ref=e321]
+            - row "#1012 GONZALES, MARCELO 3/4/2026 01:08 a. m. - 15,2 kg Administrador" [ref=e324]:
+              - cell "#1012" [ref=e325]
+              - cell "GONZALES, MARCELO" [ref=e326]
+              - cell "3/4/2026 01:08 a. m." [ref=e327]
+              - cell "-" [ref=e328]
+              - cell "15,2 kg" [ref=e329]
+              - cell "Administrador" [ref=e330]
+              - cell [ref=e331]:
+                - button "Editar" [ref=e332] [cursor=pointer]:
+                  - img [ref=e333]
+                - button "Anular" [ref=e336] [cursor=pointer]:
+                  - img [ref=e337]
+            - row "#1011 GOMEZ, MARIA 2/4/2026 11:08 p. m. - 85,5 kg Administrador" [ref=e340]:
+              - cell "#1011" [ref=e341]
+              - cell "GOMEZ, MARIA" [ref=e342]
+              - cell "2/4/2026 11:08 p. m." [ref=e343]
+              - cell "-" [ref=e344]
+              - cell "85,5 kg" [ref=e345]
+              - cell "Administrador" [ref=e346]
+              - cell [ref=e347]:
+                - button "Editar" [ref=e348] [cursor=pointer]:
+                  - img [ref=e349]
+                - button "Anular" [ref=e352] [cursor=pointer]:
+                  - img [ref=e353]
+            - row "#11 GOMEZ, MARIA 30/3/2026 08:52 p. m. - 70,5 kg Administrador" [ref=e356]:
+              - cell "#11" [ref=e357]
+              - cell "GOMEZ, MARIA" [ref=e358]
+              - cell "30/3/2026 08:52 p. m." [ref=e359]
+              - cell "-" [ref=e360]
+              - cell "70,5 kg" [ref=e361]
+              - cell "Administrador" [ref=e362]
+              - cell [ref=e363]:
+                - button "Editar" [ref=e364] [cursor=pointer]:
+                  - img [ref=e365]
+                - button "Anular" [ref=e368] [cursor=pointer]:
+                  - img [ref=e369]
+            - row "#10 GOMEZ, MARIA 30/3/2026 08:44 p. m. - 98 kg Administrador" [ref=e372]:
+              - cell "#10" [ref=e373]
+              - cell "GOMEZ, MARIA" [ref=e374]
+              - cell "30/3/2026 08:44 p. m." [ref=e375]
+              - cell "-" [ref=e376]
+              - cell "98 kg" [ref=e377]
+              - cell "Administrador" [ref=e378]
+              - cell [ref=e379]:
+                - button "Editar" [ref=e380] [cursor=pointer]:
+                  - img [ref=e381]
+                - button "Anular" [ref=e384] [cursor=pointer]:
+                  - img [ref=e385]

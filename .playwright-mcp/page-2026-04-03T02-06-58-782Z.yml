@@ -1,0 +1,250 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - generic [ref=e6]:
+        - generic [ref=e7]: COSECHA
+        - generic [ref=e8]: SISTEMA DE CULTIVOS
+    - navigation [ref=e9]:
+      - link "Dashboard" [ref=e10] [cursor=pointer]:
+        - /url: index.html
+        - img [ref=e12]
+        - text: Dashboard
+      - generic [ref=e17]: Campo
+      - link "Cosecha" [ref=e18] [cursor=pointer]:
+        - /url: juntada.html
+        - img [ref=e20]
+        - text: Cosecha
+      - link "Despalillado" [ref=e29] [cursor=pointer]:
+        - /url: despalillado.html
+        - img [ref=e31]
+        - text: Despalillado
+      - link "Clasificación" [ref=e37] [cursor=pointer]:
+        - /url: clasificacion-embalaje.html
+        - img [ref=e39]
+        - text: Clasificación
+      - link "Aplicaciones" [ref=e43] [cursor=pointer]:
+        - /url: aplicaciones.html
+        - img [ref=e45]
+        - text: Aplicaciones
+      - generic [ref=e48]: Sistema
+      - link "Stock" [ref=e49] [cursor=pointer]:
+        - /url: menu-stock.html
+        - img [ref=e51]
+        - text: Stock
+      - link "Comercial" [ref=e55] [cursor=pointer]:
+        - /url: menu-comercial.html
+        - img [ref=e57]
+        - text: Comercial
+      - link "Administración" [ref=e62] [cursor=pointer]:
+        - /url: menu-admin.html
+        - img [ref=e64]
+        - text: Administración
+      - link "Mercado" [ref=e66] [cursor=pointer]:
+        - /url: mercado.html
+        - img [ref=e68]
+        - text: Mercado
+      - link "Configuración" [ref=e71] [cursor=pointer]:
+        - /url: menu-config.html
+        - img [ref=e73]
+        - text: Configuración
+    - generic [ref=e76]:
+      - generic [ref=e77]: Administrador · administrador
+      - button "Cerrar sesión" [ref=e78] [cursor=pointer]
+  - generic [ref=e79]:
+    - banner [ref=e80]:
+      - generic [ref=e81]:
+        - img [ref=e82]
+        - generic [ref=e83]:
+          - generic [ref=e84]: COSECHA
+          - generic [ref=e85]: SISTEMA DE CULTIVOS
+        - generic [ref=e86]: 🌱 Campaña FIX 2026 · Día 4
+      - generic [ref=e87]:
+        - generic [ref=e88] [cursor=pointer]:
+          - img [ref=e89]
+          - text: Administrador
+        - generic [ref=e92]: jueves, 2 de abril
+    - generic [ref=e93]:
+      - generic [ref=e94]:
+        - generic [ref=e95]: Dashboard
+        - generic [ref=e96]:
+          - generic [ref=e97]: 2 de abril de 2026
+          - generic [ref=e98]: "Última actualización: 11:06 p. m."
+      - generic [ref=e100]:
+        - generic [ref=e101]:
+          - generic [ref=e103]: Campaña FIX 2026
+          - generic [ref=e104]: Frutilla
+          - generic [ref=e105]: Día 4
+          - link "Cambiar campaña →" [ref=e106] [cursor=pointer]:
+            - /url: temporadas.html
+        - generic [ref=e107]:
+          - generic [ref=e108]:
+            - generic [ref=e109]: Dólar Blue
+            - generic [ref=e110]: $1.405
+          - generic [ref=e112]:
+            - generic [ref=e113]: Oficial
+            - generic [ref=e114]: $1.415
+          - generic [ref=e116]:
+            - generic [ref=e117]: MEP
+            - generic [ref=e118]: $1.436
+          - generic [ref=e120]:
+            - generic [ref=e121]: CCL
+            - generic [ref=e122]: $1.484
+          - generic [ref=e124]:
+            - generic [ref=e125]: Frutilla hoy
+            - generic [ref=e126]: $---
+      - generic [ref=e127]:
+        - generic [ref=e128]:
+          - generic [ref=e129]: Hoy
+          - generic [ref=e130]:
+            - generic [ref=e131]:
+              - generic [ref=e132]:
+                - generic [ref=e133]: Cosecha hoy
+                - img [ref=e135]
+              - generic [ref=e144]: 42,9
+              - generic [ref=e145]: 2 cosechadores activos
+            - generic [ref=e146]:
+              - generic [ref=e147]:
+                - generic [ref=e148]: En cámara
+                - img [ref=e150]
+              - generic [ref=e153]: 606,7
+              - generic [ref=e154]: kg disponibles
+            - generic [ref=e155]:
+              - generic [ref=e156]:
+                - generic [ref=e157]: Saldo caja
+                - img [ref=e159]
+              - generic [ref=e162]: "-$ 17.990.700"
+              - generic [ref=e163]: ≈ USD —
+          - generic [ref=e164]: Estado del stock
+          - generic [ref=e165]:
+            - generic [ref=e166]:
+              - generic [ref=e167]: Pendiente desp.
+              - generic [ref=e168]: 3 lot.
+              - generic [ref=e169]: 395 kg
+            - generic [ref=e170]:
+              - generic [ref=e171]: Fresco
+              - generic [ref=e172]: 7 lot.
+              - generic [ref=e173]: 618 kg
+            - generic [ref=e174]:
+              - generic [ref=e175]: Despalillado
+              - generic [ref=e176]: 2 lot.
+              - generic [ref=e177]: 173 kg
+          - generic [ref=e178]: Campaña · Campaña FIX 2026
+          - generic [ref=e179]:
+            - generic [ref=e180]:
+              - generic [ref=e181]:
+                - generic [ref=e182]: Total cosechado
+                - img [ref=e184]
+              - generic [ref=e193]: "1.614"
+              - generic [ref=e194]: kg total temporada
+            - generic [ref=e195]:
+              - generic [ref=e196]:
+                - generic [ref=e197]: Vendido total
+                - img [ref=e199]
+              - generic [ref=e203]: "300"
+              - generic [ref=e204]: kg total temporada
+              - generic [ref=e208]: 19% del cosechado vendido
+        - generic [ref=e209]:
+          - generic [ref=e211]: Estado de depósitos
+          - generic [ref=e212]:
+            - generic [ref=e213]:
+              - generic [ref=e214]:
+                - generic [ref=e215]: CAMARA DE FRIO 1
+                - generic [ref=e216]: 0%
+              - generic [ref=e218]: 114,5 / 200.000 kg
+            - generic [ref=e219]:
+              - generic [ref=e220]:
+                - generic [ref=e221]: CAMARA DE FRIO 2
+                - generic [ref=e222]: 0%
+              - generic [ref=e224]: 0 / 160.000 kg
+            - generic [ref=e225]:
+              - generic [ref=e226]:
+                - generic [ref=e227]: GALPON FRESCO
+                - generic [ref=e228]: 0%
+              - generic [ref=e230]: 492,2 / 100.000 kg
+        - generic [ref=e231]:
+          - generic [ref=e232]:
+            - generic [ref=e233]: Alertas
+            - generic [ref=e234]:
+              - generic [ref=e235]: 6 activas
+              - generic "Alertas activas" [ref=e236] [cursor=pointer]:
+                - img [ref=e237]
+                - generic [ref=e240]: "6"
+          - generic [ref=e241]:
+            - generic [ref=e242]:
+              - generic [ref=e243]: Stock bajo de insumos (3)
+              - generic [ref=e247]:
+                - generic [ref=e248]: GLIFOSATO 1.5L
+                - generic [ref=e249]: lt — 0 unidades
+              - generic [ref=e252]:
+                - generic [ref=e253]: GLIFOSATO 10L
+                - generic [ref=e254]: lt — 0 unidades
+              - generic [ref=e257]:
+                - generic [ref=e258]: MANGUERAS
+                - generic [ref=e259]: u — 0 unidades
+            - generic [ref=e260]:
+              - generic [ref=e261]: Stock en tránsito (3)
+              - generic [ref=e265]:
+                - generic [ref=e266]: PARCELA NORTE — 100 kg
+                - generic [ref=e267]: CAMARA DE FRIO 1 · GONZALES, MARCELO
+              - generic [ref=e270]:
+                - generic [ref=e271]: PARCELA NORTE — 54,92 kg
+                - generic [ref=e272]: CAMARA DE FRIO 2 · GOMEZ, MARIA
+              - generic [ref=e275]:
+                - generic [ref=e276]: PARCELA NORTE — 240 kg
+                - generic [ref=e277]: CAMARA DE FRIO 2 · GONZALES, MARCELO
+      - generic [ref=e278]:
+        - generic [ref=e279]:
+          - generic [ref=e281]: Últimos registros de cosecha
+          - table [ref=e283]:
+            - rowgroup [ref=e284]:
+              - row "Hora Cosechador Parcela Kilos Destino" [ref=e285]:
+                - columnheader "Hora" [ref=e286]
+                - columnheader "Cosechador" [ref=e287]
+                - columnheader "Parcela" [ref=e288]
+                - columnheader "Kilos" [ref=e289]
+                - columnheader "Destino" [ref=e290]
+            - rowgroup [ref=e291]:
+              - row "09:08 p. m. GONZALES, MARCELO PARCELA NORTE 8,9 kg —" [ref=e292]:
+                - cell "09:08 p. m." [ref=e293]
+                - cell "GONZALES, MARCELO" [ref=e294]
+                - cell "PARCELA NORTE" [ref=e295]
+                - cell "8,9 kg" [ref=e296]
+                - cell "—" [ref=e297]
+              - row "09:08 p. m. GOMEZ, MARIA PARCELA NORTE 7,6 kg —" [ref=e298]:
+                - cell "09:08 p. m." [ref=e299]
+                - cell "GOMEZ, MARIA" [ref=e300]
+                - cell "PARCELA NORTE" [ref=e301]
+                - cell "7,6 kg" [ref=e302]
+                - cell "—" [ref=e303]
+              - row "09:08 p. m. GOMEZ, MARIA PARCELA NORTE 9,7 kg —" [ref=e304]:
+                - cell "09:08 p. m." [ref=e305]
+                - cell "GOMEZ, MARIA" [ref=e306]
+                - cell "PARCELA NORTE" [ref=e307]
+                - cell "9,7 kg" [ref=e308]
+                - cell "—" [ref=e309]
+              - row "09:08 p. m. GOMEZ, MARIA PARCELA NORTE 8,9 kg —" [ref=e310]:
+                - cell "09:08 p. m." [ref=e311]
+                - cell "GOMEZ, MARIA" [ref=e312]
+                - cell "PARCELA NORTE" [ref=e313]
+                - cell "8,9 kg" [ref=e314]
+                - cell "—" [ref=e315]
+              - row "09:08 p. m. GOMEZ, MARIA PARCELA NORTE 7,8 kg —" [ref=e316]:
+                - cell "09:08 p. m." [ref=e317]
+                - cell "GOMEZ, MARIA" [ref=e318]
+                - cell "PARCELA NORTE" [ref=e319]
+                - cell "7,8 kg" [ref=e320]
+                - cell "—" [ref=e321]
+        - generic [ref=e322]:
+          - generic [ref=e324]: Últimos registros de aplicaciones
+          - table [ref=e326]:
+            - rowgroup [ref=e327]:
+              - row "Fecha Producto Parcela Dosis Usuario" [ref=e328]:
+                - columnheader "Fecha" [ref=e329]
+                - columnheader "Producto" [ref=e330]
+                - columnheader "Parcela" [ref=e331]
+                - columnheader "Dosis" [ref=e332]
+                - columnheader "Usuario" [ref=e333]
+            - rowgroup [ref=e334]:
+              - row "Sin aplicaciones recientes" [ref=e335]:
+                - cell "Sin aplicaciones recientes" [ref=e336]

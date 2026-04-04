@@ -1,0 +1,236 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - img [ref=e5]
+        - generic [ref=e6]:
+          - generic [ref=e7]: COSECHA
+          - generic [ref=e8]: SISTEMA DE CULTIVOS
+      - navigation [ref=e9]:
+        - link "Dashboard" [ref=e10] [cursor=pointer]:
+          - /url: index.html
+          - img [ref=e12]
+          - text: Dashboard
+        - generic [ref=e17]: Campo
+        - link "Cosecha" [ref=e18] [cursor=pointer]:
+          - /url: juntada.html
+          - img [ref=e20]
+          - text: Cosecha
+        - link "Despalillado" [ref=e29] [cursor=pointer]:
+          - /url: despalillado.html
+          - img [ref=e31]
+          - text: Despalillado
+        - link "Aplicaciones" [ref=e37] [cursor=pointer]:
+          - /url: aplicaciones.html
+          - img [ref=e39]
+          - text: Aplicaciones
+        - generic [ref=e42]: Sistema
+        - link "Stock" [ref=e43] [cursor=pointer]:
+          - /url: menu-stock.html
+          - img [ref=e45]
+          - text: Stock
+        - link "Comercial" [ref=e49] [cursor=pointer]:
+          - /url: menu-comercial.html
+          - img [ref=e51]
+          - text: Comercial
+        - link "Administración" [ref=e56] [cursor=pointer]:
+          - /url: menu-admin.html
+          - img [ref=e58]
+          - text: Administración
+        - link "Mercado" [ref=e60] [cursor=pointer]:
+          - /url: mercado.html
+          - img [ref=e62]
+          - text: Mercado
+        - link "Configuración" [ref=e65] [cursor=pointer]:
+          - /url: menu-config.html
+          - img [ref=e67]
+          - text: Configuración
+      - generic [ref=e70]:
+        - generic [ref=e71]: Administrador · administrador
+        - button "Cerrar sesión" [ref=e72] [cursor=pointer]
+    - generic [ref=e73]:
+      - banner [ref=e74]:
+        - generic [ref=e75]:
+          - img [ref=e76]
+          - generic [ref=e77]:
+            - generic [ref=e78]: COSECHA
+            - generic [ref=e79]: SISTEMA DE CULTIVOS
+          - generic [ref=e80]: 🌱 Campaña FIX 2026 · Día 3
+        - generic [ref=e81]:
+          - generic [ref=e82] [cursor=pointer]:
+            - img [ref=e83]
+            - text: Administrador
+          - generic [ref=e86]: jueves, 2 de abril
+      - generic [ref=e87]:
+        - link "← Volver" [ref=e88] [cursor=pointer]:
+          - /url: "#"
+        - generic [ref=e89]:
+          - generic [ref=e90]: Registrar juntada
+          - generic [ref=e91]: Seleccioná el parcela, escaneá el cosechador y confirmá el peso
+        - generic [ref=e92]:
+          - generic [ref=e93]:
+            - generic [ref=e94]: Total de hoy
+            - generic [ref=e95]: 0 kg
+          - generic [ref=e96]:
+            - generic [ref=e97]: Parcela actual hoy
+            - generic [ref=e98]: — kg
+          - generic [ref=e99]:
+            - generic [ref=e100]: Campaña actual
+            - generic [ref=e101]: 846,1 kg
+        - generic [ref=e102]:
+          - generic [ref=e103]:
+            - generic [ref=e105]:
+              - generic [ref=e106]: Parcela
+              - combobox [ref=e107] [cursor=pointer]:
+                - option "Seleccionar parcela..." [selected]
+                - option "PARCELA NORTE"
+                - option "PARCELA SUR"
+            - generic [ref=e108]:
+              - generic [ref=e109]: Cosechador
+              - generic [ref=e110]:
+                - button "Seleccionar" [ref=e111] [cursor=pointer]:
+                  - img [ref=e112]
+                  - text: Seleccionar
+                - button "Escanear QR" [ref=e113] [cursor=pointer]:
+                  - img [ref=e114]
+                  - text: Escanear QR
+              - combobox [ref=e120] [cursor=pointer]:
+                - option "— seleccionar cosechador —" [selected]
+                - option "GOMEZ, MARIA"
+                - option "GONZALES, MARCELO"
+            - generic [ref=e121]:
+              - generic [ref=e122]: KILOS COSECHADOS
+              - generic [ref=e123]:
+                - textbox "0" [ref=e124]
+                - generic [ref=e125]: kg
+            - button "Registrar cosecha" [disabled] [ref=e126]:
+              - img [ref=e127]
+              - text: Registrar cosecha
+          - generic [ref=e130]:
+            - generic [ref=e131]:
+              - heading "Registros de hoy" [level=3] [ref=e132]
+              - generic [ref=e133]:
+                - button "Historial" [active] [ref=e134] [cursor=pointer]:
+                  - img [ref=e135]
+                  - text: Historial
+                - button "Totales campaña" [ref=e136] [cursor=pointer]:
+                  - img [ref=e137]
+                  - text: Totales campaña
+            - generic [ref=e138]:
+              - combobox "Filtrar por..." [ref=e139]
+              - button "✕ Limpiar" [ref=e140] [cursor=pointer]
+            - table [ref=e142]:
+              - rowgroup [ref=e143]:
+                - row "# Cosechero Fecha Tipo Kg Parcela Depósito Usuario" [ref=e144]:
+                  - columnheader "#" [ref=e145]
+                  - columnheader "Cosechero" [ref=e146]
+                  - columnheader "Fecha" [ref=e147]
+                  - columnheader "Tipo" [ref=e148]
+                  - columnheader "Kg" [ref=e149]
+                  - columnheader "Parcela" [ref=e150]
+                  - columnheader "Depósito" [ref=e151]
+                  - columnheader "Usuario" [ref=e152]
+              - rowgroup [ref=e153]:
+                - row "Sin movimientos" [ref=e158]:
+                  - cell "Sin movimientos" [ref=e159]
+            - generic [ref=e156]:
+              - text: "Total hoy:"
+              - generic [ref=e157]: —
+  - generic [ref=e161]:
+    - generic [ref=e162]:
+      - heading "Historial completo de cosecha" [level=3] [ref=e163]
+      - generic [ref=e164]:
+        - textbox [ref=e165]
+        - textbox [ref=e166]
+        - button "✕ Cerrar" [ref=e167] [cursor=pointer]
+    - table [ref=e169]:
+      - rowgroup [ref=e170]:
+        - row "# Cosechero Fecha/Hora Parcela Kg Usuario Temporada" [ref=e171]:
+          - columnheader "#" [ref=e172]
+          - columnheader "Cosechero" [ref=e173]
+          - columnheader "Fecha/Hora" [ref=e174]
+          - columnheader "Parcela" [ref=e175]
+          - columnheader "Kg" [ref=e176]
+          - columnheader "Usuario" [ref=e177]
+          - columnheader "Temporada" [ref=e178]
+      - rowgroup [ref=e179]:
+        - row "#1044 GOMEZ, MARIA 30/3/2026 09:15 p. m. PARCELA NORTE 54,92 kg Administrador Campaña FIX 2026" [ref=e180]:
+          - cell "#1044" [ref=e181]
+          - cell "GOMEZ, MARIA" [ref=e182]
+          - cell "30/3/2026 09:15 p. m." [ref=e183]
+          - cell "PARCELA NORTE" [ref=e184]
+          - cell "54,92 kg" [ref=e185]
+          - cell "Administrador" [ref=e186]
+          - cell "Campaña FIX 2026" [ref=e187]
+        - row "#1043 GOMEZ, MARIA 30/3/2026 09:15 p. m. PARCELA NORTE 122,65 kg Administrador Campaña FIX 2026" [ref=e188]:
+          - cell "#1043" [ref=e189]
+          - cell "GOMEZ, MARIA" [ref=e190]
+          - cell "30/3/2026 09:15 p. m." [ref=e191]
+          - cell "PARCELA NORTE" [ref=e192]
+          - cell "122,65 kg" [ref=e193]
+          - cell "Administrador" [ref=e194]
+          - cell "Campaña FIX 2026" [ref=e195]
+        - row "#1042 GONZALES, MARCELO 30/3/2026 09:14 p. m. PARCELA NORTE 100,00 kg Administrador Campaña FIX 2026" [ref=e196]:
+          - cell "#1042" [ref=e197]
+          - cell "GONZALES, MARCELO" [ref=e198]
+          - cell "30/3/2026 09:14 p. m." [ref=e199]
+          - cell "PARCELA NORTE" [ref=e200]
+          - cell "100,00 kg" [ref=e201]
+          - cell "Administrador" [ref=e202]
+          - cell "Campaña FIX 2026" [ref=e203]
+        - row "#1041 GONZALES, MARCELO 30/3/2026 08:57 p. m. PARCELA NORTE 12,55 kg Administrador Campaña FIX 2026" [ref=e204]:
+          - cell "#1041" [ref=e205]
+          - cell "GONZALES, MARCELO" [ref=e206]
+          - cell "30/3/2026 08:57 p. m." [ref=e207]
+          - cell "PARCELA NORTE" [ref=e208]
+          - cell "12,55 kg" [ref=e209]
+          - cell "Administrador" [ref=e210]
+          - cell "Campaña FIX 2026" [ref=e211]
+        - row "#1040 GOMEZ, MARIA 30/3/2026 08:55 p. m. PARCELA NORTE 50,00 kg Administrador Campaña FIX 2026" [ref=e212]:
+          - cell "#1040" [ref=e213]
+          - cell "GOMEZ, MARIA" [ref=e214]
+          - cell "30/3/2026 08:55 p. m." [ref=e215]
+          - cell "PARCELA NORTE" [ref=e216]
+          - cell "50,00 kg" [ref=e217]
+          - cell "Administrador" [ref=e218]
+          - cell "Campaña FIX 2026" [ref=e219]
+        - row "#1039 GOMEZ, MARIA 30/3/2026 08:52 p. m. PARCELA NORTE 73,00 kg Administrador Campaña FIX 2026" [ref=e220]:
+          - cell "#1039" [ref=e221]
+          - cell "GOMEZ, MARIA" [ref=e222]
+          - cell "30/3/2026 08:52 p. m." [ref=e223]
+          - cell "PARCELA NORTE" [ref=e224]
+          - cell "73,00 kg" [ref=e225]
+          - cell "Administrador" [ref=e226]
+          - cell "Campaña FIX 2026" [ref=e227]
+        - row "#1038 GOMEZ, MARIA 30/3/2026 08:44 p. m. PARCELA NORTE 87,00 kg Administrador Campaña FIX 2026" [ref=e228]:
+          - cell "#1038" [ref=e229]
+          - cell "GOMEZ, MARIA" [ref=e230]
+          - cell "30/3/2026 08:44 p. m." [ref=e231]
+          - cell "PARCELA NORTE" [ref=e232]
+          - cell "87,00 kg" [ref=e233]
+          - cell "Administrador" [ref=e234]
+          - cell "Campaña FIX 2026" [ref=e235]
+        - row "#1037 GONZALES, MARCELO 30/3/2026 08:38 p. m. PARCELA NORTE 100,00 kg Administrador Campaña FIX 2026" [ref=e236]:
+          - cell "#1037" [ref=e237]
+          - cell "GONZALES, MARCELO" [ref=e238]
+          - cell "30/3/2026 08:38 p. m." [ref=e239]
+          - cell "PARCELA NORTE" [ref=e240]
+          - cell "100,00 kg" [ref=e241]
+          - cell "Administrador" [ref=e242]
+          - cell "Campaña FIX 2026" [ref=e243]
+        - row "#1036 GOMEZ, MARIA 30/3/2026 08:32 p. m. PARCELA NORTE 100,00 kg — Campaña FIX 2026" [ref=e244]:
+          - cell "#1036" [ref=e245]
+          - cell "GOMEZ, MARIA" [ref=e246]
+          - cell "30/3/2026 08:32 p. m." [ref=e247]
+          - cell "PARCELA NORTE" [ref=e248]
+          - cell "100,00 kg" [ref=e249]
+          - cell "—" [ref=e250]
+          - cell "Campaña FIX 2026" [ref=e251]
+        - row "#1035 GOMEZ, MARIA 30/3/2026 08:32 p. m. PARCELA NORTE 146,00 kg — Campaña FIX 2026" [ref=e252]:
+          - cell "#1035" [ref=e253]
+          - cell "GOMEZ, MARIA" [ref=e254]
+          - cell "30/3/2026 08:32 p. m." [ref=e255]
+          - cell "PARCELA NORTE" [ref=e256]
+          - cell "146,00 kg" [ref=e257]
+          - cell "—" [ref=e258]
+          - cell "Campaña FIX 2026" [ref=e259]

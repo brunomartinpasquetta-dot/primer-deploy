@@ -1,0 +1,141 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - generic [ref=e6]:
+        - generic [ref=e7]: COSECHA
+        - generic [ref=e8]: SISTEMA DE CULTIVOS
+    - navigation [ref=e9]:
+      - link "Dashboard" [ref=e10] [cursor=pointer]:
+        - /url: index.html
+        - img [ref=e12]
+        - text: Dashboard
+      - generic [ref=e17]: Campo
+      - link "Cosecha" [ref=e18] [cursor=pointer]:
+        - /url: juntada.html
+        - img [ref=e20]
+        - text: Cosecha
+      - link "Despalillado" [ref=e29] [cursor=pointer]:
+        - /url: despalillado.html
+        - img [ref=e31]
+        - text: Despalillado
+      - link "Clasificacion" [ref=e37] [cursor=pointer]:
+        - /url: clasificacion-embalaje.html
+        - img [ref=e39]
+        - text: Clasificacion
+      - link "Aplicaciones" [ref=e43] [cursor=pointer]:
+        - /url: aplicaciones.html
+        - img [ref=e45]
+        - text: Aplicaciones
+      - generic [ref=e48]: Sistema
+      - link "Stock" [ref=e49] [cursor=pointer]:
+        - /url: menu-stock.html
+        - img [ref=e51]
+        - text: Stock
+      - link "Comercial" [ref=e55] [cursor=pointer]:
+        - /url: menu-comercial.html
+        - img [ref=e57]
+        - text: Comercial
+      - link "Administracion" [ref=e62] [cursor=pointer]:
+        - /url: menu-admin.html
+        - img [ref=e64]
+        - text: Administracion
+      - link "Mercado" [ref=e66] [cursor=pointer]:
+        - /url: mercado.html
+        - img [ref=e68]
+        - text: Mercado
+      - link "Configuracion" [ref=e71] [cursor=pointer]:
+        - /url: menu-config.html
+        - img [ref=e73]
+        - text: Configuracion
+    - generic [ref=e76]:
+      - generic [ref=e77]: Administrador · administrador
+      - button "Cerrar sesión" [ref=e78] [cursor=pointer]
+  - generic [ref=e79]:
+    - banner [ref=e80]:
+      - generic [ref=e81]:
+        - img [ref=e82]
+        - generic [ref=e83]:
+          - generic [ref=e84]: COSECHA
+          - generic [ref=e85]: SISTEMA DE CULTIVOS
+        - generic [ref=e86]: Cargando...
+      - generic [ref=e87]:
+        - generic [ref=e88] [cursor=pointer]:
+          - img [ref=e89]
+          - text: Administrador
+        - generic [ref=e92]: viernes, 3 de abril
+    - generic [ref=e93]:
+      - link "← Volver" [ref=e94] [cursor=pointer]:
+        - /url: "#"
+      - generic [ref=e95]:
+        - generic [ref=e96]: Despalillado
+        - generic [ref=e97]: Proceso de despalillado por lotes de cosecha
+      - generic [ref=e98]:
+        - generic [ref=e99]:
+          - generic [ref=e100]: Despalillado hoy
+          - generic [ref=e101]: — kg
+        - generic [ref=e102]:
+          - generic [ref=e103]: Lotes pendientes
+          - generic [ref=e104]: —
+        - generic [ref=e105]:
+          - generic [ref=e106]: Campana actual
+          - generic [ref=e107]: — kg
+      - generic [ref=e108]:
+        - generic [ref=e109]:
+          - generic [ref=e110]:
+            - img [ref=e111]
+            - heading "Lotes pendientes" [level=3] [ref=e112]
+          - generic [ref=e114]: Cargando lotes...
+        - generic [ref=e116]:
+          - img [ref=e117]
+          - paragraph [ref=e123]: Selecciona un lote del panel izquierdo para comenzar el despalillado
+      - generic [ref=e124]:
+        - generic [ref=e125]:
+          - heading "Registros de hoy" [level=3] [ref=e126]
+          - generic [ref=e127]:
+            - button "Historial" [ref=e128] [cursor=pointer]:
+              - img [ref=e129]
+              - text: Historial
+            - button "Totales x Despalillador" [ref=e130] [cursor=pointer]:
+              - img [ref=e131]
+              - text: Totales x Despalillador
+        - generic [ref=e132]:
+          - combobox "Filtrar por..." [ref=e133]
+          - button "✕ Limpiar" [ref=e134] [cursor=pointer]
+        - table [ref=e136]:
+          - rowgroup [ref=e137]:
+            - row "Despalillador Lote Fecha Kg Deposito Usuario Acciones" [ref=e138]:
+              - columnheader "Despalillador" [ref=e139]
+              - columnheader "Lote" [ref=e140]
+              - columnheader "Fecha" [ref=e141]
+              - columnheader "Kg" [ref=e142]
+              - columnheader "Deposito" [ref=e143]
+              - columnheader "Usuario" [ref=e144]
+              - columnheader "Acciones" [ref=e145]
+          - rowgroup [ref=e146]:
+            - row "Cargando..." [ref=e147]:
+              - cell "Cargando..." [ref=e148]
+        - generic [ref=e149]:
+          - text: "Total hoy:"
+          - generic [ref=e150]: —
+      - generic [ref=e151]:
+        - button "Historial" [ref=e152] [cursor=pointer]
+        - button "Totales x Despalillador" [ref=e153] [cursor=pointer]
+      - generic [ref=e155]:
+        - generic [ref=e156]:
+          - heading "Historial completo de despalillado" [level=3] [ref=e157]
+          - generic [ref=e158]:
+            - textbox [ref=e159]
+            - textbox [ref=e160]
+        - table [ref=e162]:
+          - rowgroup [ref=e163]:
+            - row "# Despalillador Lote Fecha/Hora Deposito Kg Usuario Acciones" [ref=e164]:
+              - columnheader "#" [ref=e165]
+              - columnheader "Despalillador" [ref=e166]
+              - columnheader "Lote" [ref=e167]
+              - columnheader "Fecha/Hora" [ref=e168]
+              - columnheader "Deposito" [ref=e169]
+              - columnheader "Kg" [ref=e170]
+              - columnheader "Usuario" [ref=e171]
+              - columnheader "Acciones" [ref=e172]
+          - rowgroup

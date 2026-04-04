@@ -1,0 +1,237 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - generic [ref=e6]:
+        - generic [ref=e7]: COSECHA
+        - generic [ref=e8]: SISTEMA DE CULTIVOS
+    - navigation [ref=e9]:
+      - link "Dashboard" [ref=e10] [cursor=pointer]:
+        - /url: index.html
+        - img [ref=e258]
+        - text: Dashboard
+      - generic [ref=e17]: Campo
+      - link "Cosecha" [ref=e18] [cursor=pointer]:
+        - /url: juntada.html
+        - img [ref=e263]
+        - text: Cosecha
+      - link "Despalillado" [ref=e29] [cursor=pointer]:
+        - /url: despalillado.html
+        - img [ref=e272]
+        - text: Despalillado
+      - link "Aplicaciones" [ref=e37] [cursor=pointer]:
+        - /url: aplicaciones.html
+        - img [ref=e278]
+        - text: Aplicaciones
+      - generic [ref=e42]: Sistema
+      - link "Stock" [ref=e43] [cursor=pointer]:
+        - /url: menu-stock.html
+        - img [ref=e281]
+        - text: Stock
+      - link "Comercial" [ref=e49] [cursor=pointer]:
+        - /url: menu-comercial.html
+        - img [ref=e285]
+        - text: Comercial
+      - link "Administración" [ref=e56] [cursor=pointer]:
+        - /url: menu-admin.html
+        - img [ref=e290]
+        - text: Administración
+      - link "Mercado" [ref=e60] [cursor=pointer]:
+        - /url: mercado.html
+        - img [ref=e292]
+        - text: Mercado
+      - link "Configuración" [ref=e65] [cursor=pointer]:
+        - /url: menu-config.html
+        - img [ref=e295]
+        - text: Configuración
+    - generic [ref=e70]:
+      - generic [ref=e71]: Administrador · administrador
+      - button "Cerrar sesión" [ref=e72] [cursor=pointer]
+  - generic [ref=e73]:
+    - banner [ref=e74]:
+      - generic [ref=e75]:
+        - img [ref=e76]
+        - generic [ref=e77]:
+          - generic [ref=e78]: COSECHA
+          - generic [ref=e79]: SISTEMA DE CULTIVOS
+        - generic [ref=e80]: 🌱 Campaña FIX 2026 · Día 3
+      - generic [ref=e81]:
+        - generic [ref=e82] [cursor=pointer]:
+          - img [ref=e83]
+          - text: Administrador
+        - generic [ref=e87]: miércoles, 1 de abril
+    - generic [ref=e88]:
+      - link "← Volver" [ref=e89] [cursor=pointer]:
+        - /url: "#"
+      - generic [ref=e90]:
+        - generic [ref=e91]:
+          - generic [ref=e92]: Ventas
+          - generic [ref=e93]: Registro de ventas de mercadería
+        - button "+ Nueva venta" [active] [ref=e94] [cursor=pointer]:
+          - img [ref=e298]
+          - text: + Nueva venta
+      - generic [ref=e99]:
+        - generic [ref=e100]:
+          - img [ref=e302]
+          - generic [ref=e107]: 300,00
+          - generic [ref=e108]: Kg Vendidos
+        - generic [ref=e109]:
+          - img [ref=e307]
+          - generic [ref=e114]: $1.470.000,00
+          - generic [ref=e115]: Total Ingresos
+        - generic [ref=e116]:
+          - img [ref=e310]
+          - generic [ref=e121]: $4.900,00
+          - generic [ref=e122]: Precio Promedio / Kg
+      - generic [ref=e314]:
+        - generic [ref=e315]: Datos de la venta
+        - generic [ref=e316]:
+          - generic [ref=e317]:
+            - generic [ref=e318]: Temporada *
+            - combobox [ref=e319] [cursor=pointer]:
+              - option "Sin temporada"
+              - option "Campaña FIX 2026" [selected]
+          - generic [ref=e320]:
+            - generic [ref=e321]: Fecha
+            - textbox [ref=e322]: 2026-04-02
+          - generic [ref=e323]:
+            - generic [ref=e324]: Cliente *
+            - combobox [ref=e325] [cursor=pointer]:
+              - option "Seleccionar cliente..." [selected]
+              - option "ARTESANA"
+              - option "FRUTILLAS DEL LITORAL"
+          - generic [ref=e326]:
+            - generic [ref=e327]: Destino / Dirección
+            - 'textbox "Ej: Mercado Central" [ref=e328]'
+          - generic [ref=e329]:
+            - generic [ref=e330]: Forma de pago *
+            - combobox [ref=e331] [cursor=pointer]:
+              - option "Seleccionar..." [selected]
+              - option "Cheque propio"
+              - option "Cheque tercero"
+              - option "Cuenta Corriente"
+              - option "Efectivo"
+              - option "Tarjeta credito"
+              - option "Tarjeta debito"
+              - option "Transferencia"
+          - generic [ref=e332]:
+            - generic [ref=e333]: N° Remito
+            - textbox "R-0001" [ref=e334]: R-0002
+          - generic [ref=e335]:
+            - generic [ref=e336]: Observación
+            - textbox "Opcional" [ref=e337]
+        - generic [ref=e338]: Mercadería a vender
+        - generic [ref=e340]:
+          - generic [ref=e341]:
+            - generic [ref=e342]: Depósito *
+            - combobox [ref=e343] [cursor=pointer]:
+              - option "Seleccionar..." [selected]
+              - option "CAMARA DE FRIO 1"
+              - option "CAMARA DE FRIO 2"
+              - option "GALPON FRESCO"
+              - option "INSUMOS-STOCK"
+          - generic [ref=e344]:
+            - generic [ref=e345]: Variedad
+            - combobox [ref=e346] [cursor=pointer]:
+              - option "— Seleccioná depósito —" [selected]
+          - generic [ref=e347]:
+            - generic [ref=e348]: Kilos *
+            - spinbutton [ref=e349]
+          - generic [ref=e350]:
+            - generic [ref=e351]: Precio/Kg
+            - spinbutton [ref=e352]
+          - button "×" [ref=e354] [cursor=pointer]
+        - button "Agregar otra mercadería" [ref=e355] [cursor=pointer]:
+          - img [ref=e356]
+          - text: Agregar otra mercadería
+        - generic [ref=e357]:
+          - generic [ref=e358]:
+            - img [ref=e359]
+            - text: Embalaje utilizado
+          - generic [ref=e363]: Aplica a toda la venta. Se descuenta del stock de insumos.
+          - button "Agregar embalaje" [ref=e364] [cursor=pointer]:
+            - img [ref=e365]
+            - text: Agregar embalaje
+        - button "Registrar venta" [ref=e366] [cursor=pointer]
+      - generic [ref=e123]:
+        - combobox "Temporada" [ref=e124] [cursor=pointer]:
+          - option "Todas"
+          - option "Campaña FIX 2026" [selected]
+        - 'searchbox "Filtrar por: Cliente · Variedad · Destino · Estado · Usuario" [ref=e125]'
+        - textbox "Desde" [ref=e127]
+        - textbox "Hasta" [ref=e128]
+        - button "✕ Limpiar" [ref=e129] [cursor=pointer]
+      - table [ref=e131]:
+        - rowgroup [ref=e132]:
+          - row "# Fecha Depósito Variedad Parcela Cliente Kg Precio/Kg Total Estado Embalaje CC Usuario" [ref=e133]:
+            - columnheader "#" [ref=e134]
+            - columnheader "Fecha" [ref=e135]
+            - columnheader "Depósito" [ref=e136]
+            - columnheader "Variedad" [ref=e137]
+            - columnheader "Parcela" [ref=e138]
+            - columnheader "Cliente" [ref=e139]
+            - columnheader "Kg" [ref=e140]
+            - columnheader "Precio/Kg" [ref=e141]
+            - columnheader "Total" [ref=e142]
+            - columnheader "Estado" [ref=e143]
+            - columnheader "Embalaje" [ref=e144]
+            - columnheader "CC" [ref=e145]
+            - columnheader "Usuario" [ref=e146]
+        - rowgroup [ref=e147]:
+          - row "#2060 R-0001 1/4/2026 09:00 p. m. Campaña FIX 2026 CAMARA DE FRIO 1 CAMAROSA - ARTESANA 200,00 kg $5.000,00 $1.000.000,00 ⏳ CC Pendiente Cuenta Corriente Embalaje Ver CC cliente Administrador" [ref=e205]:
+            - cell "#2060 R-0001" [ref=e206]:
+              - text: "#2060"
+              - text: R-0001
+            - cell "1/4/2026 09:00 p. m. Campaña FIX 2026" [ref=e207]:
+              - text: 1/4/2026 09:00 p. m.
+              - text: Campaña FIX 2026
+            - cell "CAMARA DE FRIO 1" [ref=e208]
+            - cell "CAMAROSA" [ref=e209]
+            - cell "-" [ref=e210]
+            - cell "ARTESANA" [ref=e211]
+            - cell "200,00 kg" [ref=e212]
+            - cell "$5.000,00" [ref=e213]
+            - cell "$1.000.000,00" [ref=e214]
+            - cell "⏳ CC Pendiente Cuenta Corriente" [ref=e215]:
+              - generic [ref=e216]: ⏳ CC Pendiente
+              - text: Cuenta Corriente
+            - cell "Embalaje" [ref=e217]:
+              - button "Embalaje" [ref=e218] [cursor=pointer]:
+                - img [ref=e367]
+                - text: Embalaje
+            - cell "Ver CC cliente" [ref=e223]:
+              - button "Ver CC cliente" [ref=e224] [cursor=pointer]:
+                - img [ref=e371]
+            - cell "Administrador" [ref=e227]
+          - row "#2061 R-0001 1/4/2026 09:00 p. m. Campaña FIX 2026 GALPON FRESCO CAMAROSA - ARTESANA 100,00 kg $4.700,00 $470.000,00 ⏳ CC Pendiente Cuenta Corriente Embalaje Ver CC cliente Administrador" [ref=e228]:
+            - cell "#2061 R-0001" [ref=e229]:
+              - text: "#2061"
+              - text: R-0001
+            - cell "1/4/2026 09:00 p. m. Campaña FIX 2026" [ref=e230]:
+              - text: 1/4/2026 09:00 p. m.
+              - text: Campaña FIX 2026
+            - cell "GALPON FRESCO" [ref=e231]
+            - cell "CAMAROSA" [ref=e232]
+            - cell "-" [ref=e233]
+            - cell "ARTESANA" [ref=e234]
+            - cell "100,00 kg" [ref=e235]
+            - cell "$4.700,00" [ref=e236]
+            - cell "$470.000,00" [ref=e237]
+            - cell "⏳ CC Pendiente Cuenta Corriente" [ref=e238]:
+              - generic [ref=e239]: ⏳ CC Pendiente
+              - text: Cuenta Corriente
+            - cell "Embalaje" [ref=e240]:
+              - button "Embalaje" [ref=e241] [cursor=pointer]:
+                - img [ref=e373]
+                - text: Embalaje
+            - cell "Ver CC cliente" [ref=e246]:
+              - button "Ver CC cliente" [ref=e247] [cursor=pointer]:
+                - img [ref=e377]
+            - cell "Administrador" [ref=e250]
+        - rowgroup [ref=e251]:
+          - row "TOTALES 300,00 kg $1.470.000,00" [ref=e252]:
+            - cell "TOTALES" [ref=e253]
+            - cell "300,00 kg" [ref=e254]
+            - cell [ref=e255]
+            - cell "$1.470.000,00" [ref=e256]
+            - cell [ref=e257]

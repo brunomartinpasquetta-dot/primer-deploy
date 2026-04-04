@@ -1,0 +1,428 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - generic [ref=e6]:
+        - generic [ref=e7]: COSECHA
+        - generic [ref=e8]: SISTEMA DE CULTIVOS
+    - navigation [ref=e9]:
+      - link "Dashboard" [ref=e10] [cursor=pointer]:
+        - /url: index.html
+        - img [ref=e12]
+        - text: Dashboard
+      - generic [ref=e17]: Campo
+      - link "Cosecha" [ref=e18] [cursor=pointer]:
+        - /url: juntada.html
+        - img [ref=e20]
+        - text: Cosecha
+      - link "Despalillado" [ref=e29] [cursor=pointer]:
+        - /url: despalillado.html
+        - img [ref=e31]
+        - text: Despalillado
+      - link "Aplicaciones" [ref=e37] [cursor=pointer]:
+        - /url: aplicaciones.html
+        - img [ref=e39]
+        - text: Aplicaciones
+      - generic [ref=e42]: Sistema
+      - link "Stock" [ref=e43] [cursor=pointer]:
+        - /url: menu-stock.html
+        - img [ref=e45]
+        - text: Stock
+      - link "Comercial" [ref=e49] [cursor=pointer]:
+        - /url: menu-comercial.html
+        - img [ref=e51]
+        - text: Comercial
+      - link "Administración" [ref=e56] [cursor=pointer]:
+        - /url: menu-admin.html
+        - img [ref=e58]
+        - text: Administración
+      - link "Mercado" [ref=e60] [cursor=pointer]:
+        - /url: mercado.html
+        - img [ref=e62]
+        - text: Mercado
+      - link "Configuración" [ref=e65] [cursor=pointer]:
+        - /url: menu-config.html
+        - img [ref=e67]
+        - text: Configuración
+    - generic [ref=e70]:
+      - generic [ref=e71]: Administrador · administrador
+      - button "Cerrar sesión" [ref=e72] [cursor=pointer]
+  - generic [ref=e73]:
+    - banner [ref=e74]:
+      - generic [ref=e75]:
+        - img [ref=e76]
+        - generic [ref=e77]:
+          - generic [ref=e78]: COSECHA
+          - generic [ref=e79]: SISTEMA DE CULTIVOS
+        - generic [ref=e80]: 🌱 Campaña FIX 2026 · Día 3
+      - generic [ref=e81]:
+        - generic [ref=e82] [cursor=pointer]:
+          - img [ref=e83]
+          - text: Administrador
+        - generic [ref=e86]: jueves, 2 de abril
+    - generic [ref=e87]:
+      - link "← Volver" [ref=e88] [cursor=pointer]:
+        - /url: "#"
+      - generic [ref=e89]:
+        - generic [ref=e90]:
+          - generic [ref=e91]: Stock Insumos
+          - generic [ref=e92]: Inventario de insumos agrícolas
+        - generic [ref=e93]:
+          - link "Nueva compra" [ref=e94] [cursor=pointer]:
+            - /url: compras.html?nuevo=1
+            - img [ref=e95]
+            - text: Nueva compra
+          - button "Registrar Ingreso" [ref=e99] [cursor=pointer]:
+            - img [ref=e100]
+            - text: Registrar Ingreso
+          - button "Registrar Egreso" [ref=e104] [cursor=pointer]:
+            - img [ref=e105]
+            - text: Registrar Egreso
+          - link "Registrar Aplicación" [ref=e106] [cursor=pointer]:
+            - /url: aplicaciones.html
+            - img [ref=e107]
+            - text: Registrar Aplicación
+          - button "Historial de Movimientos" [ref=e110] [cursor=pointer]:
+            - img [ref=e111]
+            - text: Historial de Movimientos
+      - generic [ref=e114]:
+        - generic [ref=e115]:
+          - img [ref=e117]
+          - generic [ref=e121]: "7"
+          - generic [ref=e122]: Insumos Totales
+        - generic [ref=e123]:
+          - img [ref=e125]
+          - generic [ref=e128]: "3"
+          - generic [ref=e129]: Alertas de Stock Bajo
+        - generic [ref=e130]:
+          - img [ref=e132]
+          - generic [ref=e135]: $183.958.800
+          - generic [ref=e136]: Valor de Inventario
+      - generic [ref=e137]:
+        - generic [ref=e138]: Estado de almacenes
+        - generic [ref=e140]:
+          - generic [ref=e141]: INSUMOS-STOCK
+          - generic [ref=e145]: 12.335 / 500 (100%)
+      - generic [ref=e147]:
+        - generic [ref=e148]:
+          - combobox "Filtrar por..." [ref=e149]
+          - button "Exportar CSV" [ref=e151] [cursor=pointer]:
+            - img [ref=e152]
+          - button "Imprimir" [ref=e155] [cursor=pointer]:
+            - img [ref=e156]
+          - button "✕ Limpiar" [ref=e160] [cursor=pointer]
+        - table [ref=e163]:
+          - rowgroup [ref=e164]:
+            - row "PRODUCTO CATEGORÍA PRESENTACIÓN STOCK ACTUAL PROVEEDOR DEPÓSITO ACCIONES" [ref=e165]:
+              - columnheader "PRODUCTO" [ref=e166]
+              - columnheader "CATEGORÍA" [ref=e167]
+              - columnheader "PRESENTACIÓN" [ref=e168]
+              - columnheader "STOCK ACTUAL" [ref=e169]
+              - columnheader "PROVEEDOR" [ref=e170]
+              - columnheader "DEPÓSITO" [ref=e171]
+              - columnheader "ACCIONES" [ref=e172]
+          - rowgroup [ref=e173]:
+            - row "CAJAS CARTON X 5KG Cajas cartón Unidad 100 u ⚠️ CAICOR SRL INSUMOS-STOCK" [ref=e174]:
+              - cell "CAJAS CARTON X 5KG" [ref=e175]:
+                - strong [ref=e176]: CAJAS CARTON X 5KG
+              - cell "Cajas cartón" [ref=e177]
+              - cell "Unidad" [ref=e178]
+              - cell "100 u ⚠️" [ref=e179]
+              - cell "CAICOR SRL" [ref=e180]
+              - cell "INSUMOS-STOCK" [ref=e181]
+              - cell [ref=e182]:
+                - button "Ver detalles del producto" [ref=e183] [cursor=pointer]:
+                  - img [ref=e184]
+                - button "Editar producto" [ref=e187] [cursor=pointer]:
+                  - img [ref=e188]
+                - button "Activar/Desactivar desde Inventario" [disabled] [ref=e191]:
+                  - img [ref=e192]
+            - row "CAJONES PLASTICO 15KG Cajones Unidad 50 u CAICOR SRL INSUMOS-STOCK" [ref=e194]:
+              - cell "CAJONES PLASTICO 15KG" [ref=e195]:
+                - strong [ref=e196]: CAJONES PLASTICO 15KG
+              - cell "Cajones" [ref=e197]
+              - cell "Unidad" [ref=e198]
+              - cell "50 u" [ref=e199]
+              - cell "CAICOR SRL" [ref=e200]
+              - cell "INSUMOS-STOCK" [ref=e201]
+              - cell [ref=e202]:
+                - button "Ver detalles del producto" [ref=e203] [cursor=pointer]:
+                  - img [ref=e204]
+                - button "Editar producto" [ref=e207] [cursor=pointer]:
+                  - img [ref=e208]
+                - button "Activar/Desactivar desde Inventario" [disabled] [ref=e211]:
+                  - img [ref=e212]
+            - row "FERTILIZANTE X28 Fert. Fosforados Bidón 100 lt AGROQUIMICA SRL INSUMOS-STOCK" [ref=e214]:
+              - cell "FERTILIZANTE X28" [ref=e215]:
+                - strong [ref=e216]: FERTILIZANTE X28
+              - cell "Fert. Fosforados" [ref=e217]
+              - cell "Bidón" [ref=e218]
+              - cell "100 lt" [ref=e219]
+              - cell "AGROQUIMICA SRL" [ref=e220]
+              - cell "INSUMOS-STOCK" [ref=e221]
+              - cell [ref=e222]:
+                - button "Ver detalles del producto" [ref=e223] [cursor=pointer]:
+                  - img [ref=e224]
+                - button "Editar producto" [ref=e227] [cursor=pointer]:
+                  - img [ref=e228]
+                - button "Activar/Desactivar desde Inventario" [disabled] [ref=e231]:
+                  - img [ref=e232]
+            - row "FUNGICIDA C-300 WTD Fungicidas Bidón 44 lt AGROQUIMICA SRL INSUMOS-STOCK" [ref=e234]:
+              - cell "FUNGICIDA C-300 WTD" [ref=e235]:
+                - strong [ref=e236]: FUNGICIDA C-300 WTD
+              - cell "Fungicidas" [ref=e237]
+              - cell "Bidón" [ref=e238]
+              - cell "44 lt" [ref=e239]
+              - cell "AGROQUIMICA SRL" [ref=e240]
+              - cell "INSUMOS-STOCK" [ref=e241]
+              - cell [ref=e242]:
+                - button "Ver detalles del producto" [ref=e243] [cursor=pointer]:
+                  - img [ref=e244]
+                - button "Editar producto" [ref=e247] [cursor=pointer]:
+                  - img [ref=e248]
+                - button "Activar/Desactivar desde Inventario" [disabled] [ref=e251]:
+                  - img [ref=e252]
+            - row "NUTRIENTES MEGA NUTRICION nutriente — 1 lt ⚠️ AGROQUIMICA SRL INSUMOS-STOCK" [ref=e254]:
+              - cell "NUTRIENTES MEGA NUTRICION" [ref=e255]:
+                - strong [ref=e256]: NUTRIENTES MEGA NUTRICION
+              - cell "nutriente" [ref=e257]
+              - cell "—" [ref=e258]
+              - cell "1 lt ⚠️" [ref=e259]
+              - cell "AGROQUIMICA SRL" [ref=e260]
+              - cell "INSUMOS-STOCK" [ref=e261]
+              - cell [ref=e262]:
+                - button "Ver detalles del producto" [ref=e263] [cursor=pointer]:
+                  - img [ref=e264]
+                - button "Editar producto" [ref=e267] [cursor=pointer]:
+                  - img [ref=e268]
+                - button "Activar/Desactivar desde Inventario" [disabled] [ref=e271]:
+                  - img [ref=e272]
+            - row "PAPEL FILM Otros Rollo 40 m QUIMICOS FRUTA S.A INSUMOS-STOCK" [ref=e274]:
+              - cell "PAPEL FILM" [ref=e275]:
+                - strong [ref=e276]: PAPEL FILM
+              - cell "Otros" [ref=e277]
+              - cell "Rollo" [ref=e278]
+              - cell "40 m" [ref=e279]
+              - cell "QUIMICOS FRUTA S.A" [ref=e280]
+              - cell "INSUMOS-STOCK" [ref=e281]
+              - cell [ref=e282]:
+                - button "Ver detalles del producto" [ref=e283] [cursor=pointer]:
+                  - img [ref=e284]
+                - button "Editar producto" [ref=e287] [cursor=pointer]:
+                  - img [ref=e288]
+                - button "Activar/Desactivar desde Inventario" [disabled] [ref=e291]:
+                  - img [ref=e292]
+            - row "PLANTINES 2026 Plantines Unidad 10 u ⚠️ PLANTINES SRL —" [ref=e294]:
+              - cell "PLANTINES 2026" [ref=e295]:
+                - strong [ref=e296]: PLANTINES 2026
+              - cell "Plantines" [ref=e297]
+              - cell "Unidad" [ref=e298]
+              - cell "10 u ⚠️" [ref=e299]
+              - cell "PLANTINES SRL" [ref=e300]
+              - cell "—" [ref=e301]
+              - cell [ref=e302]:
+                - button "Ver detalles del producto" [ref=e303] [cursor=pointer]:
+                  - img [ref=e304]
+                - button "Editar producto" [ref=e307] [cursor=pointer]:
+                  - img [ref=e308]
+                - button "Activar/Desactivar desde Inventario" [disabled] [ref=e311]:
+                  - img [ref=e312]
+            - row "PLANTINES 2026 Plantines Unidad 12.000 u ⚠️ PLANTINES SRL INSUMOS-STOCK" [ref=e314]:
+              - cell "PLANTINES 2026" [ref=e315]:
+                - strong [ref=e316]: PLANTINES 2026
+              - cell "Plantines" [ref=e317]
+              - cell "Unidad" [ref=e318]
+              - cell "12.000 u ⚠️" [ref=e319]
+              - cell "PLANTINES SRL" [ref=e320]
+              - cell "INSUMOS-STOCK" [ref=e321]
+              - cell [ref=e322]:
+                - button "Ver detalles del producto" [ref=e323] [cursor=pointer]:
+                  - img [ref=e324]
+                - button "Editar producto" [ref=e327] [cursor=pointer]:
+                  - img [ref=e328]
+                - button "Activar/Desactivar desde Inventario" [disabled] [ref=e331]:
+                  - img [ref=e332]
+      - generic [ref=e334]:
+        - generic [ref=e335]:
+          - generic [ref=e336]:
+            - img [ref=e337]
+            - text: Últimos movimientos
+          - generic [ref=e340]:
+            - textbox "Desde" [ref=e341]
+            - textbox "Hasta" [ref=e342]
+        - table [ref=e344]:
+          - rowgroup [ref=e345]:
+            - row "Remito Fecha Producto Movimiento Cantidad Proveedor Depósito Usuario Observación Acciones" [ref=e346]:
+              - columnheader "Remito" [ref=e347]
+              - columnheader "Fecha" [ref=e348]
+              - columnheader "Producto" [ref=e349]
+              - columnheader "Movimiento" [ref=e350]
+              - columnheader "Cantidad" [ref=e351]
+              - columnheader "Proveedor" [ref=e352]
+              - columnheader "Depósito" [ref=e353]
+              - columnheader "Usuario" [ref=e354]
+              - columnheader "Observación" [ref=e355]
+              - columnheader "Acciones" [ref=e356]
+          - rowgroup [ref=e357]:
+            - row "— 01/04/26 21:22 CAJONES PLASTICO 15KG Compra +50 u CAICOR SRL INSUMOS-STOCK Administrador" [ref=e358]:
+              - cell "—" [ref=e359]
+              - cell "01/04/26 21:22" [ref=e360]
+              - cell "CAJONES PLASTICO 15KG" [ref=e361]
+              - cell "Compra" [ref=e362]:
+                - generic [ref=e363]: Compra
+              - cell "+50 u" [ref=e364]
+              - cell "CAICOR SRL" [ref=e365]
+              - cell "INSUMOS-STOCK" [ref=e366]
+              - cell "Administrador" [ref=e367]
+              - cell [ref=e368]
+              - cell [ref=e369]:
+                - button "Ver detalles" [ref=e370] [cursor=pointer]:
+                  - img [ref=e371]
+                - button "Editar" [ref=e374] [cursor=pointer]:
+                  - img [ref=e375]
+                - button "Activar/Desactivar desde Inventario" [disabled] [ref=e378]:
+                  - img [ref=e379]
+            - row "— 31/03/26 02:05 CAJAS CARTON X 5KG Compra +100 u CAICOR SRL INSUMOS-STOCK Administrador" [ref=e381]:
+              - cell "—" [ref=e382]
+              - cell "31/03/26 02:05" [ref=e383]
+              - cell "CAJAS CARTON X 5KG" [ref=e384]
+              - cell "Compra" [ref=e385]:
+                - generic [ref=e386]: Compra
+              - cell "+100 u" [ref=e387]
+              - cell "CAICOR SRL" [ref=e388]
+              - cell "INSUMOS-STOCK" [ref=e389]
+              - cell "Administrador" [ref=e390]
+              - cell [ref=e391]
+              - cell [ref=e392]:
+                - button "Ver detalles" [ref=e393] [cursor=pointer]:
+                  - img [ref=e394]
+                - button "Editar" [ref=e397] [cursor=pointer]:
+                  - img [ref=e398]
+                - button "Activar/Desactivar desde Inventario" [disabled] [ref=e401]:
+                  - img [ref=e402]
+            - row "— 31/03/26 01:54 PLANTINES 2026 Compra +10 u PLANTINES SRL — Administrador" [ref=e404]:
+              - cell "—" [ref=e405]
+              - cell "31/03/26 01:54" [ref=e406]
+              - cell "PLANTINES 2026" [ref=e407]
+              - cell "Compra" [ref=e408]:
+                - generic [ref=e409]: Compra
+              - cell "+10 u" [ref=e410]
+              - cell "PLANTINES SRL" [ref=e411]
+              - cell "—" [ref=e412]
+              - cell "Administrador" [ref=e413]
+              - cell [ref=e414]
+              - cell [ref=e415]:
+                - button "Ver detalles" [ref=e416] [cursor=pointer]:
+                  - img [ref=e417]
+                - button "Editar" [ref=e420] [cursor=pointer]:
+                  - img [ref=e421]
+                - button "Activar/Desactivar desde Inventario" [disabled] [ref=e424]:
+                  - img [ref=e425]
+            - row "— 31/03/26 01:34 FERTILIZANTE X28 Compra +100 lt AGROQUIMICA SRL INSUMOS-STOCK Administrador" [ref=e427]:
+              - cell "—" [ref=e428]
+              - cell "31/03/26 01:34" [ref=e429]
+              - cell "FERTILIZANTE X28" [ref=e430]
+              - cell "Compra" [ref=e431]:
+                - generic [ref=e432]: Compra
+              - cell "+100 lt" [ref=e433]
+              - cell "AGROQUIMICA SRL" [ref=e434]
+              - cell "INSUMOS-STOCK" [ref=e435]
+              - cell "Administrador" [ref=e436]
+              - cell [ref=e437]
+              - cell [ref=e438]:
+                - button "Ver detalles" [ref=e439] [cursor=pointer]:
+                  - img [ref=e440]
+                - button "Editar" [ref=e443] [cursor=pointer]:
+                  - img [ref=e444]
+                - button "Activar/Desactivar desde Inventario" [disabled] [ref=e447]:
+                  - img [ref=e448]
+            - row "— 31/03/26 01:32 PLANTINES 2026 Compra +12.000 u PLANTINES SRL INSUMOS-STOCK Administrador" [ref=e450]:
+              - cell "—" [ref=e451]
+              - cell "31/03/26 01:32" [ref=e452]
+              - cell "PLANTINES 2026" [ref=e453]
+              - cell "Compra" [ref=e454]:
+                - generic [ref=e455]: Compra
+              - cell "+12.000 u" [ref=e456]
+              - cell "PLANTINES SRL" [ref=e457]
+              - cell "INSUMOS-STOCK" [ref=e458]
+              - cell "Administrador" [ref=e459]
+              - cell [ref=e460]
+              - cell [ref=e461]:
+                - button "Ver detalles" [ref=e462] [cursor=pointer]:
+                  - img [ref=e463]
+                - button "Editar" [ref=e466] [cursor=pointer]:
+                  - img [ref=e467]
+                - button "Activar/Desactivar desde Inventario" [disabled] [ref=e470]:
+                  - img [ref=e471]
+            - row "— 31/03/26 01:08 PAPEL FILM Compra +40 m QUIMICOS FRUTA S.A INSUMOS-STOCK Administrador" [ref=e473]:
+              - cell "—" [ref=e474]
+              - cell "31/03/26 01:08" [ref=e475]
+              - cell "PAPEL FILM" [ref=e476]
+              - cell "Compra" [ref=e477]:
+                - generic [ref=e478]: Compra
+              - cell "+40 m" [ref=e479]
+              - cell "QUIMICOS FRUTA S.A" [ref=e480]
+              - cell "INSUMOS-STOCK" [ref=e481]
+              - cell "Administrador" [ref=e482]
+              - cell [ref=e483]
+              - cell [ref=e484]:
+                - button "Ver detalles" [ref=e485] [cursor=pointer]:
+                  - img [ref=e486]
+                - button "Editar" [ref=e489] [cursor=pointer]:
+                  - img [ref=e490]
+                - button "Activar/Desactivar desde Inventario" [disabled] [ref=e493]:
+                  - img [ref=e494]
+            - row "— 31/03/26 00:34 FUNGICIDA C-300 WTD Compra +40 lt AGROQUIMICA SRL INSUMOS-STOCK Administrador" [ref=e496]:
+              - cell "—" [ref=e497]
+              - cell "31/03/26 00:34" [ref=e498]
+              - cell "FUNGICIDA C-300 WTD" [ref=e499]
+              - cell "Compra" [ref=e500]:
+                - generic [ref=e501]: Compra
+              - cell "+40 lt" [ref=e502]
+              - cell "AGROQUIMICA SRL" [ref=e503]
+              - cell "INSUMOS-STOCK" [ref=e504]
+              - cell "Administrador" [ref=e505]
+              - cell [ref=e506]
+              - cell [ref=e507]:
+                - button "Ver detalles" [ref=e508] [cursor=pointer]:
+                  - img [ref=e509]
+                - button "Editar" [ref=e512] [cursor=pointer]:
+                  - img [ref=e513]
+                - button "Activar/Desactivar desde Inventario" [disabled] [ref=e516]:
+                  - img [ref=e517]
+            - row "— 31/03/26 00:15 NUTRIENTES MEGA NUTRICION Compra +1 lt AGROQUIMICA SRL INSUMOS-STOCK Administrador" [ref=e519]:
+              - cell "—" [ref=e520]
+              - cell "31/03/26 00:15" [ref=e521]
+              - cell "NUTRIENTES MEGA NUTRICION" [ref=e522]
+              - cell "Compra" [ref=e523]:
+                - generic [ref=e524]: Compra
+              - cell "+1 lt" [ref=e525]
+              - cell "AGROQUIMICA SRL" [ref=e526]
+              - cell "INSUMOS-STOCK" [ref=e527]
+              - cell "Administrador" [ref=e528]
+              - cell [ref=e529]
+              - cell [ref=e530]:
+                - button "Ver detalles" [ref=e531] [cursor=pointer]:
+                  - img [ref=e532]
+                - button "Editar" [ref=e535] [cursor=pointer]:
+                  - img [ref=e536]
+                - button "Activar/Desactivar desde Inventario" [disabled] [ref=e539]:
+                  - img [ref=e540]
+            - row "— 31/03/26 00:10 FUNGICIDA C-300 WTD Compra +4 lt AGROQUIMICA SRL INSUMOS-STOCK Administrador" [ref=e542]:
+              - cell "—" [ref=e543]
+              - cell "31/03/26 00:10" [ref=e544]
+              - cell "FUNGICIDA C-300 WTD" [ref=e545]
+              - cell "Compra" [ref=e546]:
+                - generic [ref=e547]: Compra
+              - cell "+4 lt" [ref=e548]
+              - cell "AGROQUIMICA SRL" [ref=e549]
+              - cell "INSUMOS-STOCK" [ref=e550]
+              - cell "Administrador" [ref=e551]
+              - cell [ref=e552]
+              - cell [ref=e553]:
+                - button "Ver detalles" [ref=e554] [cursor=pointer]:
+                  - img [ref=e555]
+                - button "Editar" [ref=e558] [cursor=pointer]:
+                  - img [ref=e559]
+                - button "Activar/Desactivar desde Inventario" [disabled] [ref=e562]:
+                  - img [ref=e563]

@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1A2E0A">
+  <title>Clasificacion + Embalaje — Campo</title>
+  <link rel="icon" href="img/logo.png">
+  <script src="js/utils.js"></script>
+  <link rel="stylesheet" href="cosecha.css">
+  <style>
+    /* ── KPI cards ── */
+    .ce-kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:12px; }
+    .ce-kpi { background:white; border:1px solid var(--borde); border-top:3px solid var(--verde); border-radius:8px; padding:6px 8px; text-align:center; }
+    .ce-kpi-label { font-size:9px; font-weight:700; color:var(--texto-suave); text-transform:uppercase; letter-spacing:.06em; margin-bottom:2px; }
+    .ce-kpi-valor { font-size:16px; font-weight:700; color:var(--verde); font-family:'JetBrains Mono',monospace; letter-spacing:-.5px; }
+    @media (max-width:600px) { .ce-kpis { grid-template-columns:1fr 1fr; } }
+
+    /* ── Layout 2 columnas ── */
+    #layout-ce { display:grid; grid-template-columns:minmax(0,520px) 1fr; gap:16px; align-items:start; }
+    @media (max-width:900px) { #layout-ce { grid-template-columns:1fr !important; } }
+
+    /* ── Lote card ── */
+    .lote-card {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:10px 14px; border:1.5px solid var(--borde); border-radius:10px;
+      background:var(--superficie); margin-bottom:8px; gap:10px;
+      cursor:pointer; transition:.15s;
+    }
+    .lote-card:hover { border-color:var(--verde); background:var(--verde-suave); }
+    .lote-card.seleccionado { border-color:var(--verde); background:var(--verde-suave); border-width:2px; }
+    .lote-info { flex:1; }
+    .lote-codigo { font-weight:700; font-size:14px; color:var(--texto); font-family:'JetBrains Mono',monospace; }
+    .lote-meta { font-size:12px; color:var(--texto-secundario); margin-top:2px; }
+    .lote-kilos { font-size:15px; font-weight:700; color:var(--verde); white-space:nowrap; }
+
+    /* ── Barra progreso ── */
+    .progress-bar { height:6px; background:var(--borde); border-radius:3px; margin-top:6px; overflow:hidden; }
+    .progress-fill { height:100%; background:var(--verde); border-radius:3px; transition:width .3s; }
+
+    /* ── Section header ── */
+    .sec-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+    .sec-title { font-size:13px; font-weight:700; color:var(--texto-secundario); text-transform:uppercase; letter-spacing:.4px; }
+    .sec-badge { font-size:11px; font-weight:700; padding:2px 8px; border-radius:10px; background:var(--sem-verde-bg); color:var(--sem-verde); }
+    .sin-items { text-align:center; padding:20px; color:var(--texto-secundario); font-size:13px; }
+
+    /* ── Tabs ── */
+    .ce-tabs { display:flex; gap:0; border-bottom:2px solid var(--borde); margin-top:16px; margin-bottom:12px; }
+    .ce-tab { padding:8px 16px; font-size:12px; font-weight:700; color:var(--texto-suave); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; transition:.15s; }
+    .ce-tab:hover { color:var(--texto); }
+    .ce-tab.active { color:var(--verde); border-bottom-color:var(--verde); }
+    .ce-tab-content { display:none; }
+    .ce-tab-content.active { display:block; }
+
+    /* ── Clasificación cards (derecha) ── */
+    .clasif-card {
+      border:1.5px solid var(--borde); border-radius:10px; background:var(--superficie);
+      margin-bottom:8px; overflow:hidden;
+    }
+    .clasif-card-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:10px 14px; cursor:pointer; transition:.15s;
+    }
+    .clasif-card-header:hover { background:var(--verde-suave); }
+    .clasif-cat { font-weight:700; font-size:14px; color:var(--texto); }
+    .clasif-subcat { font-size:12px; color:var(--texto-secundario); margin-left:6px; }
+    .clasif-kg { font-size:15px; font-weight:700; color:var(--verde); font-family:'JetBrains Mono',monospace; }
+
+    /* ── Form inline ── */
+    .form-clasificar {
+      padding:12px 14px; border-top:1px solid var(--borde); background:var(--fondo);
+      display:none;
+    }
+    .form-clasificar.open { display:block; }
+    .form-row-inline { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px; }
+    @media (max-width:480px) { .form-row-inline { grid-template-columns:1fr; } }
+    .form-row-inline label { font-size:11px; font-weight:700; color:var(--texto-suave); margin-bottom:2px; display:block; }
+    .form-row-inline input, .form-row-inline select {
+      width:100%; padding:6px 8px; border:1px solid var(--borde); border-radius:6px;
+      font-size:13px; background:white;
+    }
+    .form-btns { display:flex; gap:6px; margin-top:6px; }
+    .form-btns .btn { padding:6px 14px; font-size:12px; font-weight:700; border-radius:6px; border:none; cursor:pointer; }
+    .btn-confirmar { background:var(--verde); color:white; }
+    .btn-confirmar:hover { background:#1f3d0f; }
+    .btn-cancelar { background:var(--fondo); color:var(--texto-secundario); border:1px solid var(--borde) !important; }
+
+    /* ── Select verde (agregar) ── */
+    .select-agregar {
+      width:100%; padding:8px 12px; border-radius:8px; border:1.5px solid var(--verde);
+      background:var(--verde); color:white; font-size:13px; font-weight:600;
+      cursor:pointer; appearance:none; -webkit-appearance:none;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat:no-repeat; background-position:right 10px center;
+      margin-bottom:12px;
+    }
+    .select-agregar option { background:white; color:var(--texto); }
+
+    /* ── Historial (mismo patrón despalillado) ── */
+    .ce-historial { background:var(--superficie); border:1px solid var(--borde); border-radius:12px; overflow:hidden; }
+    .ce-historial-body { overflow-y:auto; max-height:300px; }
+    .ce-historial-body table { width:100%; border-collapse:collapse; font-size:13px; }
+    .ce-historial-body th { text-align:left; padding:6px 8px; font-size:10px; font-weight:600; color:var(--texto-suave); background:var(--fondo); text-transform:uppercase; letter-spacing:.5px; position:sticky; top:0; white-space:nowrap; }
+    .ce-historial-body td { padding:5px 8px; border-bottom:1px solid var(--borde); color:var(--texto); font-size:12px; white-space:nowrap; }
+    .ce-historial-body tr:hover td { background:var(--fondo); }
+    .ce-historial-body .anulado td { opacity:.5; text-decoration:line-through; }
+    .mono { font-family:'JetBrains Mono',monospace; }
+
+    /* btn-icon, btn-icon-danger, badge-anulada → definidos en cosecha.css */
+
+    /* ── Barra acciones lote ── */
+    .barra-acciones {
+      display:flex; align-items:center; gap:8px; padding:10px 14px;
+      background:var(--fondo); border:1px solid var(--borde); border-radius:10px;
+      margin-top:12px;
+    }
+    .barra-acciones .btn { padding:6px 14px; font-size:12px; font-weight:700; border-radius:6px; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:4px; }
+
+    /* ── Modal etiqueta ── */
+    .modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.5); z-index:1000; align-items:center; justify-content:center; }
+    .modal-overlay.open { display:flex; }
+    .modal-box { background:white; border-radius:14px; padding:24px; max-width:480px; width:90%; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,.3); }
+    .modal-title { font-size:16px; font-weight:700; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+    .modal-close { margin-left:auto; cursor:pointer; color:var(--texto-suave); background:none; border:none; font-size:18px; }
+
+    /* ── Etiqueta preview ── */
+    .etiqueta-preview {
+      border:2px solid #333; border-radius:4px; padding:16px; font-family:'JetBrains Mono',monospace;
+      font-size:12px; line-height:1.6; background:white; margin-bottom:16px;
+    }
+    .etiqueta-preview .et-producto { font-size:16px; font-weight:900; margin-bottom:8px; }
+    .etiqueta-preview .et-campo { display:flex; justify-content:space-between; }
+    .etiqueta-preview .et-label { font-weight:700; }
+    .etiqueta-preview .et-lote { font-size:18px; font-weight:900; margin:8px 0; padding:4px 0; border-top:1px solid #333; border-bottom:1px solid #333; }
+    .etiqueta-preview .et-empresa { text-align:right; font-weight:700; margin-top:8px; font-size:11px; }
+    .etiqueta-preview .et-peso { font-size:20px; font-weight:900; text-align:right; }
+
+    @media print {
+      body * { visibility:hidden; }
+      .etiqueta-preview, .etiqueta-preview * { visibility:visible; }
+      .etiqueta-preview { position:absolute; top:0; left:0; border:2px solid #000; }
+    }
+  </style>
+  <script src="js/auth-check.js"></script>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="img/logo-icon.png" class="brand-icon"><div class="brand-info"><span class="brand-name">CO<em>SE</em>CHA</span><span class="brand-sub">SISTEMA DE CULTIVOS</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-item"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard</a>
+      <div class="nav-section">Campo</div>
+      <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
+      <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="clasificacion-embalaje.html" class="nav-item active"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
+      <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
+      <div class="nav-section">Sistema</div>
+      <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
+      <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
+      <a href="menu-admin.html" class="nav-item"><span class="nav-icon"><i data-lucide="landmark"></i></span> Administración</a>
+      <a href="mercado.html" class="nav-item"><span class="nav-icon"><i data-lucide="trending-up"></i></span> Mercado</a>
+      <a href="menu-config.html" class="nav-item"><span class="nav-icon"><i data-lucide="settings"></i></span> Configuración</a>
+    </nav>
+    <div class="sidebar-footer">Cosecha · Sistema de Cultivos</div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
+        <img src="img/logo-icon.png" class="brand-icon"><div class="brand-info"><span class="brand-name">CO<em>SE</em>CHA</span><span class="brand-sub">SISTEMA DE CULTIVOS</span></div><span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
+      </div>
+      <div class="topbar-right"><span class="topbar-date" id="topbar-date"></span></div>
+    </header>
+
+    <div class="content">
+      <a href="menu-campo.html" class="btn-volver">← Volver</a>
+      <div class="content-header">
+        <div class="content-title">Clasificación + Embalaje</div>
+        <div class="content-sub">Clasifica la fruta despalillada por categoría y preparala para despacho</div>
+      </div>
+
+      <!-- ── KPIs ── -->
+      <div class="ce-kpis">
+        <div class="ce-kpi"><div class="ce-kpi-label">Pend. clasificación</div><div class="ce-kpi-valor" id="kpi-pend">—</div></div>
+        <div class="ce-kpi"><div class="ce-kpi-label">Clasificados hoy</div><div class="ce-kpi-valor" id="kpi-clasif">— kg</div></div>
+        <div class="ce-kpi"><div class="ce-kpi-label">Embalados hoy</div><div class="ce-kpi-valor" id="kpi-emb">— kg</div></div>
+        <div class="ce-kpi"><div class="ce-kpi-label">Lotes generados</div><div class="ce-kpi-valor" id="kpi-lotes">—</div></div>
+      </div>
+
+      <div id="mensaje"></div>
+
+      <!-- ── Layout 2 columnas ── -->
+      <div id="layout-ce">
+
+        <!-- ═══ COL IZQUIERDA: Lotes pendientes ═══ -->
+        <div>
+          <div class="sec-header">
+            <span class="sec-title">Lotes en proceso</span>
+          </div>
+          <div id="lista-lotes"></div>
+        </div>
+
+        <!-- ═══ COL DERECHA: Clasificación del lote seleccionado ═══ -->
+        <div id="panel-derecho" style="display:none;">
+
+          <div class="sec-header">
+            <span class="sec-title">Clasificación del lote <span id="lote-sel-badge" class="sec-badge"></span></span>
+          </div>
+
+          <!-- Info lote -->
+          <div id="lote-info-bar" style="display:flex;align-items:center;gap:12px;padding:8px 14px;background:var(--verde-suave);border:1px solid var(--sem-verde-borde);border-radius:8px;margin-bottom:12px;font-size:13px;flex-wrap:wrap;">
+            <span><strong>Despalillado:</strong> <span id="info-kg-desp" class="mono">—</span> kg</span>
+            <span><strong>Clasificado:</strong> <span id="info-kg-clasif" class="mono">—</span> kg</span>
+            <span><strong>Disp. clasif:</strong> <span id="info-kg-disp" class="mono" style="color:var(--sem-azul);font-weight:700;">—</span> kg</span>
+            <span><strong>Embalado:</strong> <span id="info-kg-emb" class="mono">—</span> kg</span>
+          </div>
+
+          <!-- Empleados del lote — Jornadas -->
+          <div style="margin-bottom:12px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+              <span style="font-size:11px;font-weight:700;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.4px;">Jornada de hoy</span>
+              <span id="cant-empleados" class="sec-badge" style="font-size:10px;">0</span>
+            </div>
+            <div style="display:flex;gap:6px;margin-bottom:8px;">
+              <select class="select-agregar" id="sel-agregar-empleado" onchange="agregarClasificador()" style="margin-bottom:0;flex:1;">
+                <option value="">+ Agregar empleado...</option>
+              </select>
+            </div>
+            <div style="display:flex;gap:6px;margin-bottom:8px;">
+              <button class="btn btn-confirmar" id="btn-iniciar-jornada" onclick="iniciarJornada()" style="padding:5px 12px;font-size:11px;flex:1;">
+                Iniciar jornada
+              </button>
+              <button class="btn btn-cancelar" id="btn-finalizar-jornada" onclick="finalizarJornada()" style="padding:5px 12px;font-size:11px;flex:1;border:1px solid var(--borde);">
+                Finalizar jornada
+              </button>
+            </div>
+            <div id="lista-clasificadores"></div>
+            <details id="jornadas-anteriores" style="margin-top:8px;font-size:12px;display:none;">
+              <summary style="cursor:pointer;color:var(--texto-suave);font-weight:600;font-size:11px;">Jornadas anteriores</summary>
+              <div id="lista-jornadas-anteriores" style="margin-top:6px;"></div>
+            </details>
+          </div>
+
+          <!-- Form clasificar -->
+          <div class="form-clasificar open" id="form-clasificar">
+            <div class="form-row-inline">
+              <div>
+                <label for="sel-categoria">Categoría</label>
+                <select id="sel-categoria">
+                  <option value="">Seleccionar...</option>
+                </select>
+              </div>
+              <div>
+                <label for="inp-subcategoria">Sub-categoría <span style="font-weight:400;color:var(--texto-suave);">(opcional)</span></label>
+                <input type="text" id="inp-subcategoria" placeholder="Ej: Pintona, Madura..." list="dl-subcategorias">
+                <datalist id="dl-subcategorias"></datalist>
+              </div>
+            </div>
+            <div class="form-row-inline">
+              <div>
+                <label for="inp-kilos">Kilos</label>
+                <input type="number" inputmode="decimal" id="inp-kilos" placeholder="0.00" min="0" step="any">
+              </div>
+              <div>
+                <label for="sel-destino-clasif">Destino</label>
+                <select id="sel-destino-clasif">
+                  <option value="fresco">Fresco (depósito)</option>
+                  <option value="camara_fria">Cámara fría</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-btns">
+              <button class="btn btn-confirmar" id="btn-clasificar" onclick="clasificar()">Clasificar</button>
+            </div>
+          </div>
+
+          <!-- Resumen por categoría -->
+          <div id="resumen-categorias" style="margin-top:12px;"></div>
+
+          <!-- Tabs -->
+          <div class="ce-tabs">
+            <div class="ce-tab active" onclick="cambiarTab(this,'tab-historial')">Historial</div>
+            <div class="ce-tab" onclick="cambiarTab(this,'tab-embalaje')">Embalaje</div>
+          </div>
+
+          <!-- Tab: Historial clasificación -->
+          <div class="ce-tab-content active" id="tab-historial">
+            <div class="ce-historial">
+              <div class="ce-historial-body">
+                <table>
+                  <thead><tr><th>Categoría</th><th>Sub-cat</th><th style="text-align:right;">Kg</th><th>Hora</th><th style="text-align:center;">Acc.</th></tr></thead>
+                  <tbody id="tbody-historial"><tr><td colspan="5" class="sin-items">Sin registros</td></tr></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab: Embalaje -->
+          <div class="ce-tab-content" id="tab-embalaje">
+            <!-- Sub-lotes clasificados disponibles para embalar -->
+            <div class="sec-header" style="margin-top:0;">
+              <span class="sec-title" style="font-size:12px;">Sub-lotes disponibles</span>
+            </div>
+            <div id="lista-sublotes"></div>
+
+            <!-- Form embalar (aparece al seleccionar sub-lote) -->
+            <div class="form-clasificar" id="form-embalar">
+              <div id="emb-sel-info" style="padding:6px 0 10px;font-size:13px;font-weight:600;color:var(--verde);"></div>
+              <div class="form-row-inline">
+                <div>
+                  <label for="emb-kilos">Kilos</label>
+                  <input type="number" inputmode="decimal" id="emb-kilos" placeholder="0.00" min="0" step="any">
+                </div>
+                <div>
+                  <label for="emb-producto">Embalaje</label>
+                  <select id="emb-producto">
+                    <option value="">Seleccionar...</option>
+                  </select>
+                  <div id="emb-stock-info" style="font-size:10px;color:var(--texto-suave);margin-top:2px;"></div>
+                </div>
+              </div>
+              <div class="form-row-inline">
+                <div>
+                  <label for="emb-cantidad">Cant. envases</label>
+                  <input type="number" inputmode="numeric" id="emb-cantidad" placeholder="0" min="1" step="1">
+                </div>
+                <div>
+                  <label for="emb-deposito">Depósito destino</label>
+                  <select id="emb-deposito">
+                    <option value="">Seleccionar...</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-btns">
+                <button class="btn btn-confirmar" id="btn-embalar" onclick="embalar()">Embalar</button>
+                <button class="btn btn-cancelar" onclick="cerrarFormEmb()">Cancelar</button>
+              </div>
+            </div>
+
+            <!-- Embalados hoy -->
+            <div class="ce-historial" style="margin-top:12px;">
+              <div class="ce-historial-body" style="max-height:240px;">
+                <table>
+                  <thead><tr><th>Lote</th><th>Cat.</th><th style="text-align:right;">Kg</th><th>Embalaje</th><th>Depósito</th><th style="text-align:center;">Acc.</th></tr></thead>
+                  <tbody id="tbody-embalados"><tr><td colspan="6" class="sin-items">Sin registros</td></tr></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Barra: Finalizar clasificación -->
+          <div class="barra-acciones" id="barra-finalizar" style="display:none;">
+            <i data-lucide="check-circle" style="width:18px;height:18px;color:var(--verde);"></i>
+            <span style="font-size:13px;font-weight:600;">Clasificación completa</span>
+            <button class="btn btn-confirmar" style="margin-left:auto;" onclick="finalizarClasificacion()">Finalizar clasificación</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── BOTTOM NAV ── -->
+  <nav class="bottom-nav">
+    <a href="index.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="home"></i></span><span>Inicio</span></a>
+    <a href="juntada.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="wheat"></i></span><span>Cosecha</span></a>
+    <a href="despalillado.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="scissors"></i></span><span>Despalillado</span></a>
+    <a href="clasificacion-embalaje.html" class="bottom-nav-item active"><span class="bottom-nav-icon"><i data-lucide="layers"></i></span><span>Clasif.</span></a>
+    <a href="menu-campo.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="menu"></i></span><span>Menu</span></a>
+  </nav>
+
+</div>
+
+<!-- ── Modal Etiqueta ── -->
+<div class="modal-overlay" id="modal-etiqueta">
+  <div class="modal-box">
+    <div class="modal-title">
+      <i data-lucide="tag" style="width:20px;height:20px;"></i> Etiqueta del lote
+      <button class="modal-close" onclick="cerrarModalEtiqueta()">&times;</button>
+    </div>
+    <div id="etiqueta-contenido"></div>
+    <div style="display:flex;gap:8px;margin-top:12px;">
+      <button class="btn btn-confirmar" onclick="imprimirEtiqueta()" style="flex:1;">
+        <i data-lucide="printer" style="width:14px;height:14px;"></i> Imprimir
+      </button>
+      <button class="btn btn-cancelar" onclick="cerrarModalEtiqueta()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+  lucide.createIcons();
+  document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
+
+  // ── State ──
+  var lotesPendientes = [];
+  var loteSeleccionado = null;
+  var loteDetalle = null;
+  var categorias = [];
+  var subLoteSeleccionado = null;
+
+  // ── Init ──
+  cargarTemporadaActiva();
+  cargarPendientes();
+  cargarCategorias();
+  cargarEmpleados();
+  cargarDepositos();
+  cargarProductosEmbalaje();
+  cargarResumen();
+
+  // ══════════════════════════════════════════════════════════════
+  // CARGA DE DATOS
+  // ══════════════════════════════════════════════════════════════
+
+  async function cargarPendientes() {
+    try {
+      var data = await fetchApi('/api/clasificacion-embalaje/pendientes');
+      lotesPendientes = Array.isArray(data) ? data : [];
+    } catch(e) { lotesPendientes = []; }
+    renderLotes();
+  }
+
+  function renderLotes() {
+    var el = document.getElementById('lista-lotes');
+    if (!lotesPendientes.length) {
+      el.innerHTML = '<div class="sin-items">No hay lotes pendientes de clasificar o embalar</div>';
+      return;
+    }
+    el.innerHTML = lotesPendientes.map(function(l,i) {
+      var sel = loteSeleccionado && loteSeleccionado.id === l.id ? ' seleccionado' : '';
+      var kgDesp = parseFloat(l.kilos_despalillados) || 0;
+      var kgClasif = parseFloat(l.kilos_clasificados) || 0;
+      var kgEmb = parseFloat(l.kilos_embalados) || 0;
+      var pctClasif = kgDesp > 0 ? Math.min(100, Math.round(kgClasif / kgDesp * 100)) : 0;
+      var pctEmb = kgClasif > 0 ? Math.min(100, Math.round(kgEmb / kgClasif * 100)) : 0;
+
+      // Determinar estado visual
+      var etapaLabel = '';
+      var etapaColor = 'var(--texto-suave)';
+      if (l.etapa === 'clasificado' || pctClasif >= 100) {
+        etapaLabel = 'Clasificado · ' + pctEmb + '% embalado';
+        etapaColor = pctEmb >= 100 ? 'var(--verde)' : 'var(--sem-azul)';
+      } else {
+        etapaLabel = pctClasif + '% clasificado';
+      }
+
+      return '<div class="lote-card'+sel+'" onclick="seleccionarLote('+i+')">' +
+        '<div class="lote-info">' +
+          '<div class="lote-codigo">' + (l.codigo_interno || 'Lote #'+l.id) + '</div>' +
+          '<div class="lote-meta">' + (l.parcela || '') + ' · ' + formatearNumero(kgDesp) + ' kg desp.</div>' +
+          '<div class="progress-bar"><div class="progress-fill" style="width:'+pctClasif+'%"></div></div>' +
+        '</div>' +
+        '<div style="text-align:right;">' +
+          '<div class="lote-kilos">' + formatearNumero(kgDesp) + ' kg</div>' +
+          '<div style="font-size:11px;color:'+etapaColor+';">'+etapaLabel+'</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  async function seleccionarLote(idx) {
+    loteSeleccionado = lotesPendientes[idx];
+    renderLotes();
+    document.getElementById('panel-derecho').style.display = '';
+    document.getElementById('lote-sel-badge').textContent = loteSeleccionado.codigo_interno || 'Lote #'+loteSeleccionado.id;
+    await cargarDetalleLote();
+    await cargarClasificadores();
+    lucide.createIcons();
+  }
+
+  async function cargarDetalleLote() {
+    if (!loteSeleccionado) return;
+    try {
+      loteDetalle = await fetchApi('/api/clasificacion-embalaje/lote/' + loteSeleccionado.id + '/detalle');
+    } catch(e) { loteDetalle = null; return; }
+
+    var lote = loteDetalle.lote;
+    var kgDesp = parseFloat(lote.kilos_despalillados) || 0;
+    var kgClasif = 0;
+    loteDetalle.resumen_categorias.forEach(function(r) { kgClasif += parseFloat(r.kilos_clasificados) || 0; });
+    var kgDisp = Math.max(0, kgDesp - kgClasif);
+
+    document.getElementById('info-kg-desp').textContent = formatearNumero(kgDesp);
+    document.getElementById('info-kg-clasif').textContent = formatearNumero(kgClasif);
+    document.getElementById('info-kg-disp').textContent = formatearNumero(kgDisp);
+    document.getElementById('info-kg-emb').textContent = '—'; // se actualiza desde sub-lotes
+
+    // Mostrar/ocultar formulario clasificación y barra finalizar según etapa
+    var clasificacionCompleta = kgDisp <= 0.01;
+    var etapaClasificado = loteSeleccionado.etapa === 'clasificado';
+    document.getElementById('form-clasificar').style.display = etapaClasificado ? 'none' : '';
+    document.getElementById('barra-finalizar').style.display = (clasificacionCompleta && !etapaClasificado) ? '' : 'none';
+
+    // Si ya está clasificado, abrir automáticamente la pestaña de embalaje
+    if (etapaClasificado) {
+      var tabEmb = document.querySelectorAll('.ce-tab')[1];
+      if (tabEmb) cambiarTab(tabEmb, 'tab-embalaje');
+    }
+
+    renderResumenCategorias();
+    renderHistorial();
+    cargarSubLotes();
+  }
+
+  function renderResumenCategorias() {
+    var el = document.getElementById('resumen-categorias');
+    if (!loteDetalle || !loteDetalle.resumen_categorias.length) {
+      el.innerHTML = '';
+      return;
+    }
+    el.innerHTML = '<div style="font-size:11px;font-weight:700;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">Distribución por categoría</div>' +
+      loteDetalle.resumen_categorias.map(function(r) {
+        var label = r.categoria || '?';
+        if (r.sub_categoria) label += ' · ' + r.sub_categoria;
+        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--borde);font-size:13px;">' +
+          '<span>' + label + ' <span style="color:var(--texto-suave);font-size:11px;">(' + r.registros + ' reg.)</span></span>' +
+          '<span class="mono" style="font-weight:700;color:var(--verde);">' + formatearNumero(r.kilos_clasificados) + ' kg</span>' +
+        '</div>';
+      }).join('');
+  }
+
+  function renderHistorial() {
+    var tbody = document.getElementById('tbody-historial');
+    if (!loteDetalle || !loteDetalle.registros.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="sin-items">Sin registros</td></tr>';
+      return;
+    }
+    tbody.innerHTML = loteDetalle.registros.map(function(r) {
+      var anulado = r.estado === 'anulada';
+      var hora = r.fecha_hora ? new Date(r.fecha_hora).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}) : '';
+      return '<tr' + (anulado ? ' class="anulado"' : '') + '>' +
+        '<td>' + (r.categoria || '—') + '</td>' +
+        '<td>' + (r.sub_categoria || '—') + '</td>' +
+        '<td style="text-align:right;" class="mono">' + formatearNumero(r.kilos) + '</td>' +
+        '<td>' + hora + '</td>' +
+        '<td style="text-align:center;">' +
+          (anulado ? '<span class="badge-anulada">Anulada</span>' :
+          '<button class="btn-icon-danger" title="Anular" onclick="anularClasificacion('+r.id+')"><i data-lucide="ban" style="width:12px;height:12px;"></i></button>') +
+        '</td>' +
+      '</tr>';
+    }).join('');
+    lucide.createIcons();
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // CATEGORÍAS
+  // ══════════════════════════════════════════════════════════════
+
+  async function cargarCategorias() {
+    try {
+      categorias = await fetchApi('/api/categorias-clasificacion');
+      if (!Array.isArray(categorias)) categorias = [];
+    } catch(e) { categorias = []; }
+
+    var sel = document.getElementById('sel-categoria');
+    sel.innerHTML = '<option value="">Seleccionar...</option>';
+    categorias.forEach(function(c) {
+      sel.innerHTML += '<option value="'+c.id+'">'+c.nombre+'</option>';
+    });
+  }
+
+  // Poblar datalist de sub-categorías según categoría seleccionada
+  document.getElementById('sel-categoria').addEventListener('change', function() {
+    var catId = parseInt(this.value);
+    var dl = document.getElementById('dl-subcategorias');
+    dl.innerHTML = '';
+    document.getElementById('inp-subcategoria').value = '';
+
+    if (!catId) return;
+    var cat = categorias.find(function(c) { return c.id === catId; });
+    if (cat && cat.sub_categorias && cat.sub_categorias.length) {
+      cat.sub_categorias.forEach(function(s) {
+        dl.innerHTML += '<option value="'+s.nombre+'">';
+      });
+    }
+  });
+
+  // ══════════════════════════════════════════════════════════════
+  // EMPLEADOS (selector para agregar al lote)
+  // ══════════════════════════════════════════════════════════════
+
+  var todosEmpleados = [];
+
+  async function cargarEmpleados() {
+    try {
+      var data = await fetchApi('/api/juntadores');
+      todosEmpleados = Array.isArray(data) ? data : [];
+      poblarSelectorEmpleados();
+    } catch(e) { todosEmpleados = []; }
+  }
+
+  function poblarSelectorEmpleados() {
+    var sel = document.getElementById('sel-agregar-empleado');
+    sel.innerHTML = '<option value="">+ Agregar empleado...</option>';
+    todosEmpleados.forEach(function(j) {
+      sel.innerHTML += '<option value="'+j.id+'">'+j.apellido+', '+j.nombre+'</option>';
+    });
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // CLASIFICADORES DEL LOTE (jornadas — hora inicio / hora fin)
+  // ══════════════════════════════════════════════════════════════
+
+  var clasificadores = [];
+  var hoyStr = new Date().toISOString().slice(0,10); // YYYY-MM-DD
+
+  async function cargarClasificadores() {
+    if (!loteSeleccionado) return;
+    try {
+      clasificadores = await fetchApi('/api/clasificacion-embalaje/lote/'+loteSeleccionado.id+'/clasificadores');
+      if (!Array.isArray(clasificadores)) clasificadores = [];
+    } catch(e) { clasificadores = []; }
+    renderClasificadores();
+  }
+
+  function renderClasificadores() {
+    var el = document.getElementById('lista-clasificadores');
+    // Separar hoy vs anteriores
+    var hoy = clasificadores.filter(function(c) {
+      return c.fecha && c.fecha.slice(0,10) === hoyStr;
+    });
+    var anteriores = clasificadores.filter(function(c) {
+      return !c.fecha || c.fecha.slice(0,10) !== hoyStr;
+    });
+
+    document.getElementById('cant-empleados').textContent = hoy.length;
+
+    // Estado botones jornada
+    var algunoIniciado = hoy.some(function(c) { return c.hora_inicio; });
+    var todosFinalizado = hoy.length > 0 && hoy.every(function(c) { return c.hora_inicio && c.hora_fin; });
+    var btnIniciar = document.getElementById('btn-iniciar-jornada');
+    var btnFinalizar = document.getElementById('btn-finalizar-jornada');
+    if (btnIniciar) {
+      btnIniciar.disabled = algunoIniciado;
+      btnIniciar.textContent = algunoIniciado ? 'Jornada iniciada' : 'Iniciar jornada';
+      btnIniciar.style.opacity = algunoIniciado ? '.5' : '1';
+    }
+    if (btnFinalizar) {
+      btnFinalizar.disabled = todosFinalizado || !algunoIniciado;
+      btnFinalizar.textContent = todosFinalizado ? 'Jornada finalizada' : 'Finalizar jornada';
+      btnFinalizar.style.opacity = (todosFinalizado || !algunoIniciado) ? '.5' : '1';
+    }
+
+    if (!hoy.length) {
+      el.innerHTML = '<div style="text-align:center;padding:10px;color:var(--texto-suave);font-size:12px;">Agregá empleados con el selector</div>';
+    } else {
+      el.innerHTML = hoy.map(function(c) {
+        var hi = c.hora_inicio ? new Date(c.hora_inicio).toTimeString().slice(0,5) : '';
+        var hf = c.hora_fin ? new Date(c.hora_fin).toTimeString().slice(0,5) : '';
+        var horas = '';
+        if (c.hora_inicio && c.hora_fin) {
+          var diff = (new Date(c.hora_fin) - new Date(c.hora_inicio)) / 3600000;
+          horas = ' <span class="mono" style="color:var(--verde);font-size:11px;font-weight:700;">'+diff.toFixed(1)+'h</span>';
+        }
+
+        return '<div style="display:flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--borde);border-radius:8px;margin-bottom:4px;font-size:12px;background:var(--superficie);flex-wrap:wrap;">' +
+          '<span style="flex:1;font-weight:600;min-width:100px;">'+c.nombre+'</span>' +
+          '<span style="font-size:10px;color:var(--texto-suave);font-weight:600;">Ingreso</span>' +
+          '<input type="time" value="'+hi+'" style="width:75px;padding:2px 4px;border:1px solid var(--borde);border-radius:4px;font-size:11px;" onchange="actualizarHora('+c.id+',\'inicio\',this.value)">' +
+          '<span style="font-size:10px;color:var(--texto-suave);font-weight:600;">Fin</span>' +
+          '<input type="time" value="'+hf+'" style="width:75px;padding:2px 4px;border:1px solid var(--borde);border-radius:4px;font-size:11px;" onchange="actualizarHora('+c.id+',\'fin\',this.value)">' +
+          horas +
+          '<button onclick="quitarClasificador('+c.id+')" style="background:none;border:none;color:var(--sem-rojo);cursor:pointer;padding:2px;" title="Quitar">✕</button>' +
+        '</div>';
+      }).join('');
+    }
+
+    // Jornadas anteriores
+    var detAnterior = document.getElementById('jornadas-anteriores');
+    if (anteriores.length) {
+      detAnterior.style.display = '';
+      // Agrupar por fecha
+      var fechas = {};
+      anteriores.forEach(function(c) {
+        var f = c.fecha ? c.fecha.slice(0,10) : 'Sin fecha';
+        if (!fechas[f]) fechas[f] = [];
+        fechas[f].push(c);
+      });
+      var html = '';
+      Object.keys(fechas).sort().reverse().forEach(function(f) {
+        var totalHoras = 0;
+        var items = fechas[f].map(function(c) {
+          var hi = c.hora_inicio ? new Date(c.hora_inicio).toTimeString().slice(0,5) : '—';
+          var hf = c.hora_fin ? new Date(c.hora_fin).toTimeString().slice(0,5) : '—';
+          var horas = '';
+          if (c.hora_inicio && c.hora_fin) {
+            var diff = (new Date(c.hora_fin) - new Date(c.hora_inicio)) / 3600000;
+            totalHoras += diff;
+            horas = diff.toFixed(1)+'h';
+          }
+          return '<div style="display:flex;align-items:center;gap:8px;padding:3px 8px;font-size:11px;border-bottom:1px solid var(--borde);">' +
+            '<span style="flex:1;">'+c.nombre+'</span>' +
+            '<span class="mono" style="color:var(--texto-suave);">'+hi+' → '+hf+'</span>' +
+            '<span class="mono" style="color:var(--verde);font-weight:700;width:40px;text-align:right;">'+horas+'</span>' +
+          '</div>';
+        }).join('');
+        var fechaLabel = new Date(f+'T12:00:00').toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short'});
+        html += '<div style="margin-bottom:8px;border:1px solid var(--borde);border-radius:6px;overflow:hidden;">' +
+          '<div style="display:flex;justify-content:space-between;padding:4px 8px;background:var(--fondo);font-size:11px;font-weight:700;color:var(--texto-suave);">' +
+            '<span>'+fechaLabel+'</span>' +
+            '<span class="mono" style="color:var(--verde);">Total: '+totalHoras.toFixed(1)+'h</span>' +
+          '</div>' +
+          items +
+        '</div>';
+      });
+      document.getElementById('lista-jornadas-anteriores').innerHTML = html;
+    } else {
+      detAnterior.style.display = 'none';
+    }
+
+    lucide.createIcons();
+  }
+
+  async function agregarClasificador() {
+    var sel = document.getElementById('sel-agregar-empleado');
+    var empId = sel.value;
+    if (!empId || !loteSeleccionado) { sel.value = ''; return; }
+
+    try {
+      await fetchApi('/api/clasificacion-embalaje/lote/'+loteSeleccionado.id+'/clasificador', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ empleado_id: parseInt(empId) })
+      });
+      await cargarClasificadores();
+    } catch(e) {}
+    sel.value = '';
+  }
+
+  async function iniciarJornada() {
+    if (!loteSeleccionado) return;
+    var ahora = new Date();
+    try {
+      await fetchApi('/api/clasificacion-embalaje/lote/'+loteSeleccionado.id+'/iniciar-jornada', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ hora_inicio: ahora.toISOString() })
+      });
+      mostrarMensaje('mensaje','success','Jornada iniciada — ' + ahora.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}));
+      await cargarClasificadores();
+    } catch(e) {}
+  }
+
+  async function finalizarJornada() {
+    if (!loteSeleccionado) return;
+    var ahora = new Date();
+    try {
+      await fetchApi('/api/clasificacion-embalaje/lote/'+loteSeleccionado.id+'/finalizar-jornada', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ hora_fin: ahora.toISOString() })
+      });
+      mostrarMensaje('mensaje','success','Jornada finalizada — ' + ahora.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}));
+      await cargarClasificadores();
+    } catch(e) {}
+  }
+
+  async function actualizarHora(regId, tipo, valor) {
+    if (!loteSeleccionado) return;
+    var hoy = new Date().toISOString().slice(0,10);
+    var body = {};
+    if (tipo === 'inicio') body.hora_inicio = valor ? hoy+'T'+valor+':00' : null;
+    else body.hora_fin = valor ? hoy+'T'+valor+':00' : null;
+
+    try {
+      await fetchApi('/api/clasificacion-embalaje/lote/'+loteSeleccionado.id+'/clasificador/'+regId, {
+        method:'PUT', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(body)
+      });
+      await cargarClasificadores();
+    } catch(e) {}
+  }
+
+  async function quitarClasificador(regId) {
+    if (!loteSeleccionado) return;
+    try {
+      await fetchApi('/api/clasificacion-embalaje/lote/'+loteSeleccionado.id+'/clasificador/'+regId, { method:'DELETE' });
+      await cargarClasificadores();
+    } catch(e) {}
+  }
+
+  var productosEmbalaje = [];
+
+  async function cargarDepositos() {
+    try {
+      var data = await fetchApi('/api/depositos');
+      var sel = document.getElementById('emb-deposito');
+      sel.innerHTML = '<option value="">Seleccionar...</option>';
+      if (Array.isArray(data)) {
+        // Solo depósitos de fruta (fresca y cámara fría)
+        data.filter(function(d) {
+          return d.tipo_deposito === 'fruta_fresca' || d.tipo_deposito === 'camara_frio';
+        }).forEach(function(d) {
+          var tipo = d.tipo_deposito === 'camara_frio' ? ' (Cámara)' : ' (Fresco)';
+          sel.innerHTML += '<option value="'+d.id+'">'+(d.nombre||d.descripcion)+tipo+'</option>';
+        });
+      }
+    } catch(e) {}
+  }
+
+  async function cargarProductosEmbalaje() {
+    try {
+      var data = await fetchApi('/api/productos');
+      productosEmbalaje = Array.isArray(data) ? data.filter(function(p) {
+        return p.categoria === 'embalaje_contenedores' && p.activo !== false;
+      }) : [];
+      var sel = document.getElementById('emb-producto');
+      sel.innerHTML = '<option value="">Seleccionar...</option>';
+      productosEmbalaje.forEach(function(p) {
+        var stock = parseFloat(p.stock_actual) || 0;
+        sel.innerHTML += '<option value="'+p.id+'" data-stock="'+stock+'">'+p.nombre+' (stock: '+stock+')</option>';
+      });
+      // Mostrar stock al cambiar (aviso si negativo, pero no bloquea)
+      sel.onchange = function() {
+        var opt = sel.options[sel.selectedIndex];
+        var info = document.getElementById('emb-stock-info');
+        if (opt && opt.dataset.stock !== undefined && sel.value) {
+          var stock = parseFloat(opt.dataset.stock) || 0;
+          var um = (productosEmbalaje.find(function(p){return p.id==sel.value})||{}).unidad_medida||'u';
+          if (stock <= 0) {
+            info.innerHTML = '<span style="color:var(--sem-rojo);font-weight:600;">Stock: '+stock+' '+um+' — se generará stock negativo</span>';
+          } else {
+            info.textContent = 'Stock disponible: ' + stock + ' ' + um;
+          }
+        } else {
+          info.textContent = '';
+        }
+      };
+    } catch(e) { productosEmbalaje = []; }
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // KPIs
+  // ══════════════════════════════════════════════════════════════
+
+  async function cargarResumen() {
+    try {
+      var d = await fetchApi('/api/clasificacion-embalaje/resumen');
+      document.getElementById('kpi-pend').textContent = d.pendientes_clasificacion != null ? d.pendientes_clasificacion : '—';
+      document.getElementById('kpi-clasif').textContent = d.clasificados_hoy_kg != null ? formatearNumero(d.clasificados_hoy_kg)+' kg' : '— kg';
+      document.getElementById('kpi-emb').textContent = d.embalados_hoy_kg != null ? formatearNumero(d.embalados_hoy_kg)+' kg' : '— kg';
+      document.getElementById('kpi-lotes').textContent = d.lotes_generados_hoy != null ? d.lotes_generados_hoy : '—';
+    } catch(e) {}
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // ACCIÓN: CLASIFICAR
+  // ══════════════════════════════════════════════════════════════
+
+  async function clasificar() {
+    if (!loteSeleccionado) { mostrarMensaje('mensaje','error','Selecciona un lote primero'); return; }
+
+    var catId = document.getElementById('sel-categoria').value;
+    var subCatNombre = document.getElementById('inp-subcategoria').value.trim();
+    var kilos = parseFloat(document.getElementById('inp-kilos').value);
+    var destino = document.getElementById('sel-destino-clasif').value;
+
+    if (!catId) { mostrarMensaje('mensaje','error','Selecciona una categoría'); return; }
+    if (!kilos || kilos <= 0) { mostrarMensaje('mensaje','error','Ingresa los kilos'); return; }
+
+    var btn = document.getElementById('btn-clasificar');
+    setLoading(btn, true);
+
+    try {
+      await fetchApi('/api/clasificacion-embalaje/clasificar', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          lote_id: loteSeleccionado.id,
+          categoria_clasif_id: parseInt(catId),
+          sub_categoria_nombre: subCatNombre || null,
+          destino: destino,
+          kilos: kilos
+        })
+      });
+      mostrarMensaje('mensaje','success','Clasificación registrada');
+      document.getElementById('inp-kilos').value = '';
+      document.getElementById('inp-subcategoria').value = '';
+      await cargarDetalleLote();
+      await cargarCategorias(); // refrescar datalist con nuevas sub-categorías
+      // Re-poblar datalist para la categoría actual
+      var selCat = document.getElementById('sel-categoria');
+      selCat.dispatchEvent(new Event('change'));
+      cargarPendientes();
+      cargarResumen();
+    } catch(e) {} finally { setLoading(btn, false); }
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // FINALIZAR CLASIFICACIÓN
+  // ══════════════════════════════════════════════════════════════
+
+  async function finalizarClasificacion() {
+    if (!loteSeleccionado) return;
+    if (!confirm('¿Finalizar clasificación del lote ' + (loteSeleccionado.codigo_interno||'') + '?')) return;
+
+    try {
+      await fetchApi('/api/clasificacion-embalaje/finalizar-clasificacion/' + loteSeleccionado.id, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'}
+      });
+      mostrarMensaje('mensaje','success','Clasificación finalizada');
+      loteSeleccionado = null;
+      document.getElementById('panel-derecho').style.display = 'none';
+      cargarPendientes();
+      cargarResumen();
+    } catch(e) {}
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // EMBALAJE — SUB-LOTES
+  // ══════════════════════════════════════════════════════════════
+
+  async function cargarSubLotes() {
+    var el = document.getElementById('lista-sublotes');
+    if (!loteSeleccionado) return;
+    try {
+      var data = await fetchApi('/api/clasificacion-embalaje/clasificados');
+      // Filtrar por lote padre seleccionado
+      var subLotes = data.filter(function(s) { return s.lote_padre_id === loteSeleccionado.id; });
+
+      // Calcular total embalado para la barra de info
+      var totalEmb = 0;
+      subLotes.forEach(function(s) { totalEmb += parseFloat(s.kilos_embalados) || 0; });
+      var elEmb = document.getElementById('info-kg-emb');
+      if (elEmb) elEmb.textContent = formatearNumero(totalEmb);
+
+      if (!subLotes.length) {
+        el.innerHTML = '<div class="sin-items">No hay sub-lotes clasificados para embalar</div>';
+        return;
+      }
+      el.innerHTML = subLotes.map(function(s,i) {
+        var sel = subLoteSeleccionado && subLoteSeleccionado.id === s.id ? ' seleccionado' : '';
+        var label = s.categoria || '';
+        if (s.sub_categoria) label += ' · ' + s.sub_categoria;
+        var destTag = s.destino === 'camara_fria' ? ' → Cámara' : s.destino === 'fresco' ? ' → Fresco' : '';
+        return '<div class="lote-card'+sel+'" onclick="seleccionarSubLote('+JSON.stringify(s).replace(/"/g,'&quot;')+')">' +
+          '<div class="lote-info">' +
+            '<div style="font-weight:700;font-size:14px;color:var(--texto);">' + label + '</div>' +
+            '<div class="lote-meta">' + (s.codigo_interno || 'Sub #'+s.id) + destTag + '</div>' +
+          '</div>' +
+          '<div style="text-align:right;">' +
+            '<div class="lote-kilos">' + formatearNumero(s.kilos_disponible) + ' kg</div>' +
+            '<div style="font-size:11px;color:var(--texto-suave);">disponible</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+
+      // Embalados hoy para este lote
+      cargarEmbaladosHoy();
+    } catch(e) { el.innerHTML = '<div class="sin-items">Error cargando sub-lotes</div>'; }
+  }
+
+  function seleccionarSubLote(s) {
+    subLoteSeleccionado = s;
+    var form = document.getElementById('form-embalar');
+    form.classList.add('open');
+    var destLabel = s.destino === 'camara_fria' ? ' (Cámara fría)' : s.destino === 'fresco' ? ' (Fresco)' : '';
+    document.getElementById('emb-sel-info').textContent = (s.codigo_interno||'Sub-lote #'+s.id) + ' — ' + formatearNumero(s.kilos_disponible) + ' kg disponibles' + destLabel;
+    document.getElementById('emb-kilos').value = '';
+    document.getElementById('emb-cantidad').value = '';
+    document.getElementById('emb-producto').value = '';
+    document.getElementById('emb-stock-info').textContent = '';
+    cargarSubLotes();
+    lucide.createIcons();
+  }
+
+  function cerrarFormEmb() {
+    subLoteSeleccionado = null;
+    document.getElementById('form-embalar').classList.remove('open');
+    cargarSubLotes();
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // ACCIÓN: EMBALAR
+  // ══════════════════════════════════════════════════════════════
+
+  async function embalar() {
+    if (!subLoteSeleccionado) { mostrarMensaje('mensaje','error','Selecciona un sub-lote'); return; }
+
+    var kilos = parseFloat(document.getElementById('emb-kilos').value);
+    var productoId = document.getElementById('emb-producto').value;
+    var cantEnvases = parseInt(document.getElementById('emb-cantidad').value);
+    var depositoId = document.getElementById('emb-deposito').value;
+
+    if (!kilos || kilos <= 0) { mostrarMensaje('mensaje','error','Ingresa los kilos'); return; }
+    if (!productoId) { mostrarMensaje('mensaje','error','Selecciona el tipo de embalaje'); return; }
+    if (!cantEnvases || cantEnvases <= 0) { mostrarMensaje('mensaje','error','Ingresa la cantidad de envases'); return; }
+    if (!depositoId) { mostrarMensaje('mensaje','error','Selecciona el depósito destino'); return; }
+
+    var btn = document.getElementById('btn-embalar');
+    setLoading(btn, true);
+
+    try {
+      var resp = await fetchApi('/api/clasificacion-embalaje/embalar', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          sub_lote_id: subLoteSeleccionado.id,
+          kilos: kilos,
+          producto_id: parseInt(productoId),
+          cantidad_envases: cantEnvases,
+          deposito_id: parseInt(depositoId)
+        })
+      });
+      mostrarMensaje('mensaje','success','Embalaje registrado — Lote: ' + (resp.lote.codigo_externo || resp.lote.codigo_interno));
+
+      // Mostrar etiqueta
+      if (resp.lote && resp.lote.id) {
+        mostrarEtiqueta(resp.lote.id);
+      }
+
+      subLoteSeleccionado = null;
+      document.getElementById('form-embalar').classList.remove('open');
+      cargarSubLotes();
+      cargarProductosEmbalaje(); // refrescar stock
+      cargarResumen();
+    } catch(e) {} finally { setLoading(btn, false); }
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // EMBALADOS HOY
+  // ══════════════════════════════════════════════════════════════
+
+  async function cargarEmbaladosHoy() {
+    var tbody = document.getElementById('tbody-embalados');
+    try {
+      var data = await fetchApi('/api/clasificacion-embalaje/embalados-hoy');
+      if (!Array.isArray(data) || !data.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="sin-items">Sin embalajes hoy</td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.map(function(r) {
+        var anulado = r.estado === 'anulada';
+        return '<tr' + (anulado ? ' class="anulado"' : '') + '>' +
+          '<td>' + (r.codigo_interno || '—') + '</td>' +
+          '<td>' + (r.categoria || '') + (r.sub_categoria ? ' · '+r.sub_categoria : '') + '</td>' +
+          '<td style="text-align:right;" class="mono">' + formatearNumero(r.kilos) + '</td>' +
+          '<td>' + (r.tipo_envase || '') + ' x' + (r.cantidad_envases || '') + '</td>' +
+          '<td>' + (r.deposito || r.destino || '—') + '</td>' +
+          '<td style="text-align:center;">' +
+            (anulado ? '<span style="color:var(--sem-rojo);font-size:10px;font-weight:700;">ANULADO</span>' :
+            '<button class="btn-icon" title="Etiqueta" onclick="mostrarEtiqueta('+(r.sub_lote_id||r.id)+')"><i data-lucide="tag" style="width:12px;height:12px;"></i></button>' +
+            '<button class="btn-icon-danger" title="Anular" onclick="anularEmbalaje('+r.id+')"><i data-lucide="ban" style="width:12px;height:12px;"></i></button>') +
+          '</td>' +
+        '</tr>';
+      }).join('');
+      lucide.createIcons();
+    } catch(e) {}
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // ANULACIONES
+  // ══════════════════════════════════════════════════════════════
+
+  async function anularClasificacion(id) {
+    var motivo = prompt('Motivo de anulación:');
+    if (!motivo) return;
+    try {
+      await fetchApi('/api/clasificacion-embalaje/clasificacion/'+id+'/anular', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ motivo: motivo })
+      });
+      mostrarMensaje('mensaje','success','Clasificación anulada');
+      await cargarDetalleLote();
+      cargarPendientes();
+      cargarResumen();
+    } catch(e) {}
+  }
+
+  async function anularEmbalaje(id) {
+    var motivo = prompt('Motivo de anulación:');
+    if (!motivo) return;
+    try {
+      await fetchApi('/api/clasificacion-embalaje/embalaje/'+id+'/anular', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ motivo: motivo })
+      });
+      mostrarMensaje('mensaje','success','Embalaje anulado');
+      cargarSubLotes();
+      cargarResumen();
+    } catch(e) {}
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // ETIQUETA
+  // ══════════════════════════════════════════════════════════════
+
+  async function mostrarEtiqueta(subLoteId) {
+    try {
+      var data = await fetchApi('/api/clasificacion-embalaje/etiqueta/' + subLoteId);
+      var fechaElab = data.fecha_elaboracion ? new Date(data.fecha_elaboracion).toLocaleDateString('es-AR') : '—';
+      var fechaEnv = data.fecha_envasado ? new Date(data.fecha_envasado).toLocaleDateString('es-AR') : '—';
+      var fechaVenc = data.fecha_vencimiento ? new Date(data.fecha_vencimiento).toLocaleDateString('es-AR') : '—';
+
+      document.getElementById('etiqueta-contenido').innerHTML =
+        '<div class="etiqueta-preview" id="etiqueta-print">' +
+          '<div class="et-producto">' + (data.nombre_producto || 'FRUTILLA') + '</div>' +
+          '<div class="et-campo"><span class="et-label">RNE:</span> <span>—</span></div>' +
+          '<div class="et-campo"><span class="et-label">RNPA:</span> <span>—</span></div>' +
+          '<div class="et-campo"><span class="et-label">RENSPA:</span> <span>—</span></div>' +
+          '<div class="et-lote">N° Lote: ' + (data.numero_lote || data.codigo_interno || '—') + '</div>' +
+          '<div class="et-campo"><span class="et-label">Fecha de elaboración:</span> <span>' + fechaElab + '</span></div>' +
+          '<div class="et-campo"><span class="et-label">Fecha de envasado:</span> <span>' + fechaEnv + '</span></div>' +
+          '<div class="et-campo"><span class="et-label">Fecha de vencimiento:</span> <span>' + fechaVenc + '</span></div>' +
+          '<div class="et-peso">' + formatearNumero(data.kilos) + ' Kg</div>' +
+          '<div class="et-empresa">— Configurar datos empresa —</div>' +
+        '</div>' +
+        '<p style="font-size:11px;color:var(--texto-suave);margin-top:8px;">Los campos RNE, RNPA, RENSPA y razón social se completarán desde Configuración → Empresa.</p>';
+
+      document.getElementById('modal-etiqueta').classList.add('open');
+    } catch(e) {}
+  }
+
+  function cerrarModalEtiqueta() {
+    document.getElementById('modal-etiqueta').classList.remove('open');
+  }
+
+  function imprimirEtiqueta() {
+    window.print();
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // TABS
+  // ══════════════════════════════════════════════════════════════
+
+  function cambiarTab(tabEl, contentId) {
+    document.querySelectorAll('.ce-tab').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('.ce-tab-content').forEach(function(c) { c.classList.remove('active'); });
+    tabEl.classList.add('active');
+    document.getElementById(contentId).classList.add('active');
+    if (contentId === 'tab-embalaje') cargarSubLotes();
+  }
+</script>
+</body>
+</html>

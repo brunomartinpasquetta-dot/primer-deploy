@@ -56,32 +56,26 @@ router.get('/temporada/:id', async (req, res) => {
               JOIN Parcelas l ON j.parcela_id = l.id
               WHERE l.temporada_id = @id`);
 
-    // Kilos en depósito y descartados
+    // Kilos en depósito y descartados (desde LotesMercaderia)
     const depositos = await pool.request()
       .input('id', sql.Int, temporada_id)
       .query(`SELECT
-                ISNULL(SUM(CASE WHEN tipo='ingreso'          THEN kilos ELSE 0 END),0) -
-                ISNULL(SUM(CASE WHEN tipo LIKE 'egreso%'     THEN kilos ELSE 0 END),0) AS kilos_en_deposito,
-                ISNULL(SUM(CASE WHEN tipo='egreso_descarte'  THEN kilos ELSE 0 END),0) AS kilos_descartados
-              FROM MovimientosDeposito WHERE temporada_id = @id`);
+                ISNULL(SUM(CASE WHEN etapa NOT IN ('vendido','descartado') THEN kilos ELSE 0 END), 0) AS kilos_en_deposito,
+                ISNULL(SUM(CASE WHEN etapa = 'descartado' THEN kilos ELSE 0 END), 0) AS kilos_descartados
+              FROM LotesMercaderia WHERE temporada_id = @id AND estado != 'anulada'`);
 
-    // Costo almacenamiento: SUM por depósito de (stock_actual × días_promedio × costo_kg_dia)
-    // Simplificado: kilos_en_deposito × costo_kg_dia × días desde inicio temporada
+    // Costo almacenamiento: SUM por depósito de (kilos × costo_kg_dia × días)
     const costoAlm = await pool.request()
       .input('id', sql.Int, temporada_id)
       .query(`SELECT
-                ISNULL(SUM(
-                  (
-                    ISNULL(SUM(CASE WHEN m.tipo='ingreso'      THEN m.kilos ELSE 0 END),0) -
-                    ISNULL(SUM(CASE WHEN m.tipo LIKE 'egreso%' THEN m.kilos ELSE 0 END),0)
-                  ) * ISNULL(d.costo_kg_dia, 0)
-                    * DATEDIFF(day, t.fecha_inicio, GETDATE())
-                ), 0) AS costo_total
-              FROM MovimientosDeposito m
-              JOIN Depositos d ON m.deposito_id = d.id
-              JOIN Temporadas t ON m.temporada_id = t.id
-              WHERE m.temporada_id = @id
-              GROUP BY d.id, d.costo_kg_dia, t.fecha_inicio`);
+                ISNULL(SUM(lm.kilos * ISNULL(d.costo_kg_dia, 0)
+                  * DATEDIFF(day, t.fecha_inicio, GETDATE())), 0) AS costo_total
+              FROM LotesMercaderia lm
+              JOIN Depositos d ON lm.deposito_actual_id = d.id
+              JOIN Temporadas t ON lm.temporada_id = t.id
+              WHERE lm.temporada_id = @id
+                AND lm.estado != 'anulada'
+                AND lm.etapa NOT IN ('vendido','descartado')`);
 
     const ingresos = parseFloat(ventas.recordset[0].total);
     const costoCompras = parseFloat(compras.recordset[0].total);
@@ -89,7 +83,7 @@ router.get('/temporada/:id', async (req, res) => {
     const costoGastos = parseFloat(totalGastos.recordset[0].total);
     const kilosEnDeposito = parseFloat(depositos.recordset[0]?.kilos_en_deposito || 0);
     const kilosDescartados = parseFloat(depositos.recordset[0]?.kilos_descartados || 0);
-    const costoAlmacenamiento = costoAlm.recordset.reduce((s, r) => s + parseFloat(r.costo_total || 0), 0);
+    const costoAlmacenamiento = parseFloat(costoAlm.recordset[0]?.costo_total || 0);
     const totalCostos = costoCompras + costoManoObra + costoGastos + costoAlmacenamiento;
     const resultado = ingresos - totalCostos;
     const totalKilos = parseFloat(kilos.recordset[0].total);

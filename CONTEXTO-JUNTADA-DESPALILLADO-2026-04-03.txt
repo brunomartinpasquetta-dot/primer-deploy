@@ -1,0 +1,185 @@
+================================================================================
+CONTEXTO COMPLETO — JUNTADA + DESPALILLADO CON LOTES (CHECKPOINT FINAL)
+Fecha: 2026-04-03
+================================================================================
+
+RESUMEN GENERAL
+===============
+Ambos módulos rediseñados con patrón IDÉNTICO:
+- Layout 2 columnas: lotes activos (izq) + grilla trabajadores (der)
+- Select verde "Agregar cosechero/despalillador" inline con POST al servidor
+- Persistencia de asignaciones vía tablas LoteCosecheros / LoteDespalilladores
+- Botón "Quitar" (user-minus) solo si el trabajador no tiene registros activos
+- Promise.all para carga paralela (trabajadores persistidos + registros)
+- Edición con audit trail (EdicionesHistorial)
+
+TODO FUNCIONANDO Y TESTEADO — endpoints verificados con curl.
+
+================================================================================
+ARCHIVOS MODIFICADOS (sin commitear)
+================================================================================
+
+1. public/juntada.html — reescrito completo al patrón despalillado
+2. public/despalillado.html — agregar/quitar despalillador + persistencia
+3. server/routes/juntada.js — 3 endpoints LoteCosecheros
+4. server/routes/despalillado.js — 3 endpoints LoteDespalilladores
+
+================================================================================
+TABLAS DB CREADAS ESTA SESIÓN
+================================================================================
+
+LoteCosecheros:
+  id INT IDENTITY(1,1) PRIMARY KEY,
+  lote_id INT NOT NULL REFERENCES LotesMercaderia(id),
+  juntador_id INT NOT NULL REFERENCES Juntadores(id),
+  fecha_asignacion DATETIME DEFAULT GETDATE(),
+  UNIQUE(lote_id, juntador_id)
+
+LoteDespalilladores:
+  id INT IDENTITY(1,1) PRIMARY KEY,
+  lote_id INT NOT NULL REFERENCES LotesMercaderia(id),
+  despalillador_id INT NOT NULL REFERENCES Juntadores(id),
+  fecha_asignacion DATETIME DEFAULT GETDATE(),
+  UNIQUE(lote_id, despalillador_id)
+
+================================================================================
+JUNTADA — DISEÑO FINAL
+================================================================================
+
+Layout: 2 columnas (lotes activos izq + cosecheros der)
+
+COLUMNA IZQUIERDA — Lotes activos:
+- Lista de lotes con estado abierto/en_cosecha
+- Cards con: código, fecha, kg juntadas, cant juntadas
+- Botón "Iniciar nueva juntada" (verde, icon play)
+- Click en lote → selecciona y carga grilla a la derecha
+
+COLUMNA DERECHA — Cosecheros del lote:
+- Header: "Cosecheros del lote" + badge lote + contador
+- Select verde "Agregar cosechero" (onchange auto-add con POST al servidor)
+- Tabla: Cosechero | Juntadas | Kg Acum. | Acciones (+Juntada, eye, quitar)
+- +Juntada: form inline (Kg + Parcela compact + Confirmar + Cancelar)
+- Eye: detalle expandible con tabla de juntadas individuales (fecha, parcela, kg, usuario, editar, anular)
+- Quitar (user-minus): solo visible si 0 juntadas activas, DELETE al servidor
+
+CERRAR LOTE:
+- Barra inferior: icono warehouse + select galpón + botón "Cerrar y enviar a galpón"
+- Solo visible si lote tiene juntadas registradas
+
+KPIs: Total hoy | Lotes activos | Campaña actual
+
+FLUJO:
+1. "Iniciar nueva juntada" → POST /api/juntada/crear-lote
+2. Agregar cosecheros vía select verde → POST /api/juntada/lote/:id/cosechero
+3. +Juntada por cosechero: Kg + Parcela → POST /api/juntada/lote/:id/registrar
+4. Múltiples parcelas por lote, múltiples cosecheros simultáneos
+5. Cerrar: seleccionar galpón → POST /api/juntada/lote/:id/cerrar
+
+================================================================================
+DESPALILLADO — DISEÑO FINAL
+================================================================================
+
+Layout: 2 columnas (minmax(0,520px) izq + 1fr der)
+
+COLUMNA IZQUIERDA — Lotes pendientes:
+- Cards con: código, fecha, depósito, barra progreso, kg despalillados / kg totales
+- Badges: Pendiente (amarillo), En curso (naranja), En cámara (azul)
+
+COLUMNA DERECHA — Despalilladores del lote:
+- Header: "Despalilladores del lote" + badge lote + contador
+- Select verde "Agregar despalillador" (onchange auto-add con POST al servidor)
+  Estilo idéntico al de juntada: fondo verde, texto blanco, flecha SVG
+- Cards: Despalillador | Pesajes | Kg Acum. | Acciones (+Pesaje, eye, quitar)
+- +Pesaje: form inline (Kg + Confirmar + Cancelar)
+- Eye: detalle expandible con pesajes (fecha, kg, usuario, editar con motivo, anular)
+- Quitar (user-minus): solo si 0 pesajes activos, DELETE al servidor
+
+ACCIONES LOTE:
+- Guardar en cámara (snowflake, azul)
+- Retomar (play, amarillo)
+- Finalizar despalillado (check-circle, rojo) con confirm + merma
+
+TABS: Historial completo | Totales x Despalillador
+
+================================================================================
+ENDPOINTS — JUNTADA (server/routes/juntada.js)
+================================================================================
+
+--- LOTE COSECHEROS (nuevos) ---
+GET  /api/juntada/lote/:id/cosecheros — lista persistida
+POST /api/juntada/lote/:id/cosechero — agregar (IF NOT EXISTS)
+DELETE /api/juntada/lote/:id/cosechero/:juntador_id — quitar (verifica sin juntadas)
+
+--- LOTES (existentes) ---
+GET  /api/juntada/lotes — lotes abiertos/en_cosecha
+POST /api/juntada/crear-lote — crear lote
+GET  /api/juntada/lote/:id/registros — juntadas del lote
+POST /api/juntada/lote/:id/registrar — agregar juntada (cosechero+parcela+kilos)
+PUT  /api/juntada/lote-registro/:id — editar con audit trail
+POST /api/juntada/lote-registro/:id/anular — anular con audit trail
+POST /api/juntada/lote/:id/cerrar — cerrar lote y enviar a depósito
+GET  /api/juntada/depositos-cosecha — depósitos para selector
+
+--- LEGACY (intactos) ---
+POST /api/juntada, GET /api/juntada/hoy, etc.
+
+================================================================================
+ENDPOINTS — DESPALILLADO (server/routes/despalillado.js)
+================================================================================
+
+--- LOTE DESPALILLADORES (nuevos) ---
+GET  /api/despalillado/lote/:id/despalilladores — lista persistida
+POST /api/despalillado/lote/:id/despalillador — agregar (IF NOT EXISTS)
+DELETE /api/despalillado/lote/:id/despalillador/:despalillador_id — quitar (verifica sin pesajes)
+
+--- LOTES (existentes) ---
+GET  /api/despalillado/pendientes-lote
+GET  /api/despalillado/camaras
+GET  /api/despalillado/lote/:id/registros
+POST /api/despalillado/registrar
+PUT  /api/despalillado/:id — editar con audit trail
+POST /api/despalillado/:lote_id/guardar-camara
+POST /api/despalillado/:lote_id/retomar
+POST /api/despalillado/:lote_id/finalizar — con cálculo de merma
+
+--- LEGACY (intactos) ---
+GET /api/despalillado/pendientes, POST /api/despalillado, etc.
+
+================================================================================
+TABLAS DB INVOLUCRADAS
+================================================================================
+
+LotesMercaderia: id, codigo_interno, temporada_id, kilos, etapa, estado,
+  fecha_inicio, fecha_fin, deposito_id, deposito_camara_id,
+  kilos_en_camara, merma_despalillado, parcela_id, usuario_id
+  Estados: abierto → en_cosecha → cerrado → en_despalillado → despalillado
+
+LoteCosecheros: id, lote_id, juntador_id, fecha_asignacion, UNIQUE(lote_id, juntador_id)
+LoteDespalilladores: id, lote_id, despalillador_id, fecha_asignacion, UNIQUE(lote_id, despalillador_id)
+
+Juntada: id, parcela_id, juntador_id, kilos, ..., lote_id (INT NULL)
+Despalillado: id, despalillador_id, kilos, ..., lote_id (INT NULL)
+EdicionesHistorial: tabla, registro_id, campo, valor_anterior, valor_nuevo, usuario_id, motivo
+
+================================================================================
+REGLAS DE NEGOCIO
+================================================================================
+
+1. Múltiples lotes activos simultáneos en juntada (diferentes quintas)
+2. Destino se elige al CERRAR el lote, no al registrar cada juntada
+3. Múltiples parcelas y cosecheros por lote
+4. Trabajadores asignados PERSISTEN aunque no tengan registros
+5. Solo se puede quitar un trabajador si tiene 0 registros activos
+6. Al cerrar lote en juntada → aparece como pendiente en despalillado
+7. Edición requiere motivo → audit trail en EdicionesHistorial
+8. Finalizar despalillado calcula merma = kilos cosecha - kilos despalillado
+
+================================================================================
+STACK TÉCNICO
+================================================================================
+Node.js + Express | SQL Server (mssql) | HTML vanilla + CSS (cosecha.css) | Lucide icons
+JWT auth (cosecha_jwt_secret_2026) | Roles: administrador/ingeniero/encargado
+
+================================================================================
+FIN DEL CONTEXTO — CHECKPOINT FINAL 2026-04-03
+================================================================================

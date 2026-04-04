@@ -1,0 +1,115 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - generic [ref=e6]:
+        - generic [ref=e7]: COSECHA
+        - generic [ref=e8]: SISTEMA DE CULTIVOS
+    - navigation [ref=e9]:
+      - link "Dashboard" [ref=e10] [cursor=pointer]:
+        - /url: index.html
+        - img [ref=e12]
+        - text: Dashboard
+      - generic [ref=e17]: Campo
+      - link "Cosecha" [ref=e18] [cursor=pointer]:
+        - /url: juntada.html
+        - img [ref=e20]
+        - text: Cosecha
+      - link "Despalillado" [ref=e29] [cursor=pointer]:
+        - /url: despalillado.html
+        - img [ref=e31]
+        - text: Despalillado
+      - link "Aplicaciones" [ref=e37] [cursor=pointer]:
+        - /url: aplicaciones.html
+        - img [ref=e39]
+        - text: Aplicaciones
+      - generic [ref=e42]: Sistema
+      - link "Stock" [ref=e43] [cursor=pointer]:
+        - /url: menu-stock.html
+        - img [ref=e45]
+        - text: Stock
+      - link "Comercial" [ref=e49] [cursor=pointer]:
+        - /url: menu-comercial.html
+        - img [ref=e51]
+        - text: Comercial
+      - link "Administración" [ref=e56] [cursor=pointer]:
+        - /url: menu-admin.html
+        - img [ref=e58]
+        - text: Administración
+      - link "Mercado" [ref=e60] [cursor=pointer]:
+        - /url: mercado.html
+        - img [ref=e62]
+        - text: Mercado
+      - link "Configuración" [ref=e65] [cursor=pointer]:
+        - /url: menu-config.html
+        - img [ref=e67]
+        - text: Configuración
+    - generic [ref=e70]:
+      - generic [ref=e71]: Administrador · administrador
+      - button "Cerrar sesión" [ref=e72] [cursor=pointer]
+  - generic [ref=e73]:
+    - banner [ref=e74]:
+      - generic [ref=e75]:
+        - img [ref=e76]
+        - generic [ref=e77]:
+          - generic [ref=e78]: COSECHA
+          - generic [ref=e79]: SISTEMA DE CULTIVOS
+        - generic [ref=e80]: 🌱 Campaña FIX 2026 · Día 3
+      - generic [ref=e81]:
+        - generic [ref=e82] [cursor=pointer]:
+          - img [ref=e83]
+          - text: Administrador
+        - generic [ref=e87]: jueves, 2 de abril
+    - generic [ref=e88]:
+      - link "← Volver" [ref=e89] [cursor=pointer]:
+        - /url: "#"
+      - generic [ref=e90]:
+        - generic [ref=e91]:
+          - generic [ref=e92]: Ventas
+          - generic [ref=e93]: Registro de ventas de mercadería
+        - button "+ Nueva venta" [ref=e94] [cursor=pointer]:
+          - img [ref=e95]
+          - text: + Nueva venta
+      - generic [ref=e99]:
+        - generic [ref=e100]:
+          - img [ref=e102]
+          - generic [ref=e107]: "0"
+          - generic [ref=e108]: Kg Vendidos
+        - generic [ref=e109]:
+          - img [ref=e111]
+          - generic [ref=e114]: $0
+          - generic [ref=e115]: Total Ingresos
+        - generic [ref=e116]:
+          - img [ref=e118]
+          - generic [ref=e121]: $0
+          - generic [ref=e122]: Precio Promedio / Kg
+        - generic [ref=e123]:
+          - img [ref=e125]
+          - generic [ref=e130]: $—
+          - generic [ref=e131]: Cotización Frutilla
+      - generic [ref=e132]:
+        - combobox "Temporada" [ref=e133] [cursor=pointer]:
+          - option "Todas"
+          - option "Campaña FIX 2026" [selected]
+        - 'searchbox "Filtrar por: Cliente · Variedad · Destino · Estado · Usuario" [ref=e134]'
+        - textbox "Desde" [ref=e136]
+        - textbox "Hasta" [ref=e137]
+        - button "✕ Limpiar" [ref=e138] [cursor=pointer]
+      - table [ref=e140]:
+        - rowgroup [ref=e141]:
+          - row "Remito Fecha Depósito Variedad Cliente Kg Precio/Kg Total Estado Usuario" [ref=e142]:
+            - columnheader "Remito" [ref=e143]
+            - columnheader "Fecha" [ref=e144]
+            - columnheader "Depósito" [ref=e145]
+            - columnheader "Variedad" [ref=e146]
+            - columnheader "Cliente" [ref=e147]
+            - columnheader "Kg" [ref=e148]
+            - columnheader "Precio/Kg" [ref=e149]
+            - columnheader "Total" [ref=e150]
+            - columnheader "Estado" [ref=e151]
+            - columnheader "Usuario" [ref=e152]
+            - columnheader [ref=e153]
+        - rowgroup [ref=e154]:
+          - row "Cargando..." [ref=e155]:
+            - cell "Cargando..." [ref=e156]
+        - rowgroup

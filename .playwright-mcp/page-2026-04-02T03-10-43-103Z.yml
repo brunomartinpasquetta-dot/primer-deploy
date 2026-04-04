@@ -1,0 +1,99 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - generic [ref=e6]:
+        - generic [ref=e7]: COSECHA
+        - generic [ref=e8]: SISTEMA DE CULTIVOS
+    - navigation [ref=e9]:
+      - link "Dashboard" [ref=e10] [cursor=pointer]:
+        - /url: index.html
+        - img [ref=e12]
+        - text: Dashboard
+      - generic [ref=e17]: Campo
+      - link "Cosecha" [ref=e18] [cursor=pointer]:
+        - /url: juntada.html
+        - img [ref=e20]
+        - text: Cosecha
+      - link "Despalillado" [ref=e29] [cursor=pointer]:
+        - /url: despalillado.html
+        - img [ref=e31]
+        - text: Despalillado
+      - link "Aplicaciones" [ref=e37] [cursor=pointer]:
+        - /url: aplicaciones.html
+        - img [ref=e39]
+        - text: Aplicaciones
+      - generic [ref=e42]: Sistema
+      - link "Stock" [ref=e43] [cursor=pointer]:
+        - /url: menu-stock.html
+        - img [ref=e45]
+        - text: Stock
+      - link "Comercial" [ref=e49] [cursor=pointer]:
+        - /url: menu-comercial.html
+        - img [ref=e51]
+        - text: Comercial
+      - link "Administración" [ref=e56] [cursor=pointer]:
+        - /url: menu-admin.html
+        - img [ref=e58]
+        - text: Administración
+      - link "Mercado" [ref=e60] [cursor=pointer]:
+        - /url: mercado.html
+        - img [ref=e62]
+        - text: Mercado
+      - link "Configuración" [ref=e65] [cursor=pointer]:
+        - /url: menu-config.html
+        - img [ref=e67]
+        - text: Configuración
+    - generic [ref=e70]:
+      - generic [ref=e71]: Administrador · administrador
+      - button "Cerrar sesión" [ref=e72] [cursor=pointer]
+  - generic [ref=e73]:
+    - banner [ref=e74]:
+      - generic [ref=e75]:
+        - img [ref=e76]
+        - generic [ref=e77]:
+          - generic [ref=e78]: COSECHA
+          - generic [ref=e79]: SISTEMA DE CULTIVOS
+        - generic [ref=e80]: Cargando...
+      - generic [ref=e81]:
+        - generic [ref=e82] [cursor=pointer]:
+          - img [ref=e83]
+          - text: Administrador
+        - generic [ref=e86]: jueves, 2 de abril
+    - generic [ref=e87]:
+      - link "← Volver" [ref=e88] [cursor=pointer]:
+        - /url: "#"
+      - generic [ref=e89]:
+        - generic [ref=e90]: Comercial
+        - generic [ref=e91]: Compras, ventas y cuentas corrientes
+      - generic [ref=e92]:
+        - link "Compras Compras a proveedores" [ref=e93] [cursor=pointer]:
+          - /url: compras.html
+          - img [ref=e95]
+          - generic [ref=e99]: Compras
+          - generic [ref=e100]: Compras a proveedores
+        - link "Proveedores Gestión de proveedores" [ref=e101] [cursor=pointer]:
+          - /url: proveedores.html
+          - img [ref=e103]
+          - generic [ref=e107]: Proveedores
+          - generic [ref=e108]: Gestión de proveedores
+        - link "Clientes Gestión de clientes" [ref=e109] [cursor=pointer]:
+          - /url: clientes.html
+          - img [ref=e111]
+          - generic [ref=e116]: Clientes
+          - generic [ref=e117]: Gestión de clientes
+        - link "Cta. Proveedores Deudas y pagos" [ref=e118] [cursor=pointer]:
+          - /url: cuentas-proveedores.html
+          - img [ref=e120]
+          - generic [ref=e123]: Cta. Proveedores
+          - generic [ref=e124]: Deudas y pagos
+        - link "Cta. Clientes Cobros pendientes" [ref=e125] [cursor=pointer]:
+          - /url: cuentas-clientes.html
+          - img [ref=e127]
+          - generic [ref=e130]: Cta. Clientes
+          - generic [ref=e131]: Cobros pendientes
+        - link "Ventas Salida de mercadería" [ref=e132] [cursor=pointer]:
+          - /url: ventas.html
+          - img [ref=e134]
+          - generic [ref=e138]: Ventas
+          - generic [ref=e139]: Salida de mercadería

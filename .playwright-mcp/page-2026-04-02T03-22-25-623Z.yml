@@ -1,0 +1,131 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - generic [ref=e6]:
+        - generic [ref=e7]: COSECHA
+        - generic [ref=e8]: SISTEMA DE CULTIVOS
+    - navigation [ref=e9]:
+      - link "Dashboard" [ref=e10] [cursor=pointer]:
+        - /url: index.html
+        - img [ref=e154]
+        - text: Dashboard
+      - generic [ref=e17]: Campo
+      - link "Cosecha" [ref=e18] [cursor=pointer]:
+        - /url: juntada.html
+        - img [ref=e159]
+        - text: Cosecha
+      - link "Despalillado" [ref=e29] [cursor=pointer]:
+        - /url: despalillado.html
+        - img [ref=e168]
+        - text: Despalillado
+      - link "Aplicaciones" [ref=e37] [cursor=pointer]:
+        - /url: aplicaciones.html
+        - img [ref=e174]
+        - text: Aplicaciones
+      - generic [ref=e42]: Sistema
+      - link "Stock" [ref=e43] [cursor=pointer]:
+        - /url: menu-stock.html
+        - img [ref=e177]
+        - text: Stock
+      - link "Comercial" [ref=e49] [cursor=pointer]:
+        - /url: menu-comercial.html
+        - img [ref=e181]
+        - text: Comercial
+      - link "Administración" [ref=e56] [cursor=pointer]:
+        - /url: menu-admin.html
+        - img [ref=e186]
+        - text: Administración
+      - link "Mercado" [ref=e60] [cursor=pointer]:
+        - /url: mercado.html
+        - img [ref=e188]
+        - text: Mercado
+      - link "Configuración" [ref=e65] [cursor=pointer]:
+        - /url: menu-config.html
+        - img [ref=e191]
+        - text: Configuración
+    - generic [ref=e70]:
+      - generic [ref=e71]: Administrador · administrador
+      - button "Cerrar sesión" [ref=e72] [cursor=pointer]
+  - generic [ref=e73]:
+    - banner [ref=e74]:
+      - generic [ref=e75]:
+        - img [ref=e76]
+        - generic [ref=e77]:
+          - generic [ref=e78]: COSECHA
+          - generic [ref=e79]: SISTEMA DE CULTIVOS
+        - generic [ref=e80]: 🌱 Campaña FIX 2026 · Día 3
+      - generic [ref=e81]:
+        - generic [ref=e82] [cursor=pointer]:
+          - img [ref=e83]
+          - text: Administrador
+        - generic [ref=e86]: jueves, 2 de abril
+    - generic [ref=e87]:
+      - link "← Volver" [ref=e88] [cursor=pointer]:
+        - /url: "#"
+      - generic [ref=e89]:
+        - generic [ref=e90]: Despalillado
+        - generic [ref=e91]: Registrá el proceso de despalillado de la cosecha
+      - generic [ref=e92]:
+        - generic [ref=e93]:
+          - generic [ref=e94]: Total de hoy
+          - generic [ref=e95]: 0 kg
+        - generic [ref=e96]:
+          - generic [ref=e97]: Merma hoy
+          - generic [ref=e98]: 0 kg
+        - generic [ref=e99]:
+          - generic [ref=e100]: Campaña actual
+          - generic [ref=e101]: 168,5 kg
+      - generic [ref=e102]:
+        - generic [ref=e103]:
+          - generic [ref=e104]:
+            - button "❄️ Cámara fría" [ref=e105] [cursor=pointer]
+            - button "🌿 Fruta fresca" [ref=e106] [cursor=pointer]
+          - generic [ref=e107]:
+            - generic [ref=e108]:
+              - img [ref=e194]
+              - generic [ref=e112]: "2"
+              - text: pendientes de despalillar
+            - generic [ref=e113]:
+              - generic [ref=e114] [cursor=pointer]:
+                - generic [ref=e115]:
+                  - generic [ref=e116]: PARCELA NORTE
+                  - generic [ref=e117]: "Cosechero: GONZALES, MARCELO · 30/3, 09:14 p. m."
+                  - generic [ref=e118]: → CAMARA DE FRIO 1
+                - generic [ref=e119]: 100 kg
+              - generic [ref=e120] [cursor=pointer]:
+                - generic [ref=e121]:
+                  - generic [ref=e122]: PARCELA NORTE
+                  - generic [ref=e123]: "Cosechero: GOMEZ, MARIA · 30/3, 09:15 p. m."
+                  - generic [ref=e124]: → CAMARA DE FRIO 2
+                - generic [ref=e125]: 54.923 kg
+        - generic [ref=e126]:
+          - generic [ref=e127]:
+            - heading "Registros de hoy" [level=3] [ref=e128]
+            - generic [ref=e129]:
+              - button "Historial" [ref=e130] [cursor=pointer]:
+                - img [ref=e197]
+                - text: Historial
+              - button "Totales campaña" [ref=e132] [cursor=pointer]:
+                - img [ref=e198]
+                - text: Totales campaña
+          - generic [ref=e134]:
+            - combobox "Filtrar por..." [ref=e135]
+            - button "✕ Limpiar" [ref=e136] [cursor=pointer]
+          - table [ref=e138]:
+            - rowgroup [ref=e139]:
+              - row "# Cosechero Fecha Tipo Kg Parcela Depósito Usuario" [ref=e140]:
+                - columnheader "#" [ref=e141]
+                - columnheader "Cosechero" [ref=e142]
+                - columnheader "Fecha" [ref=e143]
+                - columnheader "Tipo" [ref=e144]
+                - columnheader "Kg" [ref=e145]
+                - columnheader "Parcela" [ref=e146]
+                - columnheader "Depósito" [ref=e147]
+                - columnheader "Usuario" [ref=e148]
+            - rowgroup [ref=e149]:
+              - row "Sin movimientos" [ref=e150]:
+                - cell "Sin movimientos" [ref=e151]
+          - generic [ref=e152]:
+            - text: "Total hoy:"
+            - generic [ref=e153]: —

@@ -1,0 +1,127 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - generic [ref=e6]:
+        - generic [ref=e7]: COSECHA
+        - generic [ref=e8]: SISTEMA DE CULTIVOS
+    - navigation [ref=e9]:
+      - link "Dashboard" [ref=e10] [cursor=pointer]:
+        - /url: index.html
+        - img [ref=e12]
+        - text: Dashboard
+      - generic [ref=e17]: Campo
+      - link "Cosecha" [ref=e18] [cursor=pointer]:
+        - /url: juntada.html
+        - img [ref=e20]
+        - text: Cosecha
+      - link "Despalillado" [ref=e29] [cursor=pointer]:
+        - /url: despalillado.html
+        - img [ref=e31]
+        - text: Despalillado
+      - link "Aplicaciones" [ref=e37] [cursor=pointer]:
+        - /url: aplicaciones.html
+        - img [ref=e39]
+        - text: Aplicaciones
+      - generic [ref=e42]: Sistema
+      - link "Stock" [ref=e43] [cursor=pointer]:
+        - /url: menu-stock.html
+        - img [ref=e45]
+        - text: Stock
+      - link "Comercial" [ref=e49] [cursor=pointer]:
+        - /url: menu-comercial.html
+        - img [ref=e51]
+        - text: Comercial
+      - link "Administración" [ref=e56] [cursor=pointer]:
+        - /url: menu-admin.html
+        - img [ref=e58]
+        - text: Administración
+      - link "Mercado" [ref=e60] [cursor=pointer]:
+        - /url: mercado.html
+        - img [ref=e62]
+        - text: Mercado
+      - link "Configuración" [ref=e65] [cursor=pointer]:
+        - /url: menu-config.html
+        - img [ref=e67]
+        - text: Configuración
+    - generic [ref=e70]:
+      - generic [ref=e71]: Administrador · administrador
+      - button "Cerrar sesión" [ref=e72] [cursor=pointer]
+  - generic [ref=e73]:
+    - banner [ref=e74]:
+      - generic [ref=e75]:
+        - img [ref=e76]
+        - generic [ref=e77]:
+          - generic [ref=e78]: COSECHA
+          - generic [ref=e79]: SISTEMA DE CULTIVOS
+        - generic [ref=e80]: Cargando...
+      - generic [ref=e81]:
+        - generic [ref=e82] [cursor=pointer]:
+          - img [ref=e83]
+          - text: Administrador
+        - generic [ref=e86]: jueves, 2 de abril
+    - generic [ref=e87]:
+      - generic [ref=e88]:
+        - generic [ref=e89]: Dashboard
+        - generic [ref=e91]: Cargando...
+      - generic [ref=e92]: Hoy
+      - generic [ref=e93]:
+        - generic [ref=e94]:
+          - generic [ref=e95]: Cosecha hoy
+          - generic [ref=e96]: —
+          - generic [ref=e97]: kg
+        - generic [ref=e98]:
+          - generic [ref=e99]: En cámara
+          - generic [ref=e100]: —
+          - generic [ref=e101]: kg disponibles
+        - generic [ref=e102]:
+          - generic [ref=e103]: Saldo caja
+          - generic [ref=e104]: —
+      - generic [ref=e105]: Estado del stock
+      - generic [ref=e106]: Temporada
+      - generic [ref=e107]:
+        - generic [ref=e108]:
+          - generic [ref=e109]: Total cosechado
+          - generic [ref=e110]: —
+          - generic [ref=e111]: total temporada
+        - generic [ref=e112]:
+          - generic [ref=e113]: Vendido total
+          - generic [ref=e114]: —
+          - generic [ref=e115]: total temporada
+      - generic [ref=e116]:
+        - generic [ref=e117]:
+          - generic [ref=e119]: Estado de depósitos
+          - generic [ref=e121]: Cargando...
+        - generic [ref=e122]:
+          - generic [ref=e124]: Alertas
+          - generic [ref=e126]: Sin alertas activas
+      - generic [ref=e127]:
+        - generic [ref=e128]:
+          - generic [ref=e129]:
+            - generic [ref=e130]: Últimos registros de cosecha
+            - link "+ Nuevo registro" [ref=e131] [cursor=pointer]:
+              - /url: juntada.html
+          - table [ref=e133]:
+            - rowgroup [ref=e134]:
+              - row "Hora Cosechador Parcela Kilos Destino" [ref=e135]:
+                - columnheader "Hora" [ref=e136]
+                - columnheader "Cosechador" [ref=e137]
+                - columnheader "Parcela" [ref=e138]
+                - columnheader "Kilos" [ref=e139]
+                - columnheader "Destino" [ref=e140]
+            - rowgroup [ref=e141]:
+              - row "Cargando..." [ref=e142]:
+                - cell "Cargando..." [ref=e143]
+        - generic [ref=e144]:
+          - generic [ref=e146]: Últimos registros de aplicaciones
+          - table [ref=e148]:
+            - rowgroup [ref=e149]:
+              - row "Fecha Producto Parcela Dosis Usuario" [ref=e150]:
+                - columnheader "Fecha" [ref=e151]
+                - columnheader "Producto" [ref=e152]
+                - columnheader "Parcela" [ref=e153]
+                - columnheader "Dosis" [ref=e154]
+                - columnheader "Usuario" [ref=e155]
+            - rowgroup [ref=e156]:
+              - row "Cargando..." [ref=e157]:
+                - cell "Cargando..." [ref=e158]

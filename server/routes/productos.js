@@ -9,7 +9,7 @@ router.get('/', async (req, res) => {
     const result = await pool.request()
       .query(`
         SELECT
-          p.id, p.nombre, p.descripcion, p.tipo,
+          p.id, p.nombre, p.descripcion, p.tipo, p.categoria,
           p.presentacion, ISNULL(p.unidad_medida, p.presentacion) AS unidad_medida,
           p.contenido_litros, p.costo_unitario, p.stock_minimo,
           p.envase, p.proveedor_id,

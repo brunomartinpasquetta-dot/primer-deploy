@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1A2E0A">
+  <title>Mi Empresa — Cosecha</title>
+  <link rel="icon" href="img/logo.png">
+  <script src="js/utils.js"></script>
+  <link rel="stylesheet" href="cosecha.css">
+  <style>
+    .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    label { font-weight: bold; color: #444; display: block; margin-bottom: 6px; margin-top: 12px; font-size: 13px; }
+    input { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+    input:focus { border-color: #2D5016; outline: none; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .btn { width: 100%; padding: 14px; font-size: 16px; font-weight: bold; border: none; border-radius: 12px; cursor: pointer; margin-top: 16px; }
+    .btn-guardar { background: #2D5016; color: white; }
+    .btn-guardar:disabled { background: #aaa; cursor: not-allowed; }
+    .msg-success { background: #e8f5e2; color: #2d6a4f; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 8px; }
+    .msg-error { background: #fde8e8; color: #c0392b; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 8px; }
+    .section-title { color: #2D5016; font-size: 14px; font-weight: 700; margin-top: 20px; margin-bottom: 4px; border-bottom: 1px solid #e0e0e0; padding-bottom: 4px; }
+    @media (max-width: 500px) { .form-row { grid-template-columns: 1fr; } }
+  </style>
+  <script src="js/auth-check.js"></script>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="img/logo-icon.png" class="brand-icon"><div class="brand-info"><span class="brand-name">CO<em>SE</em>CHA</span><span class="brand-sub">SISTEMA DE CULTIVOS</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-item"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard</a>
+      <div class="nav-section">Campo</div>
+      <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
+      <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
+      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
+      <div class="nav-section">Sistema</div>
+      <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
+      <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
+      <a href="menu-admin.html" class="nav-item"><span class="nav-icon"><i data-lucide="landmark"></i></span> Administración</a>
+      <a href="mercado.html" class="nav-item"><span class="nav-icon"><i data-lucide="trending-up"></i></span> Mercado</a>
+      <a href="menu-config.html" class="nav-item active"><span class="nav-icon"><i data-lucide="settings"></i></span> Configuración</a>
+    </nav>
+    <div class="sidebar-footer">Cosecha · Sistema de Cultivos</div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
+        <img src="img/logo-icon.png" class="brand-icon"><div class="brand-info"><span class="brand-name">CO<em>SE</em>CHA</span><span class="brand-sub">SISTEMA DE CULTIVOS</span></div><span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-date" id="topbar-date"></span>
+      </div>
+    </header>
+
+    <div class="content">
+      <a href="menu-config.html" class="btn-volver">← Volver</a>
+      <div class="content-header">
+        <div class="content-title">Mi Empresa</div>
+        <div class="content-sub">Datos para etiquetas y remitos</div>
+      </div>
+
+      <div class="card">
+        <form id="form-empresa">
+          <div class="section-title">Datos fiscales</div>
+          <label>Razón Social</label>
+          <input type="text" id="razon_social" placeholder="Ej: Frutillas del Sur S.R.L.">
+
+          <div class="form-row">
+            <div>
+              <label>CUIT</label>
+              <input type="text" id="cuit" placeholder="XX-XXXXXXXX-X">
+            </div>
+            <div>
+              <label>RNE</label>
+              <input type="text" id="rne" placeholder="N° RNE">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div>
+              <label>RNPA</label>
+              <input type="text" id="rnpa" placeholder="N° RNPA">
+            </div>
+            <div>
+              <label>RENSPA</label>
+              <input type="text" id="renspa" placeholder="N° RENSPA">
+            </div>
+          </div>
+
+          <div class="section-title">Ubicación</div>
+          <label>Dirección</label>
+          <input type="text" id="direccion" placeholder="Calle y número">
+
+          <div class="form-row">
+            <div>
+              <label>Localidad</label>
+              <input type="text" id="localidad" placeholder="Localidad">
+            </div>
+            <div>
+              <label>Provincia</label>
+              <input type="text" id="provincia" placeholder="Provincia">
+            </div>
+          </div>
+
+          <div class="section-title">Contacto</div>
+          <div class="form-row">
+            <div>
+              <label>Teléfono</label>
+              <input type="text" id="telefono" placeholder="Teléfono">
+            </div>
+            <div>
+              <label>Email</label>
+              <input type="email" id="email" placeholder="email@empresa.com">
+            </div>
+          </div>
+
+          <label>Observación</label>
+          <input type="text" id="observacion" placeholder="Nota interna (opcional)">
+
+          <button type="submit" class="btn btn-guardar" id="btn-guardar">Guardar</button>
+          <div id="msg"></div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── BOTTOM NAV ── -->
+  <nav class="bottom-nav">
+    <a href="index.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="home"></i></span><span>Inicio</span></a>
+    <a href="juntada.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="wheat"></i></span><span>Cosecha</span></a>
+    <a href="despalillado.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="scissors"></i></span><span>Despalillado</span></a>
+    <a href="aplicaciones.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="droplets"></i></span><span>Aplicaciones</span></a>
+    <a href="menu-campo.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="menu"></i></span><span>Menú</span></a>
+  </nav>
+
+</div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+lucide.createIcons();
+document.getElementById('topbar-date').textContent =
+  new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
+
+const campos = ['razon_social','cuit','rne','rnpa','renspa','direccion','localidad','provincia','telefono','email','observacion'];
+const token = localStorage.getItem('cosecha_token');
+const headers = { 'Content-Type':'application/json', 'Authorization':'Bearer '+token };
+
+// Cargar datos existentes
+async function cargarEmpresa() {
+  try {
+    const res = await fetch('/api/configuracion-empresa', { headers });
+    const data = await res.json();
+    campos.forEach(c => {
+      const el = document.getElementById(c);
+      if (el && data[c]) el.value = data[c];
+    });
+  } catch(e) { console.error(e); }
+}
+
+// Guardar
+document.getElementById('form-empresa').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('btn-guardar');
+  const msg = document.getElementById('msg');
+  btn.disabled = true;
+  msg.innerHTML = '';
+
+  const body = {};
+  campos.forEach(c => body[c] = document.getElementById(c).value.trim() || null);
+
+  try {
+    const res = await fetch('/api/configuracion-empresa', { method:'PUT', headers, body: JSON.stringify(body) });
+    const data = await res.json();
+    if (data.ok) {
+      msg.innerHTML = '<div class="msg-success">Datos guardados correctamente</div>';
+    } else {
+      msg.innerHTML = '<div class="msg-error">'+(data.error||'Error')+'</div>';
+    }
+  } catch(err) {
+    msg.innerHTML = '<div class="msg-error">'+err.message+'</div>';
+  }
+  btn.disabled = false;
+});
+
+cargarEmpresa();
+cargarTemporadaActiva();
+</script>
+</body>
+</html>

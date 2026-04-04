@@ -136,7 +136,7 @@ router.post('/egreso', async (req, res) => {
   }
 });
 
-// Stock actual agregado por variedad/lote + depósito (desde MovimientosDeposito)
+// Stock actual basado en LotesMercaderia (lotes y sub-lotes en depósitos)
 router.get('/actual', async (req, res) => {
   try {
     let { temporada_id } = req.query;
@@ -154,19 +154,25 @@ router.get('/actual', async (req, res) => {
       .input('temporada_id', sql.Int, parseInt(temporada_id))
       .query(`
         SELECT
-          COALESCE(l.variedad, l.nombre, m.variedad, '—') AS variedad,
-          d.nombre AS deposito,
-          d.tipo   AS deposito_tipo,
-          COUNT(DISTINCT m.parcela_id) AS parcelas_involucradas,
-          CASE WHEN COUNT(DISTINCT m.parcela_id) = 1 THEN MIN(l.nombre) ELSE NULL END AS parcela_nombre,
-          SUM(CASE WHEN m.tipo = 'ingreso' THEN m.kilos ELSE -m.kilos END) AS kg_disponibles
-        FROM MovimientosDeposito m
-        LEFT JOIN Parcelas l ON m.parcela_id = l.id
-        JOIN Depositos d ON m.deposito_id = d.id
-        WHERE m.temporada_id = @temporada_id
-        GROUP BY COALESCE(l.variedad, l.nombre, m.variedad, '—'), d.nombre, d.tipo
-        HAVING SUM(CASE WHEN m.tipo = 'ingreso' THEN m.kilos ELSE -m.kilos END) > 0
-        ORDER BY COALESCE(l.variedad, l.nombre, m.variedad, '—'), d.nombre
+          lm.etapa,
+          ISNULL(p.variedad, p.nombre) AS variedad,
+          d.nombre   AS deposito,
+          d.tipo     AS deposito_tipo,
+          cc.nombre  AS categoria,
+          sc.nombre  AS sub_categoria,
+          COUNT(*)   AS cantidad_lotes,
+          SUM(lm.kilos) AS kg_disponibles
+        FROM LotesMercaderia lm
+        LEFT JOIN Parcelas p                    ON lm.parcela_id          = p.id
+        LEFT JOIN Depositos d                   ON lm.deposito_actual_id  = d.id
+        LEFT JOIN CategoriasClasificacion cc     ON lm.categoria_clasif_id = cc.id
+        LEFT JOIN SubCategoriasClasificacion sc  ON lm.sub_categoria_id    = sc.id
+        WHERE lm.temporada_id = @temporada_id
+          AND lm.estado != 'anulada'
+          AND lm.etapa NOT IN ('vendido')
+          AND lm.kilos > 0
+        GROUP BY lm.etapa, ISNULL(p.variedad, p.nombre), d.nombre, d.tipo, cc.nombre, sc.nombre
+        ORDER BY d.nombre, lm.etapa, cc.nombre
       `);
 
     res.json(result.recordset);
@@ -175,7 +181,7 @@ router.get('/actual', async (req, res) => {
   }
 });
 
-// KPIs de kg: cosechados (Juntada) + deposito/vendidos/descartados (MovimientosDeposito)
+// KPIs de kg: cosechados (Juntada) + por etapa (LotesMercaderia)
 router.get('/kpis', async (req, res) => {
   try {
     const { temporada_id } = req.query;
@@ -191,35 +197,30 @@ router.get('/kpis', async (req, res) => {
     }
     const jRes = await dbJ.query(qJuntada);
 
-    // KG en depósito / vendidos / descartados desde MovimientosDeposito
-    const dbM = pool.request();
-    let qMov = `SELECT
-      ISNULL(SUM(CASE WHEN tipo='ingreso'         THEN kilos ELSE 0 END),0) -
-      ISNULL(SUM(CASE WHEN tipo LIKE 'egreso%'    THEN kilos ELSE 0 END),0) AS kg_en_deposito,
-      ISNULL(SUM(CASE WHEN tipo='egreso_venta'    THEN kilos ELSE 0 END),0) AS kg_vendidos,
-      ISNULL(SUM(CASE WHEN tipo='egreso_descarte' THEN kilos ELSE 0 END),0) AS kg_descartados
-      FROM MovimientosDeposito`;
+    // KG por etapa desde LotesMercaderia
+    const dbLm = pool.request();
+    let wLm = "estado != 'anulada'";
     if (temporada_id) {
-      qMov += ' WHERE temporada_id = @tid';
-      dbM.input('tid', sql.Int, parseInt(temporada_id));
+      wLm += ' AND temporada_id = @tid';
+      dbLm.input('tid', sql.Int, parseInt(temporada_id));
     }
-    const mRes = await dbM.query(qMov);
+    const lmRes = await dbLm.query(`
+      SELECT
+        ISNULL(SUM(CASE WHEN etapa IN ('cosecha','despalillado','en_clasificacion','clasificado') THEN kilos ELSE 0 END), 0) AS kg_en_proceso,
+        ISNULL(SUM(CASE WHEN etapa IN ('embalado','vendido_parcial') AND lote_padre_id IS NOT NULL THEN kilos ELSE 0 END), 0) AS kg_embalado,
+        ISNULL(SUM(CASE WHEN etapa IN ('vendido') THEN kilos ELSE 0 END), 0) AS kg_vendidos,
+        ISNULL(SUM(CASE WHEN etapa = 'descartado' THEN kilos ELSE 0 END), 0) AS kg_descartados
+      FROM LotesMercaderia
+      WHERE ${wLm}`);
 
-    // KG venta_directa (desde StockMercaderia — no pasan por depósito)
-    const dbSm = pool.request();
-    let qSm = `SELECT ISNULL(SUM(kilos),0) AS kg_vd FROM StockMercaderia
-               WHERE tipo='egreso_venta' AND destino='venta_directa'`;
-    if (temporada_id) {
-      qSm += ' AND temporada_id = @tid_sm';
-      dbSm.input('tid_sm', sql.Int, parseInt(temporada_id));
-    }
-    const smRes = await dbSm.query(qSm);
-
+    const lm = lmRes.recordset[0];
     res.json({
       kg_cosechados:  parseFloat(jRes.recordset[0].kg_cosechados),
-      kg_en_deposito: parseFloat(mRes.recordset[0].kg_en_deposito),
-      kg_vendidos:    parseFloat(mRes.recordset[0].kg_vendidos) + parseFloat(smRes.recordset[0].kg_vd),
-      kg_descartados: parseFloat(mRes.recordset[0].kg_descartados)
+      kg_en_proceso:  parseFloat(lm.kg_en_proceso),
+      kg_embalado:    parseFloat(lm.kg_embalado),
+      kg_en_deposito: parseFloat(lm.kg_en_proceso) + parseFloat(lm.kg_embalado),
+      kg_vendidos:    parseFloat(lm.kg_vendidos),
+      kg_descartados: parseFloat(lm.kg_descartados)
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

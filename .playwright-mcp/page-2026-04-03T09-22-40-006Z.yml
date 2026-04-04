@@ -1,0 +1,143 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - generic [ref=e6]:
+        - generic [ref=e7]: COSECHA
+        - generic [ref=e8]: SISTEMA DE GESTIÓN DE CULTIVOS
+    - navigation [ref=e9]:
+      - link "Dashboard" [ref=e10] [cursor=pointer]:
+        - /url: index.html
+        - img [ref=e12]
+        - text: Dashboard
+      - generic [ref=e17]: Campo
+      - link "Cosecha" [ref=e18] [cursor=pointer]:
+        - /url: juntada.html
+        - img [ref=e20]
+        - text: Cosecha
+      - link "Despalillado" [ref=e29] [cursor=pointer]:
+        - /url: despalillado.html
+        - img [ref=e31]
+        - text: Despalillado
+      - link "Aplicaciones" [ref=e37] [cursor=pointer]:
+        - /url: aplicaciones.html
+        - img [ref=e39]
+        - text: Aplicaciones
+      - generic [ref=e42]: Sistema
+      - link "Stock" [ref=e43] [cursor=pointer]:
+        - /url: menu-stock.html
+        - img [ref=e45]
+        - text: Stock
+      - link "Comercial" [ref=e49] [cursor=pointer]:
+        - /url: menu-comercial.html
+        - img [ref=e51]
+        - text: Comercial
+      - link "Administración" [ref=e56] [cursor=pointer]:
+        - /url: menu-admin.html
+        - img [ref=e58]
+        - text: Administración
+      - link "Mercado" [ref=e60] [cursor=pointer]:
+        - /url: mercado.html
+        - img [ref=e62]
+        - text: Mercado
+      - link "Configuración" [ref=e65] [cursor=pointer]:
+        - /url: menu-config.html
+        - img [ref=e67]
+        - text: Configuración
+    - generic [ref=e70]:
+      - generic [ref=e71]: Administrador · administrador
+      - button "Cerrar sesión" [ref=e72] [cursor=pointer]
+  - generic [ref=e73]:
+    - banner [ref=e74]:
+      - generic [ref=e75]:
+        - img [ref=e76]
+        - generic [ref=e77]:
+          - generic [ref=e78]: COSECHA
+          - generic [ref=e79]: SISTEMA DE GESTIÓN DE CULTIVOS
+        - generic [ref=e80]: 🌱 Campaña FIX 2026 · Día 4
+      - generic [ref=e81]:
+        - generic [ref=e82] [cursor=pointer]:
+          - img [ref=e83]
+          - text: Administrador
+        - generic [ref=e86]: viernes, 3 de abril
+    - generic [ref=e87]:
+      - generic [ref=e88]:
+        - generic [ref=e89]: Dashboard
+        - generic [ref=e91]: Cargando...
+      - generic [ref=e92]:
+        - generic [ref=e93]:
+          - generic [ref=e94]: Hoy
+          - generic [ref=e95]:
+            - generic [ref=e96]:
+              - generic [ref=e97]: Cosecha hoy
+              - generic [ref=e98]: —
+              - generic [ref=e99]: kg
+            - generic [ref=e100]:
+              - generic [ref=e101]: En cámara
+              - generic [ref=e102]: —
+              - generic [ref=e103]: kg disponibles
+            - generic [ref=e104]:
+              - generic [ref=e105]: Saldo caja
+              - generic [ref=e106]: —
+          - generic [ref=e107]: Estado del stock
+          - generic [ref=e108]: Campaña
+          - generic [ref=e109]:
+            - generic [ref=e110]:
+              - generic [ref=e111]: Total cosechado
+              - generic [ref=e112]: —
+              - generic [ref=e113]: kg total temporada
+            - generic [ref=e114]:
+              - generic [ref=e115]: Vendido total
+              - generic [ref=e116]: —
+              - generic [ref=e117]: kg total temporada
+        - generic [ref=e118]:
+          - generic [ref=e120]: Estado de depósitos
+          - generic [ref=e121]:
+            - generic [ref=e122]:
+              - generic [ref=e123]:
+                - generic [ref=e124]: CAMARA DE FRIO 1
+                - generic [ref=e125]: 0%
+              - generic [ref=e127]: 114,5 / 200.000 kg
+            - generic [ref=e128]:
+              - generic [ref=e129]:
+                - generic [ref=e130]: CAMARA DE FRIO 2
+                - generic [ref=e131]: 0%
+              - generic [ref=e133]: 0 / 160.000 kg
+            - generic [ref=e134]:
+              - generic [ref=e135]:
+                - generic [ref=e136]: GALPON FRESCO
+                - generic [ref=e137]: 0%
+              - generic [ref=e139]: 492,2 / 100.000 kg
+        - generic [ref=e140]:
+          - generic [ref=e141]:
+            - generic [ref=e142]: Alertas
+            - generic "Alertas activas" [ref=e144] [cursor=pointer]:
+              - img [ref=e145]
+          - generic [ref=e149]: Sin alertas activas
+      - generic [ref=e150]:
+        - generic [ref=e151]:
+          - generic [ref=e153]: Últimos registros de cosecha
+          - table [ref=e155]:
+            - rowgroup [ref=e156]:
+              - row "Hora Cosechador Parcela Kilos Destino" [ref=e157]:
+                - columnheader "Hora" [ref=e158]
+                - columnheader "Cosechador" [ref=e159]
+                - columnheader "Parcela" [ref=e160]
+                - columnheader "Kilos" [ref=e161]
+                - columnheader "Destino" [ref=e162]
+            - rowgroup [ref=e163]:
+              - row "Cargando..." [ref=e164]:
+                - cell "Cargando..." [ref=e165]
+        - generic [ref=e166]:
+          - generic [ref=e168]: Últimos registros de aplicaciones
+          - table [ref=e170]:
+            - rowgroup [ref=e171]:
+              - row "Fecha Producto Parcela Dosis Usuario" [ref=e172]:
+                - columnheader "Fecha" [ref=e173]
+                - columnheader "Producto" [ref=e174]
+                - columnheader "Parcela" [ref=e175]
+                - columnheader "Dosis" [ref=e176]
+                - columnheader "Usuario" [ref=e177]
+            - rowgroup [ref=e178]:
+              - row "Sin aplicaciones recientes" [ref=e179]:
+                - cell "Sin aplicaciones recientes" [ref=e180]

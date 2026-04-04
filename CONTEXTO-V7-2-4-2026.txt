@@ -1,0 +1,265 @@
+CONTEXTO DE SESIÓN V7 — CosechaApp
+=====================================
+Fecha: 2026-04-02
+Estado: sesión completada, listo para reinicio
+
+LEER SIEMPRE ANTES DE EMPEZAR:
+  1. CONTEXTO-PROYECTO-v6.txt (si existe)
+  2. REGLAS-DESARROLLO.md (si existe)
+  3. git log --oneline -20
+  4. Este archivo
+
+════════════════════════════════════════════════
+COMMITS DE ESTA SESIÓN (en orden cronológico)
+════════════════════════════════════════════════
+
+ebc1b15  fix: despalillado grilla hoy + modales historial/totales + icono CC
+392dc81  feat: KPIs despalillado + grilla consistente + historial/totales juntada
+35701a0  feat: consistencia clientes/proveedores, ventas compacta, cotiz frutilla, fix CC
+12ac022  fix: ventas grilla — restaurar columnas originales sin Parcela, compactar filas
+75795a7  feat: ventas/compras — columna Remito, ver detalles con eye icon
+dd6a4ec  feat: remito en compras, lápiz editar en ventas/compras, proveedor compacto
+4f63a9f  feat: dashboard reestructurado, filtros compactos, KPIs stock en línea
+54e0eb6  fix: dashboard layout 3 columnas — KPIs | Depósitos | Alertas
+79be3e7  fix: dashboard — layout KPIs ancho, cotizaciones completas, títulos normales
+
+════════════════════════════════════════════════
+QUÉ SE IMPLEMENTÓ EN ESTA SESIÓN
+════════════════════════════════════════════════
+
+1. DESPALILLADO — FIXES Y MEJORAS (ebc1b15, 392dc81)
+   - Grilla "Registros de hoy": ahora usa renderMovimientosGrid (igual que juntada)
+     con wrapper .juntada-historial, búsqueda, footer con total kg
+   - Modales Historial y Totales campaña: fix inline display:none que bloqueaba
+     .open{display:flex}; fix _temporadaActivaId → window.temporadaActiva.id
+   - KPIs despalillado: 3 cards (Total hoy, Merma hoy, Campaña actual)
+     usando cargarKpisDespalillado() que suma desde totales-por-despalillador
+   - Archivos: public/despalillado.html
+
+2. JUNTADA — HISTORIAL Y TOTALES (392dc81)
+   - Botones "Historial" y "Totales campaña" en header del panel historial
+   - 2 modales: historial completo con filtros fecha, totales por cosechero con fila TOTAL
+   - Backend: GET /api/juntada/historial (filtros temporada/desde/hasta/juntador)
+              GET /api/juntada/totales-por-juntador (GROUP BY con kg_total)
+   - Archivos: public/juntada.html, server/routes/juntada.js
+
+3. CLIENTES/PROVEEDORES — CONSISTENCIA (35701a0)
+   - clientes.html: acciones Editar/Ver cuenta/Desactivar con iconos Lucide
+     (pencil, receipt, x-circle) — mismas que proveedores
+   - Modal editar cliente + endpoints PUT y PATCH /desactivar en clientes.js
+   - proveedores.html: iconos Lucide en botones, th vacío (no "Acciones"),
+     lucide.createIcons() tras render
+   - Archivos: public/clientes.html, public/proveedores.html, server/routes/clientes.js
+
+4. ICONOS CUENTAS CORRIENTES (ebc1b15)
+   - menu-comercial.html: ambas CC (proveedores y clientes) usan icono "receipt"
+     (mismo icono, no usado en otro menú)
+
+5. VENTAS — GRILLA Y FUNCIONALIDAD (35701a0, 12ac022, 75795a7, dd6a4ec)
+   - Columna # → "Remito" (muestra numero_remito o #id)
+   - Eliminadas columnas CC y Embalaje de la grilla
+   - Columna final con icono eye "Ver detalles" + icono pencil "Editar"
+   - Modal detalle venta: tabla key-value con TODA la info (remito, fecha,
+     temporada, cliente, depósito, variedad, parcela, kg, precio, total,
+     forma pago, estado cobro, cosechero, observación, usuario) + sección embalaje
+   - Modal editar venta: N° Remito + Observación
+   - Backend: PATCH /api/stock-mercaderia/historial/:id
+   - KPI cotización frutilla con fallback scraping→locales→"$—"
+   - Icono ventas en menú: "banknote" (distinto de compras "shopping-cart")
+   - Celdas compactas: padding 4px 6px, font-size 11px
+   - Archivos: public/ventas.html, public/menu-comercial.html,
+              server/routes/stock-mercaderia.js
+
+6. COMPRAS — REMITO Y EDICIÓN (dd6a4ec)
+   - DB: ALTER TABLE Compras ADD numero_remito NVARCHAR(50) NULL
+   - Campo N° Remito en formulario nueva compra (opcional)
+   - Columna Remito en grilla, col-proveedor max-width:160px
+   - Backend: numero_remito en GET, POST y PATCH /api/compras
+   - Lápiz editar siempre visible (sin chequeo permisos)
+   - Modal editar: N° Remito + Observación
+   - Tooltip eye icon → "Ver detalles de la compra"
+   - Archivos: public/compras.html, server/routes/compras.js
+
+7. CUENTAS CORRIENTES — FIX FORMAS DE PAGO (35701a0)
+   - cuentas-proveedores.html: filtro !es_cuenta_corriente en cargarFormasPago()
+     (igualando a cuentas-clientes que ya lo tenía)
+
+8. FILTROS VENTAS/COMPRAS (4f63a9f)
+   - Campaña y búsqueda en misma fila, ~70% menos ancho
+   - max-width: 150px campaña, 180px búsqueda, 120px fechas
+   - Font-size 11-12px, height 30px
+
+9. STOCK MERCADERÍA — KPIs COMPACTAS (4f63a9f)
+   - Layout flex horizontal (no grid 4 cols)
+   - Cards con padding 8px 12px, icon 28px, valor 16px, label 9px
+   - Todas las KPIs entran en una sola fila
+
+10. DASHBOARD — REESTRUCTURACIÓN COMPLETA (4f63a9f, 54e0eb6, 79be3e7)
+    - Layout 3 columnas: KPIs (2fr) | Depósitos (1fr) | Alertas (1fr)
+    - KPIs compactados: padding 8px 10px, valor 17px, flex:1 1 0
+    - Saldo caja con flex:2 para mayor ancho
+    - Hero bar: Dólar Blue + Oficial + MEP + CCL + Frutilla hoy (5 cotizaciones)
+    - cotizaciones.js: setEl para hero-oficial, hero-mep, hero-ccl
+    - Persistencia localStorage para dólar y frutilla (último dato válido)
+    - Nueva sección "Últimos registros de aplicaciones" con tabla
+      (Fecha, Producto, Parcela, Dosis, Usuario)
+    - Títulos grillas en texto normal, sin badge, sin acceso rápido
+    - Archivos: public/index.html, public/js/cotizaciones.js
+
+════════════════════════════════════════════════
+ESTADO DE LA BASE DE DATOS
+════════════════════════════════════════════════
+
+36 tablas (se agregó columna). Las más relevantes:
+- Compras: NUEVA columna numero_remito NVARCHAR(50) NULL
+- Clientes: endpoints PUT /:id y PATCH /:id/desactivar (nuevos)
+- MovimientosDeposito: endpoint PATCH /api/stock-mercaderia/historial/:id (nuevo)
+- Juntada: endpoints GET /historial y /totales-por-juntador (nuevos)
+- Remitos, RemitoItems, FormasPago, Depositos, StockInsumos — sin cambios esta sesión
+
+Datos de depósitos activos (sin cambios):
+  id=4  CAMARA DE FRIO 1   → tipo_deposito=camara_frio
+  id=5  INSUMOS-STOCK      → tipo_deposito=insumos
+  id=6  CAMARA DE FRIO 2   → tipo_deposito=camara_frio
+  id=7  GALPON FRESCO      → tipo_deposito=fruta_fresca
+
+════════════════════════════════════════════════
+ARQUITECTURA DE RUTAS ACTUALES (server/index.js)
+════════════════════════════════════════════════
+
+Sin auth:
+  /api/auth, /api/cotizaciones
+
+Con auth (encargadoOAdmin):
+  /api/dashboard, /api/depositos, /api/aplicaciones, /api/parcelas,
+  /api/juntadores, /api/juntada, /api/despalillado, /api/reportes,
+  /api/temporadas, /api/productos, /api/stock-insumos, /api/stock-mercaderia,
+  /api/proveedores, /api/compras, /api/clientes, /api/personal, /api/roles-trabajo
+
+Con auth (soloAdmin):
+  /api/balance, /api/caja, /api/cheques, /api/pagos, /api/gastos,
+  /api/cuentas-proveedores, /api/cuentas-clientes, /api/usuarios, /api/remitos
+
+Con auth (todos):
+  /api/permisos
+
+ENDPOINTS NUEVOS ESTA SESIÓN:
+  GET  /api/juntada/historial
+  GET  /api/juntada/totales-por-juntador
+  PUT  /api/clientes/:id
+  PATCH /api/clientes/:id/desactivar
+  PATCH /api/stock-mercaderia/historial/:id
+
+════════════════════════════════════════════════
+PATRONES Y DECISIONES TÉCNICAS
+════════════════════════════════════════════════
+
+GRILLA CONSISTENTE (juntada/despalillado):
+  Ambos usan renderMovimientosGrid de js/movimientos-grid.js
+  Wrapper .juntada-historial con header, search, body, footer
+  CSS .juntada-historial duplicado en despalillado.html (no en cosecha.css)
+
+MODALES HISTORIAL/TOTALES:
+  Patrón: .modal-overlay con CSS display:none + .open{display:flex}
+  NO usar inline style="display:none" (bloquea .open)
+  Temporada: window.temporadaActiva.id (no _temporadaActivaId)
+
+ICONOS SISTEMA:
+  CC (ambas): receipt
+  Ventas: banknote
+  Compras: shopping-cart
+  Editar: pencil
+  Ver detalles: eye
+  Desactivar: x-circle
+  Ver insumos (proveedores): package
+
+COTIZACIONES CON PERSISTENCIA:
+  localStorage keys: cosecha_frutilla_ultimo, cosecha_cotiz_dolar
+  Si API falla → usa último dato válido guardado
+
+FILTROS COMPACTOS:
+  Campaña max-width:150px, búsqueda 180px, fechas 120px
+  height:30px, font-size 11-12px
+
+════════════════════════════════════════════════
+MÓDULOS Y SUS PÁGINAS
+════════════════════════════════════════════════
+
+DASHBOARD:
+  index.html — layout 3 cols: KPIs | Depósitos | Alertas
+               + 2 grillas: Registros cosecha | Registros aplicaciones
+               Hero bar: campaña + Blue/Oficial/MEP/CCL/Frutilla
+
+CAMPO:
+  juntada.html        → cosecha/pesaje + historial/totales modales
+  despalillado.html   → despalillado + KPIs + historial/totales modales
+  aplicaciones.html   → fitosanitarios
+
+STOCK:
+  menu-stock.html     → 4 cards directas
+  productos.html      → gestión insumos
+  stock-insumos.html  → movimientos insumos
+  stock-mercaderia.html → KPIs compactas flex + grilla stock + historial
+  depositos.html      → gestión depósitos
+
+COMERCIAL:
+  menu-comercial.html → compras(shopping-cart), proveedores(building-2),
+                        clientes(users), CC prov(receipt), CC cli(receipt),
+                        ventas(banknote)
+  ventas.html         → grilla Remito|Fecha|Dep|Var|Cli|Kg|$/Kg|Total|Estado|Usr|eye+pencil
+                        + modal detalle + modal editar + KPI cotiz frutilla
+  compras.html        → grilla Remito|Estado|Fecha|Prov|FP|Total|Usr|eye+pencil
+                        + campo remito en form + modal editar con remito
+  proveedores.html    → acciones con iconos Lucide (pencil/package/x-circle)
+  clientes.html       → acciones con iconos Lucide (pencil/receipt/x-circle)
+  cuentas-clientes.html  → CC clientes (filtro !es_cuenta_corriente en formas pago)
+  cuentas-proveedores.html → CC proveedores (filtro !es_cuenta_corriente agregado)
+  remitos.html        → listado remitos (sin nav link)
+
+ADMINISTRACIÓN:
+  menu-admin.html     → caja, cheques, pagos, gastos, reportes, balance, personal
+  caja.html, cheques.html, pagos.html, gastos.html, reportes.html, balance.html
+
+CONFIGURACIÓN:
+  menu-config.html    → temporadas, parcelas, personal, productos, usuarios
+  parcelas.html, personal.html, usuarios.html
+
+CAMPO (menú):
+  menu-campo.html     → resumen hoy + accesos rápidos + modales despalillado
+
+════════════════════════════════════════════════
+COSAS PENDIENTES / BACKLOG
+════════════════════════════════════════════════
+
+DEL BACKLOG ORIGINAL:
+  M02. Panel lateral fijo historial en formularios
+  M07. Stock Mercadería — KPI "KG SIN ASIGNAR"
+  M09. Tabla maestra de Cultivos
+  M10. Mejoras Parcelas — ubicación/GPS
+  M13. Conectar balanza RS232
+  M14. Script instalación PC Windows
+  M15. Modo offline PWA
+
+SIN PROBAR EN PRODUCCIÓN:
+  - Flujo completo ventas multi-item con embalaje retornable
+  - remitos.html (página creada, sin nav link desde ningún menú)
+  - Endpoint /api/depositos/ocupacion?tipo_deposito= con datos reales
+  - Dashboard: grilla "Últimos registros de aplicaciones" depende de /api/aplicaciones?limit=10
+  - Cotizaciones hero (Oficial/MEP/CCL) — depende de que /api/cotizaciones/dolar retorne esos campos
+
+════════════════════════════════════════════════
+CÓMO INICIAR EL SISTEMA
+════════════════════════════════════════════════
+
+  cd ~/cosecha-app && node server/index.js
+  http://localhost:3000
+  Login: admin / admin123
+
+  Si el puerto está ocupado:
+  kill -9 $(lsof -t -i:3000)
+
+  MCP activos: mssql (DB), playwright (UI), excalidraw (diagramas)
+
+════════════════════════════════════════════════
+FIN DEL CONTEXTO V7
+════════════════════════════════════════════════

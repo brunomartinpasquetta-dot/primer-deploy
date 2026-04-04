@@ -75,13 +75,25 @@ router.get('/:id', async (req, res) => {
     const itemRes = await pool.request()
       .input('id', sql.Int, req.params.id)
       .query(`
-        SELECT ri.*, d.nombre AS deposito
+        SELECT ri.*, d.nombre AS deposito,
+               sl.codigo_interno AS sub_lote_codigo,
+               cc.nombre AS categoria,
+               sc.nombre AS sub_categoria,
+               sl.etapa  AS sub_lote_etapa
         FROM RemitoItems ri
-        LEFT JOIN Depositos d ON ri.deposito_id = d.id
+        LEFT JOIN Depositos d                   ON ri.deposito_id        = d.id
+        LEFT JOIN LotesMercaderia sl            ON ri.sub_lote_id        = sl.id
+        LEFT JOIN CategoriasClasificacion cc     ON sl.categoria_clasif_id = cc.id
+        LEFT JOIN SubCategoriasClasificacion sc  ON sl.sub_categoria_id    = sc.id
         WHERE ri.remito_id = @id
         ORDER BY ri.id`);
 
-    res.json({ ...remRes.recordset[0], items: itemRes.recordset });
+    // Datos de empresa para encabezado de remito
+    const empresaRes = await pool.request()
+      .query('SELECT TOP 1 * FROM ConfiguracionEmpresa');
+    const empresa = empresaRes.recordset[0] || {};
+
+    res.json({ ...remRes.recordset[0], items: itemRes.recordset, empresa });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

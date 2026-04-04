@@ -1,0 +1,106 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - generic [ref=e6]:
+        - generic [ref=e7]: COSECHA
+        - generic [ref=e8]: SISTEMA DE CULTIVOS
+    - navigation [ref=e9]:
+      - link "Dashboard" [ref=e10] [cursor=pointer]:
+        - /url: index.html
+        - img [ref=e12]
+        - text: Dashboard
+      - generic [ref=e17]: Campo
+      - link "Cosecha" [ref=e18] [cursor=pointer]:
+        - /url: juntada.html
+        - img [ref=e20]
+        - text: Cosecha
+      - link "Despalillado" [ref=e29] [cursor=pointer]:
+        - /url: despalillado.html
+        - img [ref=e31]
+        - text: Despalillado
+      - link "Aplicaciones" [ref=e37] [cursor=pointer]:
+        - /url: aplicaciones.html
+        - img [ref=e39]
+        - text: Aplicaciones
+      - generic [ref=e42]: Sistema
+      - link "Stock" [ref=e43] [cursor=pointer]:
+        - /url: menu-stock.html
+        - img [ref=e45]
+        - text: Stock
+      - link "Comercial" [ref=e49] [cursor=pointer]:
+        - /url: menu-comercial.html
+        - img [ref=e51]
+        - text: Comercial
+      - link "Administración" [ref=e56] [cursor=pointer]:
+        - /url: menu-admin.html
+        - img [ref=e58]
+        - text: Administración
+      - link "Mercado" [ref=e60] [cursor=pointer]:
+        - /url: mercado.html
+        - img [ref=e62]
+        - text: Mercado
+      - link "Configuración" [ref=e65] [cursor=pointer]:
+        - /url: menu-config.html
+        - img [ref=e67]
+        - text: Configuración
+    - generic [ref=e70]:
+      - generic [ref=e71]: Administrador · administrador
+      - button "Cerrar sesión" [ref=e72] [cursor=pointer]
+  - generic [ref=e73]:
+    - banner [ref=e74]:
+      - generic [ref=e75]:
+        - img [ref=e76]
+        - generic [ref=e77]:
+          - generic [ref=e78]: COSECHA
+          - generic [ref=e79]: SISTEMA DE CULTIVOS
+        - generic [ref=e80]: Cargando...
+      - generic [ref=e81]:
+        - generic [ref=e82] [cursor=pointer]:
+          - img [ref=e83]
+          - text: Administrador
+        - generic [ref=e86]: viernes, 3 de abril
+    - generic [ref=e87]:
+      - link "← Volver" [ref=e88] [cursor=pointer]:
+        - /url: "#"
+      - generic [ref=e89]:
+        - generic [ref=e90]: Despalillado
+        - generic [ref=e91]: Proceso de despalillado por lotes de cosecha
+      - generic [ref=e92]:
+        - generic [ref=e93]:
+          - generic [ref=e94]: Total de hoy
+          - generic [ref=e95]: — kg
+        - generic [ref=e96]:
+          - generic [ref=e97]: Lotes pendientes
+          - generic [ref=e98]: —
+        - generic [ref=e99]:
+          - generic [ref=e100]: Campaña actual
+          - generic [ref=e101]: — kg
+      - generic [ref=e103]:
+        - generic [ref=e105]: Lotes pendientes (0)
+        - generic [ref=e107]: Cargando lotes...
+      - generic [ref=e108]:
+        - button "Historial" [ref=e109] [cursor=pointer]
+        - button "Totales x Despalillador" [ref=e110] [cursor=pointer]
+        - button "Total x Lote" [ref=e111] [cursor=pointer]
+        - button "Auditoría" [ref=e112] [cursor=pointer]
+      - generic [ref=e114]:
+        - generic [ref=e115]:
+          - heading "Historial completo de despalillado" [level=3] [ref=e116]
+          - generic [ref=e117]:
+            - textbox [ref=e118]
+            - textbox [ref=e119]
+            - searchbox "Buscar..." [ref=e120]
+        - table [ref=e122]:
+          - rowgroup [ref=e123]:
+            - row "# Despalillador Fecha/Hora Lote Kg Usuario Acciones" [ref=e124]:
+              - columnheader "#" [ref=e125]
+              - columnheader "Despalillador" [ref=e126]
+              - columnheader "Fecha/Hora" [ref=e127]
+              - columnheader "Lote" [ref=e128]
+              - columnheader "Kg" [ref=e129]
+              - columnheader "Usuario" [ref=e130]
+              - columnheader "Acciones" [ref=e131]
+          - rowgroup [ref=e132]:
+            - row "Cargando..." [ref=e133]:
+              - cell "Cargando..." [ref=e134]

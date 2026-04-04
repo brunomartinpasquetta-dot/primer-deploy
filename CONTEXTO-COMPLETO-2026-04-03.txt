@@ -1,0 +1,612 @@
+====================================================================
+CONTEXTO COMPLETO — COSECHAAPP (ERP Agrícola Frutilla)
+Generado: 2026-04-03
+Fuente: Auditoría integral con 5 agentes + memoria completa del proyecto
+====================================================================
+
+
+====================================================================
+SECCIÓN 1 — IDENTIDAD DEL SISTEMA
+====================================================================
+
+Nombre: COSECHA
+Versión: v1 — enfocada 100% en producción de frutilla
+Stack: Node.js + Express + SQL Server (mssql) + HTML/CSS/JS vanilla
+DB: CosechaFrutilla en localhost:1433, user: sa, pass: Frutilla2026!
+Puerto: 3000
+Entry point: server/index.js
+Arranque: node server/index.js
+
+Branding (2026-04-03):
+- Logo: ícono circular frutilla + surcos verdes
+- "CO<em>SE</em>CHA" con SE en rojo (#D32F2F)
+- Subtítulo: "SISTEMA DE CULTIVOS"
+- Clases CSS centralizadas: .brand-icon, .brand-info, .brand-name, .brand-sub
+- Aplicado en 38 archivos HTML
+
+
+====================================================================
+SECCIÓN 2 — NÚMEROS DEL SISTEMA
+====================================================================
+
+- 44 páginas HTML en public/
+- ~200+ endpoints REST en server/routes/
+- 48+ tablas SQL Server
+- 40 archivos de rutas backend (.js)
+- 6 archivos JS utilidades (public/js/)
+- 1 CSS unificado (cosecha.css)
+- 27 scripts SQL iniciales (db/)
+- 4 migraciones aplicadas (server/migrations/)
+
+
+====================================================================
+SECCIÓN 3 — ESTRUCTURA DE MÓDULOS
+====================================================================
+
+CAMPO (menu-campo.html):
+  - Cosecha/Juntada (juntada.html) — registro kilos por cosechero/lote
+  - Despalillado (despalillado.html) — pesaje en galpón post-cosecha
+  - Aplicaciones (aplicaciones.html) — fitosanitarios con días carencia
+  - Clasificación + Embalaje (clasificacion-embalaje.html) — categorizar y embalar
+
+STOCK (menu-stock.html):
+  - Stock Insumos (stock-insumos.html)
+  - Stock Mercadería (stock-mercaderia.html)
+  - Depósitos (depositos.html)
+  - Inventario/Insumos (productos.html)
+
+COMERCIAL (menu-comercial.html):
+  - Compras (compras.html)
+  - Proveedores (proveedores.html)
+  - Clientes (clientes.html)
+  - Cta. Proveedores (cuentas-proveedores.html)
+  - Cta. Clientes (cuentas-clientes.html)
+  - Ventas (ventas.html)
+
+ADMINISTRACIÓN (menu-admin.html):
+  - Caja (caja.html)
+  - Cheques (cheques.html)
+  - Pagos (pagos.html) — liquidaciones y anticipos a cosecheros
+  - Gastos (gastos.html)
+  - Reportes (reportes.html)
+  - Balance (balance.html)
+  - Remitos (remitos.html)
+  - Personal (personal.html)
+
+CONFIGURACIÓN (menu-config.html):
+  - Temporadas, Parcelas, Roles de Trabajo, QR, Usuarios, Mi Empresa
+
+OTROS:
+  - Dashboard (index.html) — KPIs, cotizaciones, alertas
+  - Mercado (mercado.html) — cotizaciones dólar/frutilla
+
+
+====================================================================
+SECCIÓN 4 — FLUJO DE NEGOCIO COMPLETO
+====================================================================
+
+1. CONFIGURACIÓN
+   Temporada activa → Parcelas → Trabajadores con QR → Productos con precio/stock
+
+2. CAMPO — COSECHA
+   Juntada (lote + cosechador + kilos) → Lote nace con código progresivo
+   L2026-0402-P03-001 (año-fecha-parcela-correlativo)
+   Múltiples cosecheros por lote, persistidos en LoteCosecheros
+   Al cerrar lote → asignar destino (depósito/galpón)
+
+3. CAMPO — DESPALILLADO
+   Lote llega al galpón → despalilladores asignados (LoteDespalilladores)
+   Pesaje con validación: no puede superar kg cosecha del lote
+   Código lote += ".D"
+   Merma calculada al finalizar
+
+4. CAMPO — CLASIFICACIÓN
+   Lote despalillado → clasificar por categoría (6: grande/media/chica × madura/pintona)
+   Sub-lotes por categoría: .D-GM (Grande Madura), .D-MP (Media Pintona), etc.
+   Merma registrada
+
+5. CAMPO — EMBALAJE
+   Sub-lotes clasificados → embalar en envases (cajones, bandejas)
+   Código += destino: .D-GM-F (Fresco), .D-GM-C (Cámara fría)
+   Retornables: descuentan stock al salir, se reponen con devolución
+
+6. INSUMOS
+   Compras ingresan stock (unidades × contenido_litros = volumen real)
+   Aplicaciones a parcelas egresan stock (con días carencia SENASA)
+
+7. COMERCIAL
+   Compras a proveedores → efectivo (egreso Caja) o CC (débito CuentaCorriente)
+   Ventas → egreso stock + ingreso Caja o débito CC cliente
+   Remitos auto-generados (NO-REM001, NO-REM002...)
+
+8. PAGOS TRABAJADORES
+   Anticipos (egreso Caja)
+   Liquidaciones (kilos × precio_kilo - anticipos = saldo, egreso Caja)
+
+9. GASTOS
+   Si efectivo → egreso Caja. Si CC → débito CuentaCorrienteProveedores.
+
+10. BALANCE
+    Ingresos = ventas. Costos = compras + pagos + gastos.
+    Balance por temporada, por parcela, por período.
+
+TRAZABILIDAD COMPLETA (ambas direcciones):
+Lote → Embalaje → Clasificación → Despalillado → Juntada → Parcela → Aplicaciones
+Cliente dice "lote 2026-001" → sistema muestra toda la cadena
+
+
+====================================================================
+SECCIÓN 5 — FLUJOS DE MERCADERÍA (3 variantes)
+====================================================================
+
+Flujo A — Fresco directo:
+  juntada → depósito (requiere_despalillado=0) → StockMercaderia inmediato
+
+Flujo B — Cámara fría:
+  juntada → stock_pendiente=1 → despalillado → StockMercaderia (depósito camara_fria)
+
+Flujo C — Fresco despalillado:
+  juntada → stock_pendiente=1 → despalillado → StockMercaderia (depósito galpón)
+
+
+====================================================================
+SECCIÓN 6 — REGLAS DE NEGOCIO CRÍTICAS
+====================================================================
+
+- Toda compra/gasto efectivo DEBE generar egreso en Caja
+- Toda compra/gasto CC DEBE generar débito en CuentaCorrienteProveedores
+- Toda liquidación/anticipo DEBE generar egreso en Caja
+- Stock de productos NUNCA puede quedar negativo
+- Una aplicación no puede registrarse si no hay stock suficiente
+- Los kilos de juntada son la base para calcular pagos y balance
+- Despalillado no puede superar kg cosecha del lote
+- NUNCA eliminar de la BD → desactivar/anular (soft-delete)
+- Auditoría de toda edición y anulación
+- Anulación = reversión completa en transacción (stock, caja, CC)
+- Remito obligatorio, auto-generado si vacío
+- NUNCA interpolar variables en queries SQL → siempre request.input()
+- Toda escritura multi-tabla DEBE usar sql.Transaction
+- Detección forma pago: campo es_cuenta_corriente en FormasPago (booleano)
+- Una sola temporada activa a la vez
+
+
+====================================================================
+SECCIÓN 7 — TABLAS SQL (48+)
+====================================================================
+
+MAESTRAS:
+  Usuarios, Personal, Temporadas, Parcelas, Productos,
+  CategoriasGasto, FormasPago, ConfiguracionEmpresa
+
+CAMPO:
+  LotesMercaderia (eje central — código, kilos, estado, etapa)
+  Juntada, Juntadores, LoteCosecheros
+  Despalillado, LoteDespalilladores
+  CategoriasFruta (6 categorías)
+  Clasificacion, Embalaje, VentaEmbalaje
+  LoteClasificadores
+  CategoriasClasificacion, SubCategoriasClasificacion
+  Aplicaciones
+
+STOCK:
+  StockMercaderia, MovimientosDeposito, StockInsumos, Depositos
+
+COMERCIAL:
+  Compras, ComprasDetalle, Proveedores
+  Clientes, Remitos, RemitoItems
+
+FINANZAS:
+  Caja, Cheques, ChequeMovimientos, Pagos, Gastos
+  CuentaCorrienteProveedores, CuentaCorrienteClientes
+  PrecioHistorico, PreciosLocales
+
+AUDITORÍA:
+  AuditoriaCompras, AuditoriaVentas, EdicionesHistorial
+  PermisosRol, PersonalRoles
+
+
+====================================================================
+SECCIÓN 8 — ENDPOINTS POR MÓDULO (resumen)
+====================================================================
+
+/api/auth — login, logout, me (JWT)
+/api/cotizaciones — dólar, granos, frutilla, locales (público)
+/api/juntada — 21 endpoints (lotes, cosecheros, registros, auditoría)
+/api/despalillado — 21 endpoints (lotes, despalilladores, pesajes, auditoría)
+/api/clasificacion-embalaje — 14 endpoints (clasificar, embalar, anular)
+/api/aplicaciones — 4 endpoints (historial, carencia, registrar, anular)
+/api/categorias-fruta — 5 endpoints (CRUD + toggle)
+/api/stock-mercaderia — 11 endpoints (stock, etapas, auditoría, anular)
+/api/stock-insumos — 7 endpoints (stock, historial, compra, egreso)
+/api/depositos — 18 endpoints (CRUD, ingreso, egreso, retornables)
+/api/compras — 6 endpoints (CRUD, auditoría, anular)
+/api/proveedores — 5 endpoints (CRUD + desactivar)
+/api/productos — 4 endpoints (CRUD + desactivar)
+/api/clientes — 4 endpoints (CRUD + desactivar)
+/api/remitos — 4 endpoints (siguiente-numero, CRUD, estado)
+/api/cuentas-clientes — 5 endpoints (resumen, cobro, anular)
+/api/cuentas-proveedores — 5 endpoints (resumen, pago, anular)
+/api/caja — 4 endpoints (movimientos, resumen, registrar)
+/api/cheques — 8 endpoints (CRUD + transiciones estado)
+/api/pagos — 5 endpoints (anticipo, liquidación, precio)
+/api/gastos — 4 endpoints (CRUD + anular)
+/api/balance — 3 endpoints (temporada, parcela, periodo)
+/api/dashboard — 1 endpoint (KPIs + alertas)
+/api/reportes — 8 endpoints (cosecha, desp, caja, gastos, cheques, pagos, compras, stock)
+/api/usuarios — 4 endpoints (CRUD)
+/api/personal — 5 endpoints (CRUD)
+/api/roles-trabajo — 4 endpoints (asignar, quitar, por-rol)
+/api/permisos — 3 endpoints (matriz, mi-rol, modificar)
+/api/configuracion-empresa — 2 endpoints (GET, PUT)
+/api/categorias-clasificacion — 7 endpoints (CRUD sub-categorías)
+/api/juntadores — 3 endpoints (QR, listado, crear)
+/api/temporadas — 5 endpoints (activas, CRUD)
+/api/parcelas — 3 endpoints (CRUD, montado desde lotes.js)
+
+
+====================================================================
+SECCIÓN 9 — DESIGN SYSTEM (cosecha.css)
+====================================================================
+
+Variables CSS:
+  --sem-verde, --sem-rojo, --sem-amarillo, --sem-azul, --sem-gris (+bg, +borde)
+  --superficie, --fondo, --borde, --texto, --texto-2, --texto-suave
+  --verde (#2D5016), --radius-lg (14px), --shadow-sm
+
+Componentes globales:
+  .sidebar + .sidebar-brand + .sidebar-nav + .nav-item + .sidebar-footer
+  .topbar + .topbar-left + .topbar-right + .temporada-badge
+  .filtros-barra + .fb-buscar + .fb-sep + .fb-limpiar
+  .card, .stat-card, .stat-grid
+  .modal-overlay + .modal-overlay.open + .modal-box
+  .action-card (para menús)
+  .form-colapsable + .form-colapsable.visible
+  .fg / .fi (formularios compactos)
+  .brand-icon, .brand-info, .brand-name, .brand-sub
+  .ins-btn, .ins-btn-primary, .ins-btn-egreso, .ins-btn-gray
+
+Iconos estándar grillas (Lucide):
+  eye = ver detalles
+  pencil = editar
+  power = activar/desactivar (NO eliminar)
+
+Helpers JS (utils.js):
+  poblarDatalist(datalistId, data, columnas)
+  matchFiltro(row, q, columnas)
+  _parseVal(v), _parseEl(id)
+  fetchApi() — fetch centralizado con error handling
+
+
+====================================================================
+SECCIÓN 10 — HISTORIAL DE SESIONES
+====================================================================
+
+2026-03-21: Auditoría inicial, 4 bugs corregidos (gastos sin reverso,
+  SQL injection en caja y cheques, variable pisada en pagos), seed.js creado
+
+2026-03-25: Rediseño aplicaciones + stock-insumos, DB migrations
+  (fecha_hora, usuario_id, empleado_id, aplicacion_id en StockInsumos)
+
+2026-03-27: Redesign global UI en 13 módulos, design system consolidado
+
+2026-03-28: Dashboard ejecutivo, filtros unificados (.filtros-barra) en
+  todos los módulos, etapas mercadería, embalaje retornable en ventas
+
+2026-03-31: Módulo insumos completo, navegación rediseñada,
+  aplicaciones.html form compact horizontal
+
+2026-04-02: Auditoría+anulación en compras/ventas/stock-mercadería,
+  alertas dashboard, accesos rápidos, hardening seguridad (SQL injection
+  6 puntos, transacciones 5 endpoints, limpieza datos), 4 agentes custom
+
+2026-04-03: Juntada reescrita (2 columnas lotes+cosecheros, persistencia,
+  edición inline, audit trail, 4 tabs), despalillado mejorado (select verde,
+  fix CSS edit-form, validación tope lote), clasificación+embalaje
+  reactivados, branding nuevo (logo frutilla, SE rojo, 38 archivos),
+  tablas LoteCosecheros y LoteDespalilladores creadas
+
+
+====================================================================
+SECCIÓN 11 — AUDITORÍA COMPLETA (resultados 5 agentes)
+====================================================================
+
+--------------------------------------------------------------------
+11.1 — PROBLEMAS CRÍTICOS (3)
+--------------------------------------------------------------------
+
+CRIT-01: despalillado.js POST /registrar — sin transacción
+  Escribe en LotesMercaderia + Despalillado secuencialmente.
+  Si INSERT falla, lote queda en estado 'en_despalillado' sin registro.
+  Archivo: server/routes/despalillado.js, líneas 59-102
+
+CRIT-02: juntada.js POST /lote/:id/registrar — sin transacción
+  INSERT Juntada + UPDATE LotesMercaderia sin transacción.
+  Si UPDATE falla, kilos del lote quedan desincronizados.
+  Archivo: server/routes/juntada.js, líneas 138-178
+  ADEMÁS: PUT /lote-registro/:id (4 ops sin tx) y POST /lote-registro/:id/anular (3 ops sin tx)
+
+CRIT-03: remitos.js PATCH /:id/estado — dos queries sin atomicidad
+  UPDATE Remitos + UPDATE MovimientosDeposito en mismo .query() sin transacción.
+  Archivo: server/routes/remitos.js, líneas 108-118
+
+--------------------------------------------------------------------
+11.2 — PROBLEMAS ALTOS (5)
+--------------------------------------------------------------------
+
+ALTA-01: JWT Secret con fallback público
+  auth.js y middleware/auth.js: JWT_SECRET = process.env.JWT_SECRET || 'cosecha_jwt_secret_2026'
+  Si .env no carga, cualquiera puede forjar tokens.
+
+ALTA-02: lotes.html página huérfana, duplica parcelas.html
+  Misma funcionalidad, no accesible desde ningún menú.
+
+ALTA-03: stock-mercaderia.js POST /ingreso — ruta legacy sin consumidor
+  Inserta stock sin movimiento de depósito. Inconsistencia potencial.
+
+ALTA-04: parcelas.js archivo huérfano (código muerto)
+  index.js monta lotes.js en /api/parcelas. parcelas.js nunca se usa.
+
+ALTA-05: CONTEXTO-PROYECTO-v7.txt desactualizado
+  Dice "multi-cultivo" pero sistema es solo frutilla. Faltan 8+ tablas.
+  REGLAS-DESARROLLO.md referencia v6.
+
+--------------------------------------------------------------------
+11.3 — PROBLEMAS MEDIOS (8)
+--------------------------------------------------------------------
+
+MED-01: Error messages exponen schema DB
+  res.status(500).json({ error: err.message }) en todos los endpoints.
+
+MED-02: Interpolación tipoInverso en SQL
+  cuentas-proveedores.js:151 y cuentas-clientes.js:152.
+
+MED-03: Sin rate limiting en /api/auth/login
+
+MED-04: Variables CSS fantasma
+  --texto-secundario (4 archivos), --fondo-card (1 archivo).
+
+MED-05: 7 archivos con estilos legacy sobreescriben design system
+  clientes, proveedores, admin, productos, temporadas, empresa, qr-generator.
+
+MED-06: 5 menús usan .btn como action-card
+  menu-admin, menu-comercial, menu-config, menu-stock, stock.html.
+
+MED-07: KPI cards fragmentadas
+  11 archivos con clases inventadas distintas.
+
+MED-08: movimientos-grid.js migración a medio terminar
+  Eliminado de despalillado.html pero sigue en juntada.html y stock-mercaderia.html.
+
+--------------------------------------------------------------------
+11.4 — PROBLEMAS BAJOS (6)
+--------------------------------------------------------------------
+
+- remitos.js PATCH sin verificar existencia — responde ok:true aunque no exista
+- stock-mercaderia.js POST /egreso sin validar kilos > 0
+- usuarios.js PUT sin whitelist de roles válidos
+- admin.html sin acceso desde menú (juntadores legacy)
+- 11+ archivos CONTEXTO/SESION acumulados en raíz
+- Inline styles alta densidad en juntada(69), ventas(61), compras(52)
+
+--------------------------------------------------------------------
+11.5 — CONSISTENCIA VISUAL
+--------------------------------------------------------------------
+
+100% CONSISTENTE:
+  - Branding (brand-icon + brand-info + brand-name + brand-sub) en 39 archivos
+  - Lucide CDN en todos
+  - Sidebar nav estructura idéntica
+  - Topbar + temporada-badge
+  - Filtros .filtros-barra en 16 archivos
+
+INCONSISTENTE:
+  - 15 archivos con <th>Acciones</th> (debe ser <th></th> vacío)
+  - 8 archivos con colores hardcodeados #2d6a4f fuera de variables
+  - 6 modales con estructura no canónica (inline styles)
+  - 7 archivos sobreescriben .card, .btn, label, input, table localmente
+  - 5 menús usan .btn con padding gigante como action-card
+
+--------------------------------------------------------------------
+11.6 — GAPS FUNCIONALES (negocio)
+--------------------------------------------------------------------
+
+CRÍTICOS:
+  G1. Alerta de carencia en juntada — aplicaciones registran días carencia
+      pero NO avisan al cosechar parcela con carencia activa. SENASA/legal.
+  G2. Tareas Generales — diseñado (3 tablas: TareasGenerales, TareaInsumos,
+      TareaTrabajadores) pero no implementado. Cubre preparación, riego,
+      túneles, limpieza.
+
+IMPORTANTES:
+  G3. Vista simplificada para operario de campo
+  G4. Lista de precios por categoría de fruta
+  G5. Liquidación masiva de cosecheros (hoy solo individual)
+
+DESEABLES:
+  G6. Comparativo entre temporadas
+  G7. Despacho/Logística de salida
+  G8. Notificaciones push
+  G9. Registro climático
+  G10. Mapa visual de parcelas
+
+--------------------------------------------------------------------
+11.7 — FILTROS PENDIENTES
+--------------------------------------------------------------------
+
+Completados: aplicaciones, stock-insumos, stock-mercaderia, ventas,
+  caja, cheques, pagos, compras, personal, juntada, lotes
+
+Pendientes de completar: cheques (extraer renderCheques), y verificar
+  que todos los módulos nuevos (clasificación, despalillado rediseñado)
+  tengan filtros unificados.
+
+
+====================================================================
+SECCIÓN 12 — LO QUE FUNCIONA CORRECTAMENTE
+====================================================================
+
+- Todas las rutas en server/index.js resuelven sin errores
+- Módulos principales usan transacciones SQL correctamente:
+  compras, aplicaciones, depósitos, stock-mercaderia, cheques,
+  pagos, gastos, cuentas corrientes, clasificación
+- 0 SQL injection por interpolación de valores de usuario
+- Soft-delete implementado en todos los módulos críticos
+- Auditoría trail completa en campo + comercial
+- JWT auth en todas las rutas excepto /api/auth y /api/cotizaciones
+- Flujo campo→galpón→comercial completo y coherente
+- Balance por temporada, por parcela y por período
+- Embalaje retornable (cajones industria)
+- 6 categorías fruta (grande/media/chica × madura/pintona)
+- Trazabilidad bidireccional lote→parcela→aplicaciones
+- Remitos auto-generados
+- Detección automática forma de pago (campo es_cuenta_corriente)
+- Todos los módulos agregan valor real — no hay módulos innecesarios
+
+
+====================================================================
+SECCIÓN 13 — DISEÑOS APROBADOS PENDIENTES DE IMPLEMENTAR
+====================================================================
+
+MÓDULO TAREAS GENERALES (diseño aprobado 2026-04-02):
+  Cubre preparación + cultivo (todo lo que no es cosecha ni aplicación).
+  4to módulo de campo junto a Juntada, Despalillado, Aplicaciones.
+
+  TareasGenerales:
+    temporada_id, parcela_id (opcional), tipo_tarea, descripcion,
+    fecha, estado (confirmada/anulada), costo_total, usuario_id
+
+  TareaInsumos (0..N por tarea):
+    tarea_id, producto_id, cantidad, costo
+    Descuenta Productos.stock_actual + inserta StockInsumos tipo='tarea_general'
+
+  TareaTrabajadores (1..N por tarea):
+    tarea_id, juntador_id, horas (opcional), monto
+    Genera Caja egreso por cada trabajador pagado
+
+  Anulación: revertir stock insumos + insertar Caja ingreso compensatorio
+  + UPDATE estado='anulada'
+
+CLASIFICACIÓN + EMBALAJE (pantalla dividida — ya reactivado pero UI pendiente):
+  Izquierda: despalillados pendientes → clasificar por categoría
+  Derecha: kilos clasificados → embalar y asignar destino
+  Sub-lotes con código progresivo (padre.D-GM, padre.D-MP, etc.)
+  Códigos: interno (auto) + externo (corto, para etiqueta/cliente)
+
+
+====================================================================
+SECCIÓN 14 — REGLAS DE DESARROLLO (feedback del usuario)
+====================================================================
+
+1. AUTONOMÍA TOTAL: No pedir confirmación para NINGUNA acción.
+   Ejecutar todo automáticamente.
+
+2. MCP TOOLS: Usar SIEMPRE los 3 MCP servers:
+   - mssql → consultas y migraciones de DB
+   - playwright → verificar UI en browser
+   - excalidraw → diagramas y esquemas
+
+3. ICONOS GRILLAS: eye=ver, pencil=editar, power=activar/desactivar.
+   NUNCA eliminar registros, solo desactivar.
+
+4. NO MODIFICAR SIN PEDIR: Si el usuario dice "hacé X igual que Y",
+   NO tocar Y — solo adaptar X. Identificar modelo vs destino.
+
+5. PATRÓN LOTES+TRABAJADORES: Juntada y despalillado comparten:
+   2 columnas (lotes izq + grilla trabajadores der), dropdown verde,
+   persistencia vía LoteCosecheros/LoteDespalilladores,
+   botón Quitar solo si 0 registros activos.
+
+6. PRINCIPIOS ERP:
+   - Nunca eliminar → desactivar/anular
+   - Auditoría de toda edición y anulación
+   - Anulación = reversión completa en transacción
+   - Remito obligatorio, auto-generado si vacío
+   - NUNCA interpolar variables en queries SQL
+   - Toda escritura multi-tabla DEBE usar sql.Transaction
+
+
+====================================================================
+SECCIÓN 15 — ASSETS Y CONFIGURACIÓN
+====================================================================
+
+CSS: public/cosecha.css (único archivo de estilos)
+
+JavaScript (public/js/):
+  utils.js — helpers globales (poblarDatalist, matchFiltro, fetchApi)
+  auth-check.js — verificación JWT en cliente
+  cotizaciones.js — fetch y cache cotizaciones
+  movimientos-grid.js — grilla reutilizable movimientos
+  jsqr.min.js — librería QR reading
+
+Imágenes (public/img/):
+  logo.png, logo-icon.png, logo horizontal.png,
+  logo horizontal1.png, logo-icon1.png
+
+Configuración:
+  .env — variables entorno (DB_SERVER, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME, JWT_SECRET)
+  package.json — dependencias: express ^5.2.1, mssql ^12.2.1, jsonwebtoken, bcrypt,
+    exceljs, pdfkit, serialport, ws, dotenv
+
+Migraciones (server/migrations/):
+  2026-04-02_estado-campo-modules.sql
+  2026-04-02_hardening-seguridad.sql
+  2026-04-02_indices-fk.sql
+  2026-04-02_limpieza-datos.sql
+
+Scripts DB (db/): 27 SQLQuery_*.sql + 1 migracion-categorias-clasificacion.sql
+
+Middleware (server/middleware/):
+  auth.js — verificar JWT
+  roles.js — soloAdmin, encargadoOAdmin
+
+Agentes custom (.claude/agents/):
+  visual-consistency, scope-guard, work-standards, business-context
+
+
+====================================================================
+SECCIÓN 16 — COMMITS RECIENTES (últimos 25)
+====================================================================
+
+39b61f6 docs: migration script — columna estado en Juntada, Despalillado, Aplicaciones
+6012f43 feat: aplicaciones — tabs historial/totales x aplicador, anulación por fila
+f89bdcc feat: despalillado — historial inline, totales x despalillador, anulación por fila
+4b43a48 feat: juntada — historial inline, totales x cosechero, anulación por fila
+c4a7d14 feat: endpoints anular para juntada, despalillado y aplicaciones
+c36a28b feat: fetchApi() — fetch centralizado con error handling estándar
+375bcd5 ui: simetría visual — stock-insumos, stock-mercaderia (lote 2c)
+e28d036 ui: simetría visual — juntada, despalillado, aplicaciones (lote 2b)
+5d79b4e ui: simetría visual — cheques, depositos, remitos (lote 2a)
+7a07fe8 ui: simetría visual — iconos, botones y headers estándar (lote 1)
+545a408 feat: design system — clases estándar para simetría visual
+832f7a5 feat: ventas — anulación, auditoría y acceso rápido nuevo cliente
+37bf8b1 feat: compras — anulación, auditoría, alertas y accesos rápidos
+9a6888a feat: auditoría + anulación ventas en stock-mercaderia
+b653976 feat: alertas en tránsito en dashboard — stock pendiente despalillado
+81edef9 feat: accesos rápidos — auto-abrir formulario con ?nuevo=1
+2d55a2c security: validación backend en aplicaciones, despalillado, caja, stock-insumos
+0c9fe49 security: validación backend en endpoints POST críticos
+a784bc3 fix: gastos.html — anulación soft-delete con reversión financiera
+8fe60e8 perf: crear 51 indices en FKs sin indice — cobertura 100%
+da691be docs: migration script para columnas estado en gastos y cuentas corrientes
+9572fb0 security: fix XSS en mostrarMensaje — innerHTML reemplazado por textContent
+f8fb2c9 security: eliminar hard DELETE — soft-delete en gastos y cuentas corrientes
+0599aac security: JWT secret desde env + auth en POST cotizaciones
+970dd37 fix: limpieza datos — renombrar GLIFOSATO duplicados, asignar remitos retroactivos
+
+
+====================================================================
+SECCIÓN 17 — CAMBIOS SIN COMMITEAR (working tree)
+====================================================================
+
+~49 archivos modificados correspondientes al trabajo de 2026-04-03:
+- Branding completo: logo frutilla+surcos, SE en rojo, clases .brand-* en 38 HTML
+- Juntada reescrita: 2 columnas, select verde, edición inline, audit trail, 4 tabs
+- Despalillado mejorado: select verde, persistencia, fix CSS, validación tope, 4 tabs
+- Clasificación + embalaje: rutas montadas en server/index.js
+- Tablas DB creadas: LoteCosecheros, LoteDespalilladores
+- server/routes/productos.js, balance.js, depositos.js, stock-mercaderia.js actualizados
+
+
+====================================================================
+FIN DEL CONTEXTO
+====================================================================

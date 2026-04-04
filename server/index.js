@@ -41,6 +41,9 @@ app.use('/api/parcelas',          requireAuth, encargadoOAdmin, require('./route
 app.use('/api/juntadores',        requireAuth, encargadoOAdmin, require('./routes/juntadores'));
 app.use('/api/juntada',           requireAuth, encargadoOAdmin, require('./routes/juntada'));
 app.use('/api/despalillado',      requireAuth, encargadoOAdmin, require('./routes/despalillado'));
+app.use('/api/clasificacion-embalaje', requireAuth, encargadoOAdmin, require('./routes/clasificacion-embalaje'));
+app.use('/api/categorias-fruta', requireAuth, encargadoOAdmin, require('./routes/categorias-fruta'));
+app.use('/api/categorias-clasificacion', requireAuth, encargadoOAdmin, require('./routes/categorias-clasificacion'));
 app.use('/api/reportes',          requireAuth, encargadoOAdmin, require('./routes/reportes'));
 app.use('/api/temporadas',        requireAuth, encargadoOAdmin, require('./routes/temporadas'));
 app.use('/api/productos',         requireAuth, encargadoOAdmin, require('./routes/productos'));
@@ -52,6 +55,7 @@ app.use('/api/clientes',          requireAuth, encargadoOAdmin, require('./route
 app.use('/api/personal',          requireAuth, encargadoOAdmin, require('./routes/personal'));
 app.use('/api/roles-trabajo',     requireAuth, encargadoOAdmin, require('./routes/roles-trabajo'));
 app.use('/api/permisos',          requireAuth, require('./routes/permisos'));
+app.use('/api/configuracion-empresa', requireAuth, encargadoOAdmin, require('./routes/configuracion-empresa'));
 
 // WebSocket para balanza
 wss.on('connection', (ws) => {

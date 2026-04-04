@@ -60,7 +60,12 @@
     }
     .etapa-badge.pendiente_despalillado { background:#fff3cd; color:#856404; }
     .etapa-badge.fresco                 { background:#e8f5e2; color:#2d6a4f; }
+    .etapa-badge.cosecha                { background:#fff3cd; color:#856404; }
     .etapa-badge.despalillado           { background:#e8f0fe; color:#1565c0; }
+    .etapa-badge.en_clasificacion       { background:#fef3e2; color:#c0580a; }
+    .etapa-badge.clasificado            { background:#f3e8ff; color:#7c3aed; }
+    .etapa-badge.embalado               { background:#e8f5e2; color:#2d6a4f; }
+    .etapa-badge.vendido_parcial        { background:#fde8e8; color:#c0392b; }
     .etapa-badge.vendida                { background:#f3e8ff; color:#7c3aed; }
     .etapa-badge.vendida_parcial        { background:#fde8e8; color:#c0392b; }
     /* Tabla etapas */
@@ -219,11 +224,8 @@
   <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="sidebar-brand">
-      <img src="img/logo-icon.png" style="height:44px;width:44px;border-radius:10px;">
-      <div style="margin-left:10px;display:flex;flex-direction:column;justify-content:center;line-height:1.1;">
-        <span style="color:white;font-weight:700;font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span>
-        <span style="color:rgba(255,255,255,0.5);font-size:10px;letter-spacing:1.5px;margin-top:2px;">SISTEMA DE CULTIVOS</span>
-      </div>
+      <img src="img/logo-icon.png" class="brand-icon">
+      <div class="brand-info"><span class="brand-name">CO<em>SE</em>CHA</span><span class="brand-sub">SISTEMA DE CULTIVOS</span></div>
     </div>
     <nav class="sidebar-nav">
       <a href="index.html" class="nav-item"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard</a>
@@ -231,6 +233,7 @@
       <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
       <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
       <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
+      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
       <div class="nav-section">Sistema</div>
       <a href="menu-stock.html" class="nav-item active"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
       <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
@@ -238,18 +241,15 @@
       <a href="mercado.html" class="nav-item"><span class="nav-icon"><i data-lucide="trending-up"></i></span> Mercado</a>
       <a href="menu-config.html" class="nav-item"><span class="nav-icon"><i data-lucide="settings"></i></span> Configuración</a>
     </nav>
-    <div class="sidebar-footer">Sistema Agrícola v2</div>
+    <div class="sidebar-footer">Cosecha · Sistema de Cultivos</div>
   </aside>
 
   <!-- MAIN -->
   <div class="main">
     <header class="topbar">
       <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
-        <img src="img/logo-icon.png" style="height:44px;width:44px;border-radius:10px;">
-        <div style="margin-left:10px;display:flex;flex-direction:column;justify-content:center;line-height:1.1;">
-          <span style="color:white;font-weight:700;font-size:18px;">CO<span style="color:#F5A623;">SE</span>CHA</span>
-          <span style="color:rgba(255,255,255,0.5);font-size:10px;letter-spacing:1.5px;margin-top:2px;">SISTEMA DE CULTIVOS</span>
-        </div><span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
+        <img src="img/logo-icon.png" class="brand-icon">
+        <div class="brand-info"><span class="brand-name">CO<em>SE</em>CHA</span><span class="brand-sub">SISTEMA DE CULTIVOS</span></div><span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
       </div>
       <div class="topbar-right">
         <span class="topbar-date" id="topbar-date"></span>
@@ -301,10 +301,15 @@
           <div class="merc-kpi-valor rojo" id="kpi-descartados">—</div>
           <div class="merc-kpi-label">KG Descartados</div>
         </div>
-        <div class="merc-kpi" id="kpi-transito-card" style="display:none;">
+        <div class="merc-kpi">
           <div class="merc-kpi-icon transito"><i data-lucide="clock"></i></div>
-          <div class="merc-kpi-valor" style="color:#856404;" id="kpi-transito">—</div>
-          <div class="merc-kpi-label">❄️ En tránsito</div>
+          <div class="merc-kpi-valor" style="color:#856404;" id="kpi-en-proceso">—</div>
+          <div class="merc-kpi-label">En Proceso</div>
+        </div>
+        <div class="merc-kpi">
+          <div class="merc-kpi-icon" style="background:#e8f5e2;color:#2D5016;"><i data-lucide="package-check"></i></div>
+          <div class="merc-kpi-valor verde" id="kpi-embalado">—</div>
+          <div class="merc-kpi-label">Embalado (vendible)</div>
         </div>
         <div class="merc-kpi" id="kpi-cajones-card" style="display:none;">
           <div class="merc-kpi-icon cajones"><i data-lucide="package"></i></div>
@@ -340,15 +345,16 @@
             <table id="tabla-stock-actual">
               <thead>
                 <tr>
+                  <th>ETAPA</th>
                   <th>VARIEDAD</th>
+                  <th>CATEGORÍA</th>
                   <th>DEPÓSITO</th>
-                  <th>TIPO DEPÓSITO</th>
-                  <th title="Cantidad de parcelas que aportaron a este stock">PARCELAS</th>
-                  <th style="text-align:right;">KG DISPONIBLES</th>
+                  <th style="text-align:right;">LOTES</th>
+                  <th style="text-align:right;">KG</th>
                 </tr>
               </thead>
               <tbody id="tbody-stock-actual">
-                <tr><td colspan="5" class="empty">Cargando...</td></tr>
+                <tr><td colspan="6" class="empty">Cargando...</td></tr>
               </tbody>
             </table>
           </div>
@@ -894,43 +900,46 @@ function cargarStockActual() {
   var tid = document.getElementById('filtro-temporada').value;
   var url = '/api/stock-mercaderia/actual' + (tid ? '?temporada_id=' + tid : '');
   document.getElementById('tbody-stock-actual').innerHTML =
-    '<tr><td colspan="5" class="empty">Cargando...</td></tr>';
+    '<tr><td colspan="6" class="empty">Cargando...</td></tr>';
+  var etapaLabels = {
+    cosecha:'🟡 Cosecha', despalillado:'🔵 Despalillado',
+    en_clasificacion:'🟠 En clasif.', clasificado:'🟣 Clasificado',
+    embalado:'🟢 Embalado', vendido_parcial:'🔶 Venta parcial'
+  };
   fetch(url).then(function(r){ return r.json(); }).then(function(data){
     _stockActualData = data || [];
     var tbody = document.getElementById('tbody-stock-actual');
     if (!data || !data.length) {
-      tbody.innerHTML = '<tr><td colspan="5" class="empty">Sin stock en depósitos</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" class="empty">Sin stock en depósitos</td></tr>';
       return;
     }
     tbody.innerHTML = data.map(function(row){
-      var tipoLabel = row.deposito_tipo ? row.deposito_tipo.replace(/_/g,' ') : '—';
-      var parcelas = row.parcelas_involucradas || 1;
-      var parcelaLabel = parcelas === 1 && row.parcela_nombre
-        ? row.parcela_nombre
-        : parcelas + ' parcela' + (parcelas !== 1 ? 's' : '');
+      var etiqueta = etapaLabels[row.etapa] || row.etapa;
+      var catLabel = (row.categoria || '') + (row.sub_categoria ? ' ' + row.sub_categoria : '');
       return '<tr>' +
+        '<td><span class="etapa-badge ' + (row.etapa||'') + '">' + etiqueta + '</span></td>' +
         '<td style="font-weight:600;">' + (row.variedad || '—') + '</td>' +
-        '<td>' + (row.deposito || '—') + '</td>' +
-        '<td><span class="badge badge-deposito">' + tipoLabel + '</span></td>' +
-        '<td style="font-size:12px;">' + parcelaLabel + '</td>' +
+        '<td>' + (catLabel || '—') + '</td>' +
+        '<td>' + (row.deposito || '<em style="color:var(--texto-suave)">Sin asignar</em>') + '</td>' +
+        '<td style="text-align:right;font-size:12px;">' + (row.cantidad_lotes || 1) + '</td>' +
         '<td style="text-align:right;font-weight:700;color:var(--sem-verde);">' +
           fmt(row.kg_disponibles) + ' kg</td>' +
         '</tr>';
     }).join('');
   }).catch(function(){
     document.getElementById('tbody-stock-actual').innerHTML =
-      '<tr><td colspan="5" class="empty">Error al cargar stock actual</td></tr>';
+      '<tr><td colspan="6" class="empty">Error al cargar stock actual</td></tr>';
   });
 }
 
 function exportarStockActual() {
   if (!_stockActualData.length) { alert('No hay datos para exportar'); return; }
   var filas = _stockActualData.map(function(r){
-    return [r.variedad||'', r.deposito||'', r.deposito_tipo||'',
-            r.parcelas_involucradas||1,
+    return [r.etapa||'', r.variedad||'', (r.categoria||'')+(r.sub_categoria?' '+r.sub_categoria:''),
+            r.deposito||'', r.cantidad_lotes||1,
             parseFloat(r.kg_disponibles||0).toFixed(1)];
   });
-  filas.unshift(['Variedad','Depósito','Tipo Depósito','Parcelas','KG Disponibles']);
+  filas.unshift(['Etapa','Variedad','Categoría','Depósito','Lotes','KG']);
   _descargarCSV(filas, 'stock-mercaderia-actual-' + _fechaHoy() + '.csv');
 }
 
@@ -940,20 +949,23 @@ function imprimirStockActual() {
   var filtros = [['Temporada', tNombre]];
   var thStyle = 'background:#2D5016;color:#fff;padding:8px 12px;text-align:left;font-size:12px;';
   var filas = (_stockActualData || []).map(function(r){
-    return '<tr><td style="padding:7px 12px;font-weight:600;">' + (r.variedad||'—') + '</td>' +
+    var catLabel = (r.categoria||'') + (r.sub_categoria ? ' '+r.sub_categoria : '');
+    return '<tr><td style="padding:7px 12px;">' + (r.etapa||'—') + '</td>' +
+           '<td style="padding:7px 12px;font-weight:600;">' + (r.variedad||'—') + '</td>' +
+           '<td style="padding:7px 12px;">' + (catLabel||'—') + '</td>' +
            '<td style="padding:7px 12px;">' + (r.deposito||'—') + '</td>' +
-           '<td style="padding:7px 12px;">' + (r.deposito_tipo||'—').replace(/_/g,' ') + '</td>' +
-           '<td style="padding:7px 12px;text-align:center;">' + (r.parcelas_involucradas||1) + '</td>' +
+           '<td style="padding:7px 12px;text-align:center;">' + (r.cantidad_lotes||1) + '</td>' +
            '<td style="padding:7px 12px;text-align:right;font-weight:700;">' +
              fmt(r.kg_disponibles) + ' kg</td></tr>';
   }).join('');
   var tabla = '<table style="width:100%;border-collapse:collapse;">' +
     '<thead><tr>' +
-      '<th style="' + thStyle + '">VARIEDAD / PARCELA</th>' +
+      '<th style="' + thStyle + '">ETAPA</th>' +
+      '<th style="' + thStyle + '">VARIEDAD</th>' +
+      '<th style="' + thStyle + '">CATEGORÍA</th>' +
       '<th style="' + thStyle + '">DEPÓSITO</th>' +
-      '<th style="' + thStyle + '">TIPO DEPÓSITO</th>' +
-      '<th style="' + thStyle + 'text-align:center;">PARCELAS</th>' +
-      '<th style="' + thStyle + 'text-align:right;">KG DISPONIBLES</th>' +
+      '<th style="' + thStyle + 'text-align:center;">LOTES</th>' +
+      '<th style="' + thStyle + 'text-align:right;">KG</th>' +
     '</tr></thead><tbody>' + filas + '</tbody></table>';
   _abrirVentanaImpresion('Stock Actual — Mercadería', filtros, tabla);
 }
@@ -967,16 +979,9 @@ function cargarStock() {
     document.getElementById('kpi-deposito').textContent    = fmt(k.kg_en_deposito);
     document.getElementById('kpi-vendidos').textContent    = fmt(k.kg_vendidos);
     document.getElementById('kpi-descartados').textContent = fmt(k.kg_descartados);
+    document.getElementById('kpi-en-proceso').textContent  = fmt(k.kg_en_proceso);
+    document.getElementById('kpi-embalado').textContent    = fmt(k.kg_embalado);
   });
-  // KG en tránsito — juntadas cámara fría esperando despalillado
-  var transitoUrl = '/api/juntada/pendientes-stock' + (tid ? '?temporada_id='+tid : '');
-  fetch(transitoUrl).then(function(r){ return r.json(); }).then(function(data){
-    var card = document.getElementById('kpi-transito-card');
-    if (!data || !data.total_kg) { card.style.display = 'none'; return; }
-    card.style.display = '';
-    document.getElementById('kpi-transito').textContent = fmt(data.total_kg);
-    lucide.createIcons();
-  }).catch(function(){ document.getElementById('kpi-transito-card').style.display = 'none'; });
 }
 
 /* ── Egreso de depósito ── */

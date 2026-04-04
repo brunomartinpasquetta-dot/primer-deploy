@@ -1,0 +1,134 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - text: CO
+          - emphasis [ref=e8]: SE
+          - text: CHA
+        - generic [ref=e9]: SISTEMA DE CULTIVOS
+    - navigation [ref=e10]:
+      - link "Dashboard" [ref=e11] [cursor=pointer]:
+        - /url: index.html
+        - img [ref=e13]
+        - text: Dashboard
+      - generic [ref=e18]: Campo
+      - link "Cosecha" [ref=e19] [cursor=pointer]:
+        - /url: juntada.html
+        - img [ref=e21]
+        - text: Cosecha
+      - link "Despalillado" [ref=e30] [cursor=pointer]:
+        - /url: despalillado.html
+        - img [ref=e32]
+        - text: Despalillado
+      - link "Aplicaciones" [ref=e38] [cursor=pointer]:
+        - /url: aplicaciones.html
+        - img [ref=e40]
+        - text: Aplicaciones
+      - generic [ref=e43]: Sistema
+      - link "Stock" [ref=e44] [cursor=pointer]:
+        - /url: menu-stock.html
+        - img [ref=e46]
+        - text: Stock
+      - link "Comercial" [ref=e50] [cursor=pointer]:
+        - /url: menu-comercial.html
+        - img [ref=e52]
+        - text: Comercial
+      - link "Administración" [ref=e57] [cursor=pointer]:
+        - /url: menu-admin.html
+        - img [ref=e59]
+        - text: Administración
+      - link "Mercado" [ref=e61] [cursor=pointer]:
+        - /url: mercado.html
+        - img [ref=e63]
+        - text: Mercado
+      - link "Configuración" [ref=e66] [cursor=pointer]:
+        - /url: menu-config.html
+        - img [ref=e68]
+        - text: Configuración
+    - generic [ref=e71]:
+      - generic [ref=e72]: Administrador · administrador
+      - button "Cerrar sesión" [ref=e73] [cursor=pointer]
+  - generic [ref=e74]:
+    - banner [ref=e75]:
+      - generic [ref=e76]:
+        - img [ref=e77]
+        - generic [ref=e78]:
+          - generic [ref=e79]:
+            - text: CO
+            - emphasis [ref=e80]: SE
+            - text: CHA
+          - generic [ref=e81]: SISTEMA DE CULTIVOS
+        - generic [ref=e82]: 🌱 Campaña FIX 2026 · Día 4
+      - generic [ref=e83]:
+        - generic [ref=e84] [cursor=pointer]:
+          - img [ref=e85]
+          - text: Administrador
+        - generic [ref=e88]: viernes, 3 de abril
+    - generic [ref=e89]:
+      - generic [ref=e90]:
+        - generic [ref=e91]: Dashboard
+        - generic [ref=e93]: Cargando...
+      - generic [ref=e94]:
+        - generic [ref=e95]:
+          - generic [ref=e96]: Hoy
+          - generic [ref=e97]:
+            - generic [ref=e98]:
+              - generic [ref=e99]: Cosecha hoy
+              - generic [ref=e100]: —
+              - generic [ref=e101]: kg
+            - generic [ref=e102]:
+              - generic [ref=e103]: En cámara
+              - generic [ref=e104]: —
+              - generic [ref=e105]: kg disponibles
+            - generic [ref=e106]:
+              - generic [ref=e107]: Saldo caja
+              - generic [ref=e108]: —
+          - generic [ref=e109]: Estado del stock
+          - generic [ref=e110]: Campaña
+          - generic [ref=e111]:
+            - generic [ref=e112]:
+              - generic [ref=e113]: Total cosechado
+              - generic [ref=e114]: —
+              - generic [ref=e115]: kg total temporada
+            - generic [ref=e116]:
+              - generic [ref=e117]: Vendido total
+              - generic [ref=e118]: —
+              - generic [ref=e119]: kg total temporada
+        - generic [ref=e120]:
+          - generic [ref=e122]: Estado de depósitos
+          - generic [ref=e124]: Cargando...
+        - generic [ref=e125]:
+          - generic [ref=e126]:
+            - generic [ref=e127]: Alertas
+            - generic "Alertas activas" [ref=e129] [cursor=pointer]:
+              - img [ref=e130]
+          - generic [ref=e134]: Sin alertas activas
+      - generic [ref=e135]:
+        - generic [ref=e136]:
+          - generic [ref=e138]: Últimos registros de cosecha
+          - table [ref=e140]:
+            - rowgroup [ref=e141]:
+              - row "Hora Cosechador Parcela Kilos Destino" [ref=e142]:
+                - columnheader "Hora" [ref=e143]
+                - columnheader "Cosechador" [ref=e144]
+                - columnheader "Parcela" [ref=e145]
+                - columnheader "Kilos" [ref=e146]
+                - columnheader "Destino" [ref=e147]
+            - rowgroup [ref=e148]:
+              - row "Cargando..." [ref=e149]:
+                - cell "Cargando..." [ref=e150]
+        - generic [ref=e151]:
+          - generic [ref=e153]: Últimos registros de aplicaciones
+          - table [ref=e155]:
+            - rowgroup [ref=e156]:
+              - row "Fecha Producto Parcela Dosis Usuario" [ref=e157]:
+                - columnheader "Fecha" [ref=e158]
+                - columnheader "Producto" [ref=e159]
+                - columnheader "Parcela" [ref=e160]
+                - columnheader "Dosis" [ref=e161]
+                - columnheader "Usuario" [ref=e162]
+            - rowgroup [ref=e163]:
+              - row "Cargando..." [ref=e164]:
+                - cell "Cargando..." [ref=e165]

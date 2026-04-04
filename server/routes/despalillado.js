@@ -2,6 +2,300 @@ const express = require('express');
 const router = express.Router();
 const { getPool, sql } = require('../db');
 
+// GET /api/despalillado/pendientes-lote
+// Lotes cerrados o en_despalillado listos para despalillar
+router.get('/pendientes-lote', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const result = await pool.request().query(`
+      SELECT l.id, l.codigo_interno, l.kilos, l.estado, l.fecha_inicio,
+             l.kilos_en_camara, l.deposito_camara_id, l.merma_despalillado,
+             d.nombre AS deposito, dc.nombre AS deposito_camara,
+             ISNULL((SELECT SUM(dp.kilos) FROM Despalillado dp WHERE dp.lote_id = l.id AND dp.estado != 'anulada'), 0) AS kg_despalillados
+      FROM LotesMercaderia l
+      LEFT JOIN Depositos d ON l.deposito_id = d.id
+      LEFT JOIN Depositos dc ON l.deposito_camara_id = dc.id
+      WHERE l.estado IN ('cerrado', 'en_despalillado')
+      ORDER BY l.fecha_inicio ASC`);
+    res.json(result.recordset);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/despalillado/camaras
+router.get('/camaras', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const result = await pool.request().query(`
+      SELECT id, nombre FROM Depositos WHERE tipo_deposito = 'camara_frio' AND activo = 1 ORDER BY nombre`);
+    res.json(result.recordset);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/despalillado/lote/:id/registros
+router.get('/lote/:id/registros', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const result = await pool.request()
+      .input('lote_id', sql.Int, parseInt(req.params.id))
+      .query(`SELECT d.id, d.despalillador_id, d.kilos, d.fecha_hora, d.estado, d.usuario_id,
+                     ju.apellido + ', ' + ju.nombre AS despalillador,
+                     u.nombre AS usuario
+              FROM Despalillado d
+              JOIN Juntadores ju ON d.despalillador_id = ju.id
+              LEFT JOIN Usuarios u ON d.usuario_id = u.id
+              WHERE d.lote_id = @lote_id
+              ORDER BY d.fecha_hora DESC`);
+    res.json(result.recordset);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/despalillado/registrar — pesaje por lote
+router.post('/registrar', async (req, res) => {
+  try {
+    const { lote_id, despalillador_id, kilos } = req.body;
+    if (!lote_id) return res.status(400).json({ error: 'Lote es obligatorio' });
+    if (!despalillador_id) return res.status(400).json({ error: 'Despalillador es obligatorio' });
+    if (!kilos || parseFloat(kilos) <= 0) return res.status(400).json({ error: 'Kilos debe ser mayor a 0' });
+
+    const pool = await getPool();
+    const uid = req.user ? req.user.id : null;
+    const kilosNum = parseFloat(kilos);
+
+    // Validar tope de lote: no superar kg de cosecha
+    const loteRes = await pool.request().input('lote_id', sql.Int, lote_id)
+      .query(`SELECT l.kilos AS kg_cosecha,
+              ISNULL((SELECT SUM(d.kilos) FROM Despalillado d WHERE d.lote_id = l.id AND d.estado != 'anulada'), 0) AS kg_despalillados
+              FROM LotesMercaderia l WHERE l.id = @lote_id`);
+    if (!loteRes.recordset.length) return res.status(404).json({ error: 'Lote no encontrado' });
+    const lote = loteRes.recordset[0];
+    const kgCosecha = parseFloat(lote.kg_cosecha) || 0;
+    const kgDespalillados = parseFloat(lote.kg_despalillados) || 0;
+    if (kgCosecha > 0 && (kgDespalillados + kilosNum) > kgCosecha) {
+      const disponible = Math.max(0, kgCosecha - kgDespalillados);
+      return res.status(400).json({ error: 'Supera el total del lote (' + kgCosecha.toFixed(1) + ' kg). Disponible: ' + disponible.toFixed(1) + ' kg' });
+    }
+
+    // Update lote estado if first pesaje
+    await pool.request()
+      .input('lote_id', sql.Int, lote_id)
+      .query(`UPDATE LotesMercaderia SET estado = 'en_despalillado' WHERE id = @lote_id AND estado = 'cerrado'`);
+
+    // Insert despalillado record
+    await pool.request()
+      .input('lote_id', sql.Int, lote_id)
+      .input('despalillador_id', sql.Int, despalillador_id)
+      .input('kilos', sql.Decimal(10, 3), kilosNum)
+      .input('usuario_id', sql.Int, uid)
+      .query(`INSERT INTO Despalillado (lote_id, despalillador_id, kilos, usuario_id)
+              VALUES (@lote_id, @despalillador_id, @kilos, @usuario_id)`);
+
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/despalillado/:id — editar kilos con audit trail
+router.put('/:id', async (req, res) => {
+  try {
+    const { kilos, motivo } = req.body;
+    if (!kilos || parseFloat(kilos) <= 0) return res.status(400).json({ error: 'Kilos debe ser mayor a 0' });
+    if (!motivo) return res.status(400).json({ error: 'Motivo es obligatorio' });
+
+    const pool = await getPool();
+    const id = parseInt(req.params.id);
+    const uid = req.user ? req.user.id : null;
+
+    // Get current value + lote info
+    const curr = await pool.request().input('id', sql.Int, id)
+      .query(`SELECT d.kilos, d.lote_id FROM Despalillado d WHERE d.id = @id`);
+    if (!curr.recordset.length) return res.status(404).json({ error: 'Registro no encontrado' });
+
+    const kilosAnterior = parseFloat(curr.recordset[0].kilos);
+    const kilosNuevo = parseFloat(kilos);
+    const loteId = curr.recordset[0].lote_id;
+
+    // Validar tope de lote si aplica
+    if (loteId && kilosNuevo > kilosAnterior) {
+      const loteRes = await pool.request().input('lote_id', sql.Int, loteId)
+        .query(`SELECT l.kilos AS kg_cosecha,
+                ISNULL((SELECT SUM(d2.kilos) FROM Despalillado d2 WHERE d2.lote_id = l.id AND d2.estado != 'anulada'), 0) AS kg_despalillados
+                FROM LotesMercaderia l WHERE l.id = @lote_id`);
+      if (loteRes.recordset.length) {
+        const kgCosecha = parseFloat(loteRes.recordset[0].kg_cosecha) || 0;
+        const kgDespalillados = parseFloat(loteRes.recordset[0].kg_despalillados) || 0;
+        const diferencia = kilosNuevo - kilosAnterior;
+        if (kgCosecha > 0 && (kgDespalillados + diferencia) > kgCosecha) {
+          const disponible = Math.max(0, kgCosecha - kgDespalillados + kilosAnterior);
+          return res.status(400).json({ error: 'Supera el total del lote (' + kgCosecha.toFixed(1) + ' kg). Máximo editable: ' + disponible.toFixed(1) + ' kg' });
+        }
+      }
+    }
+
+    // Update
+    await pool.request()
+      .input('id', sql.Int, id)
+      .input('kilos', sql.Decimal(10, 3), kilosNuevo)
+      .query(`UPDATE Despalillado SET kilos = @kilos WHERE id = @id`);
+
+    // Audit trail
+    await pool.request()
+      .input('tabla', sql.NVarChar, 'Despalillado')
+      .input('registro_id', sql.Int, id)
+      .input('campo', sql.NVarChar, 'kilos')
+      .input('valor_anterior', sql.NVarChar, kilosAnterior.toString())
+      .input('valor_nuevo', sql.NVarChar, kilosNuevo.toString())
+      .input('usuario_id', sql.Int, uid)
+      .input('motivo', sql.NVarChar, motivo)
+      .query(`INSERT INTO EdicionesHistorial (tabla, registro_id, campo, valor_anterior, valor_nuevo, usuario_id, motivo)
+              VALUES (@tabla, @registro_id, @campo, @valor_anterior, @valor_nuevo, @usuario_id, @motivo)`);
+
+    res.json({ ok: true, kilos_anterior: kilosAnterior, kilos_nuevo: kilosNuevo });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/despalillado/:lote_id/guardar-camara
+router.post('/:lote_id/guardar-camara', async (req, res) => {
+  try {
+    const { deposito_camara_id } = req.body;
+    if (!deposito_camara_id) return res.status(400).json({ error: 'Selecciona una cámara' });
+
+    const pool = await getPool();
+    const loteId = parseInt(req.params.lote_id);
+
+    // Get total despalillado kg for this lote
+    const totRes = await pool.request().input('lote_id', sql.Int, loteId)
+      .query(`SELECT ISNULL(SUM(kilos), 0) AS total FROM Despalillado WHERE lote_id = @lote_id AND estado != 'anulada'`);
+    const kilosEnCamara = parseFloat(totRes.recordset[0].total);
+
+    await pool.request()
+      .input('id', sql.Int, loteId)
+      .input('deposito_camara_id', sql.Int, deposito_camara_id)
+      .input('kilos_en_camara', sql.Decimal(10, 3), kilosEnCamara)
+      .query(`UPDATE LotesMercaderia SET deposito_camara_id = @deposito_camara_id, deposito_actual_id = @deposito_camara_id, kilos_en_camara = @kilos_en_camara WHERE id = @id`);
+
+    res.json({ ok: true, kilos_en_camara: kilosEnCamara });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/despalillado/:lote_id/retomar
+router.post('/:lote_id/retomar', async (req, res) => {
+  try {
+    const pool = await getPool();
+    await pool.request()
+      .input('id', sql.Int, parseInt(req.params.lote_id))
+      .query(`UPDATE LotesMercaderia SET deposito_camara_id = NULL, kilos_en_camara = 0, deposito_actual_id = deposito_id WHERE id = @id`);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/despalillado/:lote_id/finalizar
+router.post('/:lote_id/finalizar', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const loteId = parseInt(req.params.lote_id);
+
+    // Get lote info
+    const lRes = await pool.request().input('id', sql.Int, loteId)
+      .query(`SELECT kilos FROM LotesMercaderia WHERE id = @id`);
+    if (!lRes.recordset.length) return res.status(404).json({ error: 'Lote no encontrado' });
+    const kilosOrig = parseFloat(lRes.recordset[0].kilos);
+
+    // Get total despalillado
+    const tRes = await pool.request().input('lote_id', sql.Int, loteId)
+      .query(`SELECT ISNULL(SUM(kilos), 0) AS total FROM Despalillado WHERE lote_id = @lote_id AND estado != 'anulada'`);
+    const kilosDesp = parseFloat(tRes.recordset[0].total);
+    const merma = Math.max(0, kilosOrig - kilosDesp);
+
+    await pool.request()
+      .input('id', sql.Int, loteId)
+      .input('merma', sql.Decimal(10, 3), merma)
+      .query(`UPDATE LotesMercaderia SET estado = 'despalillado', etapa = 'despalillado', merma_despalillado = @merma, fecha_fin = GETDATE() WHERE id = @id`);
+
+    res.json({ ok: true, merma });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ══ LOTE DESPALILLADORES (persistencia) ══
+
+// GET /api/despalillado/lote/:id/despalilladores
+router.get('/lote/:id/despalilladores', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const result = await pool.request()
+      .input('lote_id', sql.Int, parseInt(req.params.id))
+      .query(`SELECT ld.despalillador_id, j.apellido + ', ' + j.nombre AS nombre
+              FROM LoteDespalilladores ld
+              JOIN Juntadores j ON ld.despalillador_id = j.id
+              WHERE ld.lote_id = @lote_id
+              ORDER BY ld.fecha_asignacion`);
+    res.json(result.recordset);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/despalillado/lote/:id/despalillador
+router.post('/lote/:id/despalillador', async (req, res) => {
+  try {
+    const { despalillador_id } = req.body;
+    if (!despalillador_id) return res.status(400).json({ error: 'Despalillador es obligatorio' });
+    const pool = await getPool();
+    const loteId = parseInt(req.params.id);
+    // IF NOT EXISTS
+    const exists = await pool.request()
+      .input('lote_id', sql.Int, loteId)
+      .input('despalillador_id', sql.Int, despalillador_id)
+      .query(`SELECT id FROM LoteDespalilladores WHERE lote_id = @lote_id AND despalillador_id = @despalillador_id`);
+    if (exists.recordset.length) return res.json({ ok: true, already: true });
+    await pool.request()
+      .input('lote_id', sql.Int, loteId)
+      .input('despalillador_id', sql.Int, despalillador_id)
+      .query(`INSERT INTO LoteDespalilladores (lote_id, despalillador_id) VALUES (@lote_id, @despalillador_id)`);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/despalillado/lote/:id/despalillador/:despalillador_id
+router.delete('/lote/:id/despalillador/:despalillador_id', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const loteId = parseInt(req.params.id);
+    const despId = parseInt(req.params.despalillador_id);
+    // Check for active despalillados
+    const check = await pool.request()
+      .input('lote_id', sql.Int, loteId)
+      .input('despalillador_id', sql.Int, despId)
+      .query(`SELECT COUNT(*) AS cnt FROM Despalillado WHERE lote_id = @lote_id AND despalillador_id = @despalillador_id AND estado != 'anulada'`);
+    if (check.recordset[0].cnt > 0) {
+      return res.status(400).json({ error: 'No se puede quitar: tiene pesajes registrados. Anulá los pesajes primero.' });
+    }
+    await pool.request()
+      .input('lote_id', sql.Int, loteId)
+      .input('despalillador_id', sql.Int, despId)
+      .query(`DELETE FROM LoteDespalilladores WHERE lote_id = @lote_id AND despalillador_id = @despalillador_id`);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/despalillado/pendientes
 // Devuelve filas de JuntadaDestino con stock_pendiente=1 (esperando despalillado).
 // Cada fila es un tramo destino independiente — una juntada puede tener varios.
@@ -340,6 +634,66 @@ router.get('/totales-por-despalillador', async (req, res) => {
       WHERE ${where} AND d.estado != 'anulada'
       GROUP BY ju.id, ju.apellido, ju.nombre
       ORDER BY kg_total DESC`);
+    res.json(result.recordset);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/despalillado/auditoria — ediciones y anulaciones
+router.get('/auditoria', async (req, res) => {
+  try {
+    const { temporada_id, desde, hasta } = req.query;
+    const pool = await getPool();
+    const dbReq = pool.request();
+    let where = "eh.tabla = 'Despalillado'";
+    if (temporada_id) { where += ' AND t.id = @tid'; dbReq.input('tid', sql.Int, parseInt(temporada_id)); }
+    if (desde) { where += ' AND CAST(eh.fecha_hora AS DATE) >= @desde'; dbReq.input('desde', sql.Date, desde); }
+    if (hasta) { where += ' AND CAST(eh.fecha_hora AS DATE) <= @hasta'; dbReq.input('hasta', sql.Date, hasta); }
+    const result = await dbReq.query(`
+      SELECT eh.id, eh.tabla, eh.registro_id, eh.campo,
+             eh.valor_anterior, eh.valor_nuevo, eh.motivo,
+             eh.fecha_hora, u.nombre AS usuario,
+             ju.apellido + ', ' + ju.nombre AS trabajador,
+             lm.codigo_interno AS lote_codigo
+      FROM EdicionesHistorial eh
+      LEFT JOIN Usuarios u ON eh.usuario_id = u.id
+      LEFT JOIN Despalillado d ON eh.registro_id = d.id
+      LEFT JOIN Juntadores ju ON d.despalillador_id = ju.id
+      LEFT JOIN LotesMercaderia lm ON d.lote_id = lm.id
+      LEFT JOIN Parcelas p ON d.parcela_id = p.id
+      LEFT JOIN Temporadas t ON p.temporada_id = t.id
+      WHERE ${where}
+      ORDER BY eh.fecha_hora DESC`);
+    res.json(result.recordset);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/despalillado/totales-por-lote — totales agrupados por lote
+router.get('/totales-por-lote', async (req, res) => {
+  try {
+    const { temporada_id } = req.query;
+    const pool = await getPool();
+    const dbReq = pool.request();
+    let where = "d.estado != 'anulada' AND d.lote_id IS NOT NULL";
+    if (temporada_id) { where += ' AND lm.temporada_id = @tid'; dbReq.input('tid', sql.Int, parseInt(temporada_id)); }
+    const result = await dbReq.query(`
+      SELECT lm.id AS lote_id, lm.codigo_interno AS lote,
+             lm.estado, lm.kilos AS kg_cosecha,
+             lm.fecha_inicio, lm.fecha_fin,
+             lm.merma_despalillado AS merma_kg,
+             dep.nombre AS deposito,
+             COUNT(d.id) AS registros,
+             SUM(d.kilos) AS kg_despalillado,
+             COUNT(DISTINCT d.despalillador_id) AS despalilladores
+      FROM Despalillado d
+      JOIN LotesMercaderia lm ON d.lote_id = lm.id
+      LEFT JOIN Depositos dep ON lm.deposito_id = dep.id
+      WHERE ${where}
+      GROUP BY lm.id, lm.codigo_interno, lm.estado, lm.kilos, lm.fecha_inicio, lm.fecha_fin, lm.merma_despalillado, dep.nombre
+      ORDER BY lm.fecha_inicio DESC`);
     res.json(result.recordset);
   } catch (err) {
     res.status(500).json({ error: err.message });
