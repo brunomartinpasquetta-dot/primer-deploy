@@ -29,8 +29,11 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Registrar ingreso de mercaderia (desde juntada)
+// LEGACY - deprecar en próxima versión
+// Ingreso real se hace vía POST /api/depositos/ingreso (que sí usa transacción + MovimientosDeposito)
+// Ningún frontend consume esta ruta — verificado 2026-04-03
 router.post('/ingreso', async (req, res) => {
+  console.warn('[DEPRECADO] POST /api/stock-mercaderia/ingreso llamado — usar /api/depositos/ingreso en su lugar');
   try {
     const { temporada_id, parcela_id, kilos, destino, observacion } = req.body;
     const pool = await getPool();
