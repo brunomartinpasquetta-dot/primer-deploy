@@ -106,11 +106,22 @@ router.patch('/:id/estado', async (req, res) => {
     return res.status(400).json({ error: 'Estado inválido' });
   try {
     const pool = await getPool();
-    await pool.request()
-      .input('id',     sql.Int,      req.params.id)
-      .input('estado', sql.NVarChar, estado)
-      .query(`UPDATE Remitos SET estado = @estado WHERE id = @id;
-              UPDATE MovimientosDeposito SET estado_cobro = @estado WHERE remito_id = @id`);
+    const transaction = new sql.Transaction(pool);
+    await transaction.begin();
+    try {
+      const r1 = new sql.Request(transaction);
+      await r1.input('id', sql.Int, req.params.id).input('estado', sql.NVarChar, estado)
+        .query(`UPDATE Remitos SET estado = @estado WHERE id = @id`);
+
+      const r2 = new sql.Request(transaction);
+      await r2.input('id', sql.Int, req.params.id).input('estado', sql.NVarChar, estado)
+        .query(`UPDATE MovimientosDeposito SET estado_cobro = @estado WHERE remito_id = @id`);
+
+      await transaction.commit();
+    } catch (err) {
+      await transaction.rollback();
+      throw err;
+    }
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });

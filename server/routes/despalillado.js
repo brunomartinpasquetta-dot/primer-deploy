@@ -81,19 +81,30 @@ router.post('/registrar', async (req, res) => {
       return res.status(400).json({ error: 'Supera el total del lote (' + kgCosecha.toFixed(1) + ' kg). Disponible: ' + disponible.toFixed(1) + ' kg' });
     }
 
-    // Update lote estado if first pesaje
-    await pool.request()
-      .input('lote_id', sql.Int, lote_id)
-      .query(`UPDATE LotesMercaderia SET estado = 'en_despalillado' WHERE id = @lote_id AND estado = 'cerrado'`);
+    const transaction = new sql.Transaction(pool);
+    await transaction.begin();
+    try {
+      // Update lote estado if first pesaje
+      const req1 = new sql.Request(transaction);
+      await req1
+        .input('lote_id', sql.Int, lote_id)
+        .query(`UPDATE LotesMercaderia SET estado = 'en_despalillado' WHERE id = @lote_id AND estado = 'cerrado'`);
 
-    // Insert despalillado record
-    await pool.request()
-      .input('lote_id', sql.Int, lote_id)
-      .input('despalillador_id', sql.Int, despalillador_id)
-      .input('kilos', sql.Decimal(10, 3), kilosNum)
-      .input('usuario_id', sql.Int, uid)
-      .query(`INSERT INTO Despalillado (lote_id, despalillador_id, kilos, usuario_id)
-              VALUES (@lote_id, @despalillador_id, @kilos, @usuario_id)`);
+      // Insert despalillado record
+      const req2 = new sql.Request(transaction);
+      await req2
+        .input('lote_id', sql.Int, lote_id)
+        .input('despalillador_id', sql.Int, despalillador_id)
+        .input('kilos', sql.Decimal(10, 3), kilosNum)
+        .input('usuario_id', sql.Int, uid)
+        .query(`INSERT INTO Despalillado (lote_id, despalillador_id, kilos, usuario_id)
+                VALUES (@lote_id, @despalillador_id, @kilos, @usuario_id)`);
+
+      await transaction.commit();
+    } catch (err) {
+      await transaction.rollback();
+      throw err;
+    }
 
     res.json({ ok: true });
   } catch (err) {
@@ -138,23 +149,32 @@ router.put('/:id', async (req, res) => {
       }
     }
 
-    // Update
-    await pool.request()
-      .input('id', sql.Int, id)
-      .input('kilos', sql.Decimal(10, 3), kilosNuevo)
-      .query(`UPDATE Despalillado SET kilos = @kilos WHERE id = @id`);
+    const transaction = new sql.Transaction(pool);
+    await transaction.begin();
+    try {
+      // Update
+      const r1 = new sql.Request(transaction);
+      await r1.input('id', sql.Int, id).input('kilos', sql.Decimal(10, 3), kilosNuevo)
+        .query(`UPDATE Despalillado SET kilos = @kilos WHERE id = @id`);
 
-    // Audit trail
-    await pool.request()
-      .input('tabla', sql.NVarChar, 'Despalillado')
-      .input('registro_id', sql.Int, id)
-      .input('campo', sql.NVarChar, 'kilos')
-      .input('valor_anterior', sql.NVarChar, kilosAnterior.toString())
-      .input('valor_nuevo', sql.NVarChar, kilosNuevo.toString())
-      .input('usuario_id', sql.Int, uid)
-      .input('motivo', sql.NVarChar, motivo)
-      .query(`INSERT INTO EdicionesHistorial (tabla, registro_id, campo, valor_anterior, valor_nuevo, usuario_id, motivo)
-              VALUES (@tabla, @registro_id, @campo, @valor_anterior, @valor_nuevo, @usuario_id, @motivo)`);
+      // Audit trail
+      const r2 = new sql.Request(transaction);
+      await r2
+        .input('tabla', sql.NVarChar, 'Despalillado')
+        .input('registro_id', sql.Int, id)
+        .input('campo', sql.NVarChar, 'kilos')
+        .input('valor_anterior', sql.NVarChar, kilosAnterior.toString())
+        .input('valor_nuevo', sql.NVarChar, kilosNuevo.toString())
+        .input('usuario_id', sql.Int, uid)
+        .input('motivo', sql.NVarChar, motivo)
+        .query(`INSERT INTO EdicionesHistorial (tabla, registro_id, campo, valor_anterior, valor_nuevo, usuario_id, motivo)
+                VALUES (@tabla, @registro_id, @campo, @valor_anterior, @valor_nuevo, @usuario_id, @motivo)`);
+
+      await transaction.commit();
+    } catch (err) {
+      await transaction.rollback();
+      throw err;
+    }
 
     res.json({ ok: true, kilos_anterior: kilosAnterior, kilos_nuevo: kilosNuevo });
   } catch (err) {

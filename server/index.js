@@ -1,4 +1,10 @@
 require('dotenv').config();
+
+if (!process.env.JWT_SECRET) {
+  console.error('FATAL: JWT_SECRET no definida en .env');
+  process.exit(1);
+}
+
 const express = require('express');
 const { createServer } = require('http');
 const WebSocket = require('ws');

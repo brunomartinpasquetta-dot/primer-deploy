@@ -180,26 +180,37 @@ router.post('/lote/:id/registrar', async (req, res) => {
     if (!['abierto', 'en_cosecha'].includes(loteRes.recordset[0].estado))
       return res.status(400).json({ error: 'El lote no está abierto' });
 
-    // Insertar juntada vinculada al lote
-    await pool.request()
-      .input('parcela_id', sql.Int, parcela_id)
-      .input('juntador_id', sql.Int, juntador_id)
-      .input('kilos', sql.Decimal(10,3), parseFloat(kilos))
-      .input('usuario_id', sql.Int, uid)
-      .input('lote_id', sql.Int, lote_id)
-      .input('carencia_advertida', sql.Bit, carencia_advertida ? 1 : 0)
-      .query(`
-        INSERT INTO Juntada (parcela_id, juntador_id, kilos, fecha_hora, usuario_id, estado, stock_pendiente, lote_id, carencia_advertida)
-        VALUES (@parcela_id, @juntador_id, @kilos, GETDATE(), @usuario_id, 'confirmada', 0, @lote_id, @carencia_advertida)
+    const transaction = new sql.Transaction(pool);
+    await transaction.begin();
+    try {
+      // Insertar juntada vinculada al lote
+      const req1 = new sql.Request(transaction);
+      await req1
+        .input('parcela_id', sql.Int, parcela_id)
+        .input('juntador_id', sql.Int, juntador_id)
+        .input('kilos', sql.Decimal(10,3), parseFloat(kilos))
+        .input('usuario_id', sql.Int, uid)
+        .input('lote_id', sql.Int, lote_id)
+        .input('carencia_advertida', sql.Bit, carencia_advertida ? 1 : 0)
+        .query(`
+          INSERT INTO Juntada (parcela_id, juntador_id, kilos, fecha_hora, usuario_id, estado, stock_pendiente, lote_id, carencia_advertida)
+          VALUES (@parcela_id, @juntador_id, @kilos, GETDATE(), @usuario_id, 'confirmada', 0, @lote_id, @carencia_advertida)
+        `);
+
+      // Actualizar kilos del lote y estado
+      const req2 = new sql.Request(transaction);
+      await req2.input('lote_id', sql.Int, lote_id).query(`
+        UPDATE LotesMercaderia
+        SET kilos = ISNULL((SELECT SUM(kilos) FROM Juntada WHERE lote_id = @lote_id AND estado = 'confirmada'), 0),
+            estado = 'en_cosecha'
+        WHERE id = @lote_id
       `);
 
-    // Actualizar kilos del lote y estado
-    await pool.request().input('lote_id', sql.Int, lote_id).query(`
-      UPDATE LotesMercaderia
-      SET kilos = ISNULL((SELECT SUM(kilos) FROM Juntada WHERE lote_id = @lote_id AND estado = 'confirmada'), 0),
-          estado = 'en_cosecha'
-      WHERE id = @lote_id
-    `);
+      await transaction.commit();
+    } catch (err) {
+      await transaction.rollback();
+      throw err;
+    }
 
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -222,53 +233,63 @@ router.put('/lote-registro/:id', async (req, res) => {
     const parcelaAnterior = prev.recordset[0].parcela_id;
     const lote_id = prev.recordset[0].lote_id;
 
-    // Editar kilos si se envió
-    if (kilos !== undefined) {
-      await pool.request()
-        .input('id', sql.Int, id)
-        .input('kilos', sql.Decimal(10,3), parseFloat(kilos))
-        .query("UPDATE Juntada SET kilos = @kilos WHERE id = @id");
-
-      await pool.request()
-        .input('tabla', sql.NVarChar, 'Juntada').input('registro_id', sql.Int, id)
-        .input('campo', sql.NVarChar, 'kilos')
-        .input('valor_anterior', sql.NVarChar, String(kilosAnterior))
-        .input('valor_nuevo', sql.NVarChar, String(kilos))
-        .input('usuario_id', sql.Int, uid).input('motivo', sql.NVarChar, motivo)
-        .query(`INSERT INTO EdicionesHistorial (tabla, registro_id, campo, valor_anterior, valor_nuevo, usuario_id, fecha_hora, motivo)
-                VALUES (@tabla, @registro_id, @campo, @valor_anterior, @valor_nuevo, @usuario_id, GETDATE(), @motivo)`);
-    }
-
-    // Editar parcela si se envió y cambió
+    // Get nombres parcela para audit trail (antes de la transacción, solo lectura)
+    let nombres = {};
     if (parcela_id !== undefined && parseInt(parcela_id) !== parcelaAnterior) {
-      // Get nombres para audit trail
       const nombresRes = await pool.request()
         .input('ant', sql.Int, parcelaAnterior)
         .input('nueva', sql.Int, parseInt(parcela_id))
         .query(`SELECT id, nombre FROM Parcelas WHERE id IN (@ant, @nueva)`);
-      const nombres = {};
       nombresRes.recordset.forEach(function(r) { nombres[r.id] = r.nombre; });
-
-      await pool.request()
-        .input('id', sql.Int, id)
-        .input('parcela_id', sql.Int, parseInt(parcela_id))
-        .query("UPDATE Juntada SET parcela_id = @parcela_id WHERE id = @id");
-
-      await pool.request()
-        .input('tabla', sql.NVarChar, 'Juntada').input('registro_id', sql.Int, id)
-        .input('campo', sql.NVarChar, 'parcela')
-        .input('valor_anterior', sql.NVarChar, nombres[parcelaAnterior] || String(parcelaAnterior))
-        .input('valor_nuevo', sql.NVarChar, nombres[parseInt(parcela_id)] || String(parcela_id))
-        .input('usuario_id', sql.Int, uid).input('motivo', sql.NVarChar, motivo)
-        .query(`INSERT INTO EdicionesHistorial (tabla, registro_id, campo, valor_anterior, valor_nuevo, usuario_id, fecha_hora, motivo)
-                VALUES (@tabla, @registro_id, @campo, @valor_anterior, @valor_nuevo, @usuario_id, GETDATE(), @motivo)`);
     }
 
-    // Update lote kilos
-    if (lote_id && kilos !== undefined) {
-      await pool.request().input('lote_id', sql.Int, lote_id).query(`
-        UPDATE LotesMercaderia SET kilos = ISNULL((SELECT SUM(kilos) FROM Juntada WHERE lote_id = @lote_id AND estado = 'confirmada'), 0) WHERE id = @lote_id
-      `);
+    const transaction = new sql.Transaction(pool);
+    await transaction.begin();
+    try {
+      // Editar kilos si se envió
+      if (kilos !== undefined) {
+        const rk = new sql.Request(transaction);
+        await rk.input('id', sql.Int, id).input('kilos', sql.Decimal(10,3), parseFloat(kilos))
+          .query("UPDATE Juntada SET kilos = @kilos WHERE id = @id");
+
+        const ra = new sql.Request(transaction);
+        await ra.input('tabla', sql.NVarChar, 'Juntada').input('registro_id', sql.Int, id)
+          .input('campo', sql.NVarChar, 'kilos')
+          .input('valor_anterior', sql.NVarChar, String(kilosAnterior))
+          .input('valor_nuevo', sql.NVarChar, String(kilos))
+          .input('usuario_id', sql.Int, uid).input('motivo', sql.NVarChar, motivo)
+          .query(`INSERT INTO EdicionesHistorial (tabla, registro_id, campo, valor_anterior, valor_nuevo, usuario_id, fecha_hora, motivo)
+                  VALUES (@tabla, @registro_id, @campo, @valor_anterior, @valor_nuevo, @usuario_id, GETDATE(), @motivo)`);
+      }
+
+      // Editar parcela si se envió y cambió
+      if (parcela_id !== undefined && parseInt(parcela_id) !== parcelaAnterior) {
+        const rp = new sql.Request(transaction);
+        await rp.input('id', sql.Int, id).input('parcela_id', sql.Int, parseInt(parcela_id))
+          .query("UPDATE Juntada SET parcela_id = @parcela_id WHERE id = @id");
+
+        const rpa = new sql.Request(transaction);
+        await rpa.input('tabla', sql.NVarChar, 'Juntada').input('registro_id', sql.Int, id)
+          .input('campo', sql.NVarChar, 'parcela')
+          .input('valor_anterior', sql.NVarChar, nombres[parcelaAnterior] || String(parcelaAnterior))
+          .input('valor_nuevo', sql.NVarChar, nombres[parseInt(parcela_id)] || String(parcela_id))
+          .input('usuario_id', sql.Int, uid).input('motivo', sql.NVarChar, motivo)
+          .query(`INSERT INTO EdicionesHistorial (tabla, registro_id, campo, valor_anterior, valor_nuevo, usuario_id, fecha_hora, motivo)
+                  VALUES (@tabla, @registro_id, @campo, @valor_anterior, @valor_nuevo, @usuario_id, GETDATE(), @motivo)`);
+      }
+
+      // Update lote kilos
+      if (lote_id && kilos !== undefined) {
+        const rl = new sql.Request(transaction);
+        await rl.input('lote_id', sql.Int, lote_id).query(`
+          UPDATE LotesMercaderia SET kilos = ISNULL((SELECT SUM(kilos) FROM Juntada WHERE lote_id = @lote_id AND estado = 'confirmada'), 0) WHERE id = @lote_id
+        `);
+      }
+
+      await transaction.commit();
+    } catch (err) {
+      await transaction.rollback();
+      throw err;
     }
 
     res.json({ ok: true, kilos_anterior: kilosAnterior, kilos_nuevo: kilos || kilosAnterior });
@@ -290,26 +311,38 @@ router.post('/lote-registro/:id/anular', async (req, res) => {
     if (prev.recordset[0].estado === 'anulada') return res.status(400).json({ error: 'Ya está anulada' });
     const lote_id = prev.recordset[0].lote_id;
 
-    await pool.request().input('id', sql.Int, id)
-      .query("UPDATE Juntada SET estado = 'anulada' WHERE id = @id");
+    const transaction = new sql.Transaction(pool);
+    await transaction.begin();
+    try {
+      const r1 = new sql.Request(transaction);
+      await r1.input('id', sql.Int, id)
+        .query("UPDATE Juntada SET estado = 'anulada' WHERE id = @id");
 
-    // Audit trail
-    await pool.request()
-      .input('tabla', sql.NVarChar, 'Juntada')
-      .input('registro_id', sql.Int, id)
-      .input('campo', sql.NVarChar, 'estado')
-      .input('valor_anterior', sql.NVarChar, 'confirmada')
-      .input('valor_nuevo', sql.NVarChar, 'anulada')
-      .input('usuario_id', sql.Int, uid)
-      .input('motivo', sql.NVarChar, motivo)
-      .query(`INSERT INTO EdicionesHistorial (tabla, registro_id, campo, valor_anterior, valor_nuevo, usuario_id, fecha_hora, motivo)
-              VALUES (@tabla, @registro_id, @campo, @valor_anterior, @valor_nuevo, @usuario_id, GETDATE(), @motivo)`);
+      // Audit trail
+      const r2 = new sql.Request(transaction);
+      await r2
+        .input('tabla', sql.NVarChar, 'Juntada')
+        .input('registro_id', sql.Int, id)
+        .input('campo', sql.NVarChar, 'estado')
+        .input('valor_anterior', sql.NVarChar, 'confirmada')
+        .input('valor_nuevo', sql.NVarChar, 'anulada')
+        .input('usuario_id', sql.Int, uid)
+        .input('motivo', sql.NVarChar, motivo)
+        .query(`INSERT INTO EdicionesHistorial (tabla, registro_id, campo, valor_anterior, valor_nuevo, usuario_id, fecha_hora, motivo)
+                VALUES (@tabla, @registro_id, @campo, @valor_anterior, @valor_nuevo, @usuario_id, GETDATE(), @motivo)`);
 
-    // Update lote kilos
-    if (lote_id) {
-      await pool.request().input('lote_id', sql.Int, lote_id).query(`
-        UPDATE LotesMercaderia SET kilos = ISNULL((SELECT SUM(kilos) FROM Juntada WHERE lote_id = @lote_id AND estado = 'confirmada'), 0) WHERE id = @lote_id
-      `);
+      // Update lote kilos
+      if (lote_id) {
+        const r3 = new sql.Request(transaction);
+        await r3.input('lote_id', sql.Int, lote_id).query(`
+          UPDATE LotesMercaderia SET kilos = ISNULL((SELECT SUM(kilos) FROM Juntada WHERE lote_id = @lote_id AND estado = 'confirmada'), 0) WHERE id = @lote_id
+        `);
+      }
+
+      await transaction.commit();
+    } catch (err) {
+      await transaction.rollback();
+      throw err;
     }
 
     res.json({ ok: true });

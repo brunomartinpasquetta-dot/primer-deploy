@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { getPool, sql } = require('../db');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'cosecha_jwt_secret_2026';
+const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES = '8h';
 
 // Crea la tabla Usuarios y un admin por defecto si no existe
