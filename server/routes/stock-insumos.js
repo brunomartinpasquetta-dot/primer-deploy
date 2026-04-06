@@ -209,6 +209,29 @@ router.post('/egreso', async (req, res) => {
   }
 });
 
+// Productos con stock y fecha de vencimiento vencida
+router.get('/vencidos', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const result = await pool.request().query(`
+      SELECT p.id AS producto_id, p.nombre AS producto,
+             MIN(s.fecha_vencimiento) AS fecha_vencimiento,
+             SUM(CASE WHEN s.tipo IN ('compra','ingreso_manual') THEN s.cantidad ELSE -s.cantidad END) AS stock_neto
+      FROM StockInsumos s
+      JOIN Productos p ON p.id = s.producto_id
+      WHERE s.fecha_vencimiento IS NOT NULL
+        AND s.fecha_vencimiento < CAST(GETDATE() AS DATE)
+        AND p.activo = 1
+      GROUP BY p.id, p.nombre
+      HAVING SUM(CASE WHEN s.tipo IN ('compra','ingreso_manual') THEN s.cantidad ELSE -s.cantidad END) > 0
+      ORDER BY MIN(s.fecha_vencimiento)
+    `);
+    res.json(result.recordset);
+  } catch (err) {
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
+  }
+});
+
 // Historial general de movimientos (todos los productos)
 router.get('/historial', async (req, res) => {
   try {

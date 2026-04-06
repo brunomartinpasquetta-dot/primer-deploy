@@ -12,7 +12,7 @@
     /* ── KPI Cards ── */
     .ins-kpis {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
       gap: 12px;
       margin-bottom: 16px;
     }
@@ -303,6 +303,11 @@
           <div class="ins-kpi-valor verde" id="kpi-valor">$0</div>
           <div class="ins-kpi-label">Valor de Inventario</div>
         </div>
+        <div class="ins-kpi" id="kpi-vencidos-card" style="display:none;">
+          <div class="ins-kpi-icon alerta"><i data-lucide="calendar-x"></i></div>
+          <div class="ins-kpi-valor rojo" id="kpi-vencidos">0</div>
+          <div class="ins-kpi-label">Insumos Vencidos</div>
+        </div>
       </div>
 
       <!-- ── Estado de almacenes ── -->
@@ -372,11 +377,12 @@
                 <th style="padding:8px 10px;text-align:left;border-bottom:1px solid var(--borde);">Depósito</th>
                 <th style="padding:8px 10px;text-align:left;border-bottom:1px solid var(--borde);">Usuario</th>
                 <th style="padding:8px 10px;text-align:left;border-bottom:1px solid var(--borde);">Observación</th>
+                <th style="padding:8px 10px;text-align:center;border-bottom:1px solid var(--borde);white-space:nowrap;">Venc.</th>
                 <th style="padding:8px 10px;text-align:center;border-bottom:1px solid var(--borde);"></th>
               </tr>
             </thead>
             <tbody id="hist-panel-tbody">
-              <tr><td colspan="10" style="padding:20px;text-align:center;color:var(--texto-suave);">Cargando...</td></tr>
+              <tr><td colspan="11" style="padding:20px;text-align:center;color:var(--texto-suave);">Cargando...</td></tr>
             </tbody>
           </table>
         </div>
@@ -424,7 +430,7 @@
                 </tr>
               </thead>
               <tbody id="tbody-historial">
-                <tr><td colspan="10" class="activity-empty">Cargando...</td></tr>
+                <tr><td colspan="11" class="activity-empty">Cargando...</td></tr>
               </tbody>
               <tfoot id="tfoot-historial"></tfoot>
             </table>
@@ -741,6 +747,18 @@
       /* Renderizar tabla */
       renderStockTabla(data);
     });
+
+    // KPI vencidos
+    fetch('/api/stock-insumos/vencidos').then(function(r) { return r.json(); }).then(function(venc) {
+      var card = document.getElementById('kpi-vencidos-card');
+      var kpi = document.getElementById('kpi-vencidos');
+      if (venc.length > 0) {
+        card.style.display = '';
+        kpi.textContent = venc.length;
+      } else {
+        card.style.display = 'none';
+      }
+    }).catch(function() {});
   }
 
   /* ── CSV helper ── */
@@ -984,7 +1002,7 @@
 
     var tbody = document.getElementById('tbody-historial');
     var tfoot = document.getElementById('tfoot-historial');
-    tbody.innerHTML = '<tr><td colspan="10" class="activity-empty" style="color:var(--verde);">Cargando...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11" class="activity-empty" style="color:var(--verde);">Cargando...</td></tr>';
     tfoot.innerHTML = '';
 
     fetch('/api/stock-insumos/historial?' + params.toString())
@@ -1001,7 +1019,7 @@
         filtrarHistorialLocal();
       })
       .catch(function() {
-        tbody.innerHTML = '<tr><td colspan="10" class="activity-empty" style="color:#c0392b;">Error al cargar historial</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" class="activity-empty" style="color:#c0392b;">Error al cargar historial</td></tr>';
       });
   }
 
@@ -1009,7 +1027,7 @@
     var tbody = document.getElementById('tbody-historial');
     var tfoot = document.getElementById('tfoot-historial');
         if (!data.length) {
-          tbody.innerHTML = '<tr><td colspan="10" class="activity-empty">Sin movimientos para los filtros seleccionados</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="11" class="activity-empty">Sin movimientos para los filtros seleccionados</td></tr>';
           return;
         }
         var totIngreso = 0, totEgreso = 0;
@@ -1104,7 +1122,7 @@
   function cargarHistorialPanel() {
     var tbody = document.getElementById('hist-panel-tbody');
     if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="10" style="padding:20px;text-align:center;color:var(--texto-suave);">Cargando...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11" style="padding:20px;text-align:center;color:var(--texto-suave);">Cargando...</td></tr>';
     var params = new URLSearchParams();
     var desde = document.getElementById('hist-desde').value;
     var hasta = document.getElementById('hist-hasta').value;
@@ -1114,7 +1132,7 @@
       .then(function(r) { return r.json(); })
       .then(function(data) {
         if (!data.length) {
-          tbody.innerHTML = '<tr><td colspan="10" style="padding:20px;text-align:center;">Sin movimientos</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="11" style="padding:20px;text-align:center;">Sin movimientos</td></tr>';
           return;
         }
         var tipoLabels = {
@@ -1152,6 +1170,16 @@
             '<td style="padding:7px 10px;font-size:11px;">' + (m.deposito_nombre || '—') + '</td>' +
             '<td style="padding:7px 10px;font-size:11px;">' + (m.usuario || '—') + '</td>' +
             '<td style="padding:7px 10px;font-size:11px;color:var(--texto-suave);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (m.observacion || '') + '</td>' +
+            '<td style="padding:7px 10px;text-align:center;font-size:11px;white-space:nowrap;">' + (function() {
+              if (!m.fecha_vencimiento) return '<span style="color:var(--texto-suave);">—</span>';
+              var fv = new Date(m.fecha_vencimiento);
+              var hoy = new Date(); hoy.setHours(0,0,0,0);
+              var vencido = fv < hoy;
+              var pronto = !vencido && (fv - hoy) < 30 * 86400000;
+              var color = vencido ? 'var(--sem-rojo)' : pronto ? '#856404' : 'var(--texto-suave)';
+              var bg = vencido ? 'var(--sem-rojo-bg)' : pronto ? '#fff3cd' : 'transparent';
+              return '<span style="padding:2px 6px;border-radius:4px;font-weight:600;background:'+bg+';color:'+color+';">' + fv.toLocaleDateString('es-AR') + '</span>';
+            })() + '</td>' +
             '<td style="padding:7px 10px;white-space:nowrap;text-align:center;">' +
               '<button class="btn-icon" onclick="'+eyeClick+'" title="Ver detalles"><i data-lucide="eye"></i></button> ' +
               '<button class="btn-icon" onclick="'+pencilClick+'" title="Editar"><i data-lucide="pencil"></i></button> ' +
@@ -1162,7 +1190,7 @@
         lucide.createIcons();
       })
       .catch(function() {
-        tbody.innerHTML = '<tr><td colspan="10" style="padding:20px;text-align:center;color:#c0392b;">Error al cargar</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" style="padding:20px;text-align:center;color:#c0392b;">Error al cargar</td></tr>';
       });
   }
 
