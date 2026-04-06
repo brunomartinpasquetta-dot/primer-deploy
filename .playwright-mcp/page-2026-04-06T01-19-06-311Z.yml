@@ -1,0 +1,206 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - text: CO
+          - emphasis [ref=e8]: SE
+          - text: CHA
+        - generic [ref=e9]: SISTEMA DE CULTIVOS
+    - navigation [ref=e10]:
+      - link "Dashboard" [ref=e11] [cursor=pointer]:
+        - /url: index.html
+        - img [ref=e196]
+        - text: Dashboard
+      - generic [ref=e18]: Campo
+      - link "Cosecha" [ref=e19] [cursor=pointer]:
+        - /url: juntada.html
+        - img [ref=e201]
+        - text: Cosecha
+      - link "Despalillado" [ref=e30] [cursor=pointer]:
+        - /url: despalillado.html
+        - img [ref=e210]
+        - text: Despalillado
+      - link "Aplicaciones" [ref=e38] [cursor=pointer]:
+        - /url: aplicaciones.html
+        - img [ref=e216]
+        - text: Aplicaciones
+      - link "Clasif. + Embalaje" [ref=e43] [cursor=pointer]:
+        - /url: clasificacion-embalaje.html
+        - img [ref=e219]
+        - text: Clasif. + Embalaje
+      - generic [ref=e49]: Sistema
+      - link "Stock" [ref=e50] [cursor=pointer]:
+        - /url: menu-stock.html
+        - img [ref=e223]
+        - text: Stock
+      - link "Comercial" [ref=e56] [cursor=pointer]:
+        - /url: menu-comercial.html
+        - img [ref=e227]
+        - text: Comercial
+      - link "Administración" [ref=e63] [cursor=pointer]:
+        - /url: menu-admin.html
+        - img [ref=e232]
+        - text: Administración
+      - link "Mercado" [ref=e67] [cursor=pointer]:
+        - /url: mercado.html
+        - img [ref=e234]
+        - text: Mercado
+      - link "Configuración" [ref=e72] [cursor=pointer]:
+        - /url: menu-config.html
+        - img [ref=e237]
+        - text: Configuración
+    - generic [ref=e77]:
+      - generic [ref=e78]: Administrador · administrador
+      - button "Cerrar sesión" [ref=e79] [cursor=pointer]
+  - generic [ref=e80]:
+    - banner [ref=e81]:
+      - generic [ref=e82]:
+        - img [ref=e83]
+        - generic [ref=e84]:
+          - generic [ref=e85]:
+            - text: CO
+            - emphasis [ref=e86]: SE
+            - text: CHA
+          - generic [ref=e87]: SISTEMA DE CULTIVOS
+        - generic [ref=e88]: 🌱 Campaña FIX 2026 · Día 7
+      - generic [ref=e89]:
+        - generic [ref=e90] [cursor=pointer]:
+          - img [ref=e91]
+          - text: Administrador
+        - generic [ref=e94]: domingo, 5 de abril
+    - generic [ref=e95]:
+      - link "← Volver" [ref=e96] [cursor=pointer]:
+        - /url: "#"
+      - generic [ref=e97]:
+        - generic [ref=e98]: Aplicaciones
+        - generic [ref=e99]: Registro de aplicaciones fitosanitarias por parcela
+      - generic [ref=e100]:
+        - generic [ref=e101]:
+          - generic [ref=e102]: Aplicaciones Hoy
+          - generic [ref=e103]: "0"
+        - generic [ref=e104]:
+          - generic [ref=e105]: Parcelas Hoy
+          - generic [ref=e106]: "0"
+        - generic [ref=e107]:
+          - generic [ref=e108]: Campaña Total
+          - generic [ref=e109]: "0"
+      - generic [ref=e110]:
+        - generic [ref=e111]:
+          - generic [ref=e113]: Parcelas (2)
+          - generic [ref=e114]:
+            - generic [ref=e241] [cursor=pointer]:
+              - generic [ref=e242]: PARCELA NORTE
+              - generic [ref=e243]: 13 ha · CAMAROSA · 0 aplicaciones
+            - generic [ref=e245] [cursor=pointer]:
+              - generic [ref=e246]: PARCELA SUR
+              - generic [ref=e247]: 2 ha · FESTIVAL · 0 aplicaciones
+        - generic [ref=e249]:
+          - generic [ref=e250]:
+            - heading "Aplicaciones" [level=3] [ref=e251]
+            - generic [ref=e252]: PARCELA NORTE
+          - generic [ref=e253]:
+            - generic [ref=e254]: NUEVA APLICACIÓN
+            - generic [ref=e255]:
+              - generic [ref=e256]:
+                - generic [ref=e257]: Producto
+                - combobox [ref=e258] [cursor=pointer]:
+                  - option "Seleccionar..." [selected]
+                  - option "CAJAS CARTON X 5KG (1.176 u)"
+                  - option "CAJONES PLASTICO 15KG (-23 u)"
+                  - option "FERTILIZANTE X28 (100 lt)"
+                  - option "FUNGICIDA C-300 WTD (44 lt)"
+                  - option "GLIFOSATO 1.5L (0 lt)"
+                  - option "GLIFOSATO 10L (0 lt)"
+                  - option "MANGUERAS (0 u)"
+                  - option "NUTRIENTES MEGA NUTRICION (101 lt)"
+                  - option "PAPEL FILM (40 m)"
+                  - option "PLANTINES 2026 (12.000 u)"
+              - generic [ref=e259]:
+                - generic [ref=e260]: Cantidad
+                - spinbutton [ref=e261]
+              - generic [ref=e262]:
+                - generic [ref=e263]: Unidad
+                - combobox [ref=e264] [cursor=pointer]:
+                  - option "lt" [selected]
+                  - option "ml"
+                  - option "cc"
+                  - option "kg"
+                  - option "g"
+              - generic [ref=e265]:
+                - generic [ref=e266]: Carencia
+                - spinbutton [ref=e267]
+            - generic [ref=e268]:
+              - generic [ref=e269]:
+                - generic [ref=e270]: Método
+                - combobox [ref=e271] [cursor=pointer]:
+                  - option "Mochila" [selected]
+                  - option "Tractor"
+                  - option "Manual"
+                  - option "Otro"
+              - generic [ref=e272]:
+                - generic [ref=e273]: Clima
+                - combobox [ref=e274] [cursor=pointer]:
+                  - option "Óptima" [selected]
+                  - option "Vto.leve"
+                  - option "Nublado"
+                  - option "Calor"
+              - generic [ref=e275]:
+                - generic [ref=e276]: Dosis/ha
+                - spinbutton [ref=e277]
+              - generic [ref=e278]:
+                - generic [ref=e279]: Observación
+                - textbox "Opcional" [ref=e280]
+              - generic [ref=e281]:
+                - generic [ref=e282]: Empleado
+                - combobox [ref=e283] [cursor=pointer]:
+                  - option "— opcional —" [selected]
+                  - option "FULANITO, COSME"
+                  - option "GARCIA, JOSE"
+                  - option "GOMEZ, MARIA"
+                  - option "GONZALES, MARCELO"
+                  - option "PEREZ, JUAN"
+              - button "Registrar" [ref=e285] [cursor=pointer]:
+                - img [ref=e286]
+                - text: Registrar
+          - table [ref=e291]:
+            - rowgroup [ref=e292]:
+              - row "Fecha Producto Cantidad Carencia Empleado Estado" [ref=e293]:
+                - columnheader "Fecha" [ref=e294]
+                - columnheader "Producto" [ref=e295]
+                - columnheader "Cantidad" [ref=e296]
+                - columnheader "Carencia" [ref=e297]
+                - columnheader "Empleado" [ref=e298]
+                - columnheader "Estado" [ref=e299]
+                - columnheader [ref=e300]
+            - rowgroup [ref=e301]:
+              - row "Sin aplicaciones en esta parcela" [ref=e302]:
+                - cell "Sin aplicaciones en esta parcela" [ref=e303]
+          - generic [ref=e304]:
+            - text: "Total:"
+            - generic [ref=e305]: 0 aplicaciones
+      - generic [ref=e116]:
+        - button "Historial Completo" [ref=e117] [cursor=pointer]
+        - button "Totales x Aplicador" [ref=e118] [cursor=pointer]
+      - generic [ref=e120]:
+        - generic [ref=e121]:
+          - heading "Historial completo de aplicaciones" [level=3] [ref=e122]
+          - generic [ref=e123]:
+            - textbox [ref=e124]
+            - textbox [ref=e125]
+            - searchbox "Buscar..." [ref=e126]
+        - table [ref=e128]:
+          - rowgroup [ref=e129]:
+            - row "# Fecha Producto Cantidad Empleado Parcela Estado" [ref=e130]:
+              - columnheader "#" [ref=e131]
+              - columnheader "Fecha" [ref=e132]
+              - columnheader "Producto" [ref=e133]
+              - columnheader "Cantidad" [ref=e134]
+              - columnheader "Empleado" [ref=e135]
+              - columnheader "Parcela" [ref=e136]
+              - columnheader "Estado" [ref=e137]
+              - columnheader [ref=e138]
+          - rowgroup [ref=e139]:
+            - row "Sin resultados" [ref=e194]:
+              - cell "Sin resultados" [ref=e195]

@@ -364,7 +364,7 @@
       document.getElementById('sel-producto').innerHTML='<option value="">Seleccionar...</option>'+
         data.map(function(p){return '<option value="'+p.id+'" data-stock="'+(p.stock_actual||0)+'" data-pres="'+(p.presentacion||'')+'">'+p.nombre+' ('+fmt(p.stock_actual)+' '+(p.presentacion||'')+')</option>';}).join('');
     });
-    fetch('/api/juntadores').then(function(r){return r.json();}).then(function(data){
+    fetch('/api/roles-trabajo/por-rol/aplicador').then(function(r){return r.json();}).then(function(data){
       document.getElementById('sel-agregar-empleado').innerHTML='<option value="" style="background:white;color:var(--texto);">+ Agregar aplicador</option>'+
         data.map(function(j){return '<option value="'+j.id+'" style="background:white;color:var(--texto);">'+j.apellido+', '+j.nombre+'</option>';}).join('');
     });

@@ -1,0 +1,466 @@
+================================================================================
+  COSECHA APP — CONTEXTO COMPLETO DEL PROYECTO
+  Generado: 2026-04-05
+  Version: v2
+================================================================================
+
+1. INFORMACION GENERAL
+================================================================================
+Nombre:       COSECHA — Sistema de Cultivos
+Tipo:         ERP agricola enfocado 100% en frutilla (no multi-cultivo)
+Stack:        Node.js v24 + Express 5 + SQL Server (mssql) + HTML/CSS/JS vanilla
+DB:           CosechaFrutilla en localhost:1433 (sa / Frutilla2026!)
+Puerto:       3000
+Entry point:  server/index.js
+CSS:          cosecha.css (design system centralizado)
+Auth:         JWT (8h expiry), roles: admin, encargado, operario
+Branding:     Logo frutilla+surcos, "CO" blanco + "SE" rojo (#D32F2F) + "CHA" blanco
+
+2. ESTRUCTURA DE ARCHIVOS
+================================================================================
+
+public/ (44 HTML files)
+  login.html                  — Login con JWT
+  index.html                  — Dashboard ejecutivo (KPIs, alertas, graficos)
+  menu-campo.html             — Menu operaciones de campo
+  menu-comercial.html         — Menu comercial
+  menu-config.html            — Menu configuracion
+  menu-stock.html             — Menu stock e inventario
+  menu-admin.html             — Menu administracion y finanzas
+  menu-insumos.html           — Menu insumos (legacy, redirige a menu-stock)
+  juntada.html                — Cosecha: 2 columnas, lotes+cosecheros, persistencia
+  despalillado.html           — Despalillado: 2 columnas, lotes+despalilladores
+  aplicaciones.html           — Aplicaciones fitosanitarias: 2 columnas parcelas+form
+  clasificacion-embalaje.html — Clasificacion + embalaje de fruta
+  parcelas.html               — ABM de parcelas/lotes
+  temporadas.html             — ABM de temporadas/campanas
+  stock-insumos.html          — Stock de insumos con historial y vencimientos
+  stock-mercaderia.html       — Stock de mercaderia (lotes, etapas)
+  stock.html                  — Vista general de inventario
+  depositos.html              — ABM de depositos/almacenes
+  productos.html              — Catalogo maestro de insumos
+  compras.html                — Ordenes de compra con auditoria
+  proveedores.html            — ABM de proveedores
+  clientes.html               — ABM de clientes
+  ventas.html                 — Ventas con anulacion y auditoria
+  remitos.html                — Remitos (auto-generados NO-REM001...)
+  cuentas-clientes.html       — Cuenta corriente clientes
+  cuentas-proveedores.html    — Cuenta corriente proveedores
+  caja.html                   — Movimientos de caja
+  cheques.html                — Gestion de cheques (depositar, acreditar, endosar)
+  pagos.html                  — Pagos y liquidaciones a trabajadores
+  gastos.html                 — Registro de gastos
+  balance.html                — Balance financiero y P&L
+  reportes.html               — Centro de reportes (Excel/PDF)
+  personal.html               — Directorio de personal
+  usuarios.html               — ABM de usuarios del sistema
+  roles-trabajo.html          — Asignacion de roles laborales
+  empresa.html                — Configuracion de empresa
+  admin.html                  — Trabajadores/juntadores (legacy)
+  mercado.html                — Cotizaciones (dolar, granos, frutilla)
+  qr-generator.html           — Generador de tarjetas QR
+
+server/routes/ (30+ archivos de rutas)
+  auth.js                     — Login/logout/me (rate limiting 5/15min)
+  dashboard.js                — KPIs + alertas para dashboard
+  juntada.js                  — 21 endpoints (lotes, cosecheros, registros, auditoria)
+  despalillado.js             — 21 endpoints (despalilladores, pesajes, auditoria)
+  clasificacion-embalaje.js   — 14 endpoints (clasificar, embalar, anular)
+  aplicaciones.js             — 8 endpoints (historial, empleados, horarios, carencia)
+  productos.js                — 4 endpoints (CRUD + desactivar, filtro ?categoria=)
+  stock-insumos.js            — 9 endpoints (stock, historial, compra, egreso, vencidos)
+  stock-mercaderia.js         — 11 endpoints (stock, etapas, auditoria, movimientos)
+  depositos.js                — 18 endpoints (CRUD, ingreso/egreso, retornables)
+  compras.js                  — 6 endpoints (CRUD, auditoria, anular)
+  proveedores.js              — 5 endpoints (CRUD + desactivar)
+  clientes.js                 — 4 endpoints (CRUD + desactivar)
+  remitos.js                  — 4 endpoints (numero, CRUD, estado)
+  cuentas-clientes.js         — 5 endpoints (resumen, cobro, anular)
+  cuentas-proveedores.js      — 5 endpoints (resumen, pago, anular)
+  caja.js                     — 4 endpoints (movimientos, resumen, registrar)
+  cheques.js                  — 8 endpoints (CRUD, depositar, acreditar, endosar)
+  pagos.js                    — 6 endpoints (anticipo, liquidacion, resumen)
+  gastos.js                   — 4 endpoints (CRUD + anular)
+  balance.js                  — 3 endpoints (temporada, parcela, periodo)
+  reportes.js                 — 8 endpoints (cosecha, despalillado, caja, etc.)
+  usuarios.js                 — 4 endpoints (CRUD)
+  personal.js                 — 5 endpoints (CRUD + detalle)
+  roles-trabajo.js            — 4 endpoints (asignar, quitar, por-rol/:rol, list)
+  permisos.js                 — 3 endpoints (matriz, mi-rol, modificar)
+  configuracion-empresa.js    — 2 endpoints (GET, PUT)
+  temporadas.js               — 5 endpoints (activas, activa, CRUD)
+  lotes.js                    — 3 endpoints (CRUD, montado como /api/parcelas)
+  juntadores.js               — 3 endpoints (QR lookup, list, create)
+  cotizaciones.js             — 6 endpoints (dolar, granos, frutilla, locales)
+  categorias-fruta.js         — 5 endpoints (CRUD + toggle)
+  categorias-clasificacion.js — 7 endpoints (CRUD sub-categorias)
+
+server/
+  index.js                    — Express app, rutas, WebSocket para balanza
+  db.js                       — Pool de conexion SQL Server
+  middleware/auth.js           — requireAuth, soloAdmin, encargadoOAdmin
+
+server/migrations/
+  2026-04-02_estado-campo-modules.sql
+  2026-04-02_hardening-seguridad.sql
+  2026-04-02_indices-fk.sql
+  2026-04-02_limpieza-datos.sql
+
+3. BASE DE DATOS — 50 TABLAS
+================================================================================
+
+OPERACIONES DE CAMPO:
+  Juntada                    — Registros de cosecha (kg por cosechero por lote)
+  JuntadaDestino             — Destino de la cosecha
+  Juntadores                 — Trabajadores de campo (cosecheros, despalilladores, etc.)
+  LoteCosecheros             — Relacion lote-cosechero (multi-trabajador)
+  Despalillado               — Registros de despalillado (pesaje, merma)
+  LoteDespalilladores        — Relacion lote-despalillador (multi-trabajador)
+  Clasificacion              — Clasificacion de fruta (6 categorias)
+  LoteClasificadores         — Relacion lote-clasificador (multi-trabajador)
+  Embalaje                   — Embalaje de fruta clasificada
+  VentaEmbalaje              — Venta de producto embalado
+  Aplicaciones               — Aplicaciones fitosanitarias (con carencia SENASA)
+  AplicacionEmpleados        — Empleados por aplicacion (hora_inicio/hora_fin individual)
+  LotesMercaderia            — Lotes de mercaderia (codigo, kilos, estado, etapa)
+  CategoriasFruta            — 6 categorias (grande/media/chica x madura/pintona)
+  CategoriasClasificacion    — Categorias para clasificacion
+  SubCategoriasClasificacion — Sub-categorias de clasificacion
+
+STOCK E INVENTARIO:
+  Productos                  — Catalogo maestro de insumos (stock_actual, categoria)
+  StockInsumos               — Movimientos de insumos (compra, aplicacion, egreso, anulacion)
+  StockMercaderia            — Movimientos de mercaderia
+  Depositos                  — Almacenes/depositos
+  MovimientosDeposito        — Ingresos/egresos de depositos
+
+COMERCIAL:
+  Compras                    — Ordenes de compra
+  ComprasDetalle             — Items de cada compra
+  Proveedores                — Proveedores
+  Clientes                   — Clientes
+  Remitos                    — Documentos de envio (auto-generados)
+  RemitoItems                — Items de cada remito
+
+FINANZAS:
+  Caja                       — Movimientos de caja
+  Cheques                    — Cheques recibidos/emitidos
+  ChequeMovimientos          — Historial de movimientos de cheques
+  Pagos                      — Pagos a trabajadores (anticipos, liquidaciones)
+  Gastos                     — Gastos generales
+  CuentaCorrienteClientes    — Cuenta corriente clientes
+  CuentaCorrienteProveedores — Cuenta corriente proveedores
+  FormasPago                 — Formas de pago disponibles
+  CategoriasGasto            — Categorias de gastos
+  PrecioHistorico            — Historial de precios
+
+CONFIGURACION:
+  Temporadas                 — Campanas/temporadas
+  Parcelas                   — Parcelas/lotes de campo
+  Personal                   — Directorio de personal
+  PersonalRoles              — Roles asignados a personal (cosechero, despalillador, aplicador, etc.)
+  Usuarios                   — Usuarios del sistema (login)
+  PermisosRol                — Permisos por rol
+  Configuracion              — Config general
+  ConfiguracionEmpresa       — Datos de la empresa
+  variedades_frutilla        — Variedades de frutilla
+
+AUDITORIA:
+  AuditoriaCompras           — Auditoria de compras
+  AuditoriaVentas            — Auditoria de ventas
+  AuditoriaClasificacion     — Auditoria de clasificacion
+  EdicionesHistorial         — Historial de ediciones
+
+4. REGLAS DE NEGOCIO CRITICAS
+================================================================================
+
+GENERALES:
+  - Solo UNA temporada activa a la vez
+  - Soft-delete SIEMPRE (estado='anulada'), NUNCA hard delete
+  - Anulacion = reversal completo (stock, caja, cuentas) en transaccion ACID
+  - Todas las escrituras multi-tabla usan sql.Transaction (BEGIN/COMMIT/ROLLBACK)
+  - NUNCA interpolar variables SQL — siempre request.input()
+  - Rate limiting en login: 5 intentos por IP cada 15 minutos
+  - JWT expiry: 8 horas, sin fallback a secret publico
+  - Stock de mercaderia NUNCA negativo
+  - Despalillado no puede superar kilos de cosecha
+
+APLICACIONES FITOSANITARIAS:
+  - Minimo 1 empleado (rol "aplicador") obligatorio
+  - Solo insumos categoria='agroquimicos_nutricion' en el selector
+  - Stock negativo PERMITIDO (warning amarillo, no bloquea)
+  - Carencia SENASA: dias de espera post-aplicacion, alerta en cosecha
+  - Hora inicio/fin INDIVIDUAL por empleado (patron clasificacion-embalaje)
+  - Empleados se filtran por /api/roles-trabajo/por-rol/aplicador
+
+FLUJO OPERATIVO:
+  1. Cosecha (Juntada) → crea lote con codigo L2026-0402-P03-001
+  2. Despalillado → pesa, calcula merma, registra despalilladores
+  3. Clasificacion → 6 categorias (grande/media/chica x madura/pintona)
+  4. Embalaje → asigna a deposito (fresco/frio)
+  5. Trazabilidad completa: lote <-> trabajador <-> parcela <-> aplicaciones
+
+CUENTA CORRIENTE:
+  - Deteccion automatica por nombre de forma de pago: "cuenta corriente" (lowercase)
+  - Remito obligatorio y auto-generado (NO-REM001, NO-REM002...)
+
+5. DEPENDENCIAS (package.json)
+================================================================================
+
+  bcrypt@6.0.0          — Hash de passwords
+  cheerio@1.2.0         — Scraping HTML (cotizaciones mercado)
+  dotenv@17.3.1         — Variables de entorno
+  exceljs@4.4.0         — Export a Excel
+  express@5.2.1         — Framework web
+  jsonwebtoken@9.0.3    — Autenticacion JWT
+  mssql@12.2.1          — Driver SQL Server
+  pdfkit@0.18.0         — Generacion de PDF
+  pg@8.20.0             — Driver PostgreSQL (sin usar actualmente)
+  serialport@13.0.0     — Comunicacion RS232 con balanza
+  ws@8.19.0             — WebSocket para balanza
+
+6. MIDDLEWARE Y AUTORIZACION
+================================================================================
+
+  requireAuth            — Verifica JWT valido
+  soloAdmin              — Solo rol admin
+  encargadoOAdmin        — Rol encargado o admin
+
+Rutas publicas:     /api/auth, /api/cotizaciones
+Rutas admin:        balance, caja, cheques, pagos, gastos, cuentas-*, usuarios, remitos
+Rutas encargado+:   Todas las demas (campo, stock, comercial, config)
+
+7. DESIGN SYSTEM (cosecha.css)
+================================================================================
+
+CSS Variables:
+  --verde: #2D5016          (color principal)
+  --sem-verde/rojo/amarillo/azul + variantes
+  --radius-lg: 14px
+  --texto, --texto-2, --texto-suave
+  --superficie, --fondo, --borde
+
+Componentes:
+  .sidebar, .topbar, .filtros-barra, .card, .stat-card
+  .modal-overlay, .action-card, .form-colapsable
+  .brand-icon, .brand-info, .brand-name, .brand-sub
+
+Iconos en grillas (Lucide):
+  eye = ver detalle
+  pencil = editar
+  power = activar/desactivar
+  ban = anular
+
+Patrones de layout:
+  - 2 columnas: items izq (220px) + detalle der (1fr)
+  - Mobile: 1 columna <900px
+  - Historial siempre visible (no tabs)
+  - Select verde para agregar trabajadores (fondo verde, flecha blanca SVG)
+  - Filas por empleado con hora_inicio/hora_fin individuales
+
+8. HISTORIAL DE COMMITS (ultimos 25)
+================================================================================
+
+f64f827 feat: aplicaciones — hora inicio/fin por empleado (patron clasif+embalaje)
+43ebe50 feat: aplicaciones — rediseno 2 columnas, empleados obligatorios, stock warning
+65f427e feat: aplicaciones — multi-empleado + hora inicio/fin
+796f13f feat: aplicaciones — rediseno 2 columnas parcelas+aplicaciones igual que juntada/despalillado
+1fe5aef feat: columna fecha vencimiento en grilla stock insumos
+d97e588 feat: fecha vencimiento en historial stock-insumos + KPI insumos vencidos
+30fb059 fix(visual): th acciones vacio, inline styles a CSS, action-cards, variables CSS
+ee8d245 fix(seguridad): ocultar err.message, parametrizar interpolaciones, rate limiting en login
+6b99538 fix(alta): eliminar archivos huerfanos lotes.html y parcelas.js + marcar ruta legacy
+d494b89 fix(critical): transacciones ACID en despalillado, juntada, remitos + eliminar JWT fallback
+212bcc2 feat(2026-04-03): branding frutilla, juntada 2col+audit, despalillado mejorado
+9bbae0e feat(senasa): alerta de carencia activa al registrar cosecha
+39b61f6 docs: migration script — columna estado en Juntada, Despalillado, Aplicaciones
+6012f43 feat: aplicaciones — tabs historial/totales x aplicador, anulacion por fila
+f89bdcc feat: despalillado — historial inline, totales x despalillador, anulacion por fila
+4b43a48 feat: juntada — historial inline, totales x cosechero, anulacion por fila
+c4a7d14 feat: endpoints anular para juntada, despalillado y aplicaciones
+c36a28b feat: fetchApi() — fetch centralizado con error handling estandar
+375bcd5 ui: simetria visual — stock-insumos, stock-mercaderia (lote 2c)
+e28d036 ui: simetria visual — juntada, despalillado, aplicaciones (lote 2b)
+5d79b4e ui: simetria visual — cheques, depositos, remitos (lote 2a)
+7a07fe8 ui: simetria visual — iconos, botones y headers estandar (lote 1)
+545a408 feat: design system — clases estandar para simetria visual
+832f7a5 feat: ventas — anulacion, auditoria y acceso rapido nuevo cliente
+37bf8b1 feat: compras — anulacion, auditoria, alertas y accesos rapidos
+
+9. ENDPOINTS DETALLADOS POR MODULO
+================================================================================
+
+/api/aplicaciones
+  GET /                       — Lista con filtros (temporada, parcela, desde, hasta)
+  GET /:id/empleados          — Empleados de una aplicacion (con hora individual)
+  POST /:id/empleado          — Agregar empleado a aplicacion
+  PUT /:id/empleado/:regId    — Actualizar hora_inicio/hora_fin de empleado
+  DELETE /:id/empleado/:empId — Quitar empleado de aplicacion
+  PATCH /:id/horarios         — Actualizar horas de aplicacion (legacy)
+  GET /carencia               — Parcelas en carencia activa (vista VistaCariencia)
+  POST /                      — Registrar aplicacion (transaccion: Aplicaciones + AplicacionEmpleados + Productos stock + StockInsumos)
+  POST /:id/anular            — Anular aplicacion (reversal stock en transaccion)
+
+/api/juntada
+  GET /lotes                  — Lotes de la temporada
+  POST /lote                  — Crear lote (codigo auto L2026-MMDD-P##-###)
+  GET /lote/:id               — Detalle de lote
+  PUT /lote/:id               — Editar lote
+  DELETE /lote/:id            — Eliminar lote
+  GET /lote/:id/cosecheros    — Cosecheros del lote
+  POST /lote/:id/cosechero    — Agregar cosechero al lote
+  DELETE /lote/:id/cosechero/:cid — Quitar cosechero
+  GET /lote/:id/registros     — Registros del lote
+  POST /lote/:id/registrar    — Registrar cosecha (transaccion)
+  POST /registro/:id/anular   — Anular registro
+  GET /parcela/:id/carencia-activa — Verificar carencia SENASA
+  GET /historial              — Historial completo con filtros
+  GET /totales-cosechero      — Totales agrupados por cosechero
+
+/api/despalillado
+  GET /lotes                  — Lotes de la temporada
+  POST /lote                  — Crear lote
+  GET /lote/:id               — Detalle
+  PUT /lote/:id               — Editar
+  DELETE /lote/:id            — Eliminar
+  GET /lote/:id/despalilladores — Despalilladores del lote
+  POST /lote/:id/despalillador  — Agregar despalillador
+  DELETE /lote/:id/despalillador/:did — Quitar
+  GET /lote/:id/registros     — Registros (pesajes)
+  POST /registrar             — Registrar pesaje (transaccion)
+  POST /registro/:id/anular   — Anular registro
+  GET /historial              — Historial completo
+  GET /totales-despalillador  — Totales por despalillador
+
+/api/productos
+  GET /                       — Lista activos (?categoria= para filtrar)
+  POST /                      — Crear insumo
+  PUT /:id                    — Editar insumo
+  PATCH /:id/desactivar       — Desactivar (soft delete)
+
+/api/stock-insumos
+  GET /                       — Stock actual con MIN(fecha_vencimiento)
+  GET /historial              — Historial de movimientos
+  POST /compra                — Registrar compra (ingreso stock)
+  POST /egreso                — Registrar egreso manual
+  GET /vencidos               — Insumos vencidos (alerta)
+
+/api/roles-trabajo
+  GET /                       — Todos los roles asignados
+  POST /asignar               — Asignar rol a personal
+  DELETE /quitar              — Quitar rol
+  GET /por-rol/:rol           — Personal con un rol especifico (cosechero, despalillador, aplicador...)
+
+10. CAMBIOS SIN COMMITEAR (2026-04-05)
+================================================================================
+
+M  public/aplicaciones.html   — Filtro de empleados cambiado a /api/roles-trabajo/por-rol/aplicador
+
+11. SESIONES DE TRABAJO ANTERIORES
+================================================================================
+
+2026-03-21: Auditoria inicial, 4 bugs corregidos, script seed.js
+2026-03-25: Rediseno aplicaciones + stock-insumos, DB migrations
+2026-03-27: Rediseno global UI (13 modulos), design system
+2026-03-28: Dashboard ejecutivo, filtros unificados
+2026-03-31: Modulo insumos completo, aplicaciones form compact
+2026-04-02: Auditoria+anulacion, alertas SENASA, seguridad (SQL injection, ACID)
+2026-04-03: Branding frutilla, juntada 2col, despalillado mejorado, LoteCosecheros/LoteDespalilladores
+2026-04-05: Filtro empleados aplicaciones por rol "aplicador"
+
+12. AUDITORIA INTEGRAL (2026-04-03) — ESTADO
+================================================================================
+
+CRITICOS (3/3 resueltos):
+  [OK] despalillado.js POST /registrar — transaccion ACID agregada
+  [OK] juntada.js POST /lote/:id/registrar — transaccion ACID agregada
+  [OK] remitos.js PATCH /:id/estado — transaccion ACID agregada
+
+ALTOS (5/5 resueltos):
+  [OK] JWT fallback eliminado + process.exit si falta JWT_SECRET
+  [OK] lotes.html huerfano eliminado
+  [OK] stock-mercaderia.js ruta legacy marcada
+  [OK] parcelas.js dead code eliminado (se usa lotes.js)
+  [OK] err.message oculto en 211 puntos (32 archivos)
+
+MEDIOS (parcialmente resueltos):
+  [OK] Rate limiting en login (5/15min)
+  [OK] SQL interpolation parametrizada en cuentas-*
+  [OK] CSS variables corregidas
+  [OK] Inline styles migrados a clases CSS
+  [PENDIENTE] movimientos-grid.js migracion incompleta
+  [PENDIENTE] Menus con .btn como action-card (5 archivos)
+
+GAPS FUNCIONALES (pendientes):
+  [PENDIENTE] Tareas Generales (diseno aprobado, no implementado)
+  [PENDIENTE] UI simplificada para operarios
+  [PENDIENTE] Lista de precios por categoria de fruta
+  [PENDIENTE] Liquidacion masiva de trabajadores
+
+13. PATRONES DE CODIGO
+================================================================================
+
+PATRON MULTI-TRABAJADOR (usado en juntada, despalillado, clasificacion, aplicaciones):
+  - Tabla principal: LoteCosecheros / LoteDespalilladores / LoteClasificadores / AplicacionEmpleados
+  - Select verde para agregar (fondo verde, flecha blanca SVG)
+  - Fila por trabajador con hora_inicio + hora_fin + badge de horas
+  - Boton rojo para quitar trabajador
+  - Endpoint POST /:id/empleado + DELETE /:id/empleado/:empId
+
+PATRON ANULACION:
+  - POST /:id/anular con motivo obligatorio
+  - Transaccion ACID: revertir stock + insertar movimiento reversal + UPDATE estado='anulada'
+  - Fila en grilla: fondo rojo suave, texto "ANULADA", sin acciones
+
+PATRON 2 COLUMNAS:
+  - Izquierda: lista de items (parcelas/lotes) clickeables
+  - Derecha: formulario + grilla de detalle
+  - Responsive: stack vertical en <900px
+
+14. TABLAS DE RELACION MULTI-TRABAJADOR
+================================================================================
+
+LoteCosecheros:
+  id, lote_id (FK LotesMercaderia), cosechero_id (FK Juntadores),
+  hora_inicio DATETIME, hora_fin DATETIME, fecha_creacion
+
+LoteDespalilladores:
+  id, lote_id (FK LotesMercaderia), despalillador_id (FK Juntadores),
+  hora_inicio DATETIME, hora_fin DATETIME, fecha_creacion
+
+LoteClasificadores:
+  id, lote_id (FK LotesMercaderia), clasificador_id (FK Juntadores),
+  hora_inicio DATETIME, hora_fin DATETIME, fecha_creacion
+
+AplicacionEmpleados:
+  id, aplicacion_id (FK Aplicaciones), empleado_id (FK Juntadores),
+  hora_inicio DATETIME, hora_fin DATETIME, fecha_creacion
+
+15. CATEGORIAS DE PRODUCTOS EN DB
+================================================================================
+
+agroquimicos_nutricion:   FERTILIZANTE X28, FUNGICIDA C-300 WTD, GLIFOSATO 1.5L, GLIFOSATO 10L, NUTRIENTES MEGA NUTRICION
+embalaje_contenedores:    CAJAS CARTON X 5KG, CAJONES PLASTICO 15KG
+otros:                    PAPEL FILM
+biologicos_base:          PLANTINES 2026
+infraestructura_riego:    MANGUERAS
+
+Solo agroquimicos_nutricion aparece en el selector de aplicaciones.
+
+16. ROLES DE TRABAJO DISPONIBLES
+================================================================================
+
+Sistema de roles: PersonalRoles (personal_id, rol, activo)
+Endpoint: /api/roles-trabajo/por-rol/:rol
+
+Roles usados:
+  - cosechero      → para juntada
+  - despalillador  → para despalillado
+  - clasificador   → para clasificacion+embalaje
+  - aplicador      → para aplicaciones fitosanitarias
+
+Cada modulo filtra empleados por su rol correspondiente.
+
+================================================================================
+  FIN DEL CONTEXTO — 2026-04-05
+================================================================================

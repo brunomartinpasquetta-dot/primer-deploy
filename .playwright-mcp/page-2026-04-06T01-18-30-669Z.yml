@@ -1,0 +1,115 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - text: CO
+          - emphasis [ref=e8]: SE
+          - text: CHA
+        - generic [ref=e9]: SISTEMA DE CULTIVOS
+    - navigation [ref=e10]:
+      - link "Dashboard" [ref=e11] [cursor=pointer]:
+        - /url: index.html
+        - img [ref=e13]
+        - text: Dashboard
+      - generic [ref=e18]: Campo
+      - link "Cosecha" [ref=e19] [cursor=pointer]:
+        - /url: juntada.html
+        - img [ref=e21]
+        - text: Cosecha
+      - link "Despalillado" [ref=e30] [cursor=pointer]:
+        - /url: despalillado.html
+        - img [ref=e32]
+        - text: Despalillado
+      - link "Aplicaciones" [ref=e38] [cursor=pointer]:
+        - /url: aplicaciones.html
+        - img [ref=e40]
+        - text: Aplicaciones
+      - link "Clasif. + Embalaje" [ref=e43] [cursor=pointer]:
+        - /url: clasificacion-embalaje.html
+        - img [ref=e45]
+        - text: Clasif. + Embalaje
+      - generic [ref=e49]: Sistema
+      - link "Stock" [ref=e50] [cursor=pointer]:
+        - /url: menu-stock.html
+        - img [ref=e52]
+        - text: Stock
+      - link "Comercial" [ref=e56] [cursor=pointer]:
+        - /url: menu-comercial.html
+        - img [ref=e58]
+        - text: Comercial
+      - link "Administración" [ref=e63] [cursor=pointer]:
+        - /url: menu-admin.html
+        - img [ref=e65]
+        - text: Administración
+      - link "Mercado" [ref=e67] [cursor=pointer]:
+        - /url: mercado.html
+        - img [ref=e69]
+        - text: Mercado
+      - link "Configuración" [ref=e72] [cursor=pointer]:
+        - /url: menu-config.html
+        - img [ref=e74]
+        - text: Configuración
+    - generic [ref=e77]:
+      - generic [ref=e78]: Administrador · administrador
+      - button "Cerrar sesión" [ref=e79] [cursor=pointer]
+  - generic [ref=e80]:
+    - banner [ref=e81]:
+      - generic [ref=e82]:
+        - img [ref=e83]
+        - generic [ref=e84]:
+          - generic [ref=e85]:
+            - text: CO
+            - emphasis [ref=e86]: SE
+            - text: CHA
+          - generic [ref=e87]: SISTEMA DE CULTIVOS
+        - generic [ref=e88]: Cargando...
+      - generic [ref=e89]:
+        - generic [ref=e90] [cursor=pointer]:
+          - img [ref=e91]
+          - text: Administrador
+        - generic [ref=e94]: domingo, 5 de abril
+    - generic [ref=e95]:
+      - link "← Volver" [ref=e96] [cursor=pointer]:
+        - /url: "#"
+      - generic [ref=e97]:
+        - generic [ref=e98]: Aplicaciones
+        - generic [ref=e99]: Registro de aplicaciones fitosanitarias por parcela
+      - generic [ref=e100]:
+        - generic [ref=e101]:
+          - generic [ref=e102]: Aplicaciones Hoy
+          - generic [ref=e103]: —
+        - generic [ref=e104]:
+          - generic [ref=e105]: Parcelas Hoy
+          - generic [ref=e106]: —
+        - generic [ref=e107]:
+          - generic [ref=e108]: Campaña Total
+          - generic [ref=e109]: —
+      - generic [ref=e111]:
+        - generic [ref=e113]: Parcelas (0)
+        - generic [ref=e115]: Cargando parcelas...
+      - generic [ref=e116]:
+        - button "Historial Completo" [ref=e117] [cursor=pointer]
+        - button "Totales x Aplicador" [ref=e118] [cursor=pointer]
+      - generic [ref=e120]:
+        - generic [ref=e121]:
+          - heading "Historial completo de aplicaciones" [level=3] [ref=e122]
+          - generic [ref=e123]:
+            - textbox [ref=e124]
+            - textbox [ref=e125]
+            - searchbox "Buscar..." [ref=e126]
+        - table [ref=e128]:
+          - rowgroup [ref=e129]:
+            - row "# Fecha Producto Cantidad Empleado Parcela Estado" [ref=e130]:
+              - columnheader "#" [ref=e131]
+              - columnheader "Fecha" [ref=e132]
+              - columnheader "Producto" [ref=e133]
+              - columnheader "Cantidad" [ref=e134]
+              - columnheader "Empleado" [ref=e135]
+              - columnheader "Parcela" [ref=e136]
+              - columnheader "Estado" [ref=e137]
+              - columnheader [ref=e138]
+          - rowgroup [ref=e139]:
+            - row "Cargando..." [ref=e140]:
+              - cell "Cargando..." [ref=e141]
