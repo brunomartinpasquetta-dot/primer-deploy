@@ -43,6 +43,8 @@
   --texto:          #1A1A1A;
   --texto-2:        #4A4A4A;
   --texto-suave:    #7A7268;
+  --texto-secundario: var(--texto-suave);
+  --fondo-card:       var(--superficie);
   /* Aliases semánticos para compatibilidad */
   --success-bg:     var(--sem-verde-bg);
   --success-text:   var(--sem-verde);
