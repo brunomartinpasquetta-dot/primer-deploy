@@ -48,6 +48,7 @@ app.use('/api/juntadores',        requireAuth, encargadoOAdmin, require('./route
 app.use('/api/juntada',           requireAuth, encargadoOAdmin, require('./routes/juntada'));
 app.use('/api/despalillado',      requireAuth, encargadoOAdmin, require('./routes/despalillado'));
 app.use('/api/clasificacion-embalaje', requireAuth, encargadoOAdmin, require('./routes/clasificacion-embalaje'));
+app.use('/api/trabajos-campo',       requireAuth, encargadoOAdmin, require('./routes/trabajos-campo'));
 app.use('/api/categorias-fruta', requireAuth, encargadoOAdmin, require('./routes/categorias-fruta'));
 app.use('/api/categorias-clasificacion', requireAuth, encargadoOAdmin, require('./routes/categorias-clasificacion'));
 app.use('/api/reportes',          requireAuth, encargadoOAdmin, require('./routes/reportes'));

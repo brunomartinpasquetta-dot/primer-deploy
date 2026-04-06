@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1A2E0A">
+  <title>Trabajos de Campo — Campo</title>
+  <link rel="icon" href="img/logo.png">
+  <script src="js/utils.js"></script>
+  <link rel="stylesheet" href="cosecha.css">
+  <script src="js/auth-check.js"></script>
+  <style>
+    .tc-kpis { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px; }
+    .tc-kpi { background:white; border:1px solid var(--borde); border-top:3px solid var(--verde); border-radius:8px; padding:6px 8px; text-align:center; }
+    .tc-kpi-label { font-size:9px; font-weight:700; color:var(--texto-suave); text-transform:uppercase; letter-spacing:.06em; margin-bottom:2px; }
+    .tc-kpi-valor { font-size:16px; font-weight:700; color:var(--verde); font-family:'JetBrains Mono',monospace; letter-spacing:-.5px; }
+    @media (max-width:600px) { .tc-kpis { grid-template-columns:1fr 1fr; } }
+    @media (max-width:900px) { #layout-tc { grid-template-columns:1fr !important; } }
+
+    .lote-card { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border:1.5px solid var(--borde); border-radius:10px; background:var(--superficie); margin-bottom:8px; gap:10px; cursor:pointer; transition:.15s; }
+    .lote-card:hover { border-color:var(--verde); background:var(--verde-suave); }
+    .lote-card.seleccionado { border-color:var(--verde); background:var(--verde-suave); border-width:2px; }
+    .lote-info { flex:1; }
+    .lote-codigo { font-weight:700; font-size:14px; color:var(--texto); }
+    .lote-meta { font-size:12px; color:var(--texto-secundario); margin-top:2px; }
+
+    .desp-section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+    .desp-section-title { font-size:13px; font-weight:700; color:var(--texto-secundario); text-transform:uppercase; letter-spacing:.4px; }
+    .sin-desp { text-align:center; padding:20px; color:var(--texto-secundario); font-size:13px; }
+
+    .juntada-historial { background:var(--superficie); border:1px solid var(--borde); border-radius:12px; overflow:hidden; }
+    .juntada-historial-header { padding:14px 16px 12px; border-bottom:1px solid var(--borde); display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .juntada-historial-header h3 { font-size:14px; font-weight:700; color:var(--texto); margin:0; }
+    .juntada-historial-header small { font-size:12px; color:var(--texto-suave); font-family:'JetBrains Mono',monospace; }
+    .juntada-historial-body { overflow-y:auto; max-height:520px; }
+    .juntada-historial-body table { width:100%; border-collapse:collapse; font-size:13px; }
+    .juntada-historial-body th { text-align:left; padding:6px 8px; font-size:10px; font-weight:600; color:var(--texto-suave); background:var(--fondo); text-transform:uppercase; letter-spacing:.5px; position:sticky; top:0; white-space:nowrap; }
+    .juntada-historial-body td { padding:5px 8px; border-bottom:1px solid var(--borde); color:var(--texto); font-size:12px; white-space:nowrap; }
+    .juntada-historial-body tr:hover td { background:var(--fondo); }
+    .juntada-historial-footer { padding:10px 12px; border-top:1px solid var(--borde); font-size:12px; font-weight:600; color:var(--texto-suave); background:var(--fondo); display:flex; justify-content:flex-end; gap:4px; }
+    .juntada-historial-footer span { color:var(--verde); font-family:'JetBrains Mono',monospace; }
+
+    .fg { display:flex; flex-wrap:wrap; gap:6px 10px; align-items:flex-end; }
+    .fg > .fi { display:flex; flex-direction:column; gap:2px; }
+    .fg > .fi > label { font-size:11px; font-weight:600; color:var(--texto-suave); margin:0; white-space:nowrap; }
+    .fg > .fi > input, .fg > .fi > select, .fg > .fi > textarea { margin:0; padding:6px 8px; font-size:12px; height:32px; box-sizing:border-box; }
+    .fg > .fi > textarea { height:auto; min-height:50px; resize:vertical; }
+
+    .badge-anulada { font-size:10px; background:var(--sem-rojo-bg); color:var(--sem-rojo); padding:2px 6px; border-radius:4px; font-weight:600; }
+    .badge-activa { font-size:10px; background:var(--sem-verde-bg); color:var(--sem-verde); padding:2px 6px; border-radius:4px; font-weight:600; }
+    .stock-warning { padding:4px 8px; border-radius:6px; font-size:11px; font-weight:600; background:#fff3cd; color:#856404; border:1px solid #ffc107; margin-top:4px; }
+
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1000; align-items:center; justify-content:center; }
+    .modal-overlay.open { display:flex; }
+    .modal-box { background:var(--superficie); border-radius:var(--radius-lg); padding:20px 24px; max-width:620px; width:calc(100% - 32px); max-height:80vh; overflow-y:auto; box-shadow:0 8px 32px rgba(0,0,0,.3); }
+    .det-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px 16px; }
+    .det-item { border-bottom:1px solid var(--borde); padding-bottom:6px; }
+    .det-item .det-label { font-size:10px; text-transform:uppercase; letter-spacing:.5px; color:var(--texto-suave); }
+    .det-item .det-val { font-size:13px; font-weight:600; margin-top:2px; }
+    .det-item.full { grid-column:1/-1; }
+
+    .insumo-row { display:flex; align-items:center; gap:6px; padding:4px 8px; border:1px solid var(--borde); border-radius:6px; margin-bottom:4px; font-size:12px; background:var(--superficie); }
+    .collapsible-toggle { background:none; border:1px dashed var(--borde); border-radius:6px; padding:6px 12px; font-size:11px; font-weight:600; color:var(--texto-suave); cursor:pointer; margin-top:6px; }
+    .collapsible-toggle:hover { background:var(--fondo); }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand"><img src="img/logo-icon.png" class="brand-icon"><div class="brand-info"><span class="brand-name">CO<em>SE</em>CHA</span><span class="brand-sub">SISTEMA DE CULTIVOS</span></div></div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-item"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard</a>
+      <div class="nav-section">Campo</div>
+      <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
+      <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
+      <a href="trabajos-campo.html" class="nav-item active"><span class="nav-icon"><i data-lucide="hammer"></i></span> Trabajos de Campo</a>
+      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
+      <div class="nav-section">Sistema</div>
+      <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
+      <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
+      <a href="menu-admin.html" class="nav-item"><span class="nav-icon"><i data-lucide="landmark"></i></span> Administracion</a>
+      <a href="mercado.html" class="nav-item"><span class="nav-icon"><i data-lucide="trending-up"></i></span> Mercado</a>
+      <a href="menu-config.html" class="nav-item"><span class="nav-icon"><i data-lucide="settings"></i></span> Configuracion</a>
+    </nav>
+    <div class="sidebar-footer">Cosecha · Sistema de Cultivos</div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
+        <img src="img/logo-icon.png" class="brand-icon"><div class="brand-info"><span class="brand-name">CO<em>SE</em>CHA</span><span class="brand-sub">SISTEMA DE CULTIVOS</span></div><span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
+      </div>
+      <div class="topbar-right"><span class="topbar-date" id="topbar-date"></span></div>
+    </header>
+
+    <div class="content">
+      <a href="menu-campo.html" class="btn-volver">&larr; Volver</a>
+      <div class="content-header">
+        <div class="content-title">Trabajos de Campo</div>
+        <div class="content-sub">Registro de tareas generales: mantenimiento, riego, estructuras y mas</div>
+      </div>
+
+      <div class="tc-kpis">
+        <div class="tc-kpi"><div class="tc-kpi-label">Tareas Hoy</div><div class="tc-kpi-valor" id="kpi-hoy">—</div></div>
+        <div class="tc-kpi"><div class="tc-kpi-label">Horas Hoy</div><div class="tc-kpi-valor" id="kpi-horas">—</div></div>
+        <div class="tc-kpi"><div class="tc-kpi-label">Campana Total</div><div class="tc-kpi-valor" id="kpi-campana">—</div></div>
+      </div>
+
+      <!-- LAYOUT 2 COLUMNAS -->
+      <div style="display:grid;grid-template-columns:minmax(0,420px) 1fr;gap:24px;align-items:start;" id="layout-tc">
+
+        <!-- COL IZQ: Lista tareas -->
+        <div>
+          <div class="desp-section-header">
+            <div class="desp-section-title">Tareas (<span id="cnt-tareas">0</span>)</div>
+            <button class="btn btn-primary" onclick="nuevaTarea()" style="height:30px;padding:0 12px;font-size:12px;"><i data-lucide="plus" style="width:13px;height:13px;"></i> Nueva tarea</button>
+          </div>
+          <div style="margin-bottom:8px;">
+            <select id="filtro-categoria" onchange="filtrarTareasLista()" style="width:100%;height:32px;padding:0 8px;font-size:12px;border:1px solid var(--borde);border-radius:6px;">
+              <option value="">Todas las categorias</option>
+            </select>
+          </div>
+          <div id="lista-tareas"><div class="sin-desp">Cargando tareas...</div></div>
+        </div>
+
+        <!-- COL DER: Detalle / Nueva tarea -->
+        <div id="sec-detalle" style="display:none;">
+          <div class="juntada-historial">
+            <div class="juntada-historial-header">
+              <h3 id="detalle-titulo">Nueva tarea</h3>
+              <small id="detalle-badge"></small>
+            </div>
+
+            <!-- FORM NUEVA TAREA -->
+            <div id="form-nueva" style="padding:12px 16px;border-bottom:1px solid var(--borde);background:var(--fondo);">
+              <div style="font-size:12px;font-weight:700;color:var(--texto-suave);margin-bottom:8px;">NUEVA TAREA</div>
+              <div class="fg" style="margin-bottom:6px;">
+                <div class="fi" style="flex:1 1 220px;min-width:180px;">
+                  <label>Tipo de tarea</label>
+                  <select id="sel-categoria-tarea"><option value="">Seleccionar...</option></select>
+                </div>
+                <div class="fi" style="flex:0 0 140px;">
+                  <label>Parcela (opcional)</label>
+                  <select id="sel-parcela"><option value="">Sin parcela</option></select>
+                </div>
+                <div class="fi" style="flex:0 0 110px;">
+                  <label>Fecha</label>
+                  <input type="date" id="inp-fecha">
+                </div>
+              </div>
+              <div class="fg" style="margin-bottom:6px;">
+                <div class="fi" style="flex:1 1 100%;">
+                  <label>Observacion <span id="obs-req" style="color:var(--sem-rojo);display:none;">(obligatoria para "Otros")</span></label>
+                  <textarea id="inp-observacion" placeholder="Opcional" rows="2" style="width:100%;"></textarea>
+                </div>
+              </div>
+
+              <!-- BLOQUE TRABAJADORES -->
+              <div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--borde);">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                  <div style="font-size:11px;font-weight:700;color:var(--texto-suave);text-transform:uppercase;">Trabajadores</div>
+                  <span id="cant-trabajadores" style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--sem-verde-bg);color:var(--sem-verde);">0</span>
+                  <select id="sel-agregar-trabajador" onchange="agregarTrabajador()" style="height:30px;font-size:12px;font-weight:700;border:1.5px solid var(--verde);border-radius:6px;padding:2px 8px;background:var(--verde);color:white;min-width:180px;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22white%22 stroke-width=%222.5%22><polyline points=%226 9 12 15 18 9%22/></svg>');background-repeat:no-repeat;background-position:right 8px center;">
+                    <option value="" style="background:white;color:var(--texto);">+ Agregar trabajador</option>
+                  </select>
+                </div>
+                <div id="lista-trabajadores-filas" style="min-height:26px;"></div>
+              </div>
+
+              <!-- BLOQUE INSUMOS (colapsable) -->
+              <div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--borde);">
+                <button class="collapsible-toggle" id="btn-toggle-insumos" onclick="toggleInsumos()">+ Agregar insumos (opcional)</button>
+                <div id="bloque-insumos" style="display:none;margin-top:8px;">
+                  <div class="fg" style="margin-bottom:6px;">
+                    <div class="fi" style="flex:1 1 160px;min-width:120px;">
+                      <label>Producto</label>
+                      <select id="sel-insumo"><option value="">Seleccionar...</option></select>
+                    </div>
+                    <div class="fi" style="flex:0 0 80px;">
+                      <label>Cantidad</label>
+                      <input type="number" id="inp-ins-cantidad" placeholder="0" step="0.01" min="0">
+                    </div>
+                    <div class="fi" style="flex:0 0 auto;">
+                      <label>&nbsp;</label>
+                      <button class="btn btn-primary" onclick="agregarInsumo()" style="height:32px;padding:0 10px;font-size:11px;">Agregar</button>
+                    </div>
+                  </div>
+                  <div id="ins-stock-info" style="font-size:10px;color:var(--verde);margin-top:2px;"></div>
+                  <div id="lista-insumos-filas"></div>
+                </div>
+              </div>
+
+              <div style="display:flex;align-items:center;gap:8px;margin-top:10px;">
+                <button class="btn btn-primary" id="btn-registrar" onclick="registrarTarea()" style="height:34px;padding:0 16px;white-space:nowrap;" disabled>
+                  <i data-lucide="save" style="width:13px;height:13px;"></i> Registrar tarea
+                </button>
+                <span id="emp-warning" style="font-size:11px;color:var(--sem-rojo);display:none;">Agrega al menos 1 trabajador</span>
+              </div>
+              <div id="mensaje" style="margin-top:4px;"></div>
+            </div>
+
+            <!-- VISTA DETALLE TAREA EXISTENTE -->
+            <div id="vista-detalle" style="display:none;padding:12px 16px;">
+              <div id="detalle-contenido"></div>
+              <div id="detalle-acciones" style="margin-top:10px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HISTORIAL COMPLETO -->
+      <div style="margin-top:16px;">
+        <div class="card" style="margin-top:0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+            <h3 style="margin:0;font-size:15px;">Historial completo</h3>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input type="date" id="hist-desde" onchange="cargarHistorial()" style="height:32px;padding:0 8px;border:1px solid var(--borde);border-radius:6px;font-size:12px;">
+              <input type="date" id="hist-hasta" onchange="cargarHistorial()" style="height:32px;padding:0 8px;border:1px solid var(--borde);border-radius:6px;font-size:12px;">
+              <input type="search" id="hist-buscar" placeholder="Buscar..." oninput="filtrarHist()" style="height:32px;padding:0 8px;border:1px solid var(--borde);border-radius:6px;font-size:12px;width:140px;">
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:13px;">
+              <thead><tr style="background:var(--fondo-dark);">
+                <th style="padding:6px 8px;font-size:10px;font-weight:600;color:var(--texto-suave);text-align:left;">Fecha</th>
+                <th style="padding:6px 8px;font-size:10px;font-weight:600;color:var(--texto-suave);text-align:left;">Tarea</th>
+                <th style="padding:6px 8px;font-size:10px;font-weight:600;color:var(--texto-suave);text-align:left;">Parcela</th>
+                <th style="padding:6px 8px;font-size:10px;font-weight:600;color:var(--texto-suave);text-align:center;">Trabaj.</th>
+                <th style="padding:6px 8px;font-size:10px;font-weight:600;color:var(--texto-suave);text-align:right;">Horas</th>
+                <th style="padding:6px 8px;font-size:10px;font-weight:600;color:var(--texto-suave);text-align:center;">Estado</th>
+                <th style="padding:6px 8px;font-size:10px;font-weight:600;color:var(--texto-suave);text-align:center;"></th>
+              </tr></thead>
+              <tbody id="tbody-historial"><tr><td colspan="7" style="text-align:center;padding:20px;color:var(--texto-suave);">Cargando...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DETALLES -->
+  <div class="modal-overlay" id="modal-detalles" onclick="if(event.target===this)this.classList.remove('open')">
+    <div class="modal-box">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <h3 style="margin:0;">Detalle de tarea</h3>
+        <button class="btn-cerrar" onclick="document.getElementById('modal-detalles').classList.remove('open')">&#10005;</button>
+      </div>
+      <div id="modal-contenido"></div>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="home"></i></span><span>Inicio</span></a>
+    <a href="juntada.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="wheat"></i></span><span>Cosecha</span></a>
+    <a href="despalillado.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="scissors"></i></span><span>Despalillado</span></a>
+    <a href="trabajos-campo.html" class="bottom-nav-item active"><span class="bottom-nav-icon"><i data-lucide="hammer"></i></span><span>Trabajos</span></a>
+    <a href="menu-campo.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="menu"></i></span><span>Menu</span></a>
+  </nav>
+</div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+  lucide.createIcons();
+  document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('inp-fecha').value = new Date().toISOString().split('T')[0];
+
+  var _temporadaId=null, _tareas=[], _histData=[], _categorias=[], _productos=[];
+  var _trabajadoresSeleccionados=[], _insumosSeleccionados=[];
+  var _tareaSeleccionada=null, _modoNueva=false;
+  var mono="font-family:'JetBrains Mono',monospace;";
+
+  function fmtFecha(iso){
+    if(!iso)return '—'; var d=new Date(iso);
+    return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getFullYear()).slice(-2);
+  }
+  function fmt(n){return parseFloat(n||0).toLocaleString('es-AR',{maximumFractionDigits:2});}
+  function fmtHoras(min){
+    if(!min||min<=0)return '—';
+    var h=Math.floor(min/60),m=min%60;
+    return h>0?h+'h'+(m?String(m).padStart(2,'0')+'m':''):m+'m';
+  }
+
+  /* INIT */
+  function init(){
+    fetch('/api/temporadas/activa').then(function(r){return r.json();}).then(function(t){
+      if(!t)return; _temporadaId=t.id;
+      document.getElementById('temporada-activa-badge').textContent=t.nombre||'Temporada';
+      cargarTareas(); cargarKpis(); cargarHistorial();
+    });
+    // Categorias
+    fetch('/api/trabajos-campo/categorias').then(function(r){return r.json();}).then(function(data){
+      _categorias=data;
+      var grupos={};
+      data.forEach(function(c){if(!grupos[c.categoria])grupos[c.categoria]=[];grupos[c.categoria].push(c);});
+      var html='<option value="">Seleccionar tipo...</option>';
+      var filtroHtml='<option value="">Todas las categorias</option>';
+      var catsUnicas=Object.keys(grupos);
+      catsUnicas.forEach(function(cat){
+        html+='<optgroup label="'+cat+'">';
+        grupos[cat].forEach(function(c){html+='<option value="'+c.id+'">'+c.nombre+'</option>';});
+        html+='</optgroup>';
+        filtroHtml+='<option value="'+cat+'">'+cat+'</option>';
+      });
+      document.getElementById('sel-categoria-tarea').innerHTML=html;
+      document.getElementById('filtro-categoria').innerHTML=filtroHtml;
+    });
+    // Parcelas
+    fetch('/api/parcelas').then(function(r){return r.json();}).then(function(data){
+      document.getElementById('sel-parcela').innerHTML='<option value="">Sin parcela</option>'+
+        data.map(function(p){return '<option value="'+p.id+'">'+p.nombre+'</option>';}).join('');
+    });
+    // Trabajadores
+    fetch('/api/roles-trabajo/por-rol/campo_general').then(function(r){return r.json();}).then(function(data){
+      document.getElementById('sel-agregar-trabajador').innerHTML='<option value="" style="background:white;color:var(--texto);">+ Agregar trabajador</option>'+
+        data.map(function(j){return '<option value="'+j.id+'" style="background:white;color:var(--texto);">'+j.apellido+', '+j.nombre+'</option>';}).join('');
+    });
+    // Productos (todos)
+    fetch('/api/productos').then(function(r){return r.json();}).then(function(data){
+      _productos=data;
+      document.getElementById('sel-insumo').innerHTML='<option value="">Seleccionar...</option>'+
+        data.map(function(p){return '<option value="'+p.id+'">'+p.nombre+' ('+fmt(p.stock_actual)+' '+(p.presentacion||'')+')</option>';}).join('');
+    });
+  }
+
+  /* TIPO CHANGE — mostrar obs obligatoria si es "Otros" */
+  document.getElementById('sel-categoria-tarea').addEventListener('change', function(){
+    var opt=this.options[this.selectedIndex];
+    var esOtros=opt&&opt.text==='Otros';
+    document.getElementById('obs-req').style.display=esOtros?'inline':'none';
+  });
+
+  /* TAREAS LISTA IZQ */
+  function cargarTareas(){
+    if(!_temporadaId)return;
+    fetch('/api/trabajos-campo?temporada_id='+_temporadaId).then(function(r){return r.json();}).then(function(data){
+      _tareas=data;
+      document.getElementById('cnt-tareas').textContent=data.filter(function(t){return t.estado!=='anulada';}).length;
+      filtrarTareasLista();
+    });
+  }
+  function filtrarTareasLista(){
+    var catFiltro=document.getElementById('filtro-categoria').value;
+    var filtered=_tareas;
+    if(catFiltro)filtered=filtered.filter(function(t){return t.tarea_categoria===catFiltro;});
+    renderTareasLista(filtered);
+  }
+  function renderTareasLista(data){
+    var cont=document.getElementById('lista-tareas');
+    if(!data.length){cont.innerHTML='<div class="sin-desp">Sin tareas registradas</div>';return;}
+    cont.innerHTML=data.map(function(t){
+      var sel=_tareaSeleccionada&&_tareaSeleccionada.id===t.id?' seleccionado':'';
+      var esAn=t.estado==='anulada';
+      var badge=esAn?' <span class="badge-anulada">ANULADA</span>':'';
+      return '<div class="lote-card'+sel+'"'+(esAn?' style="opacity:.6;"':'')+' onclick="seleccionarTarea('+t.id+')">'+
+        '<div class="lote-info"><div class="lote-codigo">'+t.tarea_nombre+badge+'</div>'+
+        '<div class="lote-meta">'+fmtFecha(t.fecha)+(t.parcela?' · '+t.parcela:'')+' · '+t.cant_trabajadores+' trab.'+(t.minutos_totales?' · '+fmtHoras(t.minutos_totales):'')+'</div></div></div>';
+    }).join('');
+  }
+
+  /* NUEVA TAREA */
+  function nuevaTarea(){
+    _tareaSeleccionada=null; _modoNueva=true;
+    _trabajadoresSeleccionados=[]; _insumosSeleccionados=[];
+    document.getElementById('sec-detalle').style.display='';
+    document.getElementById('form-nueva').style.display='';
+    document.getElementById('vista-detalle').style.display='none';
+    document.getElementById('detalle-titulo').textContent='Nueva tarea';
+    document.getElementById('detalle-badge').textContent='';
+    document.getElementById('sel-categoria-tarea').value='';
+    document.getElementById('sel-parcela').value='';
+    document.getElementById('inp-fecha').value=new Date().toISOString().split('T')[0];
+    document.getElementById('inp-observacion').value='';
+    document.getElementById('obs-req').style.display='none';
+    document.getElementById('bloque-insumos').style.display='none';
+    document.getElementById('btn-toggle-insumos').textContent='+ Agregar insumos (opcional)';
+    document.getElementById('lista-insumos-filas').innerHTML='';
+    renderFilasTrabajadores(); actualizarBtn();
+    renderTareasLista(_tareas);
+    lucide.createIcons();
+  }
+
+  /* SELECCIONAR TAREA EXISTENTE */
+  function seleccionarTarea(id){
+    _modoNueva=false;
+    var t=_tareas.find(function(x){return x.id===id;});
+    if(!t)return;
+    _tareaSeleccionada=t;
+    renderTareasLista(_tareas);
+    document.getElementById('sec-detalle').style.display='';
+    document.getElementById('form-nueva').style.display='none';
+    document.getElementById('vista-detalle').style.display='';
+    document.getElementById('detalle-titulo').textContent=t.tarea_nombre;
+    document.getElementById('detalle-badge').textContent=t.tarea_categoria;
+
+    // Cargar detalle completo
+    fetch('/api/trabajos-campo/'+id).then(function(r){return r.json();}).then(function(det){
+      var esAn=det.estado==='anulada';
+      var h='<div class="det-grid">';
+      h+=detItem('Tipo',det.tarea_nombre);
+      h+=detItem('Categoria',det.tarea_categoria);
+      h+=detItem('Fecha',fmtFecha(det.fecha));
+      h+=detItem('Parcela',det.parcela||'Sin parcela');
+      h+=detItem('Estado',esAn?'<span class="badge-anulada">ANULADA</span>':'<span class="badge-activa">Confirmada</span>');
+      h+=detItem('Costo','$'+fmt(det.costo_total));
+      if(det.observacion)h+=detItem('Observacion',det.observacion,true);
+      h+='</div>';
+
+      // Trabajadores
+      h+='<div style="margin-top:12px;padding-top:8px;border-top:1px solid var(--borde);">';
+      h+='<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--texto-suave);margin-bottom:6px;">Trabajadores ('+det.trabajadores.length+')</div>';
+      if(det.trabajadores.length){
+        h+='<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:var(--fondo);">';
+        h+='<th style="padding:4px 8px;text-align:left;font-size:10px;font-weight:600;color:var(--texto-suave);">Nombre</th>';
+        h+='<th style="padding:4px 8px;text-align:center;font-size:10px;font-weight:600;color:var(--texto-suave);">Inicio</th>';
+        h+='<th style="padding:4px 8px;text-align:center;font-size:10px;font-weight:600;color:var(--texto-suave);">Fin</th>';
+        h+='<th style="padding:4px 8px;text-align:center;font-size:10px;font-weight:600;color:var(--texto-suave);">Horas</th>';
+        h+='</tr></thead><tbody>';
+        det.trabajadores.forEach(function(tr){
+          var horas='—';
+          if(tr.hora_inicio&&tr.hora_fin){
+            var diff=Math.round((new Date(tr.hora_fin)-new Date(tr.hora_inicio))/60000);
+            if(diff>0)horas=fmtHoras(diff);
+          }
+          h+='<tr><td style="padding:4px 8px;font-weight:600;">'+tr.nombre+'</td>';
+          h+='<td style="padding:4px 8px;text-align:center;'+mono+'">'+(tr.hora_inicio?new Date(tr.hora_inicio).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}):'—')+'</td>';
+          h+='<td style="padding:4px 8px;text-align:center;'+mono+'">'+(tr.hora_fin?new Date(tr.hora_fin).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}):'—')+'</td>';
+          h+='<td style="padding:4px 8px;text-align:center;color:var(--verde);font-weight:700;'+mono+'">'+horas+'</td></tr>';
+        });
+        h+='</tbody></table>';
+      }
+      h+='</div>';
+
+      // Insumos
+      if(det.insumos&&det.insumos.length){
+        h+='<div style="margin-top:12px;padding-top:8px;border-top:1px solid var(--borde);">';
+        h+='<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--texto-suave);margin-bottom:6px;">Insumos ('+det.insumos.length+')</div>';
+        h+='<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:var(--fondo);">';
+        h+='<th style="padding:4px 8px;text-align:left;font-size:10px;font-weight:600;color:var(--texto-suave);">Producto</th>';
+        h+='<th style="padding:4px 8px;text-align:right;font-size:10px;font-weight:600;color:var(--texto-suave);">Cantidad</th>';
+        h+='</tr></thead><tbody>';
+        det.insumos.forEach(function(ins){
+          h+='<tr><td style="padding:4px 8px;font-weight:600;">'+ins.producto+'</td>';
+          h+='<td style="padding:4px 8px;text-align:right;'+mono+'">'+fmt(ins.cantidad)+' '+(ins.presentacion||'')+'</td></tr>';
+        });
+        h+='</tbody></table></div>';
+      }
+
+      document.getElementById('detalle-contenido').innerHTML=h;
+
+      // Acciones
+      var accHtml='';
+      if(!esAn){
+        accHtml='<button class="btn btn-danger" onclick="anularTarea('+det.id+')" style="height:32px;padding:0 14px;font-size:12px;"><i data-lucide="ban" style="width:13px;height:13px;"></i> Anular tarea</button>';
+      }
+      document.getElementById('detalle-acciones').innerHTML=accHtml;
+      lucide.createIcons();
+    });
+  }
+  function detItem(l,v,full){return '<div class="det-item'+(full?' full':'')+'"><div class="det-label">'+l+'</div><div class="det-val">'+(v||'—')+'</div></div>';}
+
+  /* TRABAJADORES */
+  function agregarTrabajador(){
+    var sel=document.getElementById('sel-agregar-trabajador');
+    var id=parseInt(sel.value); if(!id){return;}
+    if(_trabajadoresSeleccionados.find(function(e){return e.id===id;})){sel.value='';return;}
+    var opt=sel.options[sel.selectedIndex];
+    _trabajadoresSeleccionados.push({id:id,nombre:opt.text,hora_inicio:'',hora_fin:''});
+    sel.value='';
+    renderFilasTrabajadores(); actualizarBtn();
+  }
+  function quitarTrabajador(id){
+    _trabajadoresSeleccionados=_trabajadoresSeleccionados.filter(function(e){return e.id!==id;});
+    renderFilasTrabajadores(); actualizarBtn();
+  }
+  function setHoraTrabajador(id,tipo,valor){
+    var emp=_trabajadoresSeleccionados.find(function(e){return e.id===id;});
+    if(emp){ if(tipo==='inicio') emp.hora_inicio=valor; else emp.hora_fin=valor; }
+    renderFilasTrabajadores();
+  }
+  function renderFilasTrabajadores(){
+    var el=document.getElementById('lista-trabajadores-filas');
+    document.getElementById('cant-trabajadores').textContent=_trabajadoresSeleccionados.length;
+    if(!_trabajadoresSeleccionados.length){
+      el.innerHTML='<div style="text-align:center;padding:8px;color:var(--texto-suave);font-size:12px;">Agrega trabajadores con el selector</div>';
+      return;
+    }
+    el.innerHTML=_trabajadoresSeleccionados.map(function(e){
+      var horas='';
+      if(e.hora_inicio&&e.hora_fin){
+        var d1=new Date('2026-01-01T'+e.hora_inicio+':00');
+        var d2=new Date('2026-01-01T'+e.hora_fin+':00');
+        var diff=(d2-d1)/3600000;
+        if(diff>0) horas=' <span style="color:var(--verde);font-size:11px;font-weight:700;'+mono+'">'+diff.toFixed(1)+'h</span>';
+      }
+      return '<div style="display:flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--borde);border-radius:8px;margin-bottom:4px;font-size:12px;background:var(--superficie);flex-wrap:wrap;">' +
+        '<span style="flex:1;font-weight:600;min-width:100px;">'+e.nombre+'</span>' +
+        '<span style="font-size:10px;color:var(--texto-suave);font-weight:600;">Inicio</span>' +
+        '<input type="time" value="'+e.hora_inicio+'" style="width:75px;padding:2px 4px;border:1px solid var(--borde);border-radius:4px;font-size:11px;" onchange="setHoraTrabajador('+e.id+',\'inicio\',this.value)">' +
+        '<span style="font-size:10px;color:var(--texto-suave);font-weight:600;">Fin</span>' +
+        '<input type="time" value="'+e.hora_fin+'" style="width:75px;padding:2px 4px;border:1px solid var(--borde);border-radius:4px;font-size:11px;" onchange="setHoraTrabajador('+e.id+',\'fin\',this.value)">' +
+        horas +
+        '<button onclick="quitarTrabajador('+e.id+')" style="background:none;border:none;color:var(--sem-rojo);cursor:pointer;padding:2px;" title="Quitar">&#10005;</button>' +
+      '</div>';
+    }).join('');
+  }
+  function actualizarBtn(){
+    var btn=document.getElementById('btn-registrar');
+    var warn=document.getElementById('emp-warning');
+    if(_trabajadoresSeleccionados.length===0){btn.disabled=true;warn.style.display='';} else {btn.disabled=false;warn.style.display='none';}
+  }
+
+  /* INSUMOS */
+  function toggleInsumos(){
+    var bloque=document.getElementById('bloque-insumos');
+    var btn=document.getElementById('btn-toggle-insumos');
+    if(bloque.style.display==='none'){bloque.style.display='';btn.textContent='- Ocultar insumos';}
+    else{bloque.style.display='none';btn.textContent='+ Agregar insumos (opcional)';}
+  }
+  document.getElementById('sel-insumo').addEventListener('change',function(){
+    var id=this.value;
+    var prod=_productos.find(function(p){return p.id==id;});
+    var info=document.getElementById('ins-stock-info');
+    info.textContent=prod?'Stock: '+fmt(prod.stock_actual)+' '+(prod.presentacion||''):'';
+  });
+  function agregarInsumo(){
+    var selIns=document.getElementById('sel-insumo');
+    var id=parseInt(selIns.value); if(!id)return;
+    var cant=parseFloat(document.getElementById('inp-ins-cantidad').value)||0;
+    if(cant<=0){mostrarMensaje('mensaje','error','Ingresa una cantidad');return;}
+    if(_insumosSeleccionados.find(function(i){return i.producto_id===id;})){
+      mostrarMensaje('mensaje','error','Insumo ya agregado');return;
+    }
+    var prod=_productos.find(function(p){return p.id===id;});
+    _insumosSeleccionados.push({producto_id:id,nombre:prod?prod.nombre:'',cantidad:cant,stock:prod?parseFloat(prod.stock_actual):0,presentacion:prod?prod.presentacion:''});
+    selIns.value='';document.getElementById('inp-ins-cantidad').value='';
+    document.getElementById('ins-stock-info').textContent='';
+    renderFilasInsumos();
+  }
+  function quitarInsumo(pid){
+    _insumosSeleccionados=_insumosSeleccionados.filter(function(i){return i.producto_id!==pid;});
+    renderFilasInsumos();
+  }
+  function renderFilasInsumos(){
+    var el=document.getElementById('lista-insumos-filas');
+    if(!_insumosSeleccionados.length){el.innerHTML='';return;}
+    el.innerHTML=_insumosSeleccionados.map(function(ins){
+      var warn=ins.stock<ins.cantidad?' <span class="stock-warning" style="display:inline;margin-left:4px;">Stock insuficiente</span>':'';
+      return '<div class="insumo-row">'+
+        '<span style="flex:1;font-weight:600;">'+ins.nombre+'</span>'+
+        '<span style="'+mono+'">'+fmt(ins.cantidad)+' '+(ins.presentacion||'')+'</span>'+
+        '<span style="font-size:10px;color:var(--texto-suave);margin-left:4px;">(stock: '+fmt(ins.stock)+')</span>'+
+        warn+
+        '<button onclick="quitarInsumo('+ins.producto_id+')" style="background:none;border:none;color:var(--sem-rojo);cursor:pointer;padding:2px;" title="Quitar">&#10005;</button>'+
+      '</div>';
+    }).join('');
+  }
+
+  /* REGISTRAR TAREA */
+  function registrarTarea(){
+    var catId=document.getElementById('sel-categoria-tarea').value;
+    if(!catId){mostrarMensaje('mensaje','error','Selecciona un tipo de tarea');return;}
+    if(_trabajadoresSeleccionados.length===0){mostrarMensaje('mensaje','error','Agrega al menos 1 trabajador');return;}
+
+    // Verificar obs obligatoria para "Otros"
+    var opt=document.getElementById('sel-categoria-tarea').options[document.getElementById('sel-categoria-tarea').selectedIndex];
+    var obs=document.getElementById('inp-observacion').value.trim();
+    if(opt&&opt.text==='Otros'&&!obs){mostrarMensaje('mensaje','error','Para tipo "Otros", la observacion es obligatoria');return;}
+
+    var hoyStr=document.getElementById('inp-fecha').value||new Date().toISOString().split('T')[0];
+
+    var btn=document.getElementById('btn-registrar');
+    setLoading(btn,true);
+
+    var body={
+      temporada_id:_temporadaId,
+      parcela_id:document.getElementById('sel-parcela').value||null,
+      categoria_tarea_id:parseInt(catId),
+      observacion:obs||null,
+      fecha:hoyStr,
+      trabajadores:_trabajadoresSeleccionados.map(function(e){
+        return {
+          trabajador_id:e.id,
+          hora_inicio:e.hora_inicio?hoyStr+'T'+e.hora_inicio+':00':null,
+          hora_fin:e.hora_fin?hoyStr+'T'+e.hora_fin+':00':null
+        };
+      }),
+      insumos:_insumosSeleccionados.map(function(i){
+        return {producto_id:i.producto_id,cantidad:i.cantidad};
+      })
+    };
+
+    fetch('/api/trabajos-campo',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(body)
+    }).then(function(r){return r.json();}).then(function(data){
+      setLoading(btn,false);
+      if(data.ok){
+        var msg='Tarea registrada';
+        if(data.warning_stock)msg+=' (alerta: stock negativo en algun insumo)';
+        mostrarMensaje('mensaje','success',msg);
+        _trabajadoresSeleccionados=[];_insumosSeleccionados=[];
+        document.getElementById('sel-categoria-tarea').value='';
+        document.getElementById('inp-observacion').value='';
+        document.getElementById('lista-insumos-filas').innerHTML='';
+        renderFilasTrabajadores();actualizarBtn();
+        cargarTareas();cargarKpis();cargarHistorial();
+        // Refresh productos
+        fetch('/api/productos').then(function(r){return r.json();}).then(function(d){
+          _productos=d;
+          document.getElementById('sel-insumo').innerHTML='<option value="">Seleccionar...</option>'+
+            d.map(function(p){return '<option value="'+p.id+'">'+p.nombre+' ('+fmt(p.stock_actual)+' '+(p.presentacion||'')+')</option>';}).join('');
+        });
+      } else {mostrarMensaje('mensaje','error',data.error||'Error');}
+    }).catch(function(){setLoading(btn,false);mostrarMensaje('mensaje','error','Error de conexion');});
+  }
+
+  /* ANULAR */
+  function anularTarea(id){
+    var motivo=prompt('Motivo de anulacion:');if(!motivo)return;
+    fetch('/api/trabajos-campo/'+id+'/anular',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({motivo:motivo})})
+      .then(function(r){return r.json();}).then(function(data){
+        if(data.ok){cargarTareas();cargarKpis();cargarHistorial();seleccionarTarea(id);}
+        else{alert(data.error||'Error');}
+      });
+  }
+
+  /* KPIs */
+  function cargarKpis(){
+    var hoy=new Date().toISOString().split('T')[0];
+    fetch('/api/trabajos-campo?temporada_id='+_temporadaId+'&desde='+hoy+'&hasta='+hoy).then(function(r){return r.json();}).then(function(data){
+      var act=data.filter(function(t){return t.estado!=='anulada';});
+      document.getElementById('kpi-hoy').textContent=act.length;
+      var minTotal=act.reduce(function(s,t){return s+(parseInt(t.minutos_totales)||0);},0);
+      document.getElementById('kpi-horas').textContent=fmtHoras(minTotal);
+    });
+    if(_temporadaId){
+      fetch('/api/trabajos-campo?temporada_id='+_temporadaId).then(function(r){return r.json();}).then(function(data){
+        document.getElementById('kpi-campana').textContent=data.filter(function(t){return t.estado!=='anulada';}).length;
+      });
+    }
+  }
+
+  /* HISTORIAL */
+  function cargarHistorial(){
+    var p=new URLSearchParams();
+    if(_temporadaId)p.set('temporada_id',_temporadaId);
+    var d=document.getElementById('hist-desde').value,h=document.getElementById('hist-hasta').value;
+    if(d)p.set('desde',d);if(h)p.set('hasta',h);
+    fetch('/api/trabajos-campo?'+p.toString()).then(function(r){return r.json();}).then(function(data){
+      _histData=data;filtrarHist();
+    });
+  }
+  function filtrarHist(){
+    var q=(document.getElementById('hist-buscar').value||'').trim().toLowerCase();
+    var data=q?_histData.filter(function(t){
+      return (t.tarea_nombre||'').toLowerCase().includes(q)||(t.parcela||'').toLowerCase().includes(q)||(t.trabajadores||'').toLowerCase().includes(q)||(t.tarea_categoria||'').toLowerCase().includes(q);
+    }):_histData;
+    renderHistorial(data);
+  }
+  function renderHistorial(data){
+    var tbody=document.getElementById('tbody-historial');
+    if(!data.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--texto-suave);">Sin resultados</td></tr>';return;}
+    tbody.innerHTML=data.map(function(t){
+      var esAn=t.estado==='anulada';
+      var acc=esAn?'<span class="badge-anulada">Anulada</span>'
+        :'<button class="btn-icon" title="Ver" onclick="verDetallesModal('+t.id+')"><i data-lucide="eye"></i></button> '+
+         '<button class="btn-icon-danger" title="Anular" onclick="anularTarea('+t.id+')"><i data-lucide="ban"></i></button>';
+      return '<tr'+(esAn?' style="opacity:.5;text-decoration:line-through;"':'')+'>' +
+        '<td style="padding:5px 8px;font-size:12px;">'+fmtFecha(t.fecha)+'</td>'+
+        '<td style="padding:5px 8px;font-weight:600;">'+t.tarea_nombre+'</td>'+
+        '<td style="padding:5px 8px;font-size:12px;">'+(t.parcela||'—')+'</td>'+
+        '<td style="padding:5px 8px;text-align:center;'+mono+'">'+t.cant_trabajadores+'</td>'+
+        '<td style="padding:5px 8px;text-align:right;'+mono+'color:var(--verde);font-weight:700;">'+fmtHoras(t.minutos_totales)+'</td>'+
+        '<td style="padding:5px 8px;text-align:center;">'+(esAn?'<span class="badge-anulada">Anulada</span>':'<span class="badge-activa">Activa</span>')+'</td>'+
+        '<td style="padding:5px 8px;text-align:center;">'+acc+'</td></tr>';
+    }).join('');
+    lucide.createIcons();
+  }
+
+  /* VER DETALLES MODAL */
+  function verDetallesModal(id){
+    fetch('/api/trabajos-campo/'+id).then(function(r){return r.json();}).then(function(det){
+      var esAn=det.estado==='anulada';
+      var h='<div class="det-grid">';
+      h+=detItem('Tipo',det.tarea_nombre);
+      h+=detItem('Categoria',det.tarea_categoria);
+      h+=detItem('Fecha',fmtFecha(det.fecha));
+      h+=detItem('Parcela',det.parcela||'Sin parcela');
+      h+=detItem('Estado',esAn?'<span class="badge-anulada">ANULADA</span>':'<span class="badge-activa">Confirmada</span>');
+      h+=detItem('Costo','$'+fmt(det.costo_total));
+      if(det.observacion)h+=detItem('Observacion',det.observacion,true);
+      h+='</div>';
+
+      if(det.trabajadores.length){
+        h+='<div style="margin-top:10px;border-top:1px solid var(--borde);padding-top:8px;"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--texto-suave);margin-bottom:6px;">Trabajadores</div>';
+        det.trabajadores.forEach(function(tr){
+          var horas='—';
+          if(tr.hora_inicio&&tr.hora_fin){var diff=Math.round((new Date(tr.hora_fin)-new Date(tr.hora_inicio))/60000);if(diff>0)horas=fmtHoras(diff);}
+          h+='<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px;border-bottom:1px solid var(--borde);"><span style="font-weight:600;">'+tr.nombre+'</span><span style="'+mono+'color:var(--verde);">'+horas+'</span></div>';
+        });
+        h+='</div>';
+      }
+      if(det.insumos&&det.insumos.length){
+        h+='<div style="margin-top:10px;border-top:1px solid var(--borde);padding-top:8px;"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--texto-suave);margin-bottom:6px;">Insumos</div>';
+        det.insumos.forEach(function(ins){
+          h+='<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px;border-bottom:1px solid var(--borde);"><span style="font-weight:600;">'+ins.producto+'</span><span style="'+mono+'">'+fmt(ins.cantidad)+' '+(ins.presentacion||'')+'</span></div>';
+        });
+        h+='</div>';
+      }
+
+      document.getElementById('modal-contenido').innerHTML=h;
+      document.getElementById('modal-detalles').classList.add('open');
+      lucide.createIcons();
+    });
+  }
+
+  init();
+  cargarTemporadaActiva();
+</script>
+</body>
+</html>
