@@ -70,8 +70,24 @@
     .badge-anticipo { font-size:10px; background:#fff3cd; color:#856404; padding:2px 6px; border-radius:4px; font-weight:600; }
     .badge-liquidacion { font-size:10px; background:var(--sem-verde-bg); color:var(--sem-verde); padding:2px 6px; border-radius:4px; font-weight:600; }
     .badge-parcial { font-size:10px; background:var(--sem-amarillo-bg); color:var(--sem-amarillo); padding:2px 6px; border-radius:4px; font-weight:600; }
-    .collapsible-toggle { background:none; border:1px dashed var(--borde); border-radius:6px; padding:6px 12px; font-size:11px; font-weight:600; color:var(--texto-suave); cursor:pointer; margin-bottom:12px; width:100%; }
-    .collapsible-toggle:hover { background:var(--fondo); }
+    .pagos-toolbar { display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap; }
+    .pagos-toolbar .ins-btn { font-size:12px; padding:6px 14px; }
+    .pagos-toolbar .ins-btn.active { box-shadow:inset 0 -2px 0 var(--verde); background:var(--verde-suave); color:var(--verde); }
+    .stats-panel { background:var(--superficie); border:1px solid var(--borde); border-radius:12px; padding:16px; margin-bottom:12px; display:none; }
+    .stats-panel.visible { display:block; }
+    .stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+    @media (max-width:600px) { .stats-grid { grid-template-columns:1fr; } }
+    .stat-box { background:var(--fondo); border:1px solid var(--borde); border-radius:10px; padding:12px; }
+    .stat-box-label { font-size:10px; font-weight:700; color:var(--texto-suave); text-transform:uppercase; letter-spacing:.4px; margin-bottom:4px; }
+    .stat-box-valor { font-size:20px; font-weight:700; color:var(--verde); font-family:'JetBrains Mono',monospace; }
+    .stat-box-sub { font-size:11px; color:var(--texto-suave); margin-top:2px; }
+    .stats-section-title { font-size:12px; font-weight:700; color:var(--texto-secundario); text-transform:uppercase; letter-spacing:.4px; margin:16px 0 8px; }
+    .deudor-row { display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid var(--borde); font-size:12px; }
+    .deudor-row:last-child { border-bottom:none; }
+    .deudor-nombre { color:var(--texto); }
+    .deudor-monto { font-weight:700; color:var(--sem-rojo); font-family:'JetBrains Mono',monospace; }
+    .inactivo-chip { display:inline-block; background:var(--sem-amarillo-bg); color:var(--sem-amarillo); font-size:11px; font-weight:600; padding:2px 8px; border-radius:4px; margin:2px 4px 2px 0; }
+    .chart-container { max-width:100%; height:200px; margin-top:8px; }
     .mixto-error { font-size:11px; color:var(--sem-rojo); font-weight:600; margin-top:4px; display:none; }
     .post-pago-recibo { margin-top:8px; }
   </style>
@@ -116,14 +132,22 @@
         <div class="content-sub">Gestion de pagos a trabajadores</div>
       </div>
 
-      <!-- PRECIOS (collapsible, admin) -->
-      <button class="collapsible-toggle" onclick="togglePrecios()">Configurar precios por actividad</button>
+      <!-- TOOLBAR -->
+      <div class="pagos-toolbar">
+        <button class="ins-btn ins-btn-gray" id="tb-precios" onclick="togglePanel('precios')"><i data-lucide="settings" style="width:14px;height:14px;"></i> Precios</button>
+        <button class="ins-btn ins-btn-gray" id="tb-stats" onclick="togglePanel('stats')"><i data-lucide="bar-chart-2" style="width:14px;height:14px;"></i> Estadisticas</button>
+      </div>
+
+      <!-- PRECIOS PANEL -->
       <div id="precios-panel" class="precios-panel" style="display:none;">
         <table>
           <thead><tr><th>Actividad</th><th>Unidad</th><th>Precio</th><th></th></tr></thead>
           <tbody id="precios-body"></tbody>
         </table>
       </div>
+
+      <!-- ESTADISTICAS PANEL -->
+      <div id="stats-panel" class="stats-panel"></div>
 
       <!-- 2-COL LAYOUT -->
       <div id="layout-pagos" style="display:grid;grid-template-columns:280px 1fr;gap:16px;">
@@ -186,6 +210,7 @@
 </div>
 
 <script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 <script>
 lucide.createIcons();
 document.getElementById('topbar-date').textContent =
@@ -219,11 +244,43 @@ function abrirRecibo(pagoId) {
     .catch(function(err) { alert(err.message || 'Error al abrir recibo'); });
 }
 
-// ── PRECIOS ──
-function togglePrecios() {
-  var p = document.getElementById('precios-panel');
-  p.style.display = p.style.display === 'none' ? 'block' : 'none';
-  if (p.style.display !== 'none') cargarPrecios();
+// ── PANELES (toolbar) ──
+var _activePanel = null;
+var _chartInstance = null;
+
+function togglePanel(name) {
+  var preciosEl = document.getElementById('precios-panel');
+  var statsEl = document.getElementById('stats-panel');
+  var tbPrecios = document.getElementById('tb-precios');
+  var tbStats = document.getElementById('tb-stats');
+
+  if (_activePanel === name) {
+    // Cerrar panel activo
+    preciosEl.style.display = 'none';
+    statsEl.className = 'stats-panel';
+    tbPrecios.className = 'ins-btn ins-btn-gray';
+    tbStats.className = 'ins-btn ins-btn-gray';
+    _activePanel = null;
+    return;
+  }
+
+  // Cerrar todos
+  preciosEl.style.display = 'none';
+  statsEl.className = 'stats-panel';
+  tbPrecios.className = 'ins-btn ins-btn-gray';
+  tbStats.className = 'ins-btn ins-btn-gray';
+
+  // Abrir el seleccionado
+  _activePanel = name;
+  if (name === 'precios') {
+    preciosEl.style.display = 'block';
+    tbPrecios.className = 'ins-btn ins-btn-primary';
+    cargarPrecios();
+  } else if (name === 'stats') {
+    statsEl.className = 'stats-panel visible';
+    tbStats.className = 'ins-btn ins-btn-primary';
+    cargarEstadisticas();
+  }
 }
 
 function cargarPrecios() {
@@ -251,6 +308,99 @@ function guardarPrecio(id, btn) {
       cargarTrabajadores();
       if (_selectedId) cargarDetalle(_selectedId);
     });
+}
+
+// ── ESTADISTICAS ──
+function cargarEstadisticas() {
+  fetchApi('/api/pagos/estadisticas').then(function(data) {
+    if (data.error) { document.getElementById('stats-panel').innerHTML = '<div class="empty">'+data.error+'</div>'; return; }
+    var html = '';
+
+    // KPI cards
+    html += '<div class="stats-grid">';
+    html += '<div class="stat-box"><div class="stat-box-label">Total pagado (campana)</div><div class="stat-box-valor">'+formatMoney(data.total_pagado)+'</div><div class="stat-box-sub">Anticipos: '+formatMoney(data.total_anticipos)+' / Liquidaciones: '+formatMoney(data.total_liquidaciones)+'</div></div>';
+    html += '<div class="stat-box"><div class="stat-box-label">Trabajadores con deuda</div><div class="stat-box-valor">'+data.deudores.length+'</div><div class="stat-box-sub">Total adeudado: '+formatMoney(data.deudores.reduce(function(s,d){return s+d.saldo;},0))+'</div></div>';
+    html += '</div>';
+
+    // Desglose por actividad
+    if (data.desglose_actividad.length) {
+      html += '<div class="stats-section-title">Costo por actividad</div>';
+      html += '<div class="det-section"><div class="det-section-body"><table><thead><tr><th>Actividad</th><th>Cantidad</th><th>Monto bruto</th></tr></thead><tbody>';
+      data.desglose_actividad.forEach(function(a) {
+        var cant = a.unidad === 'kg' ? formatKg(a.cantidad) : formatHoras(a.cantidad);
+        html += '<tr><td style="font-weight:600;">'+a.actividad+'</td><td>'+cant+'</td><td style="font-family:\'JetBrains Mono\',monospace;font-weight:600;">'+formatMoney(a.monto)+'</td></tr>';
+      });
+      html += '</tbody></table></div></div>';
+    }
+
+    // Grafico semanal
+    html += '<div class="stats-section-title">Gasto semanal en mano de obra</div>';
+    if (data.gasto_semanal.length) {
+      html += '<div class="chart-container"><canvas id="chart-semanal"></canvas></div>';
+    } else {
+      html += '<div class="empty">Sin datos de pagos en las ultimas 4 semanas</div>';
+    }
+
+    // Deudores
+    if (data.deudores.length) {
+      html += '<div class="stats-section-title">Trabajadores con deuda pendiente</div>';
+      data.deudores.forEach(function(d) {
+        html += '<div class="deudor-row"><span class="deudor-nombre">'+d.nombre+'</span><span class="deudor-monto">'+formatMoney(d.saldo)+'</span></div>';
+      });
+    }
+
+    // Inactivos
+    if (data.inactivos.length) {
+      html += '<div class="stats-section-title">Sin actividad en los ultimos 7 dias</div>';
+      html += '<div style="margin-top:4px;">';
+      data.inactivos.forEach(function(n) {
+        html += '<span class="inactivo-chip">'+n+'</span>';
+      });
+      html += '</div>';
+    }
+
+    document.getElementById('stats-panel').innerHTML = html;
+
+    // Render chart
+    if (data.gasto_semanal.length) {
+      var canvas = document.getElementById('chart-semanal');
+      if (canvas) {
+        if (_chartInstance) _chartInstance.destroy();
+        var labels = data.gasto_semanal.map(function(s) { return 'Sem ' + s.semana; });
+        var valores = data.gasto_semanal.map(function(s) { return s.total; });
+        _chartInstance = new Chart(canvas, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Gasto semanal',
+              data: valores,
+              backgroundColor: 'rgba(45,80,22,0.7)',
+              borderColor: '#2D5016',
+              borderWidth: 1,
+              borderRadius: 6
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  callback: function(v) { return '$' + Number(v).toLocaleString('es-AR'); },
+                  font: { size: 10 }
+                },
+                grid: { color: 'rgba(0,0,0,0.06)' }
+              },
+              x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+            }
+          }
+        });
+      }
+    }
+  });
 }
 
 // ── WORKERS LIST ──
@@ -342,7 +492,7 @@ function renderDetalle(d) {
   if (r.saldo > 0) {
     html += '<div class="pagar-form"><h3>Pagar</h3>';
     html += '<div class="fg">';
-    html += '<div class="fi"><label>Monto a pagar</label><input type="number" id="pagar-monto" value="'+r.saldo+'" min="0" max="'+r.saldo+'" step="any" inputmode="decimal" onchange="checkMixto()" oninput="checkMixto()"></div>';
+    html += '<div class="fi"><label>Monto a pagar <span style="font-weight:700;color:var(--verde);font-family:\'JetBrains Mono\',monospace;margin-left:4px;" id="pagar-monto-fmt">'+formatMoney(r.saldo)+'</span></label><input type="number" id="pagar-monto" value="'+r.saldo+'" min="0" max="'+r.saldo+'" step="any" inputmode="decimal" onchange="checkMixto();actualizarMontoFmt()" oninput="checkMixto();actualizarMontoFmt()"></div>';
     html += '<div class="fi"><label>Forma de pago</label><select id="pagar-fp" onchange="checkMixto()"><option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option><option value="mixto">Mixto</option></select></div>';
     html += '</div>';
     html += '<div class="mixto-row" id="mixto-row">' +
@@ -434,6 +584,12 @@ function buildTrabajosTable(rows) {
     h += '<tr><td>'+fDate(r.fecha)+'</td><td>'+(r.tarea||'-')+'</td><td>'+fTime(r.hora_inicio)+'</td><td>'+fTime(r.hora_fin)+'</td><td>'+formatHoras(r.horas)+'</td><td>'+formatMoney(r.precio)+'/h</td><td style="font-weight:600;">'+formatMoney(r.subtotal)+'</td></tr>';
   });
   return h + '</tbody></table>';
+}
+
+// ── MONTO FORMATEADO ──
+function actualizarMontoFmt() {
+  var el = document.getElementById('pagar-monto-fmt');
+  if (el) el.textContent = formatMoney(_parseEl('pagar-monto') || 0);
 }
 
 // ── MIXTO AUTOCOMPLETAR (FIX-04) ──
@@ -554,6 +710,10 @@ function cerrarAnticipo() { document.getElementById('modal-anticipo').classList.
 function guardarAnticipo() {
   var monto = parseFloat(document.getElementById('ant-monto').value);
   if (!monto || monto <= 0) { alert('Ingresa un monto'); return; }
+  if (_detalle && _detalle.resumen && monto >= _detalle.resumen.saldo - 0.01 && _detalle.resumen.saldo > 0) {
+    alert('El monto ingresado es igual o mayor al total adeudado (' + formatMoney(_detalle.resumen.saldo) + '). Usa Liquidar para cerrar el pago.');
+    return;
+  }
   var btn = document.getElementById('btn-ant-ok');
   setLoading(btn, true);
   fetchApi('/api/pagos/anticipo', {

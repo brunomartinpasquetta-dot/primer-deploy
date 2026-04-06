@@ -392,11 +392,25 @@ router.post('/anticipo', async (req, res) => {
   if (!trabajador_id) return res.status(400).json({ error: 'Trabajador es obligatorio' });
   if (!monto || parseFloat(monto) <= 0) return res.status(400).json({ error: 'Monto debe ser mayor a 0' });
   const pool = await getPool();
+
+  // Validar que anticipo no cubra el total adeudado
+  const temp = await getTemporadaActiva(pool);
+  if (temp) {
+    const precios = await getPreciosMap(pool, temp.id);
+    const totales = await calcularTotalesTrabajador(pool, trabajador_id, temp.fecha_inicio, temp.fecha_fin, temp.id);
+    const { bruto } = buildDesglose(totales, precios);
+    const anticipos = parseFloat(totales.anticipos) || 0;
+    const liquidado = parseFloat(totales.liquidado) || 0;
+    const saldo = Math.round((bruto - anticipos - liquidado) * 100) / 100;
+    if (parseFloat(monto) >= saldo - 0.01 && saldo > 0) {
+      return res.status(400).json({ error: 'El monto ingresado es igual o mayor al total. Usa Liquidar para cerrar el pago.' });
+    }
+  }
+
   const transaction = new sql.Transaction(pool);
   try {
     await transaction.begin();
     const recibo = await nextRecibo(new sql.Request(transaction));
-    const temp = await getTemporadaActiva(pool);
 
     const usuarioId = req.user ? req.user.id : null;
     const r1 = new sql.Request(transaction);
@@ -707,6 +721,157 @@ router.get('/:id/recibo', async (req, res) => {
     doc.text('Firma: _____________________    Aclaracion: _____________________');
 
     doc.end();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// ────────────────────────────────────────────────────────────────
+// GET /estadisticas
+// ────────────────────────────────────────────────────────────────
+router.get('/estadisticas', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const temp = await getTemporadaActiva(pool);
+    if (!temp) return res.json({ error: 'Sin temporada activa' });
+    const precios = await getPreciosMap(pool, temp.id);
+
+    // Total pagado en la campana (anticipos + liquidaciones)
+    const pagosRes = await pool.request().input('tempId', sql.Int, temp.id)
+      .query(`SELECT
+        ISNULL(SUM(CASE WHEN tipo='anticipo' THEN monto ELSE 0 END),0) AS total_anticipos,
+        ISNULL(SUM(CASE WHEN tipo='liquidacion' THEN ISNULL(monto_pagado,monto) ELSE 0 END),0) AS total_liquidaciones
+        FROM Pagos WHERE fecha >= (SELECT fecha_inicio FROM Temporadas WHERE id=@tempId)
+          AND fecha <= (SELECT fecha_fin FROM Temporadas WHERE id=@tempId)`);
+    const totPagos = pagosRes.recordset[0];
+
+    // Desglose por actividad — bruto generado por cada actividad
+    const allWorkersRes = await pool.request()
+      .input('fi', sql.Date, temp.fecha_inicio)
+      .input('ff', sql.Date, temp.fecha_fin)
+      .input('tempId', sql.Int, temp.id)
+      .query(`
+        SELECT
+          ISNULL(SUM(j.kilos),0) AS juntada_kilos
+        FROM Juntada j WHERE ISNULL(j.estado,'activa')!='anulada'
+          AND j.fecha_hora>=@fi AND j.fecha_hora<DATEADD(DAY,1,@ff);
+        SELECT
+          ISNULL(SUM(d.kilos),0) AS despalillado_kilos
+        FROM Despalillado d WHERE ISNULL(d.estado,'activa')!='anulada'
+          AND d.fecha_hora>=@fi AND d.fecha_hora<DATEADD(DAY,1,@ff);
+        SELECT
+          ISNULL(SUM(DATEDIFF(MINUTE,lc.hora_inicio,lc.hora_fin)/60.0),0) AS clasificacion_horas
+        FROM LoteClasificadores lc
+        WHERE lc.hora_inicio IS NOT NULL AND lc.hora_fin IS NOT NULL
+          AND ISNULL(lc.fecha,CAST(lc.hora_inicio AS DATE))>=@fi
+          AND ISNULL(lc.fecha,CAST(lc.hora_inicio AS DATE))<=@ff;
+        SELECT
+          ISNULL(SUM(DATEDIFF(MINUTE,ae.hora_inicio,ae.hora_fin)/60.0),0) AS aplicacion_horas
+        FROM AplicacionEmpleados ae JOIN Aplicaciones a ON ae.aplicacion_id=a.id
+        WHERE ISNULL(a.estado,'activa')!='anulada' AND a.temporada_id=@tempId
+          AND ae.hora_inicio IS NOT NULL AND ae.hora_fin IS NOT NULL;
+        SELECT
+          ISNULL(SUM(DATEDIFF(MINUTE,tt.hora_inicio,tt.hora_fin)/60.0),0) AS trabajo_campo_horas
+        FROM TareaTrabajadores tt JOIN TareasGenerales tg ON tt.tarea_id=tg.id
+        WHERE ISNULL(tg.estado,'activa')!='anulada' AND tg.temporada_id=@tempId
+          AND tt.hora_inicio IS NOT NULL AND tt.hora_fin IS NOT NULL
+      `);
+    const actDesglose = [];
+    const pj = precios.juntada;
+    const pd = precios.despalillado;
+    const pc = precios.clasificacion;
+    const pa = precios.aplicacion;
+    const pt = precios.trabajo_campo;
+    const jk = parseFloat(allWorkersRes.recordsets[0][0].juntada_kilos) || 0;
+    const dk = parseFloat(allWorkersRes.recordsets[1][0].despalillado_kilos) || 0;
+    const ch = parseFloat(allWorkersRes.recordsets[2][0].clasificacion_horas) || 0;
+    const ah = parseFloat(allWorkersRes.recordsets[3][0].aplicacion_horas) || 0;
+    const th = parseFloat(allWorkersRes.recordsets[4][0].trabajo_campo_horas) || 0;
+    if (jk > 0 && pj) actDesglose.push({ actividad: 'Juntada', cantidad: Math.round(jk*100)/100, unidad: 'kg', monto: Math.round(jk * pj.precio * 100)/100 });
+    if (dk > 0 && pd) actDesglose.push({ actividad: 'Despalillado', cantidad: Math.round(dk*100)/100, unidad: 'kg', monto: Math.round(dk * pd.precio * 100)/100 });
+    if (ch > 0 && pc) actDesglose.push({ actividad: 'Clasificacion', cantidad: Math.round(ch*100)/100, unidad: 'hs', monto: Math.round(ch * pc.precio * 100)/100 });
+    if (ah > 0 && pa) actDesglose.push({ actividad: 'Aplicaciones', cantidad: Math.round(ah*100)/100, unidad: 'hs', monto: Math.round(ah * pa.precio * 100)/100 });
+    if (th > 0 && pt) actDesglose.push({ actividad: 'Trabajos campo', cantidad: Math.round(th*100)/100, unidad: 'hs', monto: Math.round(th * pt.precio * 100)/100 });
+
+    // Gasto semanal ultimas 4 semanas
+    const semanalRes = await pool.request()
+      .query(`SELECT
+        DATEPART(ISOWK, fecha) AS semana,
+        MIN(fecha) AS semana_inicio,
+        ISNULL(SUM(ISNULL(monto_pagado, monto)),0) AS total
+        FROM Pagos
+        WHERE fecha >= DATEADD(WEEK, -4, GETDATE())
+        GROUP BY DATEPART(ISOWK, fecha)
+        ORDER BY semana`);
+
+    // Trabajadores con deuda pendiente > 0
+    // Reuse the workers-con-saldo logic but simplified
+    const workersRes = await pool.request()
+      .input('fi', sql.Date, temp.fecha_inicio)
+      .input('ff', sql.Date, temp.fecha_fin)
+      .input('tempId', sql.Int, temp.id)
+      .query(`
+        ;WITH PagosT AS (
+          SELECT juntador_id AS wid,
+            SUM(CASE WHEN tipo='anticipo' THEN monto ELSE 0 END) AS anticipos,
+            SUM(CASE WHEN tipo='liquidacion' THEN ISNULL(monto_pagado,monto) ELSE 0 END) AS liquidado
+          FROM Pagos GROUP BY juntador_id
+        )
+        SELECT j.id, j.apellido+', '+j.nombre AS nombre,
+          ISNULL(pt.anticipos,0) AS anticipos, ISNULL(pt.liquidado,0) AS liquidado
+        FROM Juntadores j
+        LEFT JOIN PagosT pt ON j.id=pt.wid
+        WHERE j.activo=1
+        ORDER BY j.apellido, j.nombre`);
+
+    // Calculate bruto for each worker and filter deudores
+    const deudores = [];
+    for (const w of workersRes.recordset) {
+      const tots = await calcularTotalesTrabajador(pool, w.id, temp.fecha_inicio, temp.fecha_fin, temp.id);
+      const { bruto } = buildDesglose(tots, precios);
+      const ant = parseFloat(w.anticipos) || 0;
+      const liq = parseFloat(w.liquidado) || 0;
+      const saldo = Math.round((bruto - ant - liq) * 100) / 100;
+      if (saldo > 0) deudores.push({ nombre: w.nombre, saldo });
+    }
+    deudores.sort((a, b) => b.saldo - a.saldo);
+
+    // Trabajadores sin actividad en los ultimos 7 dias
+    const inactivosRes = await pool.request()
+      .input('tempId', sql.Int, temp.id)
+      .query(`
+        SELECT j.id, j.apellido+', '+j.nombre AS nombre
+        FROM Juntadores j WHERE j.activo=1
+        AND j.id NOT IN (
+          SELECT juntador_id FROM Juntada WHERE ISNULL(estado,'activa')!='anulada' AND fecha_hora >= DATEADD(DAY,-7,GETDATE())
+          UNION SELECT despalillador_id FROM Despalillado WHERE ISNULL(estado,'activa')!='anulada' AND fecha_hora >= DATEADD(DAY,-7,GETDATE())
+          UNION SELECT ae.empleado_id FROM AplicacionEmpleados ae JOIN Aplicaciones a ON ae.aplicacion_id=a.id WHERE ISNULL(a.estado,'activa')!='anulada' AND a.fecha >= DATEADD(DAY,-7,GETDATE())
+          UNION SELECT tt.trabajador_id FROM TareaTrabajadores tt JOIN TareasGenerales tg ON tt.tarea_id=tg.id WHERE ISNULL(tg.estado,'activa')!='anulada' AND tg.fecha >= DATEADD(DAY,-7,GETDATE())
+          UNION SELECT empleado_id FROM LoteClasificadores WHERE hora_inicio >= DATEADD(DAY,-7,GETDATE())
+        )
+        AND j.id IN (
+          SELECT juntador_id FROM Juntada WHERE ISNULL(estado,'activa')!='anulada'
+          UNION SELECT despalillador_id FROM Despalillado WHERE ISNULL(estado,'activa')!='anulada'
+          UNION SELECT ae.empleado_id FROM AplicacionEmpleados ae
+          UNION SELECT tt.trabajador_id FROM TareaTrabajadores tt
+          UNION SELECT empleado_id FROM LoteClasificadores
+        )
+        ORDER BY j.apellido, j.nombre`);
+
+    res.json({
+      total_anticipos: parseFloat(totPagos.total_anticipos) || 0,
+      total_liquidaciones: parseFloat(totPagos.total_liquidaciones) || 0,
+      total_pagado: (parseFloat(totPagos.total_anticipos) || 0) + (parseFloat(totPagos.total_liquidaciones) || 0),
+      desglose_actividad: actDesglose,
+      gasto_semanal: semanalRes.recordset.map(s => ({
+        semana: s.semana,
+        semana_inicio: s.semana_inicio,
+        total: parseFloat(s.total) || 0
+      })),
+      deudores,
+      inactivos: inactivosRes.recordset.map(r => r.nombre)
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error interno del servidor' });
