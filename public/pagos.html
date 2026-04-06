@@ -51,14 +51,14 @@
     .mixto-row .fi label { font-size:11px; font-weight:600; color:var(--texto-suave); }
     .mixto-row .fi input { padding:6px 8px; font-size:12px; height:32px; }
 
-    .precios-panel { background:var(--superficie); border:1px solid var(--borde); border-radius:12px; padding:14px; margin-bottom:12px; }
-    .precios-panel h3 { margin:0 0 10px; font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; color:var(--texto-secundario); }
-    .precio-row { display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid var(--borde); font-size:13px; }
-    .precio-row:last-child { border-bottom:none; }
-    .precio-row .pr-act { flex:1; font-weight:600; }
-    .precio-row .pr-und { color:var(--texto-suave); font-size:11px; width:40px; }
-    .precio-row input { width:90px; padding:4px 6px; font-size:12px; text-align:right; height:28px; }
-    .precio-row button { padding:4px 10px; font-size:11px; height:28px; }
+    .precios-panel { background:var(--superficie); border:1px solid var(--borde); border-radius:12px; overflow:hidden; margin-bottom:12px; }
+    .precios-panel table { width:100%; border-collapse:collapse; font-size:13px; }
+    .precios-panel th { text-align:left; padding:8px 12px; font-size:10px; font-weight:600; color:var(--texto-suave); background:var(--fondo); text-transform:uppercase; letter-spacing:.5px; }
+    .precios-panel td { padding:6px 12px; border-bottom:1px solid var(--borde); vertical-align:middle; }
+    .precios-panel tr:last-child td { border-bottom:none; }
+    .precios-panel .pr-unidad { color:var(--texto-suave); font-size:11px; }
+    .precios-panel input[type="number"] { width:120px; padding:4px 8px; font-size:12px; text-align:right; height:28px; box-sizing:border-box; }
+    .precios-feedback { font-size:11px; color:var(--sem-verde); font-weight:600; display:none; margin-left:6px; }
 
     .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1000; align-items:center; justify-content:center; }
     .modal-overlay.open { display:flex; }
@@ -72,6 +72,8 @@
     .badge-parcial { font-size:10px; background:var(--sem-amarillo-bg); color:var(--sem-amarillo); padding:2px 6px; border-radius:4px; font-weight:600; }
     .collapsible-toggle { background:none; border:1px dashed var(--borde); border-radius:6px; padding:6px 12px; font-size:11px; font-weight:600; color:var(--texto-suave); cursor:pointer; margin-bottom:12px; width:100%; }
     .collapsible-toggle:hover { background:var(--fondo); }
+    .mixto-error { font-size:11px; color:var(--sem-rojo); font-weight:600; margin-top:4px; display:none; }
+    .post-pago-recibo { margin-top:8px; }
   </style>
 </head>
 <body>
@@ -111,14 +113,16 @@
       <a href="menu-admin.html" class="btn-volver">&larr; Volver</a>
       <div class="content-header">
         <div class="content-title">Pagos y Liquidaciones</div>
-        <div class="content-sub">Liquidador universal — todos los modulos</div>
+        <div class="content-sub">Gestion de pagos a trabajadores</div>
       </div>
 
       <!-- PRECIOS (collapsible, admin) -->
-      <button class="collapsible-toggle" onclick="togglePrecios()">Precios por actividad (admin)</button>
+      <button class="collapsible-toggle" onclick="togglePrecios()">Configurar precios por actividad</button>
       <div id="precios-panel" class="precios-panel" style="display:none;">
-        <h3>Precios por actividad — Temporada activa</h3>
-        <div id="precios-body"></div>
+        <table>
+          <thead><tr><th>Actividad</th><th>Unidad</th><th>Precio</th><th></th></tr></thead>
+          <tbody id="precios-body"></tbody>
+        </table>
       </div>
 
       <!-- 2-COL LAYOUT -->
@@ -191,35 +195,62 @@ var _workers = [];
 var _selectedId = null;
 var _detalle = null;
 var _pendingPago = null;
+var _lastPagoRecibo = null;
 
 // ── Format helpers ──
-function $$(n) { return typeof n === 'number' ? n.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:2}) : n; }
+function formatMoney(n) { return '$' + Number(n||0).toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0}); }
+function formatKg(n) { return Number(n||0).toLocaleString('es-AR') + ' kg'; }
+function formatHoras(n) { return Number(n||0).toLocaleString('es-AR', {minimumFractionDigits:1, maximumFractionDigits:1}) + ' hs'; }
 function fDate(d) { if (!d) return '-'; return new Date(d).toLocaleDateString('es-AR'); }
 function fTime(d) { if (!d) return '-'; var t = new Date(d); return t.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}); }
+
+// ── Recibo con JWT (FIX-05) ──
+function abrirRecibo(pagoId) {
+  var token = localStorage.getItem('token');
+  fetch('/api/pagos/' + pagoId + '/recibo', { headers: { 'Authorization': 'Bearer ' + token } })
+    .then(function(r) {
+      if (!r.ok) throw new Error('Error al obtener recibo');
+      return r.blob();
+    })
+    .then(function(blob) {
+      var url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    })
+    .catch(function(err) { alert(err.message || 'Error al abrir recibo'); });
+}
 
 // ── PRECIOS ──
 function togglePrecios() {
   var p = document.getElementById('precios-panel');
   p.style.display = p.style.display === 'none' ? 'block' : 'none';
-  if (p.style.display === 'block') cargarPrecios();
+  if (p.style.display !== 'none') cargarPrecios();
 }
 
 function cargarPrecios() {
+  var labels = {juntada:'Juntada',despalillado:'Despalillado',clasificacion:'Clasificacion',embalaje:'Embalaje',aplicacion:'Aplicaciones',trabajo_campo:'Trabajos de campo'};
+  var unidades = {kilo:'por kilo',hora:'por hora'};
   fetchApi('/api/pagos/precios').then(function(data) {
-    var labels = {juntada:'Juntada',despalillado:'Despalillado',clasificacion:'Clasificacion',embalaje:'Embalaje',aplicacion:'Aplicaciones',trabajo_campo:'Trabajos campo'};
     document.getElementById('precios-body').innerHTML = data.map(function(p) {
-      return '<div class="precio-row"><span class="pr-act">'+(labels[p.actividad]||p.actividad)+'</span>' +
-        '<span class="pr-und">/'+p.unidad+'</span>' +
-        '<input type="number" id="precio-'+p.id+'" value="'+parseFloat(p.precio)+'" min="0" step="any">' +
-        '<button class="btn btn-green" style="padding:4px 10px;font-size:11px;" onclick="guardarPrecio('+p.id+')">Guardar</button></div>';
+      return '<tr>' +
+        '<td style="font-weight:600;">' + (labels[p.actividad]||p.actividad) + '</td>' +
+        '<td class="pr-unidad">' + (unidades[p.unidad]||p.unidad) + '</td>' +
+        '<td><input type="number" id="precio-'+p.id+'" value="'+parseFloat(p.precio)+'" min="0" step="50"></td>' +
+        '<td><button class="ins-btn ins-btn-primary" style="padding:4px 12px;font-size:11px;" onclick="guardarPrecio('+p.id+',this)">Guardar</button>' +
+        '<span class="precios-feedback" id="fb-precio-'+p.id+'">Precio actualizado</span></td></tr>';
     }).join('');
   });
 }
 
-function guardarPrecio(id) {
+function guardarPrecio(id, btn) {
   var val = document.getElementById('precio-'+id).value;
   fetchApi('/api/pagos/precios/'+id, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({precio:val})})
-    .then(function() { cargarTrabajadores(); if (_selectedId) cargarDetalle(_selectedId); });
+    .then(function() {
+      var fb = document.getElementById('fb-precio-'+id);
+      fb.style.display = 'inline';
+      setTimeout(function() { fb.style.display = 'none'; }, 2000);
+      cargarTrabajadores();
+      if (_selectedId) cargarDetalle(_selectedId);
+    });
 }
 
 // ── WORKERS LIST ──
@@ -247,7 +278,7 @@ function renderWorkers(list) {
       html += '<div class="worker-card'+sel+'" onclick="seleccionarTrabajador('+w.trabajador_id+')">' +
         '<div class="worker-info"><div class="worker-nombre">'+w.nombre+'</div>' +
         '<div class="worker-meta">'+acts+'</div></div>' +
-        '<div class="worker-saldo '+cls+'">$'+$$(w.saldo_pendiente)+'</div></div>';
+        '<div class="worker-saldo '+cls+'">'+formatMoney(w.saldo_pendiente)+'</div></div>';
     });
   }
   document.getElementById('workers-list').innerHTML = html;
@@ -282,7 +313,7 @@ function renderDetalle(d) {
   // Header
   html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">' +
     '<div><div style="font-size:18px;font-weight:700;">'+d.trabajador.nombre+'</div></div>' +
-    '<div style="font-size:22px;font-weight:700;color:var(--sem-rojo);font-family:\'JetBrains Mono\',monospace;">$'+$$(r.saldo)+'</div></div>';
+    '<div style="font-size:22px;font-weight:700;color:var(--sem-rojo);font-family:\'JetBrains Mono\',monospace;">'+formatMoney(r.saldo)+'</div></div>';
 
   // Date filters
   html += '<div class="fg" style="margin-bottom:12px;"><div class="fi"><label>Desde</label><input type="date" id="det-desde" onchange="cargarDetalle('+_selectedId+')"></div>' +
@@ -301,45 +332,51 @@ function renderDetalle(d) {
 
   // Resumen
   html += '<div class="resumen-card">';
-  html += '<div class="resumen-linea"><span>Total bruto</span><span style="font-weight:600;">$'+$$(r.total_bruto)+'</span></div>';
-  if (r.anticipos > 0) html += '<div class="resumen-linea"><span>Anticipos</span><span style="color:var(--sem-rojo);">-$'+$$(r.anticipos)+'</span></div>';
-  if (r.liquidado > 0) html += '<div class="resumen-linea"><span>Pagos anteriores</span><span style="color:var(--sem-rojo);">-$'+$$(r.liquidado)+'</span></div>';
-  html += '<div class="resumen-linea resumen-total"><span>SALDO A PAGAR</span><span>$'+$$(r.saldo)+'</span></div>';
+  html += '<div class="resumen-linea"><span>Total bruto</span><span style="font-weight:600;">'+formatMoney(r.total_bruto)+'</span></div>';
+  if (r.anticipos > 0) html += '<div class="resumen-linea"><span>Anticipos</span><span style="color:var(--sem-rojo);">-'+formatMoney(r.anticipos)+'</span></div>';
+  if (r.liquidado > 0) html += '<div class="resumen-linea"><span>Pagos anteriores</span><span style="color:var(--sem-rojo);">-'+formatMoney(r.liquidado)+'</span></div>';
+  html += '<div class="resumen-linea resumen-total"><span>SALDO A PAGAR</span><span>'+formatMoney(r.saldo)+'</span></div>';
   html += '</div>';
 
   // Pagar form
   if (r.saldo > 0) {
     html += '<div class="pagar-form"><h3>Pagar</h3>';
     html += '<div class="fg">';
-    html += '<div class="fi"><label>Monto a pagar ($)</label><input type="number" id="pagar-monto" value="'+r.saldo+'" min="0" max="'+r.saldo+'" step="any" inputmode="decimal" onchange="checkMixto()"></div>';
+    html += '<div class="fi"><label>Monto a pagar</label><input type="number" id="pagar-monto" value="'+r.saldo+'" min="0" max="'+r.saldo+'" step="any" inputmode="decimal" onchange="checkMixto()" oninput="checkMixto()"></div>';
     html += '<div class="fi"><label>Forma de pago</label><select id="pagar-fp" onchange="checkMixto()"><option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option><option value="mixto">Mixto</option></select></div>';
     html += '</div>';
-    html += '<div class="mixto-row" id="mixto-row"><div class="fi"><label>Monto efectivo ($)</label><input type="number" id="pagar-efec" inputmode="decimal" min="0" step="any"></div>' +
-      '<div class="fi"><label>Monto transferencia ($)</label><input type="number" id="pagar-transf" inputmode="decimal" min="0" step="any"></div></div>';
+    html += '<div class="mixto-row" id="mixto-row">' +
+      '<div class="fi"><label>Monto efectivo</label><input type="number" id="pagar-efec" inputmode="decimal" min="0" step="any" oninput="autocompletarMixto(\'efec\')"></div>' +
+      '<div class="fi"><label>Monto transferencia</label><input type="number" id="pagar-transf" inputmode="decimal" min="0" step="any" oninput="autocompletarMixto(\'transf\')"></div>' +
+      '</div>';
+    html += '<div class="mixto-error" id="mixto-error"></div>';
     html += '<div class="fg" style="margin-top:8px;"><div class="fi"><label>Referencia transferencia (opcional)</label><input type="text" id="pagar-ref" placeholder="Nro comprobante..."></div></div>';
     html += '<div style="display:flex;gap:8px;margin-top:12px;">';
     html += '<button class="btn btn-green" onclick="confirmarPago()"><i data-lucide="banknote" style="width:14px;height:14px;"></i> Pagar</button>';
     html += '<button class="btn" style="background:#f59e0b;color:#fff;" onclick="abrirAnticipo()"><i data-lucide="plus" style="width:14px;height:14px;"></i> Anticipo</button>';
-    html += '</div></div>';
+    html += '</div>';
+    html += '<div class="post-pago-recibo" id="post-pago-recibo"></div>';
+    html += '</div>';
   } else {
     html += '<div style="display:flex;gap:8px;margin-bottom:12px;"><button class="btn" style="background:#f59e0b;color:#fff;" onclick="abrirAnticipo()"><i data-lucide="plus" style="width:14px;height:14px;"></i> Anticipo</button></div>';
+    html += '<div class="post-pago-recibo" id="post-pago-recibo"></div>';
   }
 
   // Historial pagos
   if (d.pagos.length) {
     html += '<div class="det-section"><div class="det-section-header"><h3>Historial de pagos</h3><small>'+d.pagos.length+' registros</small></div>';
-    html += '<div class="det-section-body"><table><thead><tr><th>Fecha</th><th>Tipo</th><th>Monto</th><th>Forma pago</th><th>Recibo</th><th>Comprobante</th><th></th></tr></thead><tbody>';
+    html += '<div class="det-section-body"><table><thead><tr><th>Fecha</th><th>Tipo</th><th>Monto</th><th>Forma pago</th><th>Operador</th><th>Recibo</th><th></th></tr></thead><tbody>';
     d.pagos.forEach(function(p) {
       var badge = p.tipo === 'anticipo' ? 'badge-anticipo' : (p.estado_pago === 'pago_parcial' ? 'badge-parcial' : 'badge-liquidacion');
       var label = p.tipo === 'anticipo' ? 'Anticipo' : (p.estado_pago === 'pago_parcial' ? 'Parcial' : 'Liquidacion');
       html += '<tr><td>'+fDate(p.fecha)+'</td>';
       html += '<td><span class="'+badge+'">'+label+'</span></td>';
-      html += '<td style="font-family:\'JetBrains Mono\',monospace;font-weight:600;">$'+$$(parseFloat(p.monto_pagado||p.monto))+'</td>';
+      html += '<td style="font-family:\'JetBrains Mono\',monospace;font-weight:600;">'+formatMoney(parseFloat(p.monto_pagado||p.monto))+'</td>';
       html += '<td>'+(p.forma_pago||'efectivo')+'</td>';
-      html += '<td>'+(p.numero_recibo||'-')+'</td>';
-      html += '<td>'+(p.comprobante_path ? '<span style="color:var(--sem-verde);">Si</span>' : '-')+'</td>';
+      html += '<td style="font-size:11px;">'+(p.operador_nombre||'-')+'</td>';
+      html += '<td style="font-size:11px;">'+(p.numero_recibo||'-')+'</td>';
       html += '<td style="display:flex;gap:4px;">';
-      if (p.numero_recibo) html += '<button class="btn" style="padding:2px 6px;font-size:11px;" onclick="verRecibo('+p.id+')" title="Ver recibo"><i data-lucide="eye" style="width:13px;height:13px;"></i></button>';
+      if (p.numero_recibo) html += '<button class="btn" style="padding:2px 6px;font-size:11px;" onclick="abrirRecibo('+p.id+')" title="Imprimir recibo"><i data-lucide="printer" style="width:13px;height:13px;"></i></button>';
       if (!p.comprobante_path) html += '<button class="btn" style="padding:2px 6px;font-size:11px;" onclick="subirComprobante('+p.id+')" title="Adjuntar comprobante"><i data-lucide="upload" style="width:13px;height:13px;"></i></button>';
       html += '</td></tr>';
     });
@@ -354,7 +391,7 @@ function renderDetalle(d) {
 function renderActSection(title, info, tableHtml, total) {
   return '<div class="det-section"><div class="det-section-header"><h3>'+title+'</h3><small>'+info+'</small></div>' +
     '<div class="det-section-body">'+tableHtml+'</div>' +
-    '<div class="det-section-footer">Subtotal: <span>$'+$$(total)+'</span></div></div>';
+    '<div class="det-section-footer">Subtotal: <span>'+formatMoney(total)+'</span></div></div>';
 }
 
 function sumSubtotals(rows) { return rows.reduce(function(s, r) { return s + (r.subtotal || 0); }, 0); }
@@ -362,7 +399,7 @@ function sumSubtotals(rows) { return rows.reduce(function(s, r) { return s + (r.
 function buildJuntadaTable(rows) {
   var h = '<table><thead><tr><th>Fecha</th><th>Parcela</th><th>Kilos</th><th>Precio</th><th>Subtotal</th></tr></thead><tbody>';
   rows.forEach(function(r) {
-    h += '<tr><td>'+fDate(r.fecha)+'</td><td>'+(r.parcela||'-')+'</td><td>'+$$(r.kilos)+' kg</td><td>$'+$$(r.precio)+'/kg</td><td style="font-weight:600;">$'+$$(r.subtotal)+'</td></tr>';
+    h += '<tr><td>'+fDate(r.fecha)+'</td><td>'+(r.parcela||'-')+'</td><td>'+formatKg(r.kilos)+'</td><td>'+formatMoney(r.precio)+'/kg</td><td style="font-weight:600;">'+formatMoney(r.subtotal)+'</td></tr>';
   });
   return h + '</tbody></table>';
 }
@@ -370,7 +407,7 @@ function buildJuntadaTable(rows) {
 function buildDespalilladoTable(rows) {
   var h = '<table><thead><tr><th>Fecha</th><th>Kilos</th><th>Precio</th><th>Subtotal</th></tr></thead><tbody>';
   rows.forEach(function(r) {
-    h += '<tr><td>'+fDate(r.fecha)+'</td><td>'+$$(r.kilos)+' kg</td><td>$'+$$(r.precio)+'/kg</td><td style="font-weight:600;">$'+$$(r.subtotal)+'</td></tr>';
+    h += '<tr><td>'+fDate(r.fecha)+'</td><td>'+formatKg(r.kilos)+'</td><td>'+formatMoney(r.precio)+'/kg</td><td style="font-weight:600;">'+formatMoney(r.subtotal)+'</td></tr>';
   });
   return h + '</tbody></table>';
 }
@@ -378,7 +415,7 @@ function buildDespalilladoTable(rows) {
 function buildHorasTable(rows, detCol) {
   var h = '<table><thead><tr><th>Fecha</th><th>'+detCol+'</th><th>Inicio</th><th>Fin</th><th>Horas</th><th>Precio</th><th>Subtotal</th></tr></thead><tbody>';
   rows.forEach(function(r) {
-    h += '<tr><td>'+fDate(r.fecha)+'</td><td>'+(r.lote||'-')+'</td><td>'+fTime(r.hora_inicio)+'</td><td>'+fTime(r.hora_fin)+'</td><td>'+$$(r.horas)+' hs</td><td>$'+$$(r.precio)+'/h</td><td style="font-weight:600;">$'+$$(r.subtotal)+'</td></tr>';
+    h += '<tr><td>'+fDate(r.fecha)+'</td><td>'+(r.lote||'-')+'</td><td>'+fTime(r.hora_inicio)+'</td><td>'+fTime(r.hora_fin)+'</td><td>'+formatHoras(r.horas)+'</td><td>'+formatMoney(r.precio)+'/h</td><td style="font-weight:600;">'+formatMoney(r.subtotal)+'</td></tr>';
   });
   return h + '</tbody></table>';
 }
@@ -386,7 +423,7 @@ function buildHorasTable(rows, detCol) {
 function buildAplicacionesTable(rows) {
   var h = '<table><thead><tr><th>Fecha</th><th>Parcela</th><th>Producto</th><th>Inicio</th><th>Fin</th><th>Horas</th><th>Precio</th><th>Subtotal</th></tr></thead><tbody>';
   rows.forEach(function(r) {
-    h += '<tr><td>'+fDate(r.fecha)+'</td><td>'+(r.parcela||'-')+'</td><td>'+(r.producto||'-')+'</td><td>'+fTime(r.hora_inicio)+'</td><td>'+fTime(r.hora_fin)+'</td><td>'+$$(r.horas)+' hs</td><td>$'+$$(r.precio)+'/h</td><td style="font-weight:600;">$'+$$(r.subtotal)+'</td></tr>';
+    h += '<tr><td>'+fDate(r.fecha)+'</td><td>'+(r.parcela||'-')+'</td><td>'+(r.producto||'-')+'</td><td>'+fTime(r.hora_inicio)+'</td><td>'+fTime(r.hora_fin)+'</td><td>'+formatHoras(r.horas)+'</td><td>'+formatMoney(r.precio)+'/h</td><td style="font-weight:600;">'+formatMoney(r.subtotal)+'</td></tr>';
   });
   return h + '</tbody></table>';
 }
@@ -394,18 +431,60 @@ function buildAplicacionesTable(rows) {
 function buildTrabajosTable(rows) {
   var h = '<table><thead><tr><th>Fecha</th><th>Tarea</th><th>Inicio</th><th>Fin</th><th>Horas</th><th>Precio</th><th>Subtotal</th></tr></thead><tbody>';
   rows.forEach(function(r) {
-    h += '<tr><td>'+fDate(r.fecha)+'</td><td>'+(r.tarea||'-')+'</td><td>'+fTime(r.hora_inicio)+'</td><td>'+fTime(r.hora_fin)+'</td><td>'+$$(r.horas)+' hs</td><td>$'+$$(r.precio)+'/h</td><td style="font-weight:600;">$'+$$(r.subtotal)+'</td></tr>';
+    h += '<tr><td>'+fDate(r.fecha)+'</td><td>'+(r.tarea||'-')+'</td><td>'+fTime(r.hora_inicio)+'</td><td>'+fTime(r.hora_fin)+'</td><td>'+formatHoras(r.horas)+'</td><td>'+formatMoney(r.precio)+'/h</td><td style="font-weight:600;">'+formatMoney(r.subtotal)+'</td></tr>';
   });
   return h + '</tbody></table>';
 }
 
-// ── PAGO ──
+// ── MIXTO AUTOCOMPLETAR (FIX-04) ──
 function checkMixto() {
   var fp = document.getElementById('pagar-fp').value;
   var row = document.getElementById('mixto-row');
-  if (row) row.className = fp === 'mixto' ? 'mixto-row visible' : 'mixto-row';
+  if (row) {
+    row.className = fp === 'mixto' ? 'mixto-row visible' : 'mixto-row';
+    if (fp === 'mixto') {
+      var monto = _parseEl('pagar-monto') || 0;
+      document.getElementById('pagar-efec').value = monto;
+      document.getElementById('pagar-transf').value = 0;
+    }
+  }
+  var errDiv = document.getElementById('mixto-error');
+  if (errDiv) errDiv.style.display = 'none';
 }
 
+function autocompletarMixto(campo) {
+  var monto = _parseEl('pagar-monto') || 0;
+  var efecEl = document.getElementById('pagar-efec');
+  var transfEl = document.getElementById('pagar-transf');
+  var errDiv = document.getElementById('mixto-error');
+
+  if (campo === 'efec') {
+    var efec = parseFloat(efecEl.value);
+    if (isNaN(efec) || efecEl.value === '') {
+      transfEl.value = monto;
+    } else {
+      transfEl.value = Math.max(0, Math.round((monto - efec) * 100) / 100);
+    }
+  } else {
+    var transf = parseFloat(transfEl.value);
+    if (isNaN(transf) || transfEl.value === '') {
+      efecEl.value = monto;
+    } else {
+      efecEl.value = Math.max(0, Math.round((monto - transf) * 100) / 100);
+    }
+  }
+
+  // Validar suma
+  var suma = (parseFloat(efecEl.value) || 0) + (parseFloat(transfEl.value) || 0);
+  if (Math.abs(suma - monto) > 0.01) {
+    errDiv.textContent = 'Efectivo + Transferencia deben sumar ' + formatMoney(monto);
+    errDiv.style.display = 'block';
+  } else {
+    errDiv.style.display = 'none';
+  }
+}
+
+// ── PAGO ──
 function confirmarPago() {
   var monto = _parseEl('pagar-monto');
   var fp = document.getElementById('pagar-fp').value;
@@ -414,7 +493,10 @@ function confirmarPago() {
   if (fp === 'mixto') {
     var me = _parseEl('pagar-efec') || 0;
     var mt = _parseEl('pagar-transf') || 0;
-    if (Math.abs(me + mt - monto) > 0.01) { alert('Efectivo + transferencia deben sumar $'+$$(monto)); return; }
+    if (Math.abs(me + mt - monto) > 0.01) {
+      alert('Efectivo + transferencia deben sumar ' + formatMoney(monto));
+      return;
+    }
   }
 
   _pendingPago = {
@@ -426,7 +508,7 @@ function confirmarPago() {
     monto_transferencia: fp === 'mixto' ? _parseEl('pagar-transf') : null
   };
 
-  document.getElementById('modal-msg').textContent = 'Confirmar pago de $'+$$(monto)+' a '+_detalle.trabajador.nombre+'?';
+  document.getElementById('modal-msg').textContent = 'Confirmar pago de ' + formatMoney(monto) + ' a ' + _detalle.trabajador.nombre + '?';
   document.getElementById('modal-confirm').classList.add('open');
 }
 
@@ -443,8 +525,17 @@ function ejecutarPago() {
   }).then(function(data) {
     setLoading(btn, false);
     if (data.ok) {
+      _lastPagoRecibo = data.pago_id;
       cargarTrabajadores();
       cargarDetalle(_selectedId);
+      // Mostrar boton ver recibo despues de pagar
+      setTimeout(function() {
+        var container = document.getElementById('post-pago-recibo');
+        if (container && _lastPagoRecibo) {
+          container.innerHTML = '<button class="ins-btn ins-btn-primary" onclick="abrirRecibo('+_lastPagoRecibo+')"><i data-lucide="printer" style="width:14px;height:14px;"></i> Ver recibo</button>';
+          lucide.createIcons();
+        }
+      }, 300);
     } else {
       alert(data.error || 'Error al registrar pago');
     }
@@ -478,16 +569,22 @@ function guardarAnticipo() {
   }).then(function(data) {
     setLoading(btn, false);
     if (data.ok) {
+      _lastPagoRecibo = data.pago_id;
       cerrarAnticipo();
       cargarTrabajadores();
       cargarDetalle(_selectedId);
+      setTimeout(function() {
+        var container = document.getElementById('post-pago-recibo');
+        if (container && _lastPagoRecibo) {
+          container.innerHTML = '<button class="ins-btn ins-btn-primary" onclick="abrirRecibo('+_lastPagoRecibo+')"><i data-lucide="printer" style="width:14px;height:14px;"></i> Ver recibo</button>';
+          lucide.createIcons();
+        }
+      }, 300);
     } else { alert(data.error || 'Error'); }
   }).catch(function() { setLoading(btn, false); alert('Error de conexion'); });
 }
 
-// ── RECIBO / COMPROBANTE ──
-function verRecibo(id) { window.open('/api/pagos/'+id+'/recibo', '_blank'); }
-
+// ── COMPROBANTE ──
 function subirComprobante(pagoId) {
   var input = document.createElement('input');
   input.type = 'file';

@@ -1,0 +1,412 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - text: CO
+          - emphasis [ref=e8]: SE
+          - text: CHA
+        - generic [ref=e9]: SISTEMA DE CULTIVOS
+    - navigation [ref=e10]:
+      - link "Dashboard" [ref=e11] [cursor=pointer]:
+        - /url: index.html
+        - img [ref=e140]
+        - text: Dashboard
+      - generic [ref=e18]: Campo
+      - link "Cosecha" [ref=e19] [cursor=pointer]:
+        - /url: juntada.html
+        - img [ref=e145]
+        - text: Cosecha
+      - link "Despalillado" [ref=e30] [cursor=pointer]:
+        - /url: despalillado.html
+        - img [ref=e154]
+        - text: Despalillado
+      - link "Aplicaciones" [ref=e38] [cursor=pointer]:
+        - /url: aplicaciones.html
+        - img [ref=e160]
+        - text: Aplicaciones
+      - link "Trabajos de Campo" [ref=e43] [cursor=pointer]:
+        - /url: trabajos-campo.html
+        - img [ref=e163]
+        - text: Trabajos de Campo
+      - link "Clasif. + Embalaje" [ref=e49] [cursor=pointer]:
+        - /url: clasificacion-embalaje.html
+        - img [ref=e167]
+        - text: Clasif. + Embalaje
+      - generic [ref=e55]: Sistema
+      - link "Stock" [ref=e56] [cursor=pointer]:
+        - /url: menu-stock.html
+        - img [ref=e171]
+        - text: Stock
+      - link "Comercial" [ref=e62] [cursor=pointer]:
+        - /url: menu-comercial.html
+        - img [ref=e175]
+        - text: Comercial
+      - link "Administracion" [ref=e69] [cursor=pointer]:
+        - /url: menu-admin.html
+        - img [ref=e180]
+        - text: Administracion
+      - link "Mercado" [ref=e73] [cursor=pointer]:
+        - /url: mercado.html
+        - img [ref=e182]
+        - text: Mercado
+      - link "Configuracion" [ref=e78] [cursor=pointer]:
+        - /url: menu-config.html
+        - img [ref=e185]
+        - text: Configuracion
+    - generic [ref=e83]:
+      - generic [ref=e84]: Administrador · administrador
+      - button "Cerrar sesión" [ref=e85] [cursor=pointer]
+  - generic [ref=e86]:
+    - banner [ref=e87]:
+      - generic [ref=e88]:
+        - img [ref=e89]
+        - generic [ref=e90]:
+          - generic [ref=e91]:
+            - text: CO
+            - emphasis [ref=e92]: SE
+            - text: CHA
+          - generic [ref=e93]: SISTEMA DE CULTIVOS
+        - generic [ref=e94]: 🌱 Campaña FIX 2026 · Día 7
+      - generic [ref=e95]:
+        - generic [ref=e96] [cursor=pointer]:
+          - img [ref=e97]
+          - text: Administrador
+        - generic [ref=e100]: lunes, 6 de abril
+    - generic [ref=e101]:
+      - link "← Volver" [ref=e102] [cursor=pointer]:
+        - /url: "#"
+      - generic [ref=e103]:
+        - generic [ref=e104]: Pagos y Liquidaciones
+        - generic [ref=e105]: Liquidador universal — todos los modulos
+      - button "Precios por actividad (admin)" [ref=e106] [cursor=pointer]
+      - generic [ref=e107]:
+        - generic [ref=e108]:
+          - searchbox "Buscar trabajador..." [ref=e110]
+          - generic [ref=e111]:
+            - generic [ref=e188] [cursor=pointer]:
+              - generic [ref=e189]:
+                - generic [ref=e190]: GOMEZ, MARIA
+                - generic [ref=e191]: Juntada, Despalillado, Aplicaciones
+              - generic [ref=e192]: $140.431,9
+            - generic [ref=e193] [cursor=pointer]:
+              - generic [ref=e194]:
+                - generic [ref=e195]: GONZALES, MARCELO
+                - generic [ref=e196]: Juntada, Despalillado, Aplicaciones
+              - generic [ref=e197]: $132.934
+            - generic [ref=e198] [cursor=pointer]:
+              - generic [ref=e199]:
+                - generic [ref=e200]: GARCIA, JOSE
+                - generic [ref=e201]: Despalillado
+              - generic [ref=e202]: $4.260
+            - generic [ref=e203] [cursor=pointer]:
+              - generic [ref=e204]:
+                - generic [ref=e205]: FULANITO, COSME
+                - generic [ref=e206]: Despalillado, Clasificacion
+              - generic [ref=e207]: $1.033,67
+            - generic [ref=e208] [cursor=pointer]:
+              - generic [ref=e209]:
+                - generic [ref=e210]: PEREZ, JUAN
+                - generic [ref=e211]: Despalillado
+              - generic [ref=e212]: $640
+        - generic [ref=e113]:
+          - generic [ref=e213]:
+            - generic [ref=e215]: GOMEZ, MARIA
+            - generic [ref=e216]: $140.431,9
+          - generic [ref=e217]:
+            - generic [ref=e218]:
+              - generic [ref=e219]: Desde
+              - textbox [ref=e220]
+            - generic [ref=e221]:
+              - generic [ref=e222]: Hasta
+              - textbox [ref=e223]
+          - generic [ref=e224]:
+            - generic [ref=e225]:
+              - heading "Juntada" [level=3] [ref=e226]
+              - generic [ref=e227]: 21 registros
+            - table [ref=e229]:
+              - rowgroup [ref=e230]:
+                - row "Fecha Parcela Kilos Precio Subtotal" [ref=e231]:
+                  - columnheader "Fecha" [ref=e232]
+                  - columnheader "Parcela" [ref=e233]
+                  - columnheader "Kilos" [ref=e234]
+                  - columnheader "Precio" [ref=e235]
+                  - columnheader "Subtotal" [ref=e236]
+              - rowgroup [ref=e237]:
+                - row "30/3/2026 PARCELA NORTE 146 kg $150/kg $21.900" [ref=e238]:
+                  - cell "30/3/2026" [ref=e239]
+                  - cell "PARCELA NORTE" [ref=e240]
+                  - cell "146 kg" [ref=e241]
+                  - cell "$150/kg" [ref=e242]
+                  - cell "$21.900" [ref=e243]
+                - row "30/3/2026 PARCELA NORTE 100 kg $150/kg $15.000" [ref=e244]:
+                  - cell "30/3/2026" [ref=e245]
+                  - cell "PARCELA NORTE" [ref=e246]
+                  - cell "100 kg" [ref=e247]
+                  - cell "$150/kg" [ref=e248]
+                  - cell "$15.000" [ref=e249]
+                - row "30/3/2026 PARCELA NORTE 87 kg $150/kg $13.050" [ref=e250]:
+                  - cell "30/3/2026" [ref=e251]
+                  - cell "PARCELA NORTE" [ref=e252]
+                  - cell "87 kg" [ref=e253]
+                  - cell "$150/kg" [ref=e254]
+                  - cell "$13.050" [ref=e255]
+                - row "30/3/2026 PARCELA NORTE 73 kg $150/kg $10.950" [ref=e256]:
+                  - cell "30/3/2026" [ref=e257]
+                  - cell "PARCELA NORTE" [ref=e258]
+                  - cell "73 kg" [ref=e259]
+                  - cell "$150/kg" [ref=e260]
+                  - cell "$10.950" [ref=e261]
+                - row "30/3/2026 PARCELA NORTE 50 kg $150/kg $7.500" [ref=e262]:
+                  - cell "30/3/2026" [ref=e263]
+                  - cell "PARCELA NORTE" [ref=e264]
+                  - cell "50 kg" [ref=e265]
+                  - cell "$150/kg" [ref=e266]
+                  - cell "$7.500" [ref=e267]
+                - row "30/3/2026 PARCELA NORTE 122,65 kg $150/kg $18.397,5" [ref=e268]:
+                  - cell "30/3/2026" [ref=e269]
+                  - cell "PARCELA NORTE" [ref=e270]
+                  - cell "122,65 kg" [ref=e271]
+                  - cell "$150/kg" [ref=e272]
+                  - cell "$18.397,5" [ref=e273]
+                - row "30/3/2026 PARCELA NORTE 54,92 kg $150/kg $8.238" [ref=e274]:
+                  - cell "30/3/2026" [ref=e275]
+                  - cell "PARCELA NORTE" [ref=e276]
+                  - cell "54,92 kg" [ref=e277]
+                  - cell "$150/kg" [ref=e278]
+                  - cell "$8.238" [ref=e279]
+                - row "2/4/2026 PARCELA SUR 9,65 kg $150/kg $1.447,5" [ref=e280]:
+                  - cell "2/4/2026" [ref=e281]
+                  - cell "PARCELA SUR" [ref=e282]
+                  - cell "9,65 kg" [ref=e283]
+                  - cell "$150/kg" [ref=e284]
+                  - cell "$1.447,5" [ref=e285]
+                - row "2/4/2026 PARCELA SUR 12,65 kg $150/kg $1.897,5" [ref=e286]:
+                  - cell "2/4/2026" [ref=e287]
+                  - cell "PARCELA SUR" [ref=e288]
+                  - cell "12,65 kg" [ref=e289]
+                  - cell "$150/kg" [ref=e290]
+                  - cell "$1.897,5" [ref=e291]
+                - row "2/4/2026 PARCELA NORTE 56 kg $150/kg $8.400" [ref=e292]:
+                  - cell "2/4/2026" [ref=e293]
+                  - cell "PARCELA NORTE" [ref=e294]
+                  - cell "56 kg" [ref=e295]
+                  - cell "$150/kg" [ref=e296]
+                  - cell "$8.400" [ref=e297]
+                - row "2/4/2026 PARCELA SUR 65 kg $150/kg $9.750" [ref=e298]:
+                  - cell "2/4/2026" [ref=e299]
+                  - cell "PARCELA SUR" [ref=e300]
+                  - cell "65 kg" [ref=e301]
+                  - cell "$150/kg" [ref=e302]
+                  - cell "$9.750" [ref=e303]
+                - row "2/4/2026 PARCELA SUR 5,6 kg $150/kg $840" [ref=e304]:
+                  - cell "2/4/2026" [ref=e305]
+                  - cell "PARCELA SUR" [ref=e306]
+                  - cell "5,6 kg" [ref=e307]
+                  - cell "$150/kg" [ref=e308]
+                  - cell "$840" [ref=e309]
+                - row "2/4/2026 PARCELA NORTE 32 kg $150/kg $4.800" [ref=e310]:
+                  - cell "2/4/2026" [ref=e311]
+                  - cell "PARCELA NORTE" [ref=e312]
+                  - cell "32 kg" [ref=e313]
+                  - cell "$150/kg" [ref=e314]
+                  - cell "$4.800" [ref=e315]
+                - row "2/4/2026 PARCELA NORTE 7,8 kg $150/kg $1.170" [ref=e316]:
+                  - cell "2/4/2026" [ref=e317]
+                  - cell "PARCELA NORTE" [ref=e318]
+                  - cell "7,8 kg" [ref=e319]
+                  - cell "$150/kg" [ref=e320]
+                  - cell "$1.170" [ref=e321]
+                - row "2/4/2026 PARCELA NORTE 8,9 kg $150/kg $1.335" [ref=e322]:
+                  - cell "2/4/2026" [ref=e323]
+                  - cell "PARCELA NORTE" [ref=e324]
+                  - cell "8,9 kg" [ref=e325]
+                  - cell "$150/kg" [ref=e326]
+                  - cell "$1.335" [ref=e327]
+                - row "2/4/2026 PARCELA NORTE 9,7 kg $150/kg $1.455" [ref=e328]:
+                  - cell "2/4/2026" [ref=e329]
+                  - cell "PARCELA NORTE" [ref=e330]
+                  - cell "9,7 kg" [ref=e331]
+                  - cell "$150/kg" [ref=e332]
+                  - cell "$1.455" [ref=e333]
+                - row "2/4/2026 PARCELA NORTE 7,6 kg $150/kg $1.140" [ref=e334]:
+                  - cell "2/4/2026" [ref=e335]
+                  - cell "PARCELA NORTE" [ref=e336]
+                  - cell "7,6 kg" [ref=e337]
+                  - cell "$150/kg" [ref=e338]
+                  - cell "$1.140" [ref=e339]
+                - row "3/4/2026 PARCELA NORTE 15 kg $150/kg $2.250" [ref=e340]:
+                  - cell "3/4/2026" [ref=e341]
+                  - cell "PARCELA NORTE" [ref=e342]
+                  - cell "15 kg" [ref=e343]
+                  - cell "$150/kg" [ref=e344]
+                  - cell "$2.250" [ref=e345]
+                - row "3/4/2026 PARCELA NORTE 5,5 kg $150/kg $825" [ref=e346]:
+                  - cell "3/4/2026" [ref=e347]
+                  - cell "PARCELA NORTE" [ref=e348]
+                  - cell "5,5 kg" [ref=e349]
+                  - cell "$150/kg" [ref=e350]
+                  - cell "$825" [ref=e351]
+                - row "3/4/2026 PARCELA NORTE 31,3 kg $150/kg $4.695" [ref=e352]:
+                  - cell "3/4/2026" [ref=e353]
+                  - cell "PARCELA NORTE" [ref=e354]
+                  - cell "31,3 kg" [ref=e355]
+                  - cell "$150/kg" [ref=e356]
+                  - cell "$4.695" [ref=e357]
+                - row "3/4/2026 PARCELA NORTE 88,3 kg $150/kg $13.245" [ref=e358]:
+                  - cell "3/4/2026" [ref=e359]
+                  - cell "PARCELA NORTE" [ref=e360]
+                  - cell "88,3 kg" [ref=e361]
+                  - cell "$150/kg" [ref=e362]
+                  - cell "$13.245" [ref=e363]
+            - generic [ref=e364]:
+              - text: "Subtotal:"
+              - generic [ref=e365]: $148.285,5
+          - generic [ref=e366]:
+            - generic [ref=e367]:
+              - heading "Despalillado" [level=3] [ref=e368]
+              - generic [ref=e369]: 6 registros
+            - table [ref=e371]:
+              - rowgroup [ref=e372]:
+                - row "Fecha Kilos Precio Subtotal" [ref=e373]:
+                  - columnheader "Fecha" [ref=e374]
+                  - columnheader "Kilos" [ref=e375]
+                  - columnheader "Precio" [ref=e376]
+                  - columnheader "Subtotal" [ref=e377]
+              - rowgroup [ref=e378]:
+                - row "30/3/2026 98 kg $80/kg $7.840" [ref=e379]:
+                  - cell "30/3/2026" [ref=e380]
+                  - cell "98 kg" [ref=e381]
+                  - cell "$80/kg" [ref=e382]
+                  - cell "$7.840" [ref=e383]
+                - row "30/3/2026 70,5 kg $80/kg $5.640" [ref=e384]:
+                  - cell "30/3/2026" [ref=e385]
+                  - cell "70,5 kg" [ref=e386]
+                  - cell "$80/kg" [ref=e387]
+                  - cell "$5.640" [ref=e388]
+                - row "2/4/2026 85,5 kg $80/kg $6.840" [ref=e389]:
+                  - cell "2/4/2026" [ref=e390]
+                  - cell "85,5 kg" [ref=e391]
+                  - cell "$80/kg" [ref=e392]
+                  - cell "$6.840" [ref=e393]
+                - row "3/4/2026 28 kg $80/kg $2.240" [ref=e394]:
+                  - cell "3/4/2026" [ref=e395]
+                  - cell "28 kg" [ref=e396]
+                  - cell "$80/kg" [ref=e397]
+                  - cell "$2.240" [ref=e398]
+                - row "3/4/2026 49,83 kg $80/kg $3.986,4" [ref=e399]:
+                  - cell "3/4/2026" [ref=e400]
+                  - cell "49,83 kg" [ref=e401]
+                  - cell "$80/kg" [ref=e402]
+                  - cell "$3.986,4" [ref=e403]
+                - row "3/4/2026 70 kg $80/kg $5.600" [ref=e404]:
+                  - cell "3/4/2026" [ref=e405]
+                  - cell "70 kg" [ref=e406]
+                  - cell "$80/kg" [ref=e407]
+                  - cell "$5.600" [ref=e408]
+            - generic [ref=e409]:
+              - text: "Subtotal:"
+              - generic [ref=e410]: $32.146,4
+          - generic [ref=e411]:
+            - generic [ref=e412]:
+              - heading "Aplicaciones" [level=3] [ref=e413]
+              - generic [ref=e414]: 1 registros
+            - table [ref=e416]:
+              - rowgroup [ref=e417]:
+                - row "Fecha Parcela Producto Inicio Fin Horas Precio Subtotal" [ref=e418]:
+                  - columnheader "Fecha" [ref=e419]
+                  - columnheader "Parcela" [ref=e420]
+                  - columnheader "Producto" [ref=e421]
+                  - columnheader "Inicio" [ref=e422]
+                  - columnheader "Fin" [ref=e423]
+                  - columnheader "Horas" [ref=e424]
+                  - columnheader "Precio" [ref=e425]
+                  - columnheader "Subtotal" [ref=e426]
+              - rowgroup [ref=e427]:
+                - row "5/4/2026 PARCELA NORTE FERTILIZANTE X28 07:00 a. m. 12:00 p. m. 5 hs $3.000/h $15.000" [ref=e428]:
+                  - cell "5/4/2026" [ref=e429]
+                  - cell "PARCELA NORTE" [ref=e430]
+                  - cell "FERTILIZANTE X28" [ref=e431]
+                  - cell "07:00 a. m." [ref=e432]
+                  - cell "12:00 p. m." [ref=e433]
+                  - cell "5 hs" [ref=e434]
+                  - cell "$3.000/h" [ref=e435]
+                  - cell "$15.000" [ref=e436]
+            - generic [ref=e437]:
+              - text: "Subtotal:"
+              - generic [ref=e438]: $15.000
+          - generic [ref=e439]:
+            - generic [ref=e440]:
+              - generic [ref=e441]: Total bruto
+              - generic [ref=e442]: $195.431,9
+            - generic [ref=e443]:
+              - generic [ref=e444]: Anticipos
+              - generic [ref=e445]: "-$5.000"
+            - generic [ref=e446]:
+              - generic [ref=e447]: Pagos anteriores
+              - generic [ref=e448]: "-$50.000"
+            - generic [ref=e449]:
+              - generic [ref=e450]: SALDO A PAGAR
+              - generic [ref=e451]: $140.431,9
+          - generic [ref=e452]:
+            - heading "Pagar" [level=3] [ref=e453]
+            - generic [ref=e454]:
+              - generic [ref=e455]:
+                - generic [ref=e456]: Monto a pagar ($)
+                - spinbutton [ref=e457]: "140431.9"
+              - generic [ref=e458]:
+                - generic [ref=e459]: Forma de pago
+                - combobox [ref=e460] [cursor=pointer]:
+                  - option "Efectivo" [selected]
+                  - option "Transferencia"
+                  - option "Mixto"
+            - generic [ref=e462]:
+              - generic [ref=e463]: Referencia transferencia (opcional)
+              - textbox "Nro comprobante..." [ref=e464]
+            - generic [ref=e465]:
+              - button "Pagar" [ref=e466] [cursor=pointer]:
+                - img [ref=e467]
+                - text: Pagar
+              - button "Anticipo" [ref=e470] [cursor=pointer]:
+                - img [ref=e471]
+                - text: Anticipo
+          - generic [ref=e472]:
+            - generic [ref=e473]:
+              - heading "Historial de pagos" [level=3] [ref=e474]
+              - generic [ref=e475]: 2 registros
+            - table [ref=e477]:
+              - rowgroup [ref=e478]:
+                - row "Fecha Tipo Monto Forma pago Recibo Comprobante" [ref=e479]:
+                  - columnheader "Fecha" [ref=e480]
+                  - columnheader "Tipo" [ref=e481]
+                  - columnheader "Monto" [ref=e482]
+                  - columnheader "Forma pago" [ref=e483]
+                  - columnheader "Recibo" [ref=e484]
+                  - columnheader "Comprobante" [ref=e485]
+                  - columnheader [ref=e486]
+              - rowgroup [ref=e487]:
+                - row "5/4/2026 Parcial $50.000 transferencia REC-2026-0002 -" [ref=e488]:
+                  - cell "5/4/2026" [ref=e489]
+                  - cell "Parcial" [ref=e490]
+                  - cell "$50.000" [ref=e491]
+                  - cell "transferencia" [ref=e492]
+                  - cell "REC-2026-0002" [ref=e493]
+                  - cell "-" [ref=e494]
+                  - cell [ref=e495]:
+                    - button "Ver recibo" [ref=e496] [cursor=pointer]:
+                      - img [ref=e497]
+                    - button "Adjuntar comprobante" [ref=e500] [cursor=pointer]:
+                      - img [ref=e501]
+                - row "5/4/2026 Anticipo $5.000 efectivo REC-2026-0001 -" [ref=e504]:
+                  - cell "5/4/2026" [ref=e505]
+                  - cell "Anticipo" [ref=e506]
+                  - cell "$5.000" [ref=e507]
+                  - cell "efectivo" [ref=e508]
+                  - cell "REC-2026-0001" [ref=e509]
+                  - cell "-" [ref=e510]
+                  - cell [ref=e511]:
+                    - button "Ver recibo" [ref=e512] [cursor=pointer]:
+                      - img [ref=e513]
+                    - button "Adjuntar comprobante" [ref=e516] [cursor=pointer]:
+                      - img [ref=e517]

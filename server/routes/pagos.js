@@ -311,9 +311,11 @@ router.get('/trabajador/:id/detalle', async (req, res) => {
 
     // Pagos history
     const pagosHist = await pool.request().input('tid', sql.Int, tid)
-      .query(`SELECT id, tipo, monto, fecha, estado_pago, numero_recibo, forma_pago,
-                referencia_transferencia, comprobante_path, observacion, monto_total, monto_pagado
-              FROM Pagos WHERE juntador_id=@tid ORDER BY fecha DESC, id DESC`);
+      .query(`SELECT p.id, p.tipo, p.monto, p.fecha, p.estado_pago, p.numero_recibo, p.forma_pago,
+                p.referencia_transferencia, p.comprobante_path, p.observacion, p.monto_total, p.monto_pagado,
+                u.nombre AS operador_nombre
+              FROM Pagos p LEFT JOIN Usuarios u ON p.usuario_id = u.id
+              WHERE p.juntador_id=@tid ORDER BY p.fecha DESC, p.id DESC`);
 
     // Build response with calculated subtotals
     const calcHoras = (ini, fin) => {
@@ -396,16 +398,20 @@ router.post('/anticipo', async (req, res) => {
     const recibo = await nextRecibo(new sql.Request(transaction));
     const temp = await getTemporadaActiva(pool);
 
+    const usuarioId = req.user ? req.user.id : null;
     const r1 = new sql.Request(transaction);
-    await r1.input('jid', sql.Int, trabajador_id)
+    const r1Result = await r1.input('jid', sql.Int, trabajador_id)
       .input('monto', sql.Decimal(12, 2), monto)
       .input('obs', sql.NVarChar, observacion || '')
       .input('fp', sql.VarChar(20), forma_pago || 'efectivo')
       .input('ref', sql.VarChar(100), referencia || null)
       .input('recibo', sql.VarChar(20), recibo)
+      .input('uid', sql.Int, usuarioId)
       .query(`INSERT INTO Pagos (juntador_id, monto, tipo, observacion, forma_pago, referencia_transferencia,
-              numero_recibo, estado_pago, monto_pagado)
-              VALUES (@jid, @monto, 'anticipo', @obs, @fp, @ref, @recibo, 'pagado', @monto)`);
+              numero_recibo, estado_pago, monto_pagado, usuario_id)
+              VALUES (@jid, @monto, 'anticipo', @obs, @fp, @ref, @recibo, 'pagado', @monto, @uid);
+              SELECT SCOPE_IDENTITY() AS pago_id;`);
+    const pagoId = r1Result.recordset && r1Result.recordset[0] ? r1Result.recordset[0].pago_id : null;
 
     // Worker name for Caja concepto
     const nameRes = await new sql.Request(transaction).input('id', sql.Int, trabajador_id)
@@ -422,7 +428,7 @@ router.post('/anticipo', async (req, res) => {
               VALUES ('egreso', @concepto, @monto, @usuario, @medio, @tempId)`);
 
     await transaction.commit();
-    res.json({ ok: true, numero_recibo: recibo });
+    res.json({ ok: true, numero_recibo: recibo, pago_id: pagoId });
   } catch (err) {
     await transaction.rollback();
     console.error(err);
@@ -468,8 +474,9 @@ router.post('/liquidar', async (req, res) => {
     const recibo = await nextRecibo(new sql.Request(transaction));
     const estadoPago = montoPagar >= saldo - 0.01 ? 'pagado' : 'pago_parcial';
 
+    const usuarioId = req.user ? req.user.id : null;
     const r1 = new sql.Request(transaction);
-    await r1.input('jid', sql.Int, trabajador_id)
+    const r1Result = await r1.input('jid', sql.Int, trabajador_id)
       .input('monto', sql.Decimal(12, 2), montoPagar)
       .input('monto_total', sql.Decimal(12, 2), bruto)
       .input('monto_pagado', sql.Decimal(12, 2), montoPagar)
@@ -483,11 +490,14 @@ router.post('/liquidar', async (req, res) => {
       .input('obs', sql.NVarChar, observacion || '')
       .input('desde', sql.Date, temp.fecha_inicio)
       .input('hasta', sql.Date, temp.fecha_fin)
+      .input('uid', sql.Int, usuarioId)
       .query(`INSERT INTO Pagos (juntador_id, monto, tipo, monto_total, monto_pagado, anticipos,
               total_bruto, saldo_final, forma_pago, referencia_transferencia, numero_recibo,
-              estado_pago, observacion, periodo_desde, periodo_hasta)
+              estado_pago, observacion, periodo_desde, periodo_hasta, usuario_id)
               VALUES (@jid, @monto, 'liquidacion', @monto_total, @monto_pagado, @anticipos,
-              @total_bruto, @saldo_final, @fp, @ref, @recibo, @estado, @obs, @desde, @hasta)`);
+              @total_bruto, @saldo_final, @fp, @ref, @recibo, @estado, @obs, @desde, @hasta, @uid);
+              SELECT SCOPE_IDENTITY() AS pago_id;`);
+    const pagoId = r1Result.recordset && r1Result.recordset[0] ? r1Result.recordset[0].pago_id : null;
 
     // Worker name
     const nameRes = await new sql.Request(transaction).input('id', sql.Int, trabajador_id)
@@ -530,7 +540,7 @@ router.post('/liquidar', async (req, res) => {
     }
 
     await transaction.commit();
-    res.json({ ok: true, numero_recibo: recibo, estado_pago: estadoPago, saldo_restante: Math.round((saldo - montoPagar) * 100) / 100 });
+    res.json({ ok: true, numero_recibo: recibo, estado_pago: estadoPago, saldo_restante: Math.round((saldo - montoPagar) * 100) / 100, pago_id: pagoId });
   } catch (err) {
     await transaction.rollback();
     console.error(err);
@@ -591,6 +601,14 @@ router.get('/:id/recibo', async (req, res) => {
       .query("SELECT apellido+', '+nombre AS nombre FROM Juntadores WHERE id=@id");
     const nombre = wRes.recordset[0] ? wRes.recordset[0].nombre : 'Desconocido';
 
+    // Operador
+    let operadorNombre = '-';
+    if (pago.usuario_id) {
+      const opRes = await pool.request().input('uid', sql.Int, pago.usuario_id)
+        .query('SELECT nombre FROM Usuarios WHERE id=@uid');
+      if (opRes.recordset.length) operadorNombre = opRes.recordset[0].nombre;
+    }
+
     // Empresa
     const eRes = await pool.request().query('SELECT TOP 1 * FROM ConfiguracionEmpresa');
     const emp = eRes.recordset[0] || {};
@@ -605,6 +623,9 @@ router.get('/:id/recibo', async (req, res) => {
       const { items } = buildDesglose(totales, precios);
       desglose = items;
     }
+
+    // Format helper for PDF amounts
+    const fmtMoney = (n) => '$' + Number(n || 0).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
     // Generate PDF
     const doc = new PDFDocument({ size: 'A4', margin: 50 });
@@ -622,11 +643,13 @@ router.get('/:id/recibo', async (req, res) => {
 
     // Recibo info
     doc.fontSize(16).font('Helvetica-Bold').text('RECIBO DE PAGO');
+    const fechaPago = pago.fecha ? new Date(pago.fecha) : new Date();
     doc.fontSize(11).font('Helvetica')
        .text(`N\u00b0: ${pago.numero_recibo || '-'}`)
-       .text(`Fecha: ${pago.fecha ? new Date(pago.fecha).toLocaleDateString('es-AR') : new Date().toLocaleDateString('es-AR')}`)
+       .text(`Fecha: ${fechaPago.toLocaleDateString('es-AR')} ${fechaPago.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}`)
        .text(`Tipo: ${pago.tipo === 'anticipo' ? 'Anticipo' : 'Liquidacion'}`)
-       .text(`Trabajador: ${nombre}`);
+       .text(`Trabajador: ${nombre}`)
+       .text(`Operador: ${operadorNombre}`);
     doc.moveDown();
 
     // Activity detail for liquidaciones
@@ -646,28 +669,28 @@ router.get('/:id/recibo', async (req, res) => {
       desglose.forEach(item => {
         doc.text(item.actividad, col[0], y);
         doc.text(`${item.cantidad} ${item.unidad}`, col[1], y);
-        doc.text(`$${item.precio.toLocaleString('es-AR')}/${item.unidad}`, col[2], y);
-        doc.text(`$${item.subtotal.toLocaleString('es-AR')}`, col[3], y);
+        doc.text(`${fmtMoney(item.precio)}/${item.unidad}`, col[2], y);
+        doc.text(fmtMoney(item.subtotal), col[3], y);
         y += 16;
       });
       doc.moveTo(50, y).lineTo(520, y).stroke();
       y += 6;
       doc.font('Helvetica-Bold').fontSize(10);
       doc.text('Total Bruto:', col[0], y);
-      doc.text(`$${parseFloat(pago.total_bruto || 0).toLocaleString('es-AR')}`, col[3], y);
+      doc.text(fmtMoney(pago.total_bruto), col[3], y);
       y += 16;
       if (parseFloat(pago.anticipos) > 0) {
         doc.font('Helvetica').text('Anticipos descontados:', col[0], y);
-        doc.text(`-$${parseFloat(pago.anticipos).toLocaleString('es-AR')}`, col[3], y);
+        doc.text(`-${fmtMoney(pago.anticipos)}`, col[3], y);
         y += 16;
       }
       doc.font('Helvetica-Bold').fontSize(12);
       doc.text('NETO PAGADO:', col[0], y);
-      doc.text(`$${parseFloat(pago.monto_pagado || pago.monto).toLocaleString('es-AR')}`, col[3], y);
+      doc.text(fmtMoney(pago.monto_pagado || pago.monto), col[3], y);
       doc.y = y + 30;
     } else {
       // Anticipo
-      doc.fontSize(12).font('Helvetica-Bold').text(`Monto: $${parseFloat(pago.monto).toLocaleString('es-AR')}`);
+      doc.fontSize(12).font('Helvetica-Bold').text(`Monto: ${fmtMoney(pago.monto)}`);
       doc.moveDown();
     }
 
@@ -706,8 +729,9 @@ router.get('/historial', async (req, res) => {
     if (hasta) { r.input('hasta', sql.Date, hasta); where += ' AND p.fecha<=@hasta'; }
 
     const result = await r.query(`
-      SELECT p.*, j.apellido+', '+j.nombre AS trabajador
+      SELECT p.*, j.apellido+', '+j.nombre AS trabajador, u.nombre AS operador_nombre
       FROM Pagos p LEFT JOIN Juntadores j ON p.juntador_id=j.id
+      LEFT JOIN Usuarios u ON p.usuario_id=u.id
       WHERE ${where} ORDER BY p.fecha DESC, p.id DESC`);
     res.json(result.recordset);
   } catch (err) {
