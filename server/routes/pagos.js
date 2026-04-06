@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
 const PDFDocument = require('pdfkit');
+const ExcelJS = require('exceljs');
 
 // ── Multer config ──────────────────────────────────────────────
 const uploadsDir = path.join(__dirname, '../../uploads/comprobantes');
@@ -788,11 +789,11 @@ router.get('/estadisticas', async (req, res) => {
     const ch = parseFloat(allWorkersRes.recordsets[2][0].clasificacion_horas) || 0;
     const ah = parseFloat(allWorkersRes.recordsets[3][0].aplicacion_horas) || 0;
     const th = parseFloat(allWorkersRes.recordsets[4][0].trabajo_campo_horas) || 0;
-    if (jk > 0 && pj) actDesglose.push({ actividad: 'Juntada', cantidad: Math.round(jk*100)/100, unidad: 'kg', monto: Math.round(jk * pj.precio * 100)/100 });
-    if (dk > 0 && pd) actDesglose.push({ actividad: 'Despalillado', cantidad: Math.round(dk*100)/100, unidad: 'kg', monto: Math.round(dk * pd.precio * 100)/100 });
-    if (ch > 0 && pc) actDesglose.push({ actividad: 'Clasificacion', cantidad: Math.round(ch*100)/100, unidad: 'hs', monto: Math.round(ch * pc.precio * 100)/100 });
-    if (ah > 0 && pa) actDesglose.push({ actividad: 'Aplicaciones', cantidad: Math.round(ah*100)/100, unidad: 'hs', monto: Math.round(ah * pa.precio * 100)/100 });
-    if (th > 0 && pt) actDesglose.push({ actividad: 'Trabajos campo', cantidad: Math.round(th*100)/100, unidad: 'hs', monto: Math.round(th * pt.precio * 100)/100 });
+    if (jk > 0 && pj) actDesglose.push({ actividad: 'Juntada', cantidad: Math.round(jk*100)/100, unidad: 'kg', monto: Math.round(jk * pj.precio * 100)/100, precio_promedio: pj.precio });
+    if (dk > 0 && pd) actDesglose.push({ actividad: 'Despalillado', cantidad: Math.round(dk*100)/100, unidad: 'kg', monto: Math.round(dk * pd.precio * 100)/100, precio_promedio: pd.precio });
+    if (ch > 0 && pc) actDesglose.push({ actividad: 'Clasificacion', cantidad: Math.round(ch*100)/100, unidad: 'hs', monto: Math.round(ch * pc.precio * 100)/100, precio_promedio: pc.precio });
+    if (ah > 0 && pa) actDesglose.push({ actividad: 'Aplicaciones', cantidad: Math.round(ah*100)/100, unidad: 'hs', monto: Math.round(ah * pa.precio * 100)/100, precio_promedio: pa.precio });
+    if (th > 0 && pt) actDesglose.push({ actividad: 'Trabajos campo', cantidad: Math.round(th*100)/100, unidad: 'hs', monto: Math.round(th * pt.precio * 100)/100, precio_promedio: pt.precio });
 
     // Gasto semanal ultimas 4 semanas
     const semanalRes = await pool.request()
@@ -863,6 +864,7 @@ router.get('/estadisticas', async (req, res) => {
       total_anticipos: parseFloat(totPagos.total_anticipos) || 0,
       total_liquidaciones: parseFloat(totPagos.total_liquidaciones) || 0,
       total_pagado: (parseFloat(totPagos.total_anticipos) || 0) + (parseFloat(totPagos.total_liquidaciones) || 0),
+      trabajadores_activos_deuda: deudores.length,
       desglose_actividad: actDesglose,
       gasto_semanal: semanalRes.recordset.map(s => ({
         semana: s.semana,
@@ -902,6 +904,200 @@ router.get('/historial', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// ────────────────────────────────────────────────────────────────
+// GET /alertas
+// ────────────────────────────────────────────────────────────────
+router.get('/alertas', async (req, res) => {
+  try {
+    const diasSinPagoParam = Math.max(1, parseInt(req.query.dias_sin_pago) || 7);
+    const diasSinActividadParam = Math.max(1, parseInt(req.query.dias_sin_actividad) || 7);
+
+    const pool = await getPool();
+    const temp = await getTemporadaActiva(pool);
+    if (!temp) return res.json({ count: 0, deuda_sin_pago: [], inactivos: [] });
+    const precios = await getPreciosMap(pool, temp.id);
+
+    // Trabajadores con deuda > N dias sin pago
+    const workersRes = await pool.request()
+      .input('fi', sql.Date, temp.fecha_inicio)
+      .input('ff', sql.Date, temp.fecha_fin)
+      .input('tempId', sql.Int, temp.id)
+      .query(`
+        ;WITH PagosT AS (
+          SELECT juntador_id AS wid,
+            SUM(CASE WHEN tipo='anticipo' THEN monto ELSE 0 END) AS anticipos,
+            SUM(CASE WHEN tipo='liquidacion' THEN ISNULL(monto_pagado,monto) ELSE 0 END) AS liquidado,
+            MAX(fecha) AS ultimo_pago
+          FROM Pagos GROUP BY juntador_id
+        )
+        SELECT j.id, j.apellido+', '+j.nombre AS nombre,
+          ISNULL(pt.anticipos,0) AS anticipos, ISNULL(pt.liquidado,0) AS liquidado,
+          pt.ultimo_pago
+        FROM Juntadores j
+        LEFT JOIN PagosT pt ON j.id=pt.wid
+        WHERE j.activo=1
+        ORDER BY j.apellido, j.nombre`);
+
+    const deudaSinPago = [];
+    for (const w of workersRes.recordset) {
+      const tots = await calcularTotalesTrabajador(pool, w.id, temp.fecha_inicio, temp.fecha_fin, temp.id);
+      const { bruto } = buildDesglose(tots, precios);
+      const ant = parseFloat(w.anticipos) || 0;
+      const liq = parseFloat(w.liquidado) || 0;
+      const saldo = Math.round((bruto - ant - liq) * 100) / 100;
+      if (saldo > 0) {
+        const diasSinPago = w.ultimo_pago
+          ? Math.floor((Date.now() - new Date(w.ultimo_pago).getTime()) / 86400000)
+          : 999;
+        if (diasSinPago > diasSinPagoParam) {
+          deudaSinPago.push({ nombre: w.nombre, saldo, dias_sin_pago: diasSinPago });
+        }
+      }
+    }
+    deudaSinPago.sort((a, b) => b.saldo - a.saldo);
+
+    // Trabajadores inactivos N dias (parametrizado)
+    const inactivosRes = await pool.request()
+      .input('tempId', sql.Int, temp.id)
+      .input('diasInact', sql.Int, diasSinActividadParam)
+      .query(`
+        SELECT j.id, j.apellido+', '+j.nombre AS nombre
+        FROM Juntadores j WHERE j.activo=1
+        AND j.id NOT IN (
+          SELECT juntador_id FROM Juntada WHERE ISNULL(estado,'activa')!='anulada' AND fecha_hora >= DATEADD(DAY,-@diasInact,GETDATE())
+          UNION SELECT despalillador_id FROM Despalillado WHERE ISNULL(estado,'activa')!='anulada' AND fecha_hora >= DATEADD(DAY,-@diasInact,GETDATE())
+          UNION SELECT ae.empleado_id FROM AplicacionEmpleados ae JOIN Aplicaciones a ON ae.aplicacion_id=a.id WHERE ISNULL(a.estado,'activa')!='anulada' AND a.fecha >= DATEADD(DAY,-@diasInact,GETDATE())
+          UNION SELECT tt.trabajador_id FROM TareaTrabajadores tt JOIN TareasGenerales tg ON tt.tarea_id=tg.id WHERE ISNULL(tg.estado,'activa')!='anulada' AND tg.fecha >= DATEADD(DAY,-@diasInact,GETDATE())
+          UNION SELECT empleado_id FROM LoteClasificadores WHERE hora_inicio >= DATEADD(DAY,-@diasInact,GETDATE())
+        )
+        AND j.id IN (
+          SELECT juntador_id FROM Juntada WHERE ISNULL(estado,'activa')!='anulada'
+          UNION SELECT despalillador_id FROM Despalillado WHERE ISNULL(estado,'activa')!='anulada'
+          UNION SELECT ae.empleado_id FROM AplicacionEmpleados ae
+          UNION SELECT tt.trabajador_id FROM TareaTrabajadores tt
+          UNION SELECT empleado_id FROM LoteClasificadores
+        )
+        ORDER BY j.apellido, j.nombre`);
+
+    const inactivos = inactivosRes.recordset.map(r => r.nombre);
+    res.json({
+      count: deudaSinPago.length + inactivos.length,
+      deuda_sin_pago: deudaSinPago,
+      inactivos
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// ────────────────────────────────────────────────────────────────
+// GET /rendimiento
+// ────────────────────────────────────────────────────────────────
+router.get('/rendimiento', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const temp = await getTemporadaActiva(pool);
+    if (!temp) return res.json({ ranking: [] });
+
+    const result = await pool.request()
+      .input('fi', sql.Date, temp.fecha_inicio)
+      .input('ff', sql.Date, temp.fecha_fin)
+      .query(`
+        ;WITH JuntadaKg AS (
+          SELECT juntador_id AS wid, SUM(kilos) AS kg
+          FROM Juntada WHERE ISNULL(estado,'activa')!='anulada'
+            AND fecha_hora>=@fi AND fecha_hora<DATEADD(DAY,1,@ff)
+          GROUP BY juntador_id
+        ), DespalilladoKg AS (
+          SELECT despalillador_id AS wid, SUM(kilos) AS kg
+          FROM Despalillado WHERE ISNULL(estado,'activa')!='anulada'
+            AND fecha_hora>=@fi AND fecha_hora<DATEADD(DAY,1,@ff)
+          GROUP BY despalillador_id
+        )
+        SELECT j.id, j.apellido+', '+j.nombre AS nombre,
+          ISNULL(jk.kg,0) AS juntada_kg, ISNULL(dk.kg,0) AS despalillado_kg,
+          ISNULL(jk.kg,0)+ISNULL(dk.kg,0) AS total_kg
+        FROM Juntadores j
+        LEFT JOIN JuntadaKg jk ON j.id=jk.wid
+        LEFT JOIN DespalilladoKg dk ON j.id=dk.wid
+        WHERE j.activo=1 AND (ISNULL(jk.kg,0)>0 OR ISNULL(dk.kg,0)>0)
+        ORDER BY total_kg DESC`);
+
+    res.json({
+      ranking: result.recordset.map(r => ({
+        nombre: r.nombre,
+        juntada_kg: Math.round((parseFloat(r.juntada_kg) || 0) * 100) / 100,
+        despalillado_kg: Math.round((parseFloat(r.despalillado_kg) || 0) * 100) / 100,
+        total_kg: Math.round((parseFloat(r.total_kg) || 0) * 100) / 100
+      }))
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// ────────────────────────────────────────────────────────────────
+// GET /exportar
+// ────────────────────────────────────────────────────────────────
+router.get('/exportar', async (req, res) => {
+  try {
+    const { trabajador_id } = req.query;
+    const pool = await getPool();
+    const temp = await getTemporadaActiva(pool);
+    if (!temp) return res.status(400).json({ error: 'Sin temporada activa' });
+
+    const r = pool.request();
+    let where = `p.fecha >= (SELECT fecha_inicio FROM Temporadas WHERE id=@tempId)
+      AND p.fecha <= (SELECT fecha_fin FROM Temporadas WHERE id=@tempId)`;
+    r.input('tempId', sql.Int, temp.id);
+    if (trabajador_id) {
+      r.input('tid', sql.Int, parseInt(trabajador_id));
+      where += ' AND p.juntador_id=@tid';
+    }
+
+    const result = await r.query(`
+      SELECT
+        CONVERT(varchar, p.fecha, 103) AS fecha,
+        j.apellido+', '+j.nombre AS trabajador,
+        p.tipo,
+        p.estado_pago,
+        p.forma_pago,
+        ISNULL(p.monto_pagado, p.monto) AS monto,
+        p.numero_recibo,
+        p.referencia_transferencia,
+        p.observacion,
+        u.nombre AS operador
+      FROM Pagos p
+      LEFT JOIN Juntadores j ON p.juntador_id=j.id
+      LEFT JOIN Usuarios u ON p.usuario_id=u.id
+      WHERE ${where}
+      ORDER BY p.fecha DESC, p.id DESC`);
+
+    const rows = result.recordset;
+    const workbook = new ExcelJS.Workbook();
+    const ws = workbook.addWorksheet('Pagos');
+    if (rows.length === 0) {
+      ws.addRow(['Sin datos']);
+    } else {
+      const cols = Object.keys(rows[0]);
+      ws.columns = cols.map(c => ({ header: c.replace(/_/g, ' ').toUpperCase(), key: c, width: 18 }));
+      ws.getRow(1).font = { bold: true };
+      ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2D5016' } };
+      ws.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      ws.addRows(rows);
+    }
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="pagos-export.xlsx"');
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error generando Excel' });
   }
 });
 

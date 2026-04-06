@@ -76,7 +76,8 @@
     .stats-panel { background:var(--superficie); border:1px solid var(--borde); border-radius:12px; padding:16px; margin-bottom:12px; display:none; }
     .stats-panel.visible { display:block; }
     .stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
-    @media (max-width:600px) { .stats-grid { grid-template-columns:1fr; } }
+    @media (max-width:900px) { .stats-grid { grid-template-columns:1fr 1fr !important; } }
+    @media (max-width:600px) { .stats-grid { grid-template-columns:1fr !important; } }
     .stat-box { background:var(--fondo); border:1px solid var(--borde); border-radius:10px; padding:12px; }
     .stat-box-label { font-size:10px; font-weight:700; color:var(--texto-suave); text-transform:uppercase; letter-spacing:.4px; margin-bottom:4px; }
     .stat-box-valor { font-size:20px; font-weight:700; color:var(--verde); font-family:'JetBrains Mono',monospace; }
@@ -90,6 +91,16 @@
     .chart-container { max-width:100%; height:200px; margin-top:8px; }
     .mixto-error { font-size:11px; color:var(--sem-rojo); font-weight:600; margin-top:4px; display:none; }
     .post-pago-recibo { margin-top:8px; }
+    .rendimiento-panel { background:var(--superficie); border:1px solid var(--borde); border-radius:12px; overflow:hidden; margin-bottom:12px; display:none; }
+    .rendimiento-panel.visible { display:block; }
+    .alertas-panel { background:var(--superficie); border:1px solid var(--borde); border-radius:12px; padding:16px; margin-bottom:12px; display:none; }
+    .alertas-panel.visible { display:block; }
+    .alerta-row { display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--borde); font-size:12px; }
+    .alerta-row:last-child { border-bottom:none; }
+    .alerta-dias { font-size:10px; background:var(--sem-rojo-bg); color:var(--sem-rojo); padding:2px 6px; border-radius:4px; font-weight:600; }
+    .tb-badge { position:relative; }
+    .tb-badge .badge-count { position:absolute; top:-6px; right:-8px; background:var(--sem-rojo); color:#fff; font-size:9px; font-weight:700; min-width:16px; height:16px; line-height:16px; text-align:center; border-radius:8px; padding:0 4px; display:none; }
+    .tb-badge .badge-count.visible { display:block; }
   </style>
 </head>
 <body>
@@ -134,8 +145,11 @@
 
       <!-- TOOLBAR -->
       <div class="pagos-toolbar">
-        <button class="ins-btn ins-btn-gray" id="tb-precios" onclick="togglePanel('precios')"><i data-lucide="settings" style="width:14px;height:14px;"></i> Precios</button>
+        <button class="ins-btn ins-btn-gray" id="tb-precios" onclick="togglePanel('precios')"><i data-lucide="sliders" style="width:14px;height:14px;"></i> Precios</button>
         <button class="ins-btn ins-btn-gray" id="tb-stats" onclick="togglePanel('stats')"><i data-lucide="bar-chart-2" style="width:14px;height:14px;"></i> Estadisticas</button>
+        <button class="ins-btn ins-btn-gray" id="tb-exportar" onclick="exportarExcel()"><i data-lucide="download" style="width:14px;height:14px;"></i> Exportar</button>
+        <button class="ins-btn ins-btn-gray" id="tb-rendimiento" onclick="togglePanel('rendimiento')"><i data-lucide="bar-chart" style="width:14px;height:14px;"></i> Rendimiento</button>
+        <button class="ins-btn ins-btn-gray tb-badge" id="tb-alertas" onclick="togglePanel('alertas')"><i data-lucide="bell" style="width:14px;height:14px;"></i> Alertas<span class="badge-count" id="alertas-badge">0</span></button>
       </div>
 
       <!-- PRECIOS PANEL -->
@@ -148,6 +162,12 @@
 
       <!-- ESTADISTICAS PANEL -->
       <div id="stats-panel" class="stats-panel"></div>
+
+      <!-- RENDIMIENTO PANEL -->
+      <div id="rendimiento-panel" class="rendimiento-panel"></div>
+
+      <!-- ALERTAS PANEL -->
+      <div id="alertas-panel" class="alertas-panel"></div>
 
       <!-- 2-COL LAYOUT -->
       <div id="layout-pagos" style="display:grid;grid-template-columns:280px 1fr;gap:16px;">
@@ -249,38 +269,46 @@ var _activePanel = null;
 var _chartInstance = null;
 
 function togglePanel(name) {
-  var preciosEl = document.getElementById('precios-panel');
-  var statsEl = document.getElementById('stats-panel');
-  var tbPrecios = document.getElementById('tb-precios');
-  var tbStats = document.getElementById('tb-stats');
+  var panels = {
+    precios: { el: document.getElementById('precios-panel'), cls: null, tb: document.getElementById('tb-precios') },
+    stats: { el: document.getElementById('stats-panel'), cls: 'stats-panel', tb: document.getElementById('tb-stats') },
+    rendimiento: { el: document.getElementById('rendimiento-panel'), cls: 'rendimiento-panel', tb: document.getElementById('tb-rendimiento') },
+    alertas: { el: document.getElementById('alertas-panel'), cls: 'alertas-panel', tb: document.getElementById('tb-alertas') }
+  };
+  var layoutEl = document.getElementById('layout-pagos');
+  // Panels que ocultan el layout principal (stats, rendimiento, alertas). Precios convive.
+  var ocultaLayout = { stats: true, rendimiento: true, alertas: true };
+
+  // Cerrar todos los panels
+  Object.keys(panels).forEach(function(k) {
+    var p = panels[k];
+    if (p.cls) { p.el.className = p.cls; } else { p.el.style.display = 'none'; }
+    var base = 'ins-btn ins-btn-gray';
+    if (k === 'alertas') base += ' tb-badge';
+    p.tb.className = base;
+  });
 
   if (_activePanel === name) {
-    // Cerrar panel activo
-    preciosEl.style.display = 'none';
-    statsEl.className = 'stats-panel';
-    tbPrecios.className = 'ins-btn ins-btn-gray';
-    tbStats.className = 'ins-btn ins-btn-gray';
+    // Cerrar: restaurar layout
     _activePanel = null;
+    layoutEl.style.display = 'grid';
     return;
   }
 
-  // Cerrar todos
-  preciosEl.style.display = 'none';
-  statsEl.className = 'stats-panel';
-  tbPrecios.className = 'ins-btn ins-btn-gray';
-  tbStats.className = 'ins-btn ins-btn-gray';
-
-  // Abrir el seleccionado
   _activePanel = name;
-  if (name === 'precios') {
-    preciosEl.style.display = 'block';
-    tbPrecios.className = 'ins-btn ins-btn-primary';
-    cargarPrecios();
-  } else if (name === 'stats') {
-    statsEl.className = 'stats-panel visible';
-    tbStats.className = 'ins-btn ins-btn-primary';
-    cargarEstadisticas();
-  }
+  var sel = panels[name];
+  if (sel.cls) { sel.el.className = sel.cls + ' visible'; } else { sel.el.style.display = 'block'; }
+  var activeBase = 'ins-btn ins-btn-primary';
+  if (name === 'alertas') activeBase += ' tb-badge';
+  sel.tb.className = activeBase;
+
+  // Ocultar/mostrar layout segun el panel
+  layoutEl.style.display = ocultaLayout[name] ? 'none' : 'grid';
+
+  if (name === 'precios') cargarPrecios();
+  else if (name === 'stats') cargarEstadisticas();
+  else if (name === 'rendimiento') cargarRendimiento();
+  else if (name === 'alertas') cargarAlertas();
 }
 
 function cargarPrecios() {
@@ -316,19 +344,22 @@ function cargarEstadisticas() {
     if (data.error) { document.getElementById('stats-panel').innerHTML = '<div class="empty">'+data.error+'</div>'; return; }
     var html = '';
 
-    // KPI cards
-    html += '<div class="stats-grid">';
-    html += '<div class="stat-box"><div class="stat-box-label">Total pagado (campana)</div><div class="stat-box-valor">'+formatMoney(data.total_pagado)+'</div><div class="stat-box-sub">Anticipos: '+formatMoney(data.total_anticipos)+' / Liquidaciones: '+formatMoney(data.total_liquidaciones)+'</div></div>';
-    html += '<div class="stat-box"><div class="stat-box-label">Trabajadores con deuda</div><div class="stat-box-valor">'+data.deudores.length+'</div><div class="stat-box-sub">Total adeudado: '+formatMoney(data.deudores.reduce(function(s,d){return s+d.saldo;},0))+'</div></div>';
+    // KPI cards (4)
+    html += '<div class="stats-grid" style="grid-template-columns:repeat(4,1fr);">';
+    html += '<div class="stat-box"><div class="stat-box-label">Total pagado</div><div class="stat-box-valor">'+formatMoney(data.total_pagado)+'</div></div>';
+    html += '<div class="stat-box"><div class="stat-box-label">Total anticipos</div><div class="stat-box-valor">'+formatMoney(data.total_anticipos)+'</div></div>';
+    html += '<div class="stat-box"><div class="stat-box-label">Total liquidaciones</div><div class="stat-box-valor">'+formatMoney(data.total_liquidaciones)+'</div></div>';
+    html += '<div class="stat-box"><div class="stat-box-label">Trabajadores con deuda</div><div class="stat-box-valor">'+data.trabajadores_activos_deuda+'</div><div class="stat-box-sub">Total: '+formatMoney(data.deudores.reduce(function(s,d){return s+d.saldo;},0))+'</div></div>';
     html += '</div>';
 
     // Desglose por actividad
     if (data.desglose_actividad.length) {
       html += '<div class="stats-section-title">Costo por actividad</div>';
-      html += '<div class="det-section"><div class="det-section-body"><table><thead><tr><th>Actividad</th><th>Cantidad</th><th>Monto bruto</th></tr></thead><tbody>';
+      html += '<div class="det-section"><div class="det-section-body"><table><thead><tr><th>Actividad</th><th>Total kg/hs</th><th>Total pagado</th><th>Precio promedio</th></tr></thead><tbody>';
       data.desglose_actividad.forEach(function(a) {
         var cant = a.unidad === 'kg' ? formatKg(a.cantidad) : formatHoras(a.cantidad);
-        html += '<tr><td style="font-weight:600;">'+a.actividad+'</td><td>'+cant+'</td><td style="font-family:\'JetBrains Mono\',monospace;font-weight:600;">'+formatMoney(a.monto)+'</td></tr>';
+        var precioFmt = formatMoney(a.precio_promedio) + '/' + (a.unidad === 'kg' ? 'kg' : 'h');
+        html += '<tr><td style="font-weight:600;">'+a.actividad+'</td><td>'+cant+'</td><td style="font-family:\'JetBrains Mono\',monospace;font-weight:600;">'+formatMoney(a.monto)+'</td><td style="font-size:11px;color:var(--texto-suave);">'+precioFmt+'</td></tr>';
       });
       html += '</tbody></table></div></div>';
     }
@@ -401,6 +432,107 @@ function cargarEstadisticas() {
       }
     }
   });
+}
+
+// ── RENDIMIENTO ──
+function cargarRendimiento() {
+  fetchApi('/api/pagos/rendimiento').then(function(data) {
+    if (!data.ranking || !data.ranking.length) {
+      document.getElementById('rendimiento-panel').innerHTML = '<div style="padding:16px;" class="empty">Sin datos de rendimiento</div>';
+      return;
+    }
+    var html = '<div style="padding:12px 16px 8px;"><div style="font-size:14px;font-weight:700;color:var(--texto);">Ranking de kg por trabajador</div></div>';
+    html += '<div class="det-section-body"><table><thead><tr><th>#</th><th>Trabajador</th><th>Juntada</th><th>Despalillado</th><th>Total kg</th></tr></thead><tbody>';
+    data.ranking.forEach(function(r, i) {
+      html += '<tr><td style="font-weight:700;color:var(--texto-suave);">'+(i+1)+'</td>';
+      html += '<td style="font-weight:600;">'+r.nombre+'</td>';
+      html += '<td>'+formatKg(r.juntada_kg)+'</td>';
+      html += '<td>'+formatKg(r.despalillado_kg)+'</td>';
+      html += '<td style="font-family:\'JetBrains Mono\',monospace;font-weight:700;color:var(--verde);">'+formatKg(r.total_kg)+'</td></tr>';
+    });
+    html += '</tbody></table></div>';
+    document.getElementById('rendimiento-panel').innerHTML = html;
+  });
+}
+
+// ── ALERTAS ──
+function cargarAlertas(diasPago, diasInact) {
+  var dp = diasPago || (document.getElementById('alerta-dias-pago') ? parseInt(document.getElementById('alerta-dias-pago').value) : 7) || 7;
+  var di = diasInact || (document.getElementById('alerta-dias-inact') ? parseInt(document.getElementById('alerta-dias-inact').value) : 7) || 7;
+  var url = '/api/pagos/alertas?dias_sin_pago=' + dp + '&dias_sin_actividad=' + di;
+
+  fetchApi(url).then(function(data) {
+    if (!data || data.error) {
+      document.getElementById('alertas-panel').innerHTML = '<div class="empty">'+(data && data.error ? data.error : 'Error al cargar alertas')+'</div>';
+      return;
+    }
+    var html = '';
+
+    // Formulario de parametros
+    html += '<div class="fg" style="margin-bottom:16px;align-items:flex-end;">';
+    html += '<div class="fi" style="min-width:120px;flex:0 0 auto;"><label>Dias sin pago</label><input type="number" id="alerta-dias-pago" value="'+dp+'" min="1" style="width:80px;"></div>';
+    html += '<div class="fi" style="min-width:120px;flex:0 0 auto;"><label>Dias sin actividad</label><input type="number" id="alerta-dias-inact" value="'+di+'" min="1" style="width:80px;"></div>';
+    html += '<div class="fi" style="flex:0 0 auto;"><button class="btn btn-green" style="padding:6px 14px;font-size:12px;" onclick="cargarAlertas()">Actualizar</button></div>';
+    html += '</div>';
+
+    // Seccion 1: Con deuda sin pago
+    html += '<div class="stats-section-title">Con deuda sin pago</div>';
+    if (data.deuda_sin_pago.length) {
+      data.deuda_sin_pago.forEach(function(d) {
+        html += '<div class="alerta-row"><span><span class="deudor-nombre">'+d.nombre+'</span> — <span class="deudor-monto">'+formatMoney(d.saldo)+'</span></span><span class="alerta-dias">'+d.dias_sin_pago+' dias</span></div>';
+      });
+    } else {
+      html += '<div class="empty" style="padding:10px;">Sin alertas en esta categoria</div>';
+    }
+
+    // Seccion 2: Sin actividad reciente
+    html += '<div class="stats-section-title" style="margin-top:20px;">Sin actividad reciente</div>';
+    if (data.inactivos.length) {
+      html += '<div style="margin-top:4px;">';
+      data.inactivos.forEach(function(n) {
+        html += '<span class="inactivo-chip">'+n+'</span>';
+      });
+      html += '</div>';
+    } else {
+      html += '<div class="empty" style="padding:10px;">Sin alertas en esta categoria</div>';
+    }
+
+    document.getElementById('alertas-panel').innerHTML = html;
+    actualizarBadgeAlertas(data.count);
+  });
+}
+
+function cargarAlertasBadge() {
+  fetchApi('/api/pagos/alertas').then(function(data) {
+    actualizarBadgeAlertas(data.count);
+  });
+}
+
+function actualizarBadgeAlertas(count) {
+  var badge = document.getElementById('alertas-badge');
+  if (badge) {
+    badge.textContent = count;
+    badge.className = count > 0 ? 'badge-count visible' : 'badge-count';
+  }
+}
+
+// ── EXPORTAR EXCEL ──
+function exportarExcel() {
+  var tid = _selectedId || '';
+  var token = localStorage.getItem('token');
+  var url = '/api/pagos/exportar' + (tid ? '?trabajador_id=' + tid : '');
+  fetch(url, { headers: { 'Authorization': 'Bearer ' + token } })
+    .then(function(r) {
+      if (!r.ok) throw new Error('Error al exportar');
+      return r.blob();
+    })
+    .then(function(blob) {
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'pagos-export.xlsx';
+      a.click();
+    })
+    .catch(function(err) { alert(err.message || 'Error al exportar'); });
 }
 
 // ── WORKERS LIST ──
@@ -768,6 +900,7 @@ function subirComprobante(pagoId) {
 // ── INIT ──
 cargarTrabajadores();
 cargarTemporadaActiva();
+cargarAlertasBadge();
 </script>
 </body>
 </html>
