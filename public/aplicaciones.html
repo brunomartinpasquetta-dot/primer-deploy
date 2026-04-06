@@ -149,22 +149,21 @@
                 <div class="fi" style="flex:0 0 100px;"><label>Método</label><select id="sel-metodo"><option value="mochila">Mochila</option><option value="tractor">Tractor</option><option value="manual">Manual</option><option value="otro">Otro</option></select></div>
                 <div class="fi" style="flex:0 0 100px;"><label>Clima</label><select id="sel-clima"><option value="optima">Óptima</option><option value="viento_leve">Vto.leve</option><option value="nublado">Nublado</option><option value="calor">Calor</option></select></div>
                 <div class="fi" style="flex:0 0 70px;"><label>Dosis/ha</label><input type="number" id="inp-dosis" placeholder="1.5" step="0.001"></div>
-                <div class="fi" style="flex:0 0 80px;"><label>H. Inicio</label><input type="time" id="inp-hora-inicio" style="font-size:11px;"></div>
-                <div class="fi" style="flex:0 0 80px;"><label>H. Fin</label><input type="time" id="inp-hora-fin" style="font-size:11px;"></div>
                 <div class="fi" style="flex:1 1 120px;min-width:80px;"><label>Observación</label><input type="text" id="inp-obs" placeholder="Opcional"></div>
               </div>
               <div id="stock-info" style="font-size:10px;color:var(--verde);margin-top:2px;"></div>
               <div id="stock-warning" class="stock-warning" style="display:none;"></div>
 
-              <!-- ── BLOQUE EMPLEADOS (patrón select verde + chips) ── -->
+              <!-- ── BLOQUE EMPLEADOS (filas con hora, patrón clasif+embalaje) ── -->
               <div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--borde);">
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
                   <div style="font-size:11px;font-weight:700;color:var(--texto-suave);text-transform:uppercase;">Aplicadores</div>
+                  <span id="cant-empleados" style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--sem-verde-bg);color:var(--sem-verde);">0</span>
                   <select id="sel-agregar-empleado" onchange="agregarEmpleado()" style="height:30px;font-size:12px;font-weight:700;border:1.5px solid var(--verde);border-radius:6px;padding:2px 8px;background:var(--verde);color:white;min-width:180px;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22white%22 stroke-width=%222.5%22><polyline points=%226 9 12 15 18 9%22/></svg>');background-repeat:no-repeat;background-position:right 8px center;">
                     <option value="" style="background:white;color:var(--texto);">+ Agregar aplicador</option>
                   </select>
                 </div>
-                <div id="chips-empleados" style="display:flex;gap:4px;flex-wrap:wrap;min-height:26px;"></div>
+                <div id="lista-empleados-filas" style="min-height:26px;"></div>
               </div>
 
               <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
@@ -184,13 +183,12 @@
                   <th>Producto</th>
                   <th style="text-align:right;">Cantidad</th>
                   <th style="text-align:center;">Carencia</th>
-                  <th style="text-align:center;">Tiempo</th>
                   <th>Aplicadores</th>
                   <th style="text-align:center;">Estado</th>
                   <th style="text-align:center;"></th>
                 </tr></thead>
                 <tbody id="tbody-aplicaciones">
-                  <tr><td colspan="8" style="text-align:center;padding:20px;color:var(--texto-suave);">Seleccioná una parcela</td></tr>
+                  <tr><td colspan="7" style="text-align:center;padding:20px;color:var(--texto-suave);">Seleccioná una parcela</td></tr>
                 </tbody>
               </table>
             </div>
@@ -302,23 +300,49 @@
     if(t==='totales')renderTotales();
   }
 
-  /* ══ EMPLEADOS — SELECT VERDE + CHIPS ══ */
+  /* ══ EMPLEADOS — FILAS CON HORA (patrón clasif+embalaje) ══ */
   function agregarEmpleado(){
     var sel=document.getElementById('sel-agregar-empleado');
     var id=parseInt(sel.value); if(!id){return;}
     if(_empleadosSeleccionados.find(function(e){return e.id===id;})){sel.value='';return;}
     var opt=sel.options[sel.selectedIndex];
-    _empleadosSeleccionados.push({id:id,nombre:opt.text});
+    _empleadosSeleccionados.push({id:id,nombre:opt.text,hora_inicio:'',hora_fin:''});
     sel.value='';
-    renderChips(); actualizarBtnRegistrar();
+    renderFilasEmpleados(); actualizarBtnRegistrar();
   }
   function quitarEmpleado(id){
     _empleadosSeleccionados=_empleadosSeleccionados.filter(function(e){return e.id!==id;});
-    renderChips(); actualizarBtnRegistrar();
+    renderFilasEmpleados(); actualizarBtnRegistrar();
   }
-  function renderChips(){
-    document.getElementById('chips-empleados').innerHTML=_empleadosSeleccionados.map(function(e){
-      return '<span class="emp-chip">'+e.nombre+' <button onclick="quitarEmpleado('+e.id+')">✕</button></span>';
+  function setHoraEmpleado(id,tipo,valor){
+    var emp=_empleadosSeleccionados.find(function(e){return e.id===id;});
+    if(emp){ if(tipo==='inicio') emp.hora_inicio=valor; else emp.hora_fin=valor; }
+    renderFilasEmpleados();
+  }
+  function renderFilasEmpleados(){
+    var el=document.getElementById('lista-empleados-filas');
+    document.getElementById('cant-empleados').textContent=_empleadosSeleccionados.length;
+    if(!_empleadosSeleccionados.length){
+      el.innerHTML='<div style="text-align:center;padding:8px;color:var(--texto-suave);font-size:12px;">Agregá aplicadores con el selector</div>';
+      return;
+    }
+    el.innerHTML=_empleadosSeleccionados.map(function(e){
+      var horas='';
+      if(e.hora_inicio&&e.hora_fin){
+        var d1=new Date('2026-01-01T'+e.hora_inicio+':00');
+        var d2=new Date('2026-01-01T'+e.hora_fin+':00');
+        var diff=(d2-d1)/3600000;
+        if(diff>0) horas=' <span style="color:var(--verde);font-size:11px;font-weight:700;'+mono+'">'+diff.toFixed(1)+'h</span>';
+      }
+      return '<div style="display:flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--borde);border-radius:8px;margin-bottom:4px;font-size:12px;background:var(--superficie);flex-wrap:wrap;">' +
+        '<span style="flex:1;font-weight:600;min-width:100px;">'+e.nombre+'</span>' +
+        '<span style="font-size:10px;color:var(--texto-suave);font-weight:600;">Inicio</span>' +
+        '<input type="time" value="'+e.hora_inicio+'" style="width:75px;padding:2px 4px;border:1px solid var(--borde);border-radius:4px;font-size:11px;" onchange="setHoraEmpleado('+e.id+',\'inicio\',this.value)">' +
+        '<span style="font-size:10px;color:var(--texto-suave);font-weight:600;">Fin</span>' +
+        '<input type="time" value="'+e.hora_fin+'" style="width:75px;padding:2px 4px;border:1px solid var(--borde);border-radius:4px;font-size:11px;" onchange="setHoraEmpleado('+e.id+',\'fin\',this.value)">' +
+        horas +
+        '<button onclick="quitarEmpleado('+e.id+')" style="background:none;border:none;color:var(--sem-rojo);cursor:pointer;padding:2px;" title="Quitar">✕</button>' +
+      '</div>';
     }).join('');
   }
   function actualizarBtnRegistrar(){
@@ -395,7 +419,7 @@
   function cargarAplicacionesParcela(){
     if(!_parcelaSeleccionada)return;
     var tbody=document.getElementById('tbody-aplicaciones');
-    tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--verde);">Cargando...</td></tr>';
+    tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--verde);">Cargando...</td></tr>';
     fetch('/api/aplicaciones?parcela_id='+_parcelaSeleccionada.id+'&temporada_id='+_temporadaId)
       .then(function(r){return r.json();}).then(function(data){
         _aplicData=data; data.forEach(function(m){_movMap[m.id]=m;});
@@ -405,7 +429,7 @@
   function renderAplicaciones(data){
     var tbody=document.getElementById('tbody-aplicaciones');
     if(!data.length){
-      tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--texto-suave);">Sin aplicaciones en esta parcela</td></tr>';
+      tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--texto-suave);">Sin aplicaciones en esta parcela</td></tr>';
       document.getElementById('aplic-total').textContent='0';
       document.getElementById('aplic-contador').textContent='';
       return;
@@ -418,7 +442,6 @@
       var carLabel=m.carencia_dias?m.carencia_dias+'d':'—';
       var carColor=m.estado_carencia==='carencia'?'color:var(--sem-rojo);font-weight:700;':'';
       var empleados=(m.empleado||'—').replace(/\s*\|\s*/g, ', ');
-      var tiempo=fmtTiempo(m.hora_inicio,m.hora_fin);
       var acciones=esAnulada?'<span class="badge-anulada">Anulada</span>'
         :'<button class="btn-icon" title="Ver" onclick="verDetalles('+m.id+')"><i data-lucide="eye"></i></button> '+
          '<button class="btn-icon-danger" title="Anular" onclick="anularAplic('+m.id+')"><i data-lucide="ban"></i></button>';
@@ -427,7 +450,6 @@
         '<td style="font-weight:600;">'+(m.producto||'—')+'</td>'+
         '<td style="text-align:right;'+mono+'color:#c0392b;font-weight:700;">'+fmt(cant)+' '+(m.unidad_aplicacion||m.presentacion||'')+'</td>'+
         '<td style="text-align:center;'+carColor+'">'+carLabel+'</td>'+
-        '<td style="text-align:center;font-size:11px;'+mono+'">'+tiempo+'</td>'+
         '<td style="font-size:11px;">'+empleados+'</td>'+
         '<td style="text-align:center;">'+(esAnulada?'<span class="badge-anulada">Anulada</span>':'<span class="badge-activa">Activa</span>')+'</td>'+
         '<td style="text-align:center;">'+acciones+'</td></tr>';
@@ -477,8 +499,6 @@
     if(_empleadosSeleccionados.length===0){mostrarMensaje('mensaje','error','Agregá al menos 1 aplicador');return;}
 
     var hoyStr=new Date().toISOString().split('T')[0];
-    var hi=document.getElementById('inp-hora-inicio').value;
-    var hf=document.getElementById('inp-hora-fin').value;
 
     var btn=document.getElementById('btn-registrar');
     setLoading(btn,true);
@@ -489,7 +509,13 @@
         producto_id:parseInt(producto_id),
         temporada_id:_temporadaId,
         empleado_id:_empleadosSeleccionados[0].id,
-        empleados:_empleadosSeleccionados.map(function(e){return e.id;}),
+        empleados:_empleadosSeleccionados.map(function(e){
+          return {
+            empleado_id: e.id,
+            hora_inicio: e.hora_inicio ? hoyStr+'T'+e.hora_inicio+':00' : null,
+            hora_fin: e.hora_fin ? hoyStr+'T'+e.hora_fin+':00' : null
+          };
+        }),
         cantidad_usada:parseFloat(cantidad),
         unidad_aplicacion:document.getElementById('sel-unidad').value,
         metodo:document.getElementById('sel-metodo').value,
@@ -497,8 +523,8 @@
         dosis_por_hectarea:document.getElementById('inp-dosis').value||null,
         carencia_dias:document.getElementById('inp-carencia').value||null,
         observacion:document.getElementById('inp-obs').value,
-        hora_inicio:hi?hoyStr+'T'+hi+':00':null,
-        hora_fin:hf?hoyStr+'T'+hf+':00':null
+        hora_inicio:null,
+        hora_fin:null
       })
     }).then(function(r){return r.json();}).then(function(data){
       setLoading(btn,false);
@@ -506,7 +532,9 @@
         var msg='Aplicación registrada';
         if(data.warning_stock)msg+=' (stock negativo: '+data.stock_resultante.toFixed(2)+')';
         mostrarMensaje('mensaje','success',msg);
-        ['inp-cantidad','inp-dosis','inp-obs','inp-hora-inicio','inp-hora-fin'].forEach(function(id){document.getElementById(id).value='';});
+        ['inp-cantidad','inp-dosis','inp-obs'].forEach(function(id){document.getElementById(id).value='';});
+        _empleadosSeleccionados=[];
+        renderFilasEmpleados(); actualizarBtnRegistrar();
         document.getElementById('stock-warning').style.display='none';
         cargarAplicacionesParcela(); cargarParcelas(); cargarKpis(); cargarHistorialCompleto();
         // Refresh productos stock
@@ -624,8 +652,6 @@
     h+=fila('Cantidad',fmt(m.cantidad_usada)+' '+(m.unidad_aplicacion||''));
     h+=fila('Costo',m.costo_total?'$'+fmt(m.costo_total):'—');
     h+=fila('Parcela',m.parcela);
-    h+=fila('Aplicadores',(m.empleado||'—').replace(/\s*\|\s*/g,', '),true);
-    if(m.hora_inicio||m.hora_fin)h+=fila('Tiempo',fmtTiempo(m.hora_inicio,m.hora_fin));
     h+=fila('Método',metodos[m.metodo]||m.metodo);h+=fila('Clima',climas[m.condicion_climatica]||m.condicion_climatica);
     h+=fila('Dosis/ha',m.dosis_por_hectarea?fmt(m.dosis_por_hectarea)+' '+(m.unidad_aplicacion||''):'—');
     h+=fila('Carencia',m.carencia_dias?m.carencia_dias+' días':'—');
@@ -633,8 +659,24 @@
     h+=fila('Est. carencia',m.estado_carencia==='carencia'?'En carencia':'Libre');
     if(m.observacion)h+=fila('Observación',m.observacion,true);
     h+='</div>';
+    h+='<div id="det-empleados" style="margin-top:10px;border-top:1px solid var(--borde);padding-top:8px;"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--texto-suave);margin-bottom:6px;">Aplicadores — detalle horas</div><div style="color:var(--texto-suave);font-size:12px;">Cargando...</div></div>';
     document.getElementById('modal-contenido').innerHTML=h;
     document.getElementById('modal-detalles').classList.add('open');
+    // Cargar empleados con horas
+    fetch('/api/aplicaciones/'+m.id+'/empleados').then(function(r){return r.json();}).then(function(emps){
+      var el=document.getElementById('det-empleados');if(!el)return;
+      if(!emps.length){el.innerHTML='<div style="font-size:12px;color:var(--texto-suave);">Sin aplicadores</div>';return;}
+      el.innerHTML='<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--texto-suave);margin-bottom:6px;">Aplicadores — detalle horas</div>'+
+        emps.map(function(e){
+          var hi=e.hora_inicio?new Date(e.hora_inicio).toTimeString().slice(0,5):'—';
+          var hf=e.hora_fin?new Date(e.hora_fin).toTimeString().slice(0,5):'—';
+          var horas='';
+          if(e.hora_inicio&&e.hora_fin){var diff=(new Date(e.hora_fin)-new Date(e.hora_inicio))/3600000;if(diff>0)horas=' <strong style="color:var(--verde);'+mono+'">'+diff.toFixed(1)+'h</strong>';}
+          return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;font-size:12px;border-bottom:1px solid var(--borde);">'+
+            '<span style="flex:1;font-weight:600;">'+e.nombre+'</span>'+
+            '<span style="'+mono+'font-size:11px;">'+hi+' — '+hf+horas+'</span></div>';
+        }).join('');
+    });
   }
 
   // Stock warning en tiempo real al cambiar cantidad

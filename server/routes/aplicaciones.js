@@ -52,7 +52,8 @@ router.get('/:id/empleados', async (req, res) => {
     const result = await pool.request()
       .input('aplicacion_id', sql.Int, req.params.id)
       .query(`SELECT ae.id, ae.empleado_id, ae.fecha_creacion,
-              j.apellido + ', ' + j.nombre AS nombre
+              j.apellido + ', ' + j.nombre AS nombre,
+              ae.hora_inicio, ae.hora_fin
               FROM AplicacionEmpleados ae
               JOIN Juntadores j ON j.id = ae.empleado_id
               WHERE ae.aplicacion_id = @aplicacion_id
@@ -74,6 +75,23 @@ router.post('/:id/empleado', async (req, res) => {
       .input('empleado_id', sql.Int, empleado_id)
       .query(`IF NOT EXISTS (SELECT 1 FROM AplicacionEmpleados WHERE aplicacion_id = @aplicacion_id AND empleado_id = @empleado_id)
                 INSERT INTO AplicacionEmpleados (aplicacion_id, empleado_id) VALUES (@aplicacion_id, @empleado_id)`);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
+  }
+});
+
+// PUT /:id/empleado/:regId — actualizar hora_inicio/hora_fin de un empleado
+router.put('/:id/empleado/:regId', async (req, res) => {
+  try {
+    const { hora_inicio, hora_fin } = req.body;
+    const pool = await getPool();
+    const sets = [];
+    const r = pool.request().input('id', sql.Int, req.params.regId);
+    if (hora_inicio !== undefined) { sets.push('hora_inicio = @hora_inicio'); r.input('hora_inicio', sql.DateTime, hora_inicio || null); }
+    if (hora_fin !== undefined) { sets.push('hora_fin = @hora_fin'); r.input('hora_fin', sql.DateTime, hora_fin || null); }
+    if (!sets.length) return res.json({ ok: true });
+    await r.query('UPDATE AplicacionEmpleados SET ' + sets.join(', ') + ' WHERE id = @id');
     res.json({ ok: true });
   } catch (err) {
     console.error(err); res.status(500).json({ error: "Error interno del servidor" });
@@ -173,15 +191,20 @@ router.post('/', async (req, res) => {
               @unidad_aplicacion, @metodo, @condicion_climatica, @dosis_por_hectarea, @carencia_dias, @costo_total, @observacion, @usuario_id, @hora_inicio, @hora_fin)`);
     const aplicacion_id = insResult.recordset[0].aplicacion_id;
 
-    // Insertar empleados en AplicacionEmpleados
+    // Insertar empleados en AplicacionEmpleados (con hora individual)
     for (let i = 0; i < listaEmpleados.length; i++) {
-      const empId = typeof listaEmpleados[i] === 'object' ? listaEmpleados[i].empleado_id : listaEmpleados[i];
+      const emp = listaEmpleados[i];
+      const empId = typeof emp === 'object' ? emp.empleado_id : emp;
+      const empHi = typeof emp === 'object' ? emp.hora_inicio || null : null;
+      const empHf = typeof emp === 'object' ? emp.hora_fin || null : null;
       if (!empId) continue;
       const reqE = new sql.Request(transaction);
       await reqE
         .input('aplicacion_id', sql.Int, aplicacion_id)
         .input('empleado_id', sql.Int, empId)
-        .query('INSERT INTO AplicacionEmpleados (aplicacion_id, empleado_id) VALUES (@aplicacion_id, @empleado_id)');
+        .input('hora_inicio', sql.DateTime, empHi)
+        .input('hora_fin', sql.DateTime, empHf)
+        .query('INSERT INTO AplicacionEmpleados (aplicacion_id, empleado_id, hora_inicio, hora_fin) VALUES (@aplicacion_id, @empleado_id, @hora_inicio, @hora_fin)');
     }
 
     const req2 = new sql.Request(transaction);
