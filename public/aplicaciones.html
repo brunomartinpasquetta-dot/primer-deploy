@@ -217,11 +217,13 @@
                   <label>Observación</label>
                   <input type="text" id="inp-obs" placeholder="Opcional">
                 </div>
-                <div class="fi" style="flex:0 0 auto;">
-                  <label>Empleado</label>
-                  <select id="sel-empleado" style="min-width:140px;">
-                    <option value="">— opcional —</option>
-                  </select>
+                <div class="fi" style="flex:0 0 80px;">
+                  <label>Inicio</label>
+                  <input type="time" id="inp-hora-inicio" style="font-size:11px;">
+                </div>
+                <div class="fi" style="flex:0 0 80px;">
+                  <label>Fin</label>
+                  <input type="time" id="inp-hora-fin" style="font-size:11px;">
                 </div>
                 <div class="fi" style="flex:0 0 auto;">
                   <label style="visibility:hidden;">_</label>
@@ -229,6 +231,13 @@
                     <i data-lucide="save" style="width:13px;height:13px;"></i> Registrar
                   </button>
                 </div>
+              </div>
+              <!-- Empleados multi-select -->
+              <div style="margin-top:6px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                <select id="sel-empleado" onchange="agregarEmpleado()" style="height:30px;font-size:12px;font-weight:700;border:1.5px solid var(--verde);border-radius:6px;padding:2px 8px;background:var(--verde);color:white;min-width:160px;cursor:pointer;">
+                  <option value="" style="background:white;color:var(--texto);">+ Agregar empleado</option>
+                </select>
+                <div id="chips-empleados" style="display:flex;gap:4px;flex-wrap:wrap;"></div>
               </div>
               <div id="stock-info" style="font-size:10px;color:var(--verde);margin-top:4px;"></div>
               <div id="mensaje" style="margin-top:4px;"></div>
@@ -242,12 +251,13 @@
                   <th>Producto</th>
                   <th style="text-align:right;">Cantidad</th>
                   <th style="text-align:center;">Carencia</th>
-                  <th>Empleado</th>
+                  <th>Empleados</th>
+                  <th style="text-align:center;">Tiempo</th>
                   <th style="text-align:center;">Estado</th>
                   <th style="text-align:center;"></th>
                 </tr></thead>
                 <tbody id="tbody-aplicaciones">
-                  <tr><td colspan="7" style="text-align:center;padding:20px;color:var(--texto-suave);">Seleccioná una parcela</td></tr>
+                  <tr><td colspan="8" style="text-align:center;padding:20px;color:var(--texto-suave);">Seleccioná una parcela</td></tr>
                 </tbody>
               </table>
             </div>
@@ -344,6 +354,7 @@
   var _parcelas = [], _productos = [], _parcelaSeleccionada = null;
   var _aplicData = [], _histData = [], _movMap = {};
   var _temporadaId = null;
+  var _empleadosSeleccionados = [];
 
   var mono = "font-family:'JetBrains Mono',monospace;";
 
@@ -362,6 +373,40 @@
     document.getElementById('tab-btn-hist').classList.toggle('active', tab === 'historial');
     document.getElementById('tab-btn-tot').classList.toggle('active', tab === 'totales');
     if (tab === 'totales') renderTotales();
+  }
+
+  /* ══ MULTI-EMPLEADO ══ */
+  function agregarEmpleado() {
+    var sel = document.getElementById('sel-empleado');
+    var id = parseInt(sel.value);
+    if (!id) return;
+    if (_empleadosSeleccionados.find(function(e){ return e.id === id; })) { sel.value = ''; return; }
+    var opt = sel.options[sel.selectedIndex];
+    _empleadosSeleccionados.push({ id: id, nombre: opt.text });
+    sel.value = '';
+    renderChipsEmpleados();
+  }
+  function quitarEmpleado(id) {
+    _empleadosSeleccionados = _empleadosSeleccionados.filter(function(e){ return e.id !== id; });
+    renderChipsEmpleados();
+  }
+  function renderChipsEmpleados() {
+    var cont = document.getElementById('chips-empleados');
+    cont.innerHTML = _empleadosSeleccionados.map(function(e) {
+      return '<span style="display:inline-flex;align-items:center;gap:4px;background:var(--sem-verde-bg);border:1px solid var(--sem-verde-borde);border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600;color:var(--sem-verde);">' +
+        e.nombre + ' <button onclick="quitarEmpleado('+e.id+')" style="background:none;border:none;cursor:pointer;color:var(--sem-verde);font-size:13px;padding:0 2px;line-height:1;">✕</button></span>';
+    }).join('');
+  }
+
+  function fmtTiempo(hi, hf) {
+    if (!hi && !hf) return '—';
+    function fmtH(d) { if (!d) return '?'; var x = new Date(d); return String(x.getHours()).padStart(2,'0') + ':' + String(x.getMinutes()).padStart(2,'0'); }
+    var s = fmtH(hi) + ' — ' + fmtH(hf);
+    if (hi && hf) {
+      var diff = Math.round((new Date(hf) - new Date(hi)) / 60000);
+      if (diff > 0) s += ' (' + (diff >= 60 ? Math.floor(diff/60) + 'h' + (diff%60 ? String(diff%60).padStart(2,'0')+'m' : '') : diff + 'm') + ')';
+    }
+    return s;
   }
 
   /* ══ CARGAR DATOS INICIALES ══ */
@@ -453,7 +498,7 @@
   function cargarAplicacionesParcela() {
     if (!_parcelaSeleccionada) return;
     var tbody = document.getElementById('tbody-aplicaciones');
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--verde);">Cargando...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--verde);">Cargando...</td></tr>';
 
     fetch('/api/aplicaciones?parcela_id='+_parcelaSeleccionada.id+'&temporada_id='+_temporadaId)
       .then(function(r){ return r.json(); })
@@ -467,7 +512,7 @@
   function renderAplicaciones(data) {
     var tbody = document.getElementById('tbody-aplicaciones');
     if (!data.length) {
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--texto-suave);">Sin aplicaciones en esta parcela</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--texto-suave);">Sin aplicaciones en esta parcela</td></tr>';
       document.getElementById('aplic-total').textContent = '0 aplicaciones';
       document.getElementById('aplic-contador').textContent = '';
       return;
@@ -484,12 +529,15 @@
         ? '<span class="badge-anulada">Anulada</span>'
         : '<button class="btn-icon" title="Ver" onclick="verDetalles('+m.id+')"><i data-lucide="eye"></i></button> ' +
           '<button class="btn-icon-danger" title="Anular" onclick="anularAplic('+m.id+')"><i data-lucide="ban"></i></button>';
+      var empleadosTxt = (m.empleado || '—').replace(/\|/g, ', ');
+      var tiempoTxt = fmtTiempo(m.hora_inicio, m.hora_fin);
       return '<tr' + (esAnulada ? ' style="opacity:.5;text-decoration:line-through;"' : '') + '>' +
         '<td>'+fmtFecha(m.fecha_hora)+'</td>' +
         '<td style="font-weight:600;">'+( m.producto || '—')+'</td>' +
         '<td style="text-align:right;'+mono+'color:#c0392b;font-weight:700;">'+fmt(cant)+' '+(m.unidad_aplicacion||m.presentacion||'')+'</td>' +
         '<td style="text-align:center;'+carColor+'">'+carLabel+'</td>' +
-        '<td style="font-size:11px;">'+(m.empleado || '—')+'</td>' +
+        '<td style="font-size:11px;">'+empleadosTxt+'</td>' +
+        '<td style="text-align:center;font-size:11px;'+mono+'">'+tiempoTxt+'</td>' +
         '<td style="text-align:center;">'+(esAnulada ? '<span class="badge-anulada">Anulada</span>' : '<span style="background:var(--sem-verde-bg);color:var(--sem-verde);padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600;">Activa</span>')+'</td>' +
         '<td style="text-align:center;">'+acciones+'</td>' +
       '</tr>';
@@ -508,26 +556,37 @@
 
     var btn = document.getElementById('btn-registrar');
     setLoading(btn, true);
+    var hoyStr = new Date().toISOString().split('T')[0];
+    var hiVal = document.getElementById('inp-hora-inicio').value;
+    var hfVal = document.getElementById('inp-hora-fin').value;
+    var horaInicio = hiVal ? hoyStr + 'T' + hiVal + ':00' : null;
+    var horaFin = hfVal ? hoyStr + 'T' + hfVal + ':00' : null;
+
     fetch('/api/aplicaciones', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         parcela_id: _parcelaSeleccionada.id,
         producto_id: parseInt(producto_id),
         temporada_id: _temporadaId,
-        empleado_id: document.getElementById('sel-empleado').value || null,
+        empleado_id: _empleadosSeleccionados.length ? _empleadosSeleccionados[0].id : null,
+        empleados: _empleadosSeleccionados.map(function(e){ return e.id; }),
         cantidad_usada: parseFloat(cantidad),
         unidad_aplicacion: document.getElementById('sel-unidad').value,
         metodo: document.getElementById('sel-metodo').value,
         condicion_climatica: document.getElementById('sel-clima').value,
         dosis_por_hectarea: document.getElementById('inp-dosis').value || null,
         carencia_dias: document.getElementById('inp-carencia').value || null,
-        observacion: document.getElementById('inp-obs').value
+        observacion: document.getElementById('inp-obs').value,
+        hora_inicio: horaInicio,
+        hora_fin: horaFin
       })
     }).then(function(r){ return r.json(); }).then(function(data) {
       setLoading(btn, false);
       if (data.ok) {
         mostrarMensaje('mensaje','success','Aplicación registrada');
-        ['inp-cantidad','inp-dosis','inp-obs'].forEach(function(id){ document.getElementById(id).value = ''; });
+        ['inp-cantidad','inp-dosis','inp-obs','inp-hora-inicio','inp-hora-fin'].forEach(function(id){ document.getElementById(id).value = ''; });
+        _empleadosSeleccionados = [];
+        renderChipsEmpleados();
         cargarAplicacionesParcela();
         cargarParcelas();
         cargarKpis();
@@ -681,7 +740,8 @@
     html += fila('Cantidad',fmt(m.cantidad_usada)+' '+(m.unidad_aplicacion||''));
     html += fila('Costo',m.costo_total?'$'+fmt(m.costo_total):'—');
     html += fila('Parcela',m.parcela);
-    html += fila('Aplicador',m.empleado);
+    html += fila('Aplicadores',(m.empleado||'��').replace(/\|/g, ', '),true);
+    if (m.hora_inicio || m.hora_fin) html += fila('Tiempo',fmtTiempo(m.hora_inicio, m.hora_fin));
     html += fila('Método',metodos[m.metodo]||m.metodo);
     html += fila('Clima',climas[m.condicion_climatica]||m.condicion_climatica);
     html += fila('Dosis/ha',m.dosis_por_hectarea?fmt(m.dosis_por_hectarea)+' '+(m.unidad_aplicacion||''):'—');
