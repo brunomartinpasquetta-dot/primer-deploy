@@ -1,0 +1,126 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - text: CO
+          - emphasis [ref=e8]: SE
+          - text: CHA
+        - generic [ref=e9]: SISTEMA DE CULTIVOS
+    - navigation [ref=e10]:
+      - link "Dashboard" [ref=e11] [cursor=pointer]:
+        - /url: index.html
+        - img [ref=e13]
+        - text: Dashboard
+      - generic [ref=e18]: Campo
+      - link "Cosecha" [ref=e19] [cursor=pointer]:
+        - /url: juntada.html
+        - img [ref=e21]
+        - text: Cosecha
+      - link "Despalillado" [ref=e30] [cursor=pointer]:
+        - /url: despalillado.html
+        - img [ref=e32]
+        - text: Despalillado
+      - link "Aplicaciones" [ref=e38] [cursor=pointer]:
+        - /url: aplicaciones.html
+        - img [ref=e40]
+        - text: Aplicaciones
+      - link "Clasif. + Embalaje" [ref=e43] [cursor=pointer]:
+        - /url: clasificacion-embalaje.html
+        - img [ref=e45]
+        - text: Clasif. + Embalaje
+      - generic [ref=e49]: Sistema
+      - link "Stock" [ref=e50] [cursor=pointer]:
+        - /url: menu-stock.html
+        - img [ref=e52]
+        - text: Stock
+      - link "Comercial" [ref=e56] [cursor=pointer]:
+        - /url: menu-comercial.html
+        - img [ref=e58]
+        - text: Comercial
+      - link "Administración" [ref=e63] [cursor=pointer]:
+        - /url: menu-admin.html
+        - img [ref=e65]
+        - text: Administración
+      - link "Mercado" [ref=e67] [cursor=pointer]:
+        - /url: mercado.html
+        - img [ref=e69]
+        - text: Mercado
+      - link "Configuración" [ref=e72] [cursor=pointer]:
+        - /url: menu-config.html
+        - img [ref=e74]
+        - text: Configuración
+    - generic [ref=e77]:
+      - generic [ref=e78]: Administrador · administrador
+      - button "Cerrar sesión" [ref=e79] [cursor=pointer]
+  - generic [ref=e80]:
+    - banner [ref=e81]:
+      - generic [ref=e82]:
+        - img [ref=e83]
+        - generic [ref=e84]:
+          - generic [ref=e85]:
+            - text: CO
+            - emphasis [ref=e86]: SE
+            - text: CHA
+          - generic [ref=e87]: SISTEMA DE CULTIVOS
+        - generic [ref=e88]: 🌱 Campaña FIX 2026 · Día 7
+      - generic [ref=e89]:
+        - generic [ref=e90] [cursor=pointer]:
+          - img [ref=e91]
+          - text: Administrador
+        - generic [ref=e94]: lunes, 6 de abril
+    - generic [ref=e95]:
+      - link "← Volver" [ref=e96] [cursor=pointer]:
+        - /url: "#"
+      - generic [ref=e97]:
+        - generic [ref=e98]: Operaciones de campo
+        - generic [ref=e99]: Cosecha, despalillado y aplicaciones del día
+      - generic [ref=e100]:
+        - link "Cosecha Registrar juntada con pesaje" [ref=e101] [cursor=pointer]:
+          - /url: juntada.html
+          - img [ref=e103]
+          - generic [ref=e112]: Cosecha
+          - generic [ref=e113]: Registrar juntada con pesaje
+        - link "Despalillado Registro de trabajo en galpón" [ref=e114] [cursor=pointer]:
+          - /url: despalillado.html
+          - img [ref=e116]
+          - generic [ref=e122]: Despalillado
+          - generic [ref=e123]: Registro de trabajo en galpón
+        - link "Aplicaciones Fitosanitarios y carencias" [ref=e124] [cursor=pointer]:
+          - /url: aplicaciones.html
+          - img [ref=e126]
+          - generic [ref=e129]: Aplicaciones
+          - generic [ref=e130]: Fitosanitarios y carencias
+        - link "Trabajos de Campo Tareas generales y mantenimiento" [ref=e131] [cursor=pointer]:
+          - /url: trabajos-campo.html
+          - img [ref=e133]
+          - generic [ref=e137]: Trabajos de Campo
+          - generic [ref=e138]: Tareas generales y mantenimiento
+        - link "Clasif. + Embalaje Clasificación y etiquetado" [ref=e139] [cursor=pointer]:
+          - /url: clasificacion-embalaje.html
+          - img [ref=e141]
+          - generic [ref=e145]: Clasif. + Embalaje
+          - generic [ref=e146]: Clasificación y etiquetado
+      - generic [ref=e147]: Despalillado
+      - generic [ref=e148]:
+        - link "Registrar despalillado" [ref=e149] [cursor=pointer]:
+          - /url: despalillado.html
+          - img [ref=e150]
+          - text: Registrar despalillado
+        - button "Historial completo" [ref=e156] [cursor=pointer]:
+          - img [ref=e157]
+          - text: Historial completo
+        - button "Totales campaña" [ref=e158] [cursor=pointer]:
+          - img [ref=e159]
+          - text: Totales campaña
+      - generic [ref=e160]: Resumen hoy
+      - generic [ref=e161]:
+        - generic [ref=e162]:
+          - generic [ref=e163]: Kilos cosecha
+          - generic [ref=e164]: "0"
+          - generic [ref=e165]: 0 registros
+        - generic [ref=e166]:
+          - generic [ref=e167]: Kilos despalillado
+          - generic [ref=e168]: "0"
+          - generic [ref=e169]: 0 registros
