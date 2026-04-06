@@ -8,29 +8,79 @@
   <link rel="icon" href="img/logo.png">
   <script src="js/utils.js"></script>
   <link rel="stylesheet" href="cosecha.css">
-  <style>
-    .empty { text-align:center; color:var(--texto-suave); padding:20px; }
-    .saldo-positivo { color:var(--sem-rojo); font-weight:700; }
-    .saldo-cero { color:var(--sem-verde); font-weight:700; }
-    .resultado-liquidacion { background:var(--sem-verde-bg); border:1px solid var(--sem-verde-borde); border-radius:10px; padding:16px; margin-top:12px; }
-    .resultado-liquidacion .linea { display:flex; justify-content:space-between; padding:4px 0; font-size:14px; }
-    .resultado-liquidacion .total { border-top:2px solid var(--sem-verde); margin-top:8px; padding-top:8px; font-weight:700; font-size:17px; }
-    .precio-card { background:var(--sem-verde-bg); border:1px solid var(--sem-verde-borde); border-radius:10px; padding:14px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; }
-    .precio-valor { font-size:22px; font-weight:700; color:var(--sem-verde); }
-    .btn-red { background:#DC2626; color:#fff; }
-  </style>
   <script src="js/auth-check.js"></script>
+  <style>
+    @media (max-width:900px) { #layout-pagos { grid-template-columns:1fr !important; } }
+
+    .worker-card { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border:1.5px solid var(--borde); border-radius:10px; background:var(--superficie); margin-bottom:8px; gap:10px; cursor:pointer; transition:.15s; }
+    .worker-card:hover { border-color:var(--verde); background:var(--verde-suave); }
+    .worker-card.seleccionado { border-color:var(--verde); background:var(--verde-suave); border-width:2px; }
+    .worker-info { flex:1; }
+    .worker-nombre { font-weight:700; font-size:14px; color:var(--texto); }
+    .worker-meta { font-size:12px; color:var(--texto-secundario); margin-top:2px; }
+    .worker-saldo { font-family:'JetBrains Mono',monospace; font-weight:700; font-size:15px; white-space:nowrap; }
+    .saldo-pos { color:var(--sem-rojo); }
+    .saldo-cero { color:var(--sem-verde); }
+
+    .det-section { background:var(--superficie); border:1px solid var(--borde); border-radius:12px; overflow:hidden; margin-bottom:12px; }
+    .det-section-header { padding:12px 16px; border-bottom:1px solid var(--borde); display:flex; align-items:center; justify-content:space-between; }
+    .det-section-header h3 { font-size:14px; font-weight:700; color:var(--texto); margin:0; }
+    .det-section-header small { font-size:12px; color:var(--texto-suave); font-family:'JetBrains Mono',monospace; }
+    .det-section-body { overflow-x:auto; }
+    .det-section-body table { width:100%; border-collapse:collapse; font-size:13px; }
+    .det-section-body th { text-align:left; padding:6px 8px; font-size:10px; font-weight:600; color:var(--texto-suave); background:var(--fondo); text-transform:uppercase; letter-spacing:.5px; position:sticky; top:0; white-space:nowrap; }
+    .det-section-body td { padding:5px 8px; border-bottom:1px solid var(--borde); color:var(--texto); font-size:12px; white-space:nowrap; }
+    .det-section-body tr:hover td { background:var(--fondo); }
+    .det-section-footer { padding:10px 12px; border-top:1px solid var(--borde); font-size:12px; font-weight:600; color:var(--texto-suave); background:var(--fondo); display:flex; justify-content:flex-end; gap:4px; }
+    .det-section-footer span { color:var(--verde); font-family:'JetBrains Mono',monospace; }
+
+    .resumen-card { background:var(--superficie); border:1px solid var(--borde); border-radius:12px; padding:16px; margin-bottom:12px; }
+    .resumen-linea { display:flex; justify-content:space-between; padding:4px 0; font-size:14px; }
+    .resumen-total { border-top:2px solid var(--verde); margin-top:8px; padding-top:8px; font-weight:700; font-size:17px; }
+    .resumen-total span:last-child { color:var(--sem-rojo); }
+
+    .pagar-form { background:var(--superficie); border:1px solid var(--borde); border-radius:12px; padding:16px; margin-bottom:12px; }
+    .pagar-form h3 { margin:0 0 12px; font-size:14px; }
+    .fg { display:flex; flex-wrap:wrap; gap:6px 10px; align-items:flex-end; }
+    .fg > .fi { display:flex; flex-direction:column; gap:2px; flex:1; min-width:140px; }
+    .fg > .fi > label { font-size:11px; font-weight:600; color:var(--texto-suave); margin:0; white-space:nowrap; }
+    .fg > .fi > input, .fg > .fi > select { margin:0; padding:6px 8px; font-size:12px; height:32px; box-sizing:border-box; }
+    .mixto-row { display:none; margin-top:8px; }
+    .mixto-row.visible { display:flex; gap:10px; }
+    .mixto-row .fi { flex:1; display:flex; flex-direction:column; gap:2px; }
+    .mixto-row .fi label { font-size:11px; font-weight:600; color:var(--texto-suave); }
+    .mixto-row .fi input { padding:6px 8px; font-size:12px; height:32px; }
+
+    .precios-panel { background:var(--superficie); border:1px solid var(--borde); border-radius:12px; padding:14px; margin-bottom:12px; }
+    .precios-panel h3 { margin:0 0 10px; font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; color:var(--texto-secundario); }
+    .precio-row { display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid var(--borde); font-size:13px; }
+    .precio-row:last-child { border-bottom:none; }
+    .precio-row .pr-act { flex:1; font-weight:600; }
+    .precio-row .pr-und { color:var(--texto-suave); font-size:11px; width:40px; }
+    .precio-row input { width:90px; padding:4px 6px; font-size:12px; text-align:right; height:28px; }
+    .precio-row button { padding:4px 10px; font-size:11px; height:28px; }
+
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1000; align-items:center; justify-content:center; }
+    .modal-overlay.open { display:flex; }
+    .modal-box { background:var(--superficie); border-radius:var(--radius-lg); padding:20px 24px; max-width:440px; width:calc(100% - 32px); box-shadow:0 8px 32px rgba(0,0,0,.3); }
+    .modal-box h3 { margin:0 0 12px; font-size:15px; }
+    .modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:16px; }
+
+    .empty { text-align:center; color:var(--texto-suave); padding:20px; font-size:13px; }
+    .badge-anticipo { font-size:10px; background:#fff3cd; color:#856404; padding:2px 6px; border-radius:4px; font-weight:600; }
+    .badge-liquidacion { font-size:10px; background:var(--sem-verde-bg); color:var(--sem-verde); padding:2px 6px; border-radius:4px; font-weight:600; }
+    .badge-parcial { font-size:10px; background:var(--sem-amarillo-bg); color:var(--sem-amarillo); padding:2px 6px; border-radius:4px; font-weight:600; }
+    .collapsible-toggle { background:none; border:1px dashed var(--borde); border-radius:6px; padding:6px 12px; font-size:11px; font-weight:600; color:var(--texto-suave); cursor:pointer; margin-bottom:12px; width:100%; }
+    .collapsible-toggle:hover { background:var(--fondo); }
+  </style>
 </head>
 <body>
 <div class="app-shell">
 
-  <!-- ── SIDEBAR ── -->
+  <!-- SIDEBAR -->
   <aside class="sidebar">
-    <div class="sidebar-brand">
-      <img src="img/logo-icon.png" class="brand-icon"><div class="brand-info"><span class="brand-name">CO<em>SE</em>CHA</span><span class="brand-sub">SISTEMA DE CULTIVOS</span></div>
-    </div>
+    <div class="sidebar-brand"><img src="img/logo-icon.png" class="brand-icon"><div class="brand-info"><span class="brand-name">CO<em>SE</em>CHA</span><span class="brand-sub">SISTEMA DE CULTIVOS</span></div></div>
     <nav class="sidebar-nav">
-      
       <a href="index.html" class="nav-item"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard</a>
       <div class="nav-section">Campo</div>
       <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
@@ -41,428 +91,426 @@
       <div class="nav-section">Sistema</div>
       <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
       <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
-      <a href="menu-admin.html" class="nav-item active"><span class="nav-icon"><i data-lucide="landmark"></i></span> Administración</a>
+      <a href="menu-admin.html" class="nav-item active"><span class="nav-icon"><i data-lucide="landmark"></i></span> Administracion</a>
       <a href="mercado.html" class="nav-item"><span class="nav-icon"><i data-lucide="trending-up"></i></span> Mercado</a>
-      <a href="menu-config.html" class="nav-item"><span class="nav-icon"><i data-lucide="settings"></i></span> Configuración</a>
+      <a href="menu-config.html" class="nav-item"><span class="nav-icon"><i data-lucide="settings"></i></span> Configuracion</a>
     </nav>
     <div class="sidebar-footer">Cosecha · Sistema de Cultivos</div>
   </aside>
 
-  <!-- ── MAIN ── -->
+  <!-- MAIN -->
   <div class="main">
     <header class="topbar">
       <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
         <img src="img/logo-icon.png" class="brand-icon"><div class="brand-info"><span class="brand-name">CO<em>SE</em>CHA</span><span class="brand-sub">SISTEMA DE CULTIVOS</span></div><span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
       </div>
-      <div class="topbar-right">
-        <span class="topbar-date" id="topbar-date"></span>
-      </div>
+      <div class="topbar-right"><span class="topbar-date" id="topbar-date"></span></div>
     </header>
 
     <div class="content">
-      <a href="menu-admin.html" class="btn-volver">← Volver</a>
+      <a href="menu-admin.html" class="btn-volver">&larr; Volver</a>
       <div class="content-header">
-        <div class="content-title">Pagos</div>
-        <div class="content-sub">Liquidaciones y anticipos</div>
+        <div class="content-title">Pagos y Liquidaciones</div>
+        <div class="content-sub">Liquidador universal — todos los modulos</div>
       </div>
 
-      <div class="tabs">
-    <button class="tab active" onclick="showTab('resumen', this)">Resumen</button>
-    <button class="tab" onclick="showTab('liquidacion', this)">Liquidar</button>
-    <button class="tab" onclick="showTab('anticipo', this)">Anticipo</button>
-    <button class="tab" onclick="showTab('precio', this)">Precio kilo</button>
-  </div>
+      <!-- PRECIOS (collapsible, admin) -->
+      <button class="collapsible-toggle" onclick="togglePrecios()">Precios por actividad (admin)</button>
+      <div id="precios-panel" class="precios-panel" style="display:none;">
+        <h3>Precios por actividad — Temporada activa</h3>
+        <div id="precios-body"></div>
+      </div>
 
-  <!-- RESUMEN -->
-  <div id="tab-resumen" class="tab-content active">
-    <div class="filtros-barra">
-      <input type="search" class="fb-buscar" id="pagos-buscar" placeholder="Filtrar por..." list="pagos-opciones" oninput="buscarResumen()">
-      <datalist id="pagos-opciones"></datalist>
-      <div class="fb-sep"></div>
-      <select id="filtro-temporada" onchange="cargarResumen()"></select>
-      <input type="date" id="filtro-desde" onchange="cargarResumen()">
-      <input type="date" id="filtro-hasta" onchange="cargarResumen()">
-      <button class="fb-limpiar" onclick="limpiarFiltrosPagos()">✕ Limpiar</button>
-    </div>
-    <div class="card">
-      <table>
-        <thead>
-          <tr><th>Juntador</th><th>Tipo</th><th>Kilos</th><th>Anticipos</th><th>Liquidado</th><th>Saldo</th></tr>
-        </thead>
-        <tbody id="tbody-resumen">
-          <tr><td colspan="6" class="empty">Selecciona una temporada</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="card" style="margin-top:0;">
-      <h2>Total pagado por trabajador</h2>
-      <table>
-        <thead>
-          <tr><th>Trabajador</th><th>N° pagos</th><th>Total pagado ($)</th></tr>
-        </thead>
-        <tbody id="tbody-total-trabajador">
-          <tr><td colspan="3" class="empty">Selecciona una temporada</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
+      <!-- 2-COL LAYOUT -->
+      <div id="layout-pagos" style="display:grid;grid-template-columns:280px 1fr;gap:16px;">
 
-  <!-- LIQUIDACION -->
-  <div id="tab-liquidacion" class="tab-content">
-    <div class="card">
-      <h2>Nueva liquidacion</h2>
-      <label>Juntador</label>
-      <select id="liq-juntador" onchange="cargarInfoJuntador()"></select>
-      <div id="liq-info"></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <!-- LEFT: Workers -->
         <div>
-          <label>Desde</label>
-          <input type="date" id="liq-desde" onchange="calcularLiquidacion()">
+          <div class="filtros-barra" style="margin-bottom:8px;">
+            <input type="search" class="fb-buscar" id="buscar-trab" placeholder="Buscar trabajador..." oninput="filtrarTrabajadores()">
+          </div>
+          <div id="workers-list"><div class="empty">Cargando...</div></div>
         </div>
-        <div>
-          <label>Hasta</label>
-          <input type="date" id="liq-hasta" onchange="calcularLiquidacion()">
+
+        <!-- RIGHT: Detail -->
+        <div id="detalle-panel">
+          <div class="empty">Selecciona un trabajador de la lista</div>
         </div>
       </div>
-      <label>Precio por kilo ($)</label>
-      <input type="number" inputmode="decimal" id="liq-precio" placeholder="Ej: 800" min="0" step="any" style="-moz-appearance:textfield;" onchange="calcularLiquidacion()">
-      <label>Anticipos a descontar ($)</label>
-      <input type="number" inputmode="decimal" id="liq-anticipos" placeholder="Ej: 5000" min="0" step="any" style="-moz-appearance:textfield;" onchange="calcularLiquidacion()">
-      <label>Observacion</label>
-      <input type="text" id="liq-obs" placeholder="Opcional">
-      <div class="resultado-liquidacion" id="resultado" style="display:none;">
-        <div class="linea"><span>Kilos trabajados:</span><span id="res-kilos">0</span></div>
-        <div class="linea"><span>Precio por kilo:</span><span id="res-precio">$0</span></div>
-        <div class="linea"><span>Total bruto:</span><span id="res-bruto">$0</span></div>
-        <div class="linea"><span>Anticipos:</span><span id="res-anticipos">-$0</span></div>
-        <div class="linea total"><span>Saldo a pagar:</span><span id="res-saldo">$0</span></div>
-      </div>
-      <button class="btn btn-green" id="btn-liquidar" onclick="registrarLiquidacion(this)">Registrar Liquidacion</button>
-      <div id="msg-liq"></div>
     </div>
   </div>
 
-  <!-- ANTICIPO -->
-  <div id="tab-anticipo" class="tab-content">
-    <div class="card">
-      <h2>Registrar anticipo</h2>
-      <label>Juntador</label>
-      <select id="ant-juntador"></select>
-      <label>Monto ($)</label>
-      <input type="number" inputmode="decimal" id="ant-monto" placeholder="Ej: 5000" min="0" step="any" style="-moz-appearance:textfield;">
-      <label>Observacion</label>
-      <input type="text" id="ant-obs" placeholder="Opcional">
-      <button class="btn btn-red" id="btn-anticipo" onclick="registrarAnticipo(this)">Registrar Anticipo</button>
-      <div id="msg-ant"></div>
-    </div>
-  </div>
-
-  <!-- PRECIO KILO -->
-  <div id="tab-precio" class="tab-content">
-    <div class="card">
-      <h2>Precio actual del kilo</h2>
-      <div class="precio-card" id="precio-actual">
-        <span style="color:#666;">Sin precio configurado</span>
-      </div>
-      <h2>Actualizar precio</h2>
-      <label>Temporada</label>
-      <select id="precio-temporada"></select>
-      <label>Precio por kilo ($)</label>
-      <input type="number" inputmode="decimal" id="precio-valor" placeholder="Ej: 800" min="0" step="any" style="-moz-appearance:textfield;">
-      <label>Destino</label>
-      <select id="precio-destino">
-        <option value="fresco">Fresco</option>
-        <option value="industria">Industria</option>
-        <option value="congelado">Congelado</option>
-      </select>
-      <label>Fecha desde</label>
-      <input type="date" id="precio-fecha">
-      <button class="btn btn-green" id="btn-precio" onclick="actualizarPrecio(this)">Actualizar Precio</button>
-      <div id="msg-precio"></div>
-    </div>
-  </div>
-
-    </div>
-  </div>
-
-  <!-- ── BOTTOM NAV ── -->
+  <!-- BOTTOM NAV -->
   <nav class="bottom-nav">
-    
     <a href="index.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="home"></i></span><span>Inicio</span></a>
     <a href="juntada.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="wheat"></i></span><span>Cosecha</span></a>
     <a href="despalillado.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="scissors"></i></span><span>Despalillado</span></a>
     <a href="aplicaciones.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="droplets"></i></span><span>Aplicaciones</span></a>
-    <a href="menu-campo.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="menu"></i></span><span>Menú</span></a>
+    <a href="menu-campo.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="menu"></i></span><span>Menu</span></a>
   </nav>
+</div>
 
+<!-- MODAL CONFIRMACION -->
+<div class="modal-overlay" id="modal-confirm">
+  <div class="modal-box">
+    <h3 id="modal-title">Confirmar pago</h3>
+    <p id="modal-msg"></p>
+    <div class="modal-actions">
+      <button class="btn" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn btn-green" id="modal-ok" onclick="ejecutarPago()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ANTICIPO -->
+<div class="modal-overlay" id="modal-anticipo">
+  <div class="modal-box">
+    <h3>Registrar anticipo</h3>
+    <div class="fg" style="flex-direction:column;gap:8px;">
+      <div class="fi"><label>Monto ($)</label><input type="number" id="ant-monto" inputmode="decimal" min="0" step="any"></div>
+      <div class="fi"><label>Forma de pago</label>
+        <select id="ant-fp"><option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option></select>
+      </div>
+      <div class="fi"><label>Referencia (opcional)</label><input type="text" id="ant-ref" placeholder="Nro transferencia..."></div>
+      <div class="fi"><label>Observacion (opcional)</label><input type="text" id="ant-obs"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="cerrarAnticipo()">Cancelar</button>
+      <button class="btn btn-green" id="btn-ant-ok" onclick="guardarAnticipo()">Registrar anticipo</button>
+    </div>
+  </div>
 </div>
 
 <script src="https://unpkg.com/lucide@latest"></script>
 <script>
+lucide.createIcons();
+document.getElementById('topbar-date').textContent =
+  new Date().toLocaleDateString('es-AR', {weekday:'long',day:'numeric',month:'long'});
+
+var _workers = [];
+var _selectedId = null;
+var _detalle = null;
+var _pendingPago = null;
+
+// ── Format helpers ──
+function $$(n) { return typeof n === 'number' ? n.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:2}) : n; }
+function fDate(d) { if (!d) return '-'; return new Date(d).toLocaleDateString('es-AR'); }
+function fTime(d) { if (!d) return '-'; var t = new Date(d); return t.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}); }
+
+// ── PRECIOS ──
+function togglePrecios() {
+  var p = document.getElementById('precios-panel');
+  p.style.display = p.style.display === 'none' ? 'block' : 'none';
+  if (p.style.display === 'block') cargarPrecios();
+}
+
+function cargarPrecios() {
+  fetchApi('/api/pagos/precios').then(function(data) {
+    var labels = {juntada:'Juntada',despalillado:'Despalillado',clasificacion:'Clasificacion',embalaje:'Embalaje',aplicacion:'Aplicaciones',trabajo_campo:'Trabajos campo'};
+    document.getElementById('precios-body').innerHTML = data.map(function(p) {
+      return '<div class="precio-row"><span class="pr-act">'+(labels[p.actividad]||p.actividad)+'</span>' +
+        '<span class="pr-und">/'+p.unidad+'</span>' +
+        '<input type="number" id="precio-'+p.id+'" value="'+parseFloat(p.precio)+'" min="0" step="any">' +
+        '<button class="btn btn-green" style="padding:4px 10px;font-size:11px;" onclick="guardarPrecio('+p.id+')">Guardar</button></div>';
+    }).join('');
+  });
+}
+
+function guardarPrecio(id) {
+  var val = document.getElementById('precio-'+id).value;
+  fetchApi('/api/pagos/precios/'+id, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({precio:val})})
+    .then(function() { cargarTrabajadores(); if (_selectedId) cargarDetalle(_selectedId); });
+}
+
+// ── WORKERS LIST ──
+function cargarTrabajadores() {
+  fetchApi('/api/pagos/trabajadores-con-saldo').then(function(data) {
+    _workers = data;
+    filtrarTrabajadores();
+  });
+}
+
+function filtrarTrabajadores() {
+  var q = (document.getElementById('buscar-trab').value || '').toLowerCase();
+  var filtered = q ? _workers.filter(function(w) { return w.nombre.toLowerCase().indexOf(q) >= 0; }) : _workers;
+  renderWorkers(filtered);
+}
+
+function renderWorkers(list) {
+  var html = '';
+  if (list.length === 0) { html = '<div class="empty">Sin trabajadores con saldo</div>'; }
+  else {
+    list.forEach(function(w) {
+      var sel = w.trabajador_id === _selectedId ? ' seleccionado' : '';
+      var cls = w.saldo_pendiente > 0 ? 'saldo-pos' : 'saldo-cero';
+      var acts = w.actividades.map(function(a) { return a.actividad; }).join(', ');
+      html += '<div class="worker-card'+sel+'" onclick="seleccionarTrabajador('+w.trabajador_id+')">' +
+        '<div class="worker-info"><div class="worker-nombre">'+w.nombre+'</div>' +
+        '<div class="worker-meta">'+acts+'</div></div>' +
+        '<div class="worker-saldo '+cls+'">$'+$$(w.saldo_pendiente)+'</div></div>';
+    });
+  }
+  document.getElementById('workers-list').innerHTML = html;
+}
+
+function seleccionarTrabajador(id) {
+  _selectedId = id;
+  filtrarTrabajadores();
+  cargarDetalle(id);
+}
+
+// ── DETALLE ──
+function cargarDetalle(id) {
+  var desde = document.getElementById('det-desde') ? document.getElementById('det-desde').value : '';
+  var hasta = document.getElementById('det-hasta') ? document.getElementById('det-hasta').value : '';
+  var url = '/api/pagos/trabajador/'+id+'/detalle';
+  var params = [];
+  if (desde) params.push('desde='+desde);
+  if (hasta) params.push('hasta='+hasta);
+  if (params.length) url += '?' + params.join('&');
+
+  fetchApi(url).then(function(data) {
+    _detalle = data;
+    renderDetalle(data);
+  });
+}
+
+function renderDetalle(d) {
+  var r = d.resumen;
+  var html = '';
+
+  // Header
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">' +
+    '<div><div style="font-size:18px;font-weight:700;">'+d.trabajador.nombre+'</div></div>' +
+    '<div style="font-size:22px;font-weight:700;color:var(--sem-rojo);font-family:\'JetBrains Mono\',monospace;">$'+$$(r.saldo)+'</div></div>';
+
+  // Date filters
+  html += '<div class="fg" style="margin-bottom:12px;"><div class="fi"><label>Desde</label><input type="date" id="det-desde" onchange="cargarDetalle('+_selectedId+')"></div>' +
+    '<div class="fi"><label>Hasta</label><input type="date" id="det-hasta" onchange="cargarDetalle('+_selectedId+')"></div></div>';
+
+  // Activity sections
+  if (d.juntada.length) html += renderActSection('Juntada', d.juntada.length+' registros', buildJuntadaTable(d.juntada), sumSubtotals(d.juntada));
+  if (d.despalillado.length) html += renderActSection('Despalillado', d.despalillado.length+' registros', buildDespalilladoTable(d.despalillado), sumSubtotals(d.despalillado));
+  if (d.clasificacion.length) html += renderActSection('Clasificacion', d.clasificacion.length+' registros', buildHorasTable(d.clasificacion, 'Lote'), sumSubtotals(d.clasificacion));
+  if (d.aplicaciones.length) html += renderActSection('Aplicaciones', d.aplicaciones.length+' registros', buildAplicacionesTable(d.aplicaciones), sumSubtotals(d.aplicaciones));
+  if (d.trabajos_campo.length) html += renderActSection('Trabajos de campo', d.trabajos_campo.length+' registros', buildTrabajosTable(d.trabajos_campo), sumSubtotals(d.trabajos_campo));
+
+  if (!d.juntada.length && !d.despalillado.length && !d.clasificacion.length && !d.aplicaciones.length && !d.trabajos_campo.length) {
+    html += '<div class="empty">Sin registros de trabajo en el periodo</div>';
+  }
+
+  // Resumen
+  html += '<div class="resumen-card">';
+  html += '<div class="resumen-linea"><span>Total bruto</span><span style="font-weight:600;">$'+$$(r.total_bruto)+'</span></div>';
+  if (r.anticipos > 0) html += '<div class="resumen-linea"><span>Anticipos</span><span style="color:var(--sem-rojo);">-$'+$$(r.anticipos)+'</span></div>';
+  if (r.liquidado > 0) html += '<div class="resumen-linea"><span>Pagos anteriores</span><span style="color:var(--sem-rojo);">-$'+$$(r.liquidado)+'</span></div>';
+  html += '<div class="resumen-linea resumen-total"><span>SALDO A PAGAR</span><span>$'+$$(r.saldo)+'</span></div>';
+  html += '</div>';
+
+  // Pagar form
+  if (r.saldo > 0) {
+    html += '<div class="pagar-form"><h3>Pagar</h3>';
+    html += '<div class="fg">';
+    html += '<div class="fi"><label>Monto a pagar ($)</label><input type="number" id="pagar-monto" value="'+r.saldo+'" min="0" max="'+r.saldo+'" step="any" inputmode="decimal" onchange="checkMixto()"></div>';
+    html += '<div class="fi"><label>Forma de pago</label><select id="pagar-fp" onchange="checkMixto()"><option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option><option value="mixto">Mixto</option></select></div>';
+    html += '</div>';
+    html += '<div class="mixto-row" id="mixto-row"><div class="fi"><label>Monto efectivo ($)</label><input type="number" id="pagar-efec" inputmode="decimal" min="0" step="any"></div>' +
+      '<div class="fi"><label>Monto transferencia ($)</label><input type="number" id="pagar-transf" inputmode="decimal" min="0" step="any"></div></div>';
+    html += '<div class="fg" style="margin-top:8px;"><div class="fi"><label>Referencia transferencia (opcional)</label><input type="text" id="pagar-ref" placeholder="Nro comprobante..."></div></div>';
+    html += '<div style="display:flex;gap:8px;margin-top:12px;">';
+    html += '<button class="btn btn-green" onclick="confirmarPago()"><i data-lucide="banknote" style="width:14px;height:14px;"></i> Pagar</button>';
+    html += '<button class="btn" style="background:#f59e0b;color:#fff;" onclick="abrirAnticipo()"><i data-lucide="plus" style="width:14px;height:14px;"></i> Anticipo</button>';
+    html += '</div></div>';
+  } else {
+    html += '<div style="display:flex;gap:8px;margin-bottom:12px;"><button class="btn" style="background:#f59e0b;color:#fff;" onclick="abrirAnticipo()"><i data-lucide="plus" style="width:14px;height:14px;"></i> Anticipo</button></div>';
+  }
+
+  // Historial pagos
+  if (d.pagos.length) {
+    html += '<div class="det-section"><div class="det-section-header"><h3>Historial de pagos</h3><small>'+d.pagos.length+' registros</small></div>';
+    html += '<div class="det-section-body"><table><thead><tr><th>Fecha</th><th>Tipo</th><th>Monto</th><th>Forma pago</th><th>Recibo</th><th>Comprobante</th><th></th></tr></thead><tbody>';
+    d.pagos.forEach(function(p) {
+      var badge = p.tipo === 'anticipo' ? 'badge-anticipo' : (p.estado_pago === 'pago_parcial' ? 'badge-parcial' : 'badge-liquidacion');
+      var label = p.tipo === 'anticipo' ? 'Anticipo' : (p.estado_pago === 'pago_parcial' ? 'Parcial' : 'Liquidacion');
+      html += '<tr><td>'+fDate(p.fecha)+'</td>';
+      html += '<td><span class="'+badge+'">'+label+'</span></td>';
+      html += '<td style="font-family:\'JetBrains Mono\',monospace;font-weight:600;">$'+$$(parseFloat(p.monto_pagado||p.monto))+'</td>';
+      html += '<td>'+(p.forma_pago||'efectivo')+'</td>';
+      html += '<td>'+(p.numero_recibo||'-')+'</td>';
+      html += '<td>'+(p.comprobante_path ? '<span style="color:var(--sem-verde);">Si</span>' : '-')+'</td>';
+      html += '<td style="display:flex;gap:4px;">';
+      if (p.numero_recibo) html += '<button class="btn" style="padding:2px 6px;font-size:11px;" onclick="verRecibo('+p.id+')" title="Ver recibo"><i data-lucide="eye" style="width:13px;height:13px;"></i></button>';
+      if (!p.comprobante_path) html += '<button class="btn" style="padding:2px 6px;font-size:11px;" onclick="subirComprobante('+p.id+')" title="Adjuntar comprobante"><i data-lucide="upload" style="width:13px;height:13px;"></i></button>';
+      html += '</td></tr>';
+    });
+    html += '</tbody></table></div></div>';
+  }
+
+  document.getElementById('detalle-panel').innerHTML = html;
   lucide.createIcons();
-  document.getElementById('topbar-date').textContent =
-    new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
-</script>
-<script>
-    function showTab(tab, el) {
-      document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.remove('active'); });
-      document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
-      document.getElementById('tab-' + tab).classList.add('active');
-      el.classList.add('active');
+}
+
+// ── Table builders ──
+function renderActSection(title, info, tableHtml, total) {
+  return '<div class="det-section"><div class="det-section-header"><h3>'+title+'</h3><small>'+info+'</small></div>' +
+    '<div class="det-section-body">'+tableHtml+'</div>' +
+    '<div class="det-section-footer">Subtotal: <span>$'+$$(total)+'</span></div></div>';
+}
+
+function sumSubtotals(rows) { return rows.reduce(function(s, r) { return s + (r.subtotal || 0); }, 0); }
+
+function buildJuntadaTable(rows) {
+  var h = '<table><thead><tr><th>Fecha</th><th>Parcela</th><th>Kilos</th><th>Precio</th><th>Subtotal</th></tr></thead><tbody>';
+  rows.forEach(function(r) {
+    h += '<tr><td>'+fDate(r.fecha)+'</td><td>'+(r.parcela||'-')+'</td><td>'+$$(r.kilos)+' kg</td><td>$'+$$(r.precio)+'/kg</td><td style="font-weight:600;">$'+$$(r.subtotal)+'</td></tr>';
+  });
+  return h + '</tbody></table>';
+}
+
+function buildDespalilladoTable(rows) {
+  var h = '<table><thead><tr><th>Fecha</th><th>Kilos</th><th>Precio</th><th>Subtotal</th></tr></thead><tbody>';
+  rows.forEach(function(r) {
+    h += '<tr><td>'+fDate(r.fecha)+'</td><td>'+$$(r.kilos)+' kg</td><td>$'+$$(r.precio)+'/kg</td><td style="font-weight:600;">$'+$$(r.subtotal)+'</td></tr>';
+  });
+  return h + '</tbody></table>';
+}
+
+function buildHorasTable(rows, detCol) {
+  var h = '<table><thead><tr><th>Fecha</th><th>'+detCol+'</th><th>Inicio</th><th>Fin</th><th>Horas</th><th>Precio</th><th>Subtotal</th></tr></thead><tbody>';
+  rows.forEach(function(r) {
+    h += '<tr><td>'+fDate(r.fecha)+'</td><td>'+(r.lote||'-')+'</td><td>'+fTime(r.hora_inicio)+'</td><td>'+fTime(r.hora_fin)+'</td><td>'+$$(r.horas)+' hs</td><td>$'+$$(r.precio)+'/h</td><td style="font-weight:600;">$'+$$(r.subtotal)+'</td></tr>';
+  });
+  return h + '</tbody></table>';
+}
+
+function buildAplicacionesTable(rows) {
+  var h = '<table><thead><tr><th>Fecha</th><th>Parcela</th><th>Producto</th><th>Inicio</th><th>Fin</th><th>Horas</th><th>Precio</th><th>Subtotal</th></tr></thead><tbody>';
+  rows.forEach(function(r) {
+    h += '<tr><td>'+fDate(r.fecha)+'</td><td>'+(r.parcela||'-')+'</td><td>'+(r.producto||'-')+'</td><td>'+fTime(r.hora_inicio)+'</td><td>'+fTime(r.hora_fin)+'</td><td>'+$$(r.horas)+' hs</td><td>$'+$$(r.precio)+'/h</td><td style="font-weight:600;">$'+$$(r.subtotal)+'</td></tr>';
+  });
+  return h + '</tbody></table>';
+}
+
+function buildTrabajosTable(rows) {
+  var h = '<table><thead><tr><th>Fecha</th><th>Tarea</th><th>Inicio</th><th>Fin</th><th>Horas</th><th>Precio</th><th>Subtotal</th></tr></thead><tbody>';
+  rows.forEach(function(r) {
+    h += '<tr><td>'+fDate(r.fecha)+'</td><td>'+(r.tarea||'-')+'</td><td>'+fTime(r.hora_inicio)+'</td><td>'+fTime(r.hora_fin)+'</td><td>'+$$(r.horas)+' hs</td><td>$'+$$(r.precio)+'/h</td><td style="font-weight:600;">$'+$$(r.subtotal)+'</td></tr>';
+  });
+  return h + '</tbody></table>';
+}
+
+// ── PAGO ──
+function checkMixto() {
+  var fp = document.getElementById('pagar-fp').value;
+  var row = document.getElementById('mixto-row');
+  if (row) row.className = fp === 'mixto' ? 'mixto-row visible' : 'mixto-row';
+}
+
+function confirmarPago() {
+  var monto = _parseEl('pagar-monto');
+  var fp = document.getElementById('pagar-fp').value;
+  if (!monto || monto <= 0) { alert('Ingresa un monto'); return; }
+
+  if (fp === 'mixto') {
+    var me = _parseEl('pagar-efec') || 0;
+    var mt = _parseEl('pagar-transf') || 0;
+    if (Math.abs(me + mt - monto) > 0.01) { alert('Efectivo + transferencia deben sumar $'+$$(monto)); return; }
+  }
+
+  _pendingPago = {
+    trabajador_id: _selectedId,
+    monto_pagado: monto,
+    forma_pago: fp,
+    referencia: document.getElementById('pagar-ref').value,
+    monto_efectivo: fp === 'mixto' ? _parseEl('pagar-efec') : null,
+    monto_transferencia: fp === 'mixto' ? _parseEl('pagar-transf') : null
+  };
+
+  document.getElementById('modal-msg').textContent = 'Confirmar pago de $'+$$(monto)+' a '+_detalle.trabajador.nombre+'?';
+  document.getElementById('modal-confirm').classList.add('open');
+}
+
+function cerrarModal() { document.getElementById('modal-confirm').classList.remove('open'); }
+
+function ejecutarPago() {
+  cerrarModal();
+  var btn = document.getElementById('modal-ok');
+  setLoading(btn, true);
+  fetchApi('/api/pagos/liquidar', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(_pendingPago)
+  }).then(function(data) {
+    setLoading(btn, false);
+    if (data.ok) {
+      cargarTrabajadores();
+      cargarDetalle(_selectedId);
+    } else {
+      alert(data.error || 'Error al registrar pago');
     }
+  }).catch(function() { setLoading(btn, false); alert('Error de conexion'); });
+}
 
-    var _resumenData = [];
+// ── ANTICIPO ──
+function abrirAnticipo() {
+  document.getElementById('ant-monto').value = '';
+  document.getElementById('ant-ref').value = '';
+  document.getElementById('ant-obs').value = '';
+  document.getElementById('modal-anticipo').classList.add('open');
+}
+function cerrarAnticipo() { document.getElementById('modal-anticipo').classList.remove('open'); }
 
-    function limpiarFiltrosPagos() {
-      document.getElementById('pagos-buscar').value = '';
-      document.getElementById('filtro-desde').value = '';
-      document.getElementById('filtro-hasta').value = '';
-      cargarResumen();
-    }
+function guardarAnticipo() {
+  var monto = parseFloat(document.getElementById('ant-monto').value);
+  if (!monto || monto <= 0) { alert('Ingresa un monto'); return; }
+  var btn = document.getElementById('btn-ant-ok');
+  setLoading(btn, true);
+  fetchApi('/api/pagos/anticipo', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      trabajador_id: _selectedId,
+      monto: monto,
+      forma_pago: document.getElementById('ant-fp').value,
+      referencia: document.getElementById('ant-ref').value,
+      observacion: document.getElementById('ant-obs').value
+    })
+  }).then(function(data) {
+    setLoading(btn, false);
+    if (data.ok) {
+      cerrarAnticipo();
+      cargarTrabajadores();
+      cargarDetalle(_selectedId);
+    } else { alert(data.error || 'Error'); }
+  }).catch(function() { setLoading(btn, false); alert('Error de conexion'); });
+}
 
-    var _pagosCols = [
-      {label:'Juntador',campo:'juntador'},
-      {label:'Tipo',campo:'tipo'}
-    ];
+// ── RECIBO / COMPROBANTE ──
+function verRecibo(id) { window.open('/api/pagos/'+id+'/recibo', '_blank'); }
 
-    function buscarResumen() {
-      var q = (document.getElementById('pagos-buscar').value || '').trim();
-      var filtrado = q ? _resumenData.filter(function(j) {
-        return matchFiltro(j, q, _pagosCols);
-      }) : _resumenData;
-      renderResumen(filtrado);
-    }
+function subirComprobante(pagoId) {
+  var input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.pdf,.jpg,.jpeg';
+  input.onchange = function() {
+    if (!input.files.length) return;
+    var fd = new FormData();
+    fd.append('comprobante', input.files[0]);
+    fetch('/api/pagos/'+pagoId+'/comprobante', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+      body: fd
+    }).then(function(r) { return r.json(); }).then(function(data) {
+      if (data.ok) cargarDetalle(_selectedId);
+      else alert(data.error || 'Error al subir');
+    });
+  };
+  input.click();
+}
 
-    function renderResumen(data) {
-      var tbody = document.getElementById('tbody-resumen');
-      if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="empty">Sin datos</td></tr>';
-        document.getElementById('tbody-total-trabajador').innerHTML = '<tr><td colspan="3" class="empty">Sin datos</td></tr>';
-        return;
-      }
-      tbody.innerHTML = data.map(function(j) {
-        const saldo = parseFloat(j.saldo_pendiente) || 0;
-        return '<tr>' +
-          '<td><strong>' + j.juntador + '</strong></td>' +
-          '<td>' + (j.tipo || 'juntador') + '</td>' +
-          '<td>' + parseFloat(j.total_kilos).toFixed(2) + ' kg</td>' +
-          '<td>$' + parseFloat(j.anticipos).toLocaleString('es-AR') + '</td>' +
-          '<td>$' + parseFloat(j.liquidado).toLocaleString('es-AR') + '</td>' +
-          '<td class="' + (saldo > 0 ? 'saldo-positivo' : 'saldo-cero') + '">$' + saldo.toLocaleString('es-AR') + '</td>' +
-          '</tr>';
-      }).join('');
-      document.getElementById('tbody-total-trabajador').innerHTML = data.map(function(j) {
-        var totalPagado = (parseFloat(j.anticipos) || 0) + (parseFloat(j.liquidado) || 0);
-        var nPagos = (parseFloat(j.anticipos) > 0 ? 1 : 0) + (parseFloat(j.liquidado) > 0 ? 1 : 0);
-        return '<tr>' +
-          '<td><strong>' + j.juntador + '</strong></td>' +
-          '<td style="text-align:center;">' + nPagos + '</td>' +
-          '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;">$' + totalPagado.toLocaleString('es-AR') + '</td>' +
-          '</tr>';
-      }).join('');
-    }
-
-    function cargarDatos() {
-      fetch('/api/juntadores')
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-          var opts = '<option value="">Seleccionar...</option>' +
-            data.map(function(j) { return '<option value="' + j.id + '">' + j.apellido + ', ' + j.nombre + '</option>'; }).join('');
-          document.getElementById('liq-juntador').innerHTML = opts;
-          document.getElementById('ant-juntador').innerHTML = opts;
-        });
-      fetch('/api/temporadas')
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-          var opts = '<option value="">Todas</option>' +
-            data.map(function(t) { return '<option value="' + t.id + '">' + t.nombre + '</option>'; }).join('');
-          document.getElementById('filtro-temporada').innerHTML = opts;
-          document.getElementById('precio-temporada').innerHTML = opts;
-          var activa = data.find(function(t){ return t.activa; });
-          if (activa) {
-            document.getElementById('filtro-temporada').value = activa.id;
-            cargarPrecioActual(activa.id);
-          } else if (data.length > 0) {
-            cargarPrecioActual(data[0].id);
-          }
-          cargarResumen();
-        });
-    }
-
-    function cargarResumen() {
-      const temporada_id = document.getElementById('filtro-temporada').value;
-      const desde = document.getElementById('filtro-desde').value;
-      const hasta = document.getElementById('filtro-hasta').value;
-      var url = '/api/pagos/resumen?';
-      if (temporada_id) url += 'temporada_id=' + temporada_id + '&';
-      if (desde) url += 'desde=' + desde + '&';
-      if (hasta) url += 'hasta=' + hasta + '&';
-      fetch(url)
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-          _resumenData = data;
-          poblarDatalist('pagos-opciones', data, _pagosCols);
-          buscarResumen();
-        });
-    }
-
-    var resumenCache = {};
-
-    function cargarInfoJuntador() {
-      var id = document.getElementById('liq-juntador').value;
-      document.getElementById('liq-info').innerHTML = '';
-      if (!id) return;
-      if (resumenCache[id]) { mostrarInfoJuntador(resumenCache[id]); return; }
-      fetch('/api/pagos/resumen')
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-          data.forEach(function(j) { resumenCache[j.id] = j; });
-          if (resumenCache[id]) mostrarInfoJuntador(resumenCache[id]);
-        });
-    }
-
-    function mostrarInfoJuntador(j) {
-      document.getElementById('liq-info').innerHTML =
-        '<div style="background:#e8f5e2;border-radius:8px;padding:10px;margin-top:8px;font-size:13px;">' +
-        'Kilos cosechados: <strong>' + parseFloat(j.total_kilos).toFixed(2) + ' kg</strong>' +
-        ' &nbsp;|&nbsp; Anticipos pendientes: <strong>$' + parseFloat(j.anticipos).toLocaleString('es-AR') + '</strong>' +
-        '</div>';
-      if (parseFloat(j.anticipos) > 0 && !document.getElementById('liq-anticipos').value) {
-        document.getElementById('liq-anticipos').value = parseFloat(j.anticipos).toFixed(2);
-      }
-      calcularLiquidacion();
-    }
-
-    function calcularLiquidacion() {
-      const precio = _parseEl('liq-precio');
-      const anticipos = _parseEl('liq-anticipos');
-      if (precio > 0) {
-        document.getElementById('resultado').style.display = 'block';
-        document.getElementById('res-precio').textContent = '$' + precio.toLocaleString('es-AR');
-        document.getElementById('res-anticipos').textContent = '-$' + anticipos.toLocaleString('es-AR');
-      }
-    }
-
-    function registrarLiquidacion(btn) {
-      const juntador_id = document.getElementById('liq-juntador').value;
-      const desde = document.getElementById('liq-desde').value;
-      const hasta = document.getElementById('liq-hasta').value;
-      const precio_kilo = _parseEl('liq-precio');
-      if (!juntador_id || !desde || !hasta || !precio_kilo) { alert('Completa todos los campos'); return; }
-      setLoading(btn, true);
-      fetch('/api/pagos/liquidacion', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          juntador_id: juntador_id,
-          periodo_desde: desde,
-          periodo_hasta: hasta,
-          precio_kilo: precio_kilo,
-          anticipos: _parseEl('liq-anticipos') || 0,
-          observacion: document.getElementById('liq-obs').value
-        })
-      })
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        setLoading(btn, false);
-        if (data.ok) {
-          resumenCache = {};
-          mostrarMensaje('msg-liq', 'success', 'Liquidacion registrada — ' +
-            data.kilos.toFixed(2) + ' kg x $' + parseFloat(precio_kilo).toLocaleString('es-AR') +
-            ' = $' + data.saldo_final.toLocaleString('es-AR'), 5000);
-          cargarResumen();
-        } else {
-          mostrarMensaje('msg-liq', 'error', data.error || 'Error al registrar');
-        }
-      })
-      .catch(function() {
-        setLoading(btn, false);
-        mostrarMensaje('msg-liq', 'error', 'Error de conexión');
-      });
-    }
-
-    function registrarAnticipo(btn) {
-      const juntador_id = document.getElementById('ant-juntador').value;
-      const monto = document.getElementById('ant-monto').value;
-      if (!juntador_id || !monto) { alert('Completa juntador y monto'); return; }
-      setLoading(btn, true);
-      fetch('/api/pagos/anticipo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          juntador_id: juntador_id,
-          monto: monto,
-          observacion: document.getElementById('ant-obs').value
-        })
-      })
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        setLoading(btn, false);
-        if (data.ok) {
-          resumenCache = {};
-          mostrarMensaje('msg-ant', 'success', 'Anticipo registrado correctamente');
-          document.getElementById('ant-monto').value = '';
-          document.getElementById('ant-obs').value = '';
-          cargarResumen();
-        } else {
-          mostrarMensaje('msg-ant', 'error', data.error || 'Error al registrar');
-        }
-      })
-      .catch(function() {
-        setLoading(btn, false);
-        mostrarMensaje('msg-ant', 'error', 'Error de conexión');
-      });
-    }
-
-    function cargarPrecioActual(temporada_id) {
-      fetch('/api/pagos/precio/' + temporada_id)
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-          const div = document.getElementById('precio-actual');
-          if (data && data.precio_kilo) {
-            div.innerHTML = '<div><strong>' + data.destino + '</strong><br><small>desde ' + data.fecha_desde.toString().split('T')[0] + '</small></div>' +
-              '<div class="precio-valor">$' + parseFloat(data.precio_kilo).toLocaleString('es-AR') + ' / kg</div>';
-          } else {
-            div.innerHTML = '<span style="color:#999;">Sin precio configurado para esta temporada</span>';
-          }
-        });
-    }
-
-    function actualizarPrecio(btn) {
-      const temporada_id = document.getElementById('precio-temporada').value;
-      const precio = document.getElementById('precio-valor').value;
-      if (!temporada_id || !precio) { alert('Selecciona temporada y precio'); return; }
-      setLoading(btn, true);
-      fetch('/api/pagos/precio', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          temporada_id: temporada_id,
-          precio_kilo: precio,
-          destino: document.getElementById('precio-destino').value,
-          fecha_desde: document.getElementById('precio-fecha').value || new Date().toISOString().split('T')[0]
-        })
-      })
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        setLoading(btn, false);
-        if (data.ok) {
-          mostrarMensaje('msg-precio', 'success', 'Precio actualizado correctamente');
-          cargarPrecioActual(temporada_id);
-        } else {
-          mostrarMensaje('msg-precio', 'error', data.error || 'Error al actualizar');
-        }
-      })
-      .catch(function() {
-        setLoading(btn, false);
-        mostrarMensaje('msg-precio', 'error', 'Error de conexión');
-      });
-    }
-
-    const hoy = new Date().toISOString().split('T')[0];
-    document.getElementById('precio-fecha').value = hoy;
-    cargarDatos();
-  cargarTemporadaActiva();
+// ── INIT ──
+cargarTrabajadores();
+cargarTemporadaActiva();
 </script>
 </body>
 </html>
