@@ -38,7 +38,7 @@ async function enviarExcel(res, rows, sheetName, titulo) {
     await workbook.xlsx.write(res);
     res.end();
   } catch (err) {
-    res.status(500).send('Error generando Excel: ' + err.message);
+    console.error(err); res.status(500).send('Error generando Excel');
   }
 }
 
@@ -95,7 +95,7 @@ function enviarPDF(res, rows, titulo) {
 
     doc.end();
   } catch (err) {
-    res.status(500).send('Error generando PDF: ' + err.message);
+    console.error(err); res.status(500).send('Error generando PDF');
   }
 }
 
@@ -138,7 +138,7 @@ router.get('/cosecha', async (req, res) => {
     if (formato === 'pdf')   return enviarPDF(res, rows, 'Reporte de Cosecha');
     res.json({ rows });
   } catch (err) {
-    res.json({ error: err.message, rows: [] });
+    console.error(err); res.json({ error: "Error interno del servidor", rows: [] });
   }
 });
 
@@ -169,7 +169,7 @@ router.get('/despalillado', async (req, res) => {
     if (formato === 'pdf')   return enviarPDF(res, rows, 'Reporte de Despalillado');
     res.json({ rows });
   } catch (err) {
-    res.json({ error: err.message, rows: [] });
+    console.error(err); res.json({ error: "Error interno del servidor", rows: [] });
   }
 });
 
@@ -206,7 +206,7 @@ router.get('/caja', async (req, res) => {
     if (formato === 'pdf')   return enviarPDF(res, rows, 'Reporte de Caja');
     res.json({ rows });
   } catch (err) {
-    res.json({ error: err.message, rows: [] });
+    console.error(err); res.json({ error: "Error interno del servidor", rows: [] });
   }
 });
 
@@ -237,7 +237,7 @@ router.get('/gastos', async (req, res) => {
     if (formato === 'pdf')   return enviarPDF(res, rows, 'Reporte de Gastos');
     res.json({ rows });
   } catch (err) {
-    res.json({ error: err.message, rows: [] });
+    console.error(err); res.json({ error: "Error interno del servidor", rows: [] });
   }
 });
 
@@ -284,7 +284,7 @@ router.get('/cheques', async (req, res) => {
     if (formato === 'pdf')   return enviarPDF(res, rows, 'Reporte de Cheques');
     res.json({ rows });
   } catch (err) {
-    res.json({ error: err.message, rows: [] });
+    console.error(err); res.json({ error: "Error interno del servidor", rows: [] });
   }
 });
 
@@ -322,7 +322,7 @@ router.get('/pagos', async (req, res) => {
     if (formato === 'pdf')   return enviarPDF(res, rows, 'Reporte de Pagos');
     res.json({ rows });
   } catch (err) {
-    res.json({ error: err.message, rows: [] });
+    console.error(err); res.json({ error: "Error interno del servidor", rows: [] });
   }
 });
 
@@ -360,7 +360,7 @@ router.get('/compras', async (req, res) => {
     if (formato === 'pdf')   return enviarPDF(res, rows, 'Reporte de Compras');
     res.json({ rows });
   } catch (err) {
-    res.json({ error: err.message, rows: [] });
+    console.error(err); res.json({ error: "Error interno del servidor", rows: [] });
   }
 });
 
@@ -382,7 +382,7 @@ router.get('/stock-insumos', async (req, res) => {
     if (formato === 'pdf')   return enviarPDF(res, rows, 'Reporte de Stock de Insumos');
     res.json({ rows });
   } catch (err) {
-    res.json({ error: err.message, rows: [] });
+    console.error(err); res.json({ error: "Error interno del servidor", rows: [] });
   }
 });
 

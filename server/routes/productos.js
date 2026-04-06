@@ -31,7 +31,7 @@ router.get('/', async (req, res) => {
       `);
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -57,7 +57,7 @@ router.post('/', async (req, res) => {
               VALUES (@nombre, @descripcion, @tipo, @categoria, @presentacion, @unidad_medida, @contenido_litros, @costo_unitario, @proveedor_id, @envase, @stock_minimo)`);
     res.json({ ok: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -87,7 +87,7 @@ router.put('/:id', async (req, res) => {
               WHERE id=@id`);
     res.json({ ok: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -100,7 +100,7 @@ router.patch('/:id/desactivar', async (req, res) => {
       .query('UPDATE Productos SET activo = 0 WHERE id = @id');
     res.json({ ok: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 

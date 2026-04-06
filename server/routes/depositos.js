@@ -27,7 +27,7 @@ router.get('/resumen', async (req, res) => {
       WHERE ${where}`);
     res.json(result.recordset[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -59,7 +59,7 @@ router.get('/', async (req, res) => {
       ORDER BY d.nombre`);
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -84,7 +84,7 @@ router.post('/', async (req, res) => {
               VALUES (@nombre, @tipo, @tipo_deposito, @capacidad_kg, @costo_kg_dia, @ubicacion, @observacion)`);
     res.json({ ok: true, id: result.recordset[0].id });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -110,7 +110,7 @@ router.put('/:id', async (req, res) => {
               observacion=@observacion, activo=@activo WHERE id=@id`);
     res.json({ ok: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -130,7 +130,7 @@ router.get('/:id/stock', async (req, res) => {
         FROM MovimientosDeposito WHERE deposito_id = @id`);
     res.json(result.recordset[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -151,7 +151,7 @@ router.get('/:id/movimientos', async (req, res) => {
         ORDER BY m.fecha DESC`);
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -192,7 +192,7 @@ router.post('/ingreso', async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     await transaction.rollback();
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -236,7 +236,7 @@ router.get('/stock-vendible-resumen', async (req, res) => {
     }));
     res.json(resumen);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -257,7 +257,7 @@ router.get('/kg-en-proceso', async (req, res) => {
       WHERE ${where}`);
     res.json(result.recordset[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -305,7 +305,7 @@ router.get('/stock-vendible', async (req, res) => {
 
     res.json(vendibles);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -338,7 +338,7 @@ router.get('/stock-disponible', async (req, res) => {
       ORDER BY variedad, parcela`);
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -562,7 +562,7 @@ router.post('/egreso', async (req, res) => {
     res.json({ ok: true, id: firstMovId.id, remito_id: remitoId, numero_remito: nroRemito });
   } catch (err) {
     await transaction.rollback();
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -593,7 +593,7 @@ router.post('/descarte', async (req, res) => {
               VALUES (@deposito_id, @temporada_id, @tipo, @kilos, @fecha, @observacion, @usuario_id)`);
     res.json({ ok: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -659,7 +659,7 @@ router.post('/devolucion-embalaje', async (req, res) => {
       throw innerErr;
     }
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -680,7 +680,7 @@ router.get('/embalaje/:movimiento_id', async (req, res) => {
               ORDER BY ve.id`);
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -709,7 +709,7 @@ router.get('/cajones-circulacion', async (req, res) => {
       ORDER BY en_circulacion DESC`);
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -773,7 +773,7 @@ router.get('/ocupacion', async (req, res) => {
       }));
     }
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 

@@ -30,7 +30,7 @@ router.get('/', async (req, res) => {
       ORDER BY c.fecha DESC, c.id DESC`);
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -54,7 +54,7 @@ router.get('/resumen', async (req, res) => {
       FROM Caja WHERE ${where}`);
     res.json(result.recordset[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -105,7 +105,7 @@ router.post('/', async (req, res) => {
                 (@tipo, @concepto, @monto, @medio_pago, @forma_pago_id, @cheque_id, @fecha, @temporada_id, @observacion, @usuario_nombre)`);
     res.json({ ok: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -117,7 +117,7 @@ router.get('/formas-pago', async (req, res) => {
       .query('SELECT id, nombre FROM FormasPago WHERE activo = 1 ORDER BY nombre');
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 

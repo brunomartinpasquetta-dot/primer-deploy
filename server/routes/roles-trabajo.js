@@ -28,7 +28,7 @@ router.get('/', async (req, res) => {
     }));
     res.json(data);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -95,7 +95,7 @@ router.post('/asignar', async (req, res) => {
       throw e;
     }
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -128,7 +128,7 @@ router.post('/quitar', async (req, res) => {
 
     res.json({ ok: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -150,7 +150,7 @@ router.get('/por-rol/:rol', async (req, res) => {
       `);
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 

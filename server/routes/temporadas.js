@@ -16,7 +16,7 @@ router.get('/activas', async (req, res) => {
               FROM Temporadas WHERE activa = 1 ORDER BY id DESC`);
     res.json(result.recordset.map(t => ({ ...t, dias_transcurridos: calcDias(t.fecha_inicio) })));
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -32,7 +32,7 @@ router.get('/activa', async (req, res) => {
     const t = result.recordset[0];
     res.json({ ...t, dias_transcurridos: calcDias(t.fecha_inicio) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -45,7 +45,7 @@ router.get('/', async (req, res) => {
               FROM Temporadas ORDER BY id DESC`);
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -76,7 +76,7 @@ router.post('/', async (req, res) => {
       throw e;
     }
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -118,7 +118,7 @@ router.put('/:id', async (req, res) => {
     await req2.query(`UPDATE Temporadas SET ${sets.join(', ')} WHERE id = @id`);
     res.json({ ok: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 

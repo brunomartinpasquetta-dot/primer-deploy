@@ -29,7 +29,7 @@ router.get('/', async (req, res) => {
 
     res.json(categorias);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -54,7 +54,7 @@ router.get('/todas', async (req, res) => {
 
     res.json(categorias);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -74,7 +74,7 @@ router.get('/sub-categorias/:categoriaId', async (req, res) => {
               ORDER BY nombre`);
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -114,7 +114,7 @@ router.post('/sub-categorias', async (req, res) => {
     if (err.message.includes('UNIQUE')) {
       return res.status(400).json({ error: 'Ya existe una sub-categoría con ese nombre en esta categoría' });
     }
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -148,7 +148,7 @@ router.put('/sub-categorias/:id', async (req, res) => {
     if (err.message.includes('UNIQUE')) {
       return res.status(400).json({ error: 'Ya existe una sub-categoría con ese nombre en esta categoría' });
     }
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -161,7 +161,7 @@ router.put('/sub-categorias/:id/toggle', async (req, res) => {
       .query('UPDATE SubCategoriasClasificacion SET activo = CASE WHEN activo = 1 THEN 0 ELSE 1 END WHERE id = @id');
     res.json({ ok: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -186,7 +186,7 @@ router.delete('/sub-categorias/:id', async (req, res) => {
 
     res.json({ ok: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 

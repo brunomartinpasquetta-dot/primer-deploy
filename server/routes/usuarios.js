@@ -12,7 +12,7 @@ router.get('/', async (req, res) => {
               FROM Usuarios ORDER BY nombre`);
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -38,7 +38,7 @@ router.post('/', async (req, res) => {
     if (err.message.includes('UNIQUE') || err.message.includes('unique')) {
       return res.status(400).json({ error: 'El nombre de usuario ya existe' });
     }
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -61,7 +61,7 @@ router.put('/:id', async (req, res) => {
     await dbReq.query(`UPDATE Usuarios SET ${sets.join(', ')} WHERE id = @id`);
     res.json({ ok: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -74,7 +74,7 @@ router.delete('/:id', async (req, res) => {
       .query('UPDATE Usuarios SET activo = 0 WHERE id = @id');
     res.json({ ok: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 

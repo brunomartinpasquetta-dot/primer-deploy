@@ -10,7 +10,7 @@ router.get('/', async (req, res) => {
       .query('SELECT TOP 1 * FROM ConfiguracionEmpresa');
     res.json(result.recordset[0] || {});
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -52,7 +52,7 @@ router.put('/', async (req, res) => {
 
     res.json({ ok: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 

@@ -50,7 +50,7 @@ router.get('/', async (req, res) => {
       `);
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -91,7 +91,7 @@ router.post('/compra', async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     await transaction.rollback();
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -122,7 +122,7 @@ router.post('/ingreso-manual', async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     await transaction.rollback();
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -161,7 +161,7 @@ router.post('/aplicacion', async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     await transaction.rollback();
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -205,7 +205,7 @@ router.post('/egreso', async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     await transaction.rollback();
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -250,7 +250,7 @@ router.get('/historial', async (req, res) => {
       ORDER BY ISNULL(s.fecha_hora, CAST(s.fecha AS DATETIME)) DESC`);
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -265,7 +265,7 @@ router.patch('/historial/:id', async (req, res) => {
       .query('UPDATE StockInsumos SET observacion = @observacion WHERE id = @id');
     res.json({ ok: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -285,7 +285,7 @@ router.get('/historial/:producto_id', async (req, res) => {
               ORDER BY ISNULL(s.fecha_hora, CAST(s.fecha AS DATETIME)) DESC`);
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 

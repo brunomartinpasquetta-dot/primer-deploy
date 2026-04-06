@@ -20,7 +20,7 @@ router.get('/siguiente-numero', async (req, res) => {
     const pool = await getPool();
     res.json({ numero: await siguienteNumero(pool) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -53,7 +53,7 @@ router.get('/', async (req, res) => {
       ORDER BY r.id DESC`);
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -95,7 +95,7 @@ router.get('/:id', async (req, res) => {
 
     res.json({ ...remRes.recordset[0], items: itemRes.recordset, empresa });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -124,7 +124,7 @@ router.patch('/:id/estado', async (req, res) => {
     }
     res.json({ ok: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 

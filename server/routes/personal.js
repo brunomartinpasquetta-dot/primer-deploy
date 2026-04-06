@@ -19,7 +19,7 @@ router.get('/', async (req, res) => {
     );
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -33,7 +33,7 @@ router.get('/:id', async (req, res) => {
     if (!result.recordset.length) return res.status(404).json({ error: 'No encontrado' });
     res.json(result.recordset[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -80,7 +80,7 @@ router.post('/', async (req, res) => {
                  @fecha_egreso, @observaciones, @juntador_id, 1)`);
     res.json({ ok: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -129,7 +129,7 @@ router.put('/:id', async (req, res) => {
     await req2.query(`UPDATE Personal SET ${sets.join(', ')} WHERE id = @id`);
     res.json({ ok: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -142,7 +142,7 @@ router.delete('/:id', async (req, res) => {
       .query('UPDATE Personal SET activo = 0 WHERE id = @id');
     res.json({ ok: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 

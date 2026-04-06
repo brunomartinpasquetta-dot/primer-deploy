@@ -10,7 +10,7 @@ router.get('/', async (req, res) => {
       .query('SELECT id, nombre, contacto, telefono, email, direccion FROM Clientes WHERE activo = 1 ORDER BY nombre');
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -28,7 +28,7 @@ router.post('/', async (req, res) => {
       .query('INSERT INTO Clientes (nombre, contacto, telefono, email, direccion) VALUES (@nombre, @contacto, @telefono, @email, @direccion)');
     res.json({ ok: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -48,7 +48,7 @@ router.put('/:id', async (req, res) => {
       .query('UPDATE Clientes SET nombre=@nombre, contacto=@contacto, telefono=@telefono, email=@email, direccion=@direccion WHERE id=@id');
     res.json({ ok: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -61,7 +61,7 @@ router.patch('/:id/desactivar', async (req, res) => {
       .query('UPDATE Clientes SET activo = 0 WHERE id = @id');
     res.json({ ok: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 

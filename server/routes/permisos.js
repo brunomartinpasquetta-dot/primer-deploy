@@ -83,7 +83,7 @@ router.get('/', async (req, res) => {
     }
     res.json({ catalogo: PERMISOS, roles: ROLES, data });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -98,7 +98,7 @@ router.get('/mi-rol', async (req, res) => {
       .query('SELECT permiso FROM PermisosRol WHERE rol = @rol AND habilitado = 1');
     res.json(result.recordset.map(r => r.permiso));
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -123,7 +123,7 @@ router.put('/:rol/:permiso', async (req, res) => {
       `);
     res.json({ ok: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 

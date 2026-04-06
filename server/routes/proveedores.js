@@ -9,7 +9,7 @@ router.get('/', async (req, res) => {
       .query('SELECT id, nombre, rubro, contacto, telefono, email, direccion FROM Proveedores WHERE activo = 1 ORDER BY nombre');
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -27,7 +27,7 @@ router.post('/', async (req, res) => {
       .query('INSERT INTO Proveedores (nombre, rubro, contacto, telefono, email, direccion) VALUES (@nombre, @rubro, @contacto, @telefono, @email, @direccion)');
     res.json({ ok: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -46,7 +46,7 @@ router.put('/:id', async (req, res) => {
       .query('UPDATE Proveedores SET nombre=@nombre, rubro=@rubro, contacto=@contacto, telefono=@telefono, email=@email, direccion=@direccion WHERE id=@id');
     res.json({ ok: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -58,7 +58,7 @@ router.patch('/:id/desactivar', async (req, res) => {
       .query('UPDATE Proveedores SET activo=0 WHERE id=@id');
     res.json({ ok: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -70,7 +70,7 @@ router.get('/:id/insumos', async (req, res) => {
       .query('SELECT id, nombre, tipo, presentacion, unidad_medida, stock_actual, costo_unitario FROM Productos WHERE proveedor_id=@id AND activo=1 ORDER BY nombre');
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 

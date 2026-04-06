@@ -109,7 +109,7 @@ router.get('/temporada/:id', async (req, res) => {
       ingreso_por_kilo: ingresXkilo.toFixed(2)
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -168,7 +168,7 @@ router.get('/parcela/:id', async (req, res) => {
       costo_por_kilo: costoXkilo.toFixed(2)
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -227,7 +227,7 @@ router.get('/periodo', async (req, res) => {
       margen: ingresos > 0 ? (((ingresos - totalCostos) / ingresos) * 100).toFixed(1) : 0
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 

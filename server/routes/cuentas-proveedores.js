@@ -21,7 +21,7 @@ router.get('/resumen', async (req, res) => {
       ORDER BY p.nombre`);
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -33,7 +33,7 @@ router.get('/formas-pago', async (req, res) => {
       .query(`SELECT id, nombre, es_cuenta_corriente FROM FormasPago WHERE activo = 1 ORDER BY nombre`);
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -70,7 +70,7 @@ router.get('/:proveedor_id', async (req, res) => {
         ORDER BY cc.fecha_hora DESC, cc.id DESC`);
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -117,7 +117,7 @@ router.post('/pago', async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     await transaction.rollback();
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -145,10 +145,11 @@ router.post('/:id/anular', async (req, res) => {
     const tipoInverso = mov.tipo === 'debito' ? 'credito' : 'debito';
     await new sql.Request(transaction)
       .input('proveedor_id', sql.Int, mov.proveedor_id)
+      .input('tipo_inverso', sql.NVarChar, tipoInverso)
       .input('monto', sql.Decimal(12,2), mov.monto)
       .input('observacion', sql.NVarChar, 'Anulación mov #' + movId + ' — ' + motivo)
       .query(`INSERT INTO CuentaCorrienteProveedores (proveedor_id, tipo, monto, observacion, fecha_hora)
-              VALUES (@proveedor_id, '${tipoInverso}', @monto, @observacion, GETDATE())`);
+              VALUES (@proveedor_id, @tipo_inverso, @monto, @observacion, GETDATE())`);
 
     // Marcar original como anulada
     await new sql.Request(transaction)
@@ -159,7 +160,7 @@ router.post('/:id/anular', async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     await transaction.rollback();
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 

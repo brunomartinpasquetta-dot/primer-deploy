@@ -22,7 +22,7 @@ router.get('/', async (req, res) => {
     );
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -41,7 +41,7 @@ router.post('/', async (req, res) => {
               VALUES (@nombre, @hectareas, @temporada_id, @variedad, @cantidad_plantines)`);
     res.json({ ok: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -65,7 +65,7 @@ router.put('/:id', async (req, res) => {
     if (!result.recordset.length) return res.status(404).json({ error: 'Parcela no encontrada' });
     res.json({ ok: true, parcela: result.recordset[0] });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 

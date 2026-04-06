@@ -7,6 +7,31 @@ const { getPool, sql } = require('../db');
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES = '8h';
 
+// ── Rate limiting para login ──────────────────────────────────────
+const _loginAttempts = new Map();
+const RATE_LIMIT_MAX = 5;
+const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutos
+
+function checkRateLimit(ip) {
+  const now = Date.now();
+  const record = _loginAttempts.get(ip);
+  if (!record) return true;
+  const recent = record.filter(t => now - t < RATE_LIMIT_WINDOW);
+  if (recent.length === 0) { _loginAttempts.delete(ip); return true; }
+  _loginAttempts.set(ip, recent);
+  return recent.length < RATE_LIMIT_MAX;
+}
+
+function recordFailedLogin(ip) {
+  const record = _loginAttempts.get(ip) || [];
+  record.push(Date.now());
+  _loginAttempts.set(ip, record);
+}
+
+function clearLoginAttempts(ip) {
+  _loginAttempts.delete(ip);
+}
+
 // Crea la tabla Usuarios y un admin por defecto si no existe
 async function ensureUsersTable(pool) {
   await pool.request().query(`
@@ -39,6 +64,11 @@ async function ensureUsersTable(pool) {
 
 // POST /api/auth/login
 router.post('/login', async (req, res) => {
+  const ip = req.ip || req.connection.remoteAddress || 'unknown';
+  if (!checkRateLimit(ip)) {
+    return res.status(429).json({ error: 'Demasiados intentos, esperá 15 minutos' });
+  }
+
   const { usuario, password } = req.body;
   if (!usuario || !password) {
     return res.status(400).json({ error: 'Usuario y contraseña requeridos' });
@@ -53,15 +83,18 @@ router.post('/login', async (req, res) => {
               FROM Usuarios WHERE usuario = @usuario AND activo = 1`);
 
     if (result.recordset.length === 0) {
+      recordFailedLogin(ip);
       return res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
     }
 
     const user = result.recordset[0];
     const match = await bcrypt.compare(password, user.password_hash);
     if (!match) {
+      recordFailedLogin(ip);
       return res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
     }
 
+    clearLoginAttempts(ip);
     const token = jwt.sign(
       { id: user.id, nombre: user.nombre, usuario: user.usuario, rol: user.rol },
       JWT_SECRET,
@@ -70,7 +103,7 @@ router.post('/login', async (req, res) => {
 
     res.json({ ok: true, token, nombre: user.nombre, rol: user.rol });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 

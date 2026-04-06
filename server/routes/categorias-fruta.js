@@ -10,7 +10,7 @@ router.get('/', async (req, res) => {
       .query('SELECT id, nombre, tamano, madurez FROM CategoriasFruta WHERE activo = 1 ORDER BY tamano, madurez');
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -22,7 +22,7 @@ router.get('/todas', async (req, res) => {
       .query('SELECT id, nombre, tamano, madurez, activo FROM CategoriasFruta ORDER BY tamano, madurez');
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -51,7 +51,7 @@ router.post('/', async (req, res) => {
               VALUES (@nombre, @tamano, @madurez)`);
     res.json({ ok: true, id: result.recordset[0].id });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -95,7 +95,7 @@ router.put('/:id', async (req, res) => {
     await request.query(`UPDATE CategoriasFruta SET ${sets.join(', ')} WHERE id=@id`);
     res.json({ ok: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -108,7 +108,7 @@ router.put('/:id/toggle', async (req, res) => {
       .query('UPDATE CategoriasFruta SET activo = CASE WHEN activo = 1 THEN 0 ELSE 1 END WHERE id=@id');
     res.json({ ok: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 

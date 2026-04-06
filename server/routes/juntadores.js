@@ -14,7 +14,7 @@ router.get('/qr/:codigo', async (req, res) => {
     }
     res.json(result.recordset[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -26,7 +26,7 @@ router.get('/', async (req, res) => {
       .query('SELECT id, nombre, apellido, qr_codigo FROM Juntadores WHERE activo = 1 ORDER BY apellido');
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -50,7 +50,7 @@ router.post('/', async (req, res) => {
       .query('INSERT INTO Juntadores (nombre, apellido, qr_codigo, tipo) VALUES (@nombre, @apellido, @qr_codigo, @tipo)');
     res.json({ ok: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 

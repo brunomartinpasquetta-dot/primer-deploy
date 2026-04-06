@@ -21,7 +21,7 @@ router.get('/lotes', async (req, res) => {
       ORDER BY l.fecha_inicio DESC
     `);
     res.json(result.recordset);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: "Error interno del servidor" }); }
 });
 
 // POST /api/juntada/crear-lote — crear nuevo lote
@@ -54,7 +54,7 @@ router.post('/crear-lote', async (req, res) => {
         SELECT SCOPE_IDENTITY() AS id
       `);
     res.json({ ok: true, id: result.recordset[0].id, codigo_interno: codigo });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: "Error interno del servidor" }); }
 });
 
 // GET /api/juntada/lote/:id/cosecheros — cosecheros asignados al lote
@@ -71,7 +71,7 @@ router.get('/lote/:id/cosecheros', async (req, res) => {
         ORDER BY lc.fecha_asignacion
       `);
     res.json(result.recordset);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: "Error interno del servidor" }); }
 });
 
 // POST /api/juntada/lote/:id/cosechero — agregar cosechero al lote
@@ -88,7 +88,7 @@ router.post('/lote/:id/cosechero', async (req, res) => {
           INSERT INTO LoteCosecheros (lote_id, juntador_id) VALUES (@lote_id, @juntador_id)
       `);
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: "Error interno del servidor" }); }
 });
 
 // DELETE /api/juntada/lote/:id/cosechero/:juntador_id — quitar cosechero del lote
@@ -109,7 +109,7 @@ router.delete('/lote/:id/cosechero/:juntador_id', async (req, res) => {
       .input('juntador_id', sql.Int, juntador_id)
       .query("DELETE FROM LoteCosecheros WHERE lote_id = @lote_id AND juntador_id = @juntador_id");
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: "Error interno del servidor" }); }
 });
 
 // GET /api/juntada/parcela/:id/carencia-activa — verificar carencia SENASA
@@ -138,7 +138,7 @@ router.get('/parcela/:id/carencia-activa', async (req, res) => {
     } else {
       res.json({ tiene_carencia: false });
     }
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: "Error interno del servidor" }); }
 });
 
 // GET /api/juntada/lote/:id/registros — juntadas del lote
@@ -160,7 +160,7 @@ router.get('/lote/:id/registros', async (req, res) => {
         ORDER BY j.fecha_hora DESC
       `);
     res.json(result.recordset);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: "Error interno del servidor" }); }
 });
 
 // POST /api/juntada/lote/:id/registrar — agregar juntada al lote
@@ -213,7 +213,7 @@ router.post('/lote/:id/registrar', async (req, res) => {
     }
 
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: "Error interno del servidor" }); }
 });
 
 // PUT /api/juntada/lote-registro/:id — editar juntada con audit trail
@@ -293,7 +293,7 @@ router.put('/lote-registro/:id', async (req, res) => {
     }
 
     res.json({ ok: true, kilos_anterior: kilosAnterior, kilos_nuevo: kilos || kilosAnterior });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: "Error interno del servidor" }); }
 });
 
 // POST /api/juntada/lote-registro/:id/anular — anular juntada del lote
@@ -346,7 +346,7 @@ router.post('/lote-registro/:id/anular', async (req, res) => {
     }
 
     res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: "Error interno del servidor" }); }
 });
 
 // POST /api/juntada/lote/:id/cerrar — cerrar lote y mandar a depósito
@@ -373,7 +373,7 @@ router.post('/lote/:id/cerrar', async (req, res) => {
       `);
 
     res.json({ ok: true, kilos: jRes.recordset[0].total });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: "Error interno del servidor" }); }
 });
 
 // GET /api/juntada/depositos-cosecha — depósitos para mandar lotes
@@ -382,7 +382,7 @@ router.get('/depositos-cosecha', async (req, res) => {
     const pool = await getPool();
     const result = await pool.request().query("SELECT id, nombre FROM Depositos WHERE activo = 1 AND tipo_deposito IN ('fruta_fresca','mercaderia') ORDER BY nombre");
     res.json(result.recordset);
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: "Error interno del servidor" }); }
 });
 
 // ══════════════════════════════════════════════════════════════════════
@@ -570,7 +570,7 @@ router.post('/', async (req, res) => {
     }
 
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -700,7 +700,7 @@ router.post('/:id/destino', async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     await transaction.rollback();
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -719,7 +719,7 @@ router.get('/hoy', async (req, res) => {
               ORDER BY j.fecha_hora DESC`);
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -759,7 +759,7 @@ router.get('/destinos-hoy', async (req, res) => {
               ORDER BY j.fecha_hora DESC`);
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -778,7 +778,7 @@ router.get('/pendientes-stock', async (req, res) => {
     const result = await dbReq.query(q);
     res.json(result.recordset[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -810,7 +810,7 @@ router.get('/historial', async (req, res) => {
       ORDER BY j.fecha_hora DESC`);
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -837,7 +837,7 @@ router.get('/totales-por-juntador', async (req, res) => {
       ORDER BY kg_total DESC`);
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -876,7 +876,7 @@ router.get('/auditoria', async (req, res) => {
       ORDER BY eh.fecha_hora DESC`);
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -902,7 +902,7 @@ router.get('/totales-por-lote', async (req, res) => {
       ORDER BY lm.fecha_inicio DESC, kg_total DESC`);
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -1055,7 +1055,7 @@ router.post('/:id/anular', async (req, res) => {
     }
 
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 

@@ -27,7 +27,7 @@ router.get('/', async (req, res) => {
     const result = await dbReq.query(query);
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -46,7 +46,7 @@ router.get('/:id/detalle', async (req, res) => {
               WHERE cd.compra_id = @id`);
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -219,7 +219,7 @@ router.post('/', async (req, res) => {
     res.json({ ok: true, compra_id });
   } catch (err) {
     await transaction.rollback();
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -292,7 +292,7 @@ router.patch('/:id', async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     await transaction.rollback();
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -388,7 +388,7 @@ router.post('/:id/anular', async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     await transaction.rollback();
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
@@ -401,7 +401,7 @@ router.get('/:id/auditoria', async (req, res) => {
       .query('SELECT * FROM AuditoriaCompras WHERE compra_id = @compra_id ORDER BY fecha_hora DESC');
     res.json(result.recordset);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
