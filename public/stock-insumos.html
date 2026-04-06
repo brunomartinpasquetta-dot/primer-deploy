@@ -342,7 +342,8 @@
                     <th style="text-align:right;">STOCK ACTUAL</th>
                     <th>PROVEEDOR</th>
                     <th>DEPÓSITO</th>
-                    <th style="text-align:center;">ACCIONES</th>
+                    <th style="text-align:center;white-space:nowrap;">VENC.</th>
+                    <th style="text-align:center;"></th>
                   </tr>
                 </thead>
                 <tbody id="tbody-stock">
@@ -683,7 +684,7 @@
     _stockDataVisible = data || [];
     var tbody = document.getElementById('tbody-stock');
     if (!data.length) {
-      tbody.innerHTML = '<tr><td colspan="7" class="activity-empty">Sin productos para los filtros seleccionados</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" class="activity-empty">Sin productos para los filtros seleccionados</td></tr>';
       return;
     }
     var mono = "font-family:'JetBrains Mono',monospace;";
@@ -702,6 +703,16 @@
         '</td>' +
         '<td style="font-size:12px;">' + (p.proveedor || 'Sin proveedor') + '</td>' +
         '<td style="font-size:12px;color:var(--texto-suave);">' + (p.deposito || '—') + '</td>' +
+        '<td style="text-align:center;font-size:11px;white-space:nowrap;">' + (function() {
+          if (!p.fecha_vencimiento) return '<span style="color:var(--texto-suave);">—</span>';
+          var fv = new Date(p.fecha_vencimiento);
+          var hoy = new Date(); hoy.setHours(0,0,0,0);
+          var vencido = fv < hoy;
+          var pronto = !vencido && (fv - hoy) < 30 * 86400000;
+          var color = vencido ? 'var(--sem-rojo)' : pronto ? '#856404' : 'var(--texto-suave)';
+          var bg = vencido ? 'var(--sem-rojo-bg)' : pronto ? '#fff3cd' : 'transparent';
+          return '<span style="padding:2px 6px;border-radius:4px;font-weight:600;background:'+bg+';color:'+color+';">' + fv.toLocaleDateString('es-AR') + '</span>';
+        })() + '</td>' +
         '<td style="white-space:nowrap;text-align:center;">' +
           '<button class="btn-icon" onclick="verDetalleProducto('+p.producto_id+')" title="Ver detalles del producto"><i data-lucide="eye"></i></button> ' +
           '<button class="btn-icon" onclick="editarProducto('+p.producto_id+')" title="Editar producto"><i data-lucide="pencil"></i></button> ' +

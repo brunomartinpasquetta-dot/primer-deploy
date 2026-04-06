@@ -32,7 +32,8 @@ router.get('/', async (req, res) => {
             WHEN si.tipo IN ('compra', 'ingreso_manual') THEN si.cantidad
             WHEN si.tipo IN ('aplicacion', 'egreso', 'vencimiento', 'perdida', 'merma') THEN -si.cantidad
             ELSE 0
-          END) AS cantidad_disponible
+          END) AS cantidad_disponible,
+          MIN(si.fecha_vencimiento) AS fecha_vencimiento
         FROM Productos p
         JOIN StockInsumos si ON si.producto_id = p.id
         LEFT JOIN Depositos d ON si.deposito_id = d.id
