@@ -10,144 +10,74 @@
   <link rel="stylesheet" href="cosecha.css">
   <script src="js/auth-check.js"></script>
   <style>
-    /* ── KPI Cards ── */
-    .aplic-kpis { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:14px; }
-    .aplic-kpi  {
-      background:#fff; border-radius:10px; padding:16px 18px;
-      box-shadow:0 2px 10px rgba(0,0,0,.08); display:flex; flex-direction:column; gap:2px;
-    }
-    .aplic-kpi-icon {
-      width:36px; height:36px; border-radius:8px;
-      display:flex; align-items:center; justify-content:center; margin-bottom:8px;
-    }
-    .aplic-kpi-icon svg { width:18px; height:18px; }
-    .aplic-kpi-icon.hoy     { background:#e8f5e2; color:#2d6a4f; }
-    .aplic-kpi-icon.parcelas   { background:#eef7ee; color:#2D5016; }
-    .aplic-kpi-icon.campana { background:#e8f0fe; color:#1565c0; }
-    .aplic-kpi .valor {
-      font-size:26px; font-weight:700; font-family:'JetBrains Mono',monospace;
-      line-height:1; color:var(--texto);
-    }
-    .aplic-kpi .valor.verde { color:#2d6a4f; }
-    .aplic-kpi .valor.azul  { color:#1565c0; }
-    .aplic-kpi .label { font-size:11px; text-transform:uppercase; letter-spacing:.5px;
-                        color:var(--texto-suave); margin-top:4px; }
-    /* ── Layout: form arriba, grilla abajo ── */
-    .aplic-layout    { display:flex; flex-direction:column; gap:14px; }
-    .aplic-form      { width:100%; }
-    .aplic-historial { width:100%; }
+    /* ── KPI cards ── */
+    .aplic-kpis { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px; }
+    .aplic-kpi { background:white; border:1px solid var(--borde); border-top:3px solid var(--verde); border-radius:8px; padding:6px 8px; text-align:center; }
+    .aplic-kpi-label { font-size:9px; font-weight:700; color:var(--texto-suave); text-transform:uppercase; letter-spacing:.06em; margin-bottom:2px; }
+    .aplic-kpi-valor { font-size:16px; font-weight:700; color:var(--verde); font-family:'JetBrains Mono',monospace; letter-spacing:-.5px; }
+    @media (max-width:600px) { .aplic-kpis { grid-template-columns:1fr 1fr; } }
 
-    /* ── Compact form grid (igual que parcelas) ── */
+    /* ── Layout 2 columnas ── */
+    @media (max-width: 900px) { #layout-aplic { grid-template-columns: 1fr !important; } }
+
+    /* ── Parcela card ── */
+    .lote-card {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:10px 14px; border:1.5px solid var(--borde); border-radius:10px;
+      background:var(--superficie); margin-bottom:8px; gap:10px;
+      cursor:pointer; transition:.15s;
+    }
+    .lote-card:hover { border-color:var(--verde); background:var(--verde-suave); }
+    .lote-card.seleccionado { border-color:var(--verde); background:var(--verde-suave); border-width:2px; }
+    .lote-info { flex:1; }
+    .lote-codigo { font-weight:700; font-size:14px; color:var(--texto); }
+    .lote-meta { font-size:12px; color:var(--texto-secundario); margin-top:2px; }
+    .lote-kilos { font-size:13px; font-weight:700; color:var(--verde); white-space:nowrap; }
+    .badge-estado { font-size:10px; font-weight:700; padding:2px 8px; border-radius:10px; margin-left:6px; }
+    .badge-carencia { background:var(--sem-rojo-bg); color:var(--sem-rojo); }
+    .badge-libre { background:var(--sem-verde-bg); color:var(--sem-verde); }
+
+    /* ── Section header ── */
+    .desp-section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+    .desp-section-title { font-size:13px; font-weight:700; color:var(--texto-secundario); text-transform:uppercase; letter-spacing:.4px; }
+    .sin-desp { text-align:center; padding:20px; color:var(--texto-secundario); font-size:13px; }
+
+    /* ── Historial panel ── */
+    .juntada-historial { background:var(--superficie); border:1px solid var(--borde); border-radius:12px; overflow:hidden; }
+    .juntada-historial-header { padding:14px 16px 12px; border-bottom:1px solid var(--borde); display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .juntada-historial-header h3 { font-size:14px; font-weight:700; color:var(--texto); margin:0; }
+    .juntada-historial-header small { font-size:12px; color:var(--texto-suave); font-family:'JetBrains Mono',monospace; }
+    .juntada-historial-body { overflow-y:auto; max-height:520px; }
+    .juntada-historial-body table { width:100%; border-collapse:collapse; font-size:13px; }
+    .juntada-historial-body th { text-align:left; padding:6px 8px; font-size:10px; font-weight:600; color:var(--texto-suave); background:var(--fondo); text-transform:uppercase; letter-spacing:.5px; position:sticky; top:0; white-space:nowrap; }
+    .juntada-historial-body td { padding:5px 8px; border-bottom:1px solid var(--borde); color:var(--texto); font-size:12px; white-space:nowrap; }
+    .juntada-historial-body tr:hover td { background:var(--fondo); }
+    .juntada-historial-footer { padding:10px 12px; border-top:1px solid var(--borde); font-size:12px; font-weight:600; color:var(--texto-suave); background:var(--fondo); display:flex; justify-content:flex-end; gap:4px; }
+    .juntada-historial-footer span { color:var(--verde); font-family:'JetBrains Mono',monospace; }
+
+    /* ── Form inline ── */
     .fg { display:flex; flex-wrap:wrap; gap:6px 10px; align-items:flex-end; }
     .fg > .fi { display:flex; flex-direction:column; gap:2px; }
     .fg > .fi > label { font-size:11px; font-weight:600; color:var(--texto-suave); margin:0; white-space:nowrap; }
-    .fg > .fi > input,
-    .fg > .fi > select { margin:0; padding:6px 8px; font-size:12px; height:32px; box-sizing:border-box; }
-    .fi-empleado  { flex:1 1 170px; min-width:140px; }
-    .fi-temporada { flex:0 1 150px; min-width:120px; }
-    .fi-parcela   { flex:0 1 150px; min-width:120px; }
-    .fi-producto  { flex:1 1 180px; min-width:150px; }
-    .fi-cantidad  { flex:0 0 88px; }
-    .fi-unidad    { flex:0 0 100px; }
-    .fi-dosis     { flex:0 0 88px; }
-    .fi-carencia  { flex:0 0 80px; }
-    .fi-metodo    { flex:0 0 110px; }
-    .fi-clima     { flex:0 0 130px; }
-    .fi-obs       { flex:1 1 160px; min-width:120px; }
+    .fg > .fi > input, .fg > .fi > select { margin:0; padding:6px 8px; font-size:12px; height:32px; box-sizing:border-box; }
 
-    /* Empleado: modos y chip inline */
-    .cosechador-modos { display:flex; gap:4px; margin-bottom:0; }
-    .modo-btn {
-      padding:4px 8px; border:1.5px solid var(--borde); border-radius:6px;
-      background:var(--fondo); color:var(--texto-2); font-size:10px; font-weight:600;
-      cursor:pointer; display:flex; align-items:center; gap:3px;
-      transition:all .15s; white-space:nowrap; height:32px;
-    }
-    .modo-btn.active { border-color:var(--verde); background:var(--verde-suave); color:var(--verde); }
-    .juntador-chip {
-      display:flex; align-items:center; gap:5px;
-      background:var(--sem-verde-bg); border:1px solid var(--sem-verde-borde);
-      border-radius:7px; padding:5px 8px; color:var(--sem-verde); height:32px; box-sizing:border-box;
-    }
-    .juntador-chip strong { flex:1; font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:110px; }
-    .juntador-chip-clear { background:none; border:none; cursor:pointer; color:var(--sem-verde); font-size:13px; padding:0 1px; line-height:1; }
-    /* ── Toolbar historial ── */
-    .aplic-toolbar {
-      display:flex; align-items:center; justify-content:space-between;
-      gap:8px; margin-bottom:10px; flex-wrap:wrap;
-    }
-    .aplic-toolbar-left  { display:flex; align-items:center; gap:8px; flex-wrap:wrap; flex:1; }
-    .aplic-toolbar-right { display:flex; align-items:center; gap:6px; }
-    .aplic-search {
-      padding:8px 12px; border:1px solid var(--borde); border-radius:7px;
-      font-size:13px; min-width:180px; background:#fff; color:var(--texto); outline:none; flex:1;
-    }
-    .aplic-search:focus { border-color:#2D5016; }
-    .aplic-btn-filtros {
-      display:inline-flex; align-items:center; gap:5px;
-      padding:8px 14px; border:1px solid var(--borde); border-radius:7px;
-      font-size:13px; font-weight:600; background:#fff; color:var(--texto-suave);
-      cursor:pointer; white-space:nowrap; transition:background .15s;
-    }
-    .aplic-btn-filtros.activo { background:#2D5016; color:#fff; border-color:#2D5016; }
-    .aplic-btn-filtros svg { width:14px; height:14px; }
-    .aplic-btn-export {
-      display:inline-flex; align-items:center; justify-content:center;
-      width:36px; height:36px; border-radius:7px; border:1px solid var(--borde);
-      background:#fff; cursor:pointer; transition:background .15s; color:var(--texto-suave);
-    }
-    .aplic-btn-export:hover { background:var(--fondo-dark); color:var(--texto); }
-    .aplic-btn-export svg { width:16px; height:16px; }
-    /* Filtros avanzados colapsables */
-    .aplic-filtros-panel {
-      background:var(--fondo-dark); border:1px solid var(--borde);
-      border-radius:8px; padding:12px; margin-bottom:10px;
-    }
-    /* ── Tabla header verde ── */
-    #tabla-historial-aplic thead th {
-      background:#2D5016; color:#fff;
-      font-weight:700; text-transform:uppercase;
-      font-size:11px; letter-spacing:.5px; padding:11px 12px;
-    }
-    #tabla-historial-aplic tbody td { padding:10px 12px; }
-    #tabla-historial-aplic tbody tr:hover { background:var(--fondo-dark); }
-    /* Badges historial */
-    .badge-compra      { background:#e8f5e2; color:#2d6a4f; }
-    .badge-aplicacion  { background:#fde8e8; color:#c0392b; }
-    .badge-egreso      { background:#fff3cd; color:#856404; }
-    .badge-merma       { background:#fff3cd; color:#856404; }
-    .badge-vencimiento { background:#e2e3e5; color:#383d41; }
-    .badge-perdida     { background:#e2e3e5; color:#383d41; }
-    /* Acciones en fila */
-    .aplic-row-actions { display:flex; gap:4px; align-items:center; justify-content:center; }
-    /* Totales tab table */
-    #tabla-totales-aplic thead th {
-      background:#2D5016; color:#fff;
-      font-weight:700; text-transform:uppercase;
-      font-size:11px; letter-spacing:.5px; padding:11px 12px;
-    }
-    #tabla-totales-aplic tbody td { padding:10px 12px; font-size:12px; }
-    #tabla-totales-aplic tbody tr:hover { background:var(--fondo-dark); }
-    /* Modal detalles */
-    .modal-overlay {
-      display:none; position:fixed; inset:0; background:rgba(0,0,0,.5);
-      z-index:1000; align-items:center; justify-content:center;
-    }
+    .badge-anulada { font-size:10px; background:var(--sem-rojo-bg); color:var(--sem-rojo); padding:2px 6px; border-radius:4px; font-weight:600; }
+
+    /* ── Modal detalles ── */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1000; align-items:center; justify-content:center; }
     .modal-overlay.open { display:flex; }
-    .modal-box {
-      background:var(--fondo-card); border-radius:12px; padding:20px 24px;
-      max-width:520px; width:calc(100% - 32px); max-height:80vh;
-      overflow-y:auto; box-shadow:0 8px 32px rgba(0,0,0,.3);
-    }
-    .modal-box h3 { margin:0 0 14px; font-size:15px; }
+    .modal-box { background:var(--superficie); border-radius:var(--radius-lg); padding:20px 24px; max-width:520px; width:calc(100% - 32px); max-height:80vh; overflow-y:auto; box-shadow:0 8px 32px rgba(0,0,0,.3); }
     .det-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px 16px; }
     .det-item { border-bottom:1px solid var(--borde); padding-bottom:6px; }
     .det-item .det-label { font-size:10px; text-transform:uppercase; letter-spacing:.5px; color:var(--texto-suave); }
     .det-item .det-val   { font-size:13px; font-weight:600; margin-top:2px; }
     .det-item.full { grid-column:1/-1; }
-    @media (max-width:900px) {
-      .aplic-layout { grid-template-columns:1fr; }
-      .aplic-form   { max-width:100%; }
+
+    /* ── Carencia alerta en panel derecho ── */
+    .carencia-banner {
+      padding:8px 12px; border-radius:8px; font-size:12px; font-weight:600;
+      background:var(--sem-rojo-bg); color:var(--sem-rojo); border:1px solid var(--sem-rojo-borde);
+      margin-bottom:10px; display:flex; align-items:center; gap:6px;
     }
   </style>
 </head>
@@ -160,35 +90,18 @@
       <img src="img/logo-icon.png" class="brand-icon"><div class="brand-info"><span class="brand-name">CO<em>SE</em>CHA</span><span class="brand-sub">SISTEMA DE CULTIVOS</span></div>
     </div>
     <nav class="sidebar-nav">
-      <a href="index.html" class="nav-item">
-        <span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard
-      </a>
+      <a href="index.html" class="nav-item"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard</a>
       <div class="nav-section">Campo</div>
-      <a href="juntada.html" class="nav-item">
-        <span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha
-      </a>
-      <a href="despalillado.html" class="nav-item">
-        <span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado
-      </a>
-      <a href="aplicaciones.html" class="nav-item active">
-        <span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones
-      </a>
+      <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
+      <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="aplicaciones.html" class="nav-item active"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
+      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
       <div class="nav-section">Sistema</div>
-      <a href="menu-stock.html" class="nav-item">
-        <span class="nav-icon"><i data-lucide="package"></i></span> Stock
-      </a>
-      <a href="menu-comercial.html" class="nav-item">
-        <span class="nav-icon"><i data-lucide="users"></i></span> Comercial
-      </a>
-      <a href="menu-admin.html" class="nav-item">
-        <span class="nav-icon"><i data-lucide="landmark"></i></span> Administración
-      </a>
-      <a href="mercado.html" class="nav-item">
-        <span class="nav-icon"><i data-lucide="trending-up"></i></span> Mercado
-      </a>
-      <a href="menu-config.html" class="nav-item">
-        <span class="nav-icon"><i data-lucide="settings"></i></span> Configuración
-      </a>
+      <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
+      <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
+      <a href="menu-admin.html" class="nav-item"><span class="nav-icon"><i data-lucide="landmark"></i></span> Administración</a>
+      <a href="mercado.html" class="nav-item"><span class="nav-icon"><i data-lucide="trending-up"></i></span> Mercado</a>
+      <a href="menu-config.html" class="nav-item"><span class="nav-icon"><i data-lucide="settings"></i></span> Configuración</a>
     </nav>
     <div class="sidebar-footer">Cosecha · Sistema de Cultivos</div>
   </aside>
@@ -199,237 +112,209 @@
       <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
         <img src="img/logo-icon.png" class="brand-icon"><div class="brand-info"><span class="brand-name">CO<em>SE</em>CHA</span><span class="brand-sub">SISTEMA DE CULTIVOS</span></div><span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
       </div>
-      <div class="topbar-right">
-        <span class="topbar-date" id="topbar-date"></span>
-      </div>
+      <div class="topbar-right"><span class="topbar-date" id="topbar-date"></span></div>
     </header>
 
     <div class="content">
       <a href="menu-campo.html" class="btn-volver">← Volver</a>
+      <div class="content-header">
+        <div class="content-title">Aplicaciones</div>
+        <div class="content-sub">Registro de aplicaciones fitosanitarias por parcela</div>
+      </div>
 
-      <!-- Panel carencia (oculto por defecto) -->
-      <div id="panel-carencia" style="display:none;margin-bottom:12px;"></div>
-
-      <!-- KPI cards -->
+      <!-- ── KPIs ── -->
       <div class="aplic-kpis">
         <div class="aplic-kpi">
-          <div class="aplic-kpi-icon hoy"><i data-lucide="droplets"></i></div>
-          <div class="valor verde" id="kpi-aplic-hoy">—</div>
-          <div class="label">Aplicaciones Hoy</div>
+          <div class="aplic-kpi-label">Aplicaciones Hoy</div>
+          <div class="aplic-kpi-valor" id="kpi-hoy">—</div>
         </div>
         <div class="aplic-kpi">
-          <div class="aplic-kpi-icon parcelas"><i data-lucide="map-pin"></i></div>
-          <div class="valor verde" id="kpi-parcelas-hoy">—</div>
-          <div class="label">Parcelas Hoy</div>
+          <div class="aplic-kpi-label">Parcelas Hoy</div>
+          <div class="aplic-kpi-valor" id="kpi-parcelas">—</div>
         </div>
         <div class="aplic-kpi">
-          <div class="aplic-kpi-icon campana"><i data-lucide="calendar-days"></i></div>
-          <div class="valor azul" id="kpi-campana">—</div>
-          <div class="label">Campaña Total</div>
+          <div class="aplic-kpi-label">Campaña Total</div>
+          <div class="aplic-kpi-valor" id="kpi-campana">—</div>
         </div>
       </div>
 
-      <div class="aplic-layout">
+      <!-- ══ LAYOUT 2 COLUMNAS ══ -->
+      <div style="display:grid;grid-template-columns:minmax(0,420px) 1fr;gap:24px;align-items:start;" id="layout-aplic">
 
-        <!-- FORMULARIO IZQUIERDO -->
-        <div class="aplic-form">
-          <div class="card-form" style="padding:12px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-              <h3 style="margin:0;font-size:13px;font-weight:700;">Nueva aplicación</h3>
-              <button class="btn btn-secondary" id="btn-repetir" style="display:none;font-size:10px;padding:3px 7px;" onclick="repetirUltimaAplicacion()">↩ Repetir</button>
-            </div>
-
-            <!-- FILA 1: Empleado · Temporada · Parcela · Producto -->
-            <div class="fg" style="margin-bottom:6px;">
-              <div class="fi fi-empleado">
-                <label>Empleado</label>
-                <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
-                  <div class="cosechador-modos" style="display:flex;gap:3px;">
-                    <button id="btn-modo-lista" class="modo-btn active" onclick="setModoEmpleado('lista')">
-                      <i data-lucide="list" style="width:11px;height:11px;"></i> Lista
-                    </button>
-                    <button id="btn-modo-qr" class="modo-btn" onclick="setModoEmpleado('qr')">
-                      <i data-lucide="scan-line" style="width:11px;height:11px;"></i> QR
-                    </button>
-                  </div>
-                  <div id="modo-lista-empleado" style="flex:1;min-width:100px;">
-                    <select id="lista-empleados" onchange="seleccionarEmpleadoLista(this.value)" style="width:100%;margin:0;padding:6px 8px;font-size:12px;height:32px;box-sizing:border-box;">
-                      <option value="">— empleado —</option>
-                    </select>
-                  </div>
-                  <div id="modo-qr-empleado" style="display:none;flex:1;">
-                    <div class="empleado-info" id="empleado-info" style="font-size:11px;">Escaneá el QR</div>
-                    <button class="btn btn-scan" onclick="toggleCamera()" style="margin-top:2px;font-size:11px;padding:3px 6px;">
-                      <i data-lucide="scan-line" style="width:11px;height:11px;"></i> Escanear
-                    </button>
-                    <div id="camera-container" class="hidden" style="margin-top:6px;position:relative;z-index:10;">
-                      <video id="video" autoplay playsinline></video>
-                      <canvas id="canvas" class="hidden"></canvas>
-                    </div>
-                  </div>
-                </div>
-                <div id="empleado-chip" class="juntador-chip" style="display:none;margin-top:3px;">
-                  <i data-lucide="user-check" style="width:13px;height:13px;flex-shrink:0;"></i>
-                  <strong id="empleado-chip-nombre"></strong>
-                  <button onclick="limpiarEmpleado()" class="juntador-chip-clear" title="Cambiar">✕</button>
-                </div>
-              </div>
-              <div class="fi fi-temporada">
-                <label>Temporada</label>
-                <select id="temporada"></select>
-              </div>
-              <div class="fi fi-parcela">
-                <label>Parcela</label>
-                <select id="parcela"></select>
-              </div>
-              <div class="fi fi-producto">
-                <label>Producto</label>
-                <select id="producto" onchange="mostrarStock()"></select>
-                <div id="stock-info" style="font-size:10px;color:var(--verde);margin-top:1px;line-height:1.2;"></div>
-              </div>
-            </div>
-
-            <!-- FILA 2: Cantidad · Unidad · Dosis · Carencia · Método · Clima · Obs · Guardar -->
-            <div class="fg" style="align-items:flex-end;">
-              <div class="fi fi-cantidad">
-                <label>Cantidad</label>
-                <input type="number" id="cantidad" placeholder="0.00" step="0.001" min="0">
-              </div>
-              <div class="fi fi-unidad">
-                <label>Unidad</label>
-                <select id="unidad-aplicacion">
-                  <option value="lt">lt</option>
-                  <option value="ml">ml</option>
-                  <option value="cc">cc</option>
-                  <option value="kg">kg</option>
-                  <option value="g">g</option>
-                </select>
-              </div>
-              <div class="fi fi-dosis">
-                <label>Dosis/ha</label>
-                <input type="number" id="dosis" placeholder="1.5" step="0.001">
-              </div>
-              <div class="fi fi-carencia">
-                <label>Carencia</label>
-                <input type="number" id="carencia" placeholder="7" step="1">
-              </div>
-              <div class="fi fi-metodo">
-                <label>Método</label>
-                <select id="metodo">
-                  <option value="mochila">Mochila</option>
-                  <option value="tractor">Tractor</option>
-                  <option value="manual">Manual</option>
-                  <option value="otro">Otro</option>
-                </select>
-              </div>
-              <div class="fi fi-clima">
-                <label>Clima</label>
-                <select id="clima">
-                  <option value="optima">Óptima</option>
-                  <option value="viento_leve">Vto.leve</option>
-                  <option value="nublado">Nublado</option>
-                  <option value="calor">Calor</option>
-                </select>
-              </div>
-              <div class="fi fi-obs">
-                <label>Observación</label>
-                <input type="text" id="observacion" placeholder="Opcional">
-              </div>
-              <div class="fi" style="flex:0 0 auto;">
-                <label style="visibility:hidden;">_</label>
-                <button class="btn btn-green" id="btn-guardar" onclick="guardar(this)" style="height:32px;padding:0 14px;white-space:nowrap;">
-                  <i data-lucide="save" style="width:13px;height:13px;"></i> Registrar
-                </button>
-              </div>
-            </div>
-            <div id="mensaje" style="margin-top:4px;"></div>
+        <!-- ── COLUMNA IZQUIERDA: Parcelas ── -->
+        <div>
+          <div class="desp-section-header">
+            <div class="desp-section-title">Parcelas (<span id="cnt-parcelas">0</span>)</div>
           </div>
-
-          <!-- Botón Ver carencia -->
-          <button class="btn btn-secondary" onclick="toggleCarencia()" style="width:100%;margin-top:8px;font-size:12px;">
-            <i data-lucide="clock" style="width:13px;height:13px;"></i>
-            <span id="lbl-ver-carencia">Ver carencia</span>
-          </button>
+          <div id="lista-parcelas">
+            <div class="sin-desp">Cargando parcelas...</div>
+          </div>
         </div>
 
-        <!-- HISTORIAL + TOTALES -->
-        <div class="aplic-historial">
+        <!-- ── COLUMNA DERECHA: Aplicaciones de la parcela ── -->
+        <div id="sec-aplicaciones" style="display:none;">
 
-          <!-- Tab bar -->
-          <div class="tabs" style="margin-top:0;">
-            <button class="tab active" id="tab-btn-historial" onclick="mostrarTabAplic('historial')">Historial</button>
-            <button class="tab" id="tab-btn-totales" onclick="mostrarTabAplic('totales')">Totales x Aplicador</button>
+          <!-- Alerta carencia -->
+          <div id="carencia-banner" style="display:none;" class="carencia-banner">
+            <i data-lucide="alert-triangle" style="width:16px;height:16px;flex-shrink:0;"></i>
+            <span id="carencia-texto"></span>
           </div>
 
-          <!-- Tab: Historial -->
-          <div id="tab-historial-aplic" class="tab-content active">
-            <!-- Barra de filtros unificada -->
-            <div class="filtros-barra">
-              <input type="search" class="fb-buscar" id="aplic-buscar" placeholder="Filtrar por..." list="aplic-opciones" oninput="buscarHistorial()">
-              <datalist id="aplic-opciones"></datalist>
-              <div class="fb-sep"></div>
-              <input type="date" id="hist-desde" onchange="cargarHistorial()" title="Desde">
-              <input type="date" id="hist-hasta" onchange="cargarHistorial()" title="Hasta">
-              <div class="fb-sep"></div>
-              <button class="aplic-btn-export" onclick="exportarAplicCSV()" title="Exportar CSV"><i data-lucide="file-spreadsheet"></i></button>
-              <button class="aplic-btn-export" onclick="window.print()" title="Imprimir"><i data-lucide="printer"></i></button>
-              <button class="fb-limpiar" onclick="limpiarFiltrosHistorial()">✕ Limpiar</button>
+          <!-- Panel principal -->
+          <div class="juntada-historial">
+            <div class="juntada-historial-header">
+              <h3>Aplicaciones</h3>
+              <small id="parcela-badge"></small>
+              <small id="aplic-contador"></small>
             </div>
 
-            <!-- Tabla -->
-            <div class="card" style="margin-top:0;border-top-left-radius:0;border-top-right-radius:0;">
-              <div class="table-wrap">
-                <table id="tabla-historial-aplic" style="table-layout:auto;">
-                  <thead>
-                    <tr>
-                      <th style="text-align:center;">#</th>
-                      <th>Fecha y Hora</th>
-                      <th>Producto</th>
-                      <th style="text-align:right;">Cantidad</th>
-                      <th>Aplicador</th>
-                      <th>Parcela</th>
-                      <th>Estado</th>
-                      <th style="text-align:center;"></th>
-                    </tr>
-                  </thead>
-                  <tbody id="tbody-historial">
-                    <tr><td colspan="8" class="activity-empty">Cargando...</td></tr>
-                  </tbody>
-                  <tfoot id="tfoot-historial"></tfoot>
-                </table>
+            <!-- Form nueva aplicación -->
+            <div style="padding:12px 16px;border-bottom:1px solid var(--borde);background:var(--fondo);">
+              <div style="font-size:12px;font-weight:700;color:var(--texto-suave);margin-bottom:8px;">NUEVA APLICACIÓN</div>
+              <div class="fg" style="margin-bottom:6px;">
+                <div class="fi" style="flex:1 1 180px;min-width:150px;">
+                  <label>Producto</label>
+                  <select id="sel-producto" onchange="onProductoChange()">
+                    <option value="">Seleccionar...</option>
+                  </select>
+                </div>
+                <div class="fi" style="flex:0 0 80px;">
+                  <label>Cantidad</label>
+                  <input type="number" id="inp-cantidad" placeholder="0.00" step="0.001" min="0">
+                </div>
+                <div class="fi" style="flex:0 0 75px;">
+                  <label>Unidad</label>
+                  <select id="sel-unidad">
+                    <option value="lt">lt</option><option value="ml">ml</option>
+                    <option value="cc">cc</option><option value="kg">kg</option><option value="g">g</option>
+                  </select>
+                </div>
+                <div class="fi" style="flex:0 0 70px;">
+                  <label>Carencia</label>
+                  <input type="number" id="inp-carencia" placeholder="7" step="1" min="0">
+                </div>
               </div>
-            </div>
-          </div>
-
-          <!-- Tab: Totales x Aplicador -->
-          <div id="tab-totales-aplic" class="tab-content">
-            <div class="card" style="margin-top:0;border-top-left-radius:0;border-top-right-radius:0;">
-              <div class="table-wrap">
-                <table id="tabla-totales-aplic" style="table-layout:auto;">
-                  <thead>
-                    <tr>
-                      <th>Aplicador</th>
-                      <th style="text-align:center;">Registros</th>
-                      <th style="text-align:center;">Productos distintos</th>
-                      <th>Últ. registro</th>
-                    </tr>
-                  </thead>
-                  <tbody id="tbody-totales-aplic">
-                    <tr><td colspan="4" class="activity-empty">Cargando...</td></tr>
-                  </tbody>
-                </table>
+              <div class="fg">
+                <div class="fi" style="flex:0 0 100px;">
+                  <label>Método</label>
+                  <select id="sel-metodo">
+                    <option value="mochila">Mochila</option><option value="tractor">Tractor</option>
+                    <option value="manual">Manual</option><option value="otro">Otro</option>
+                  </select>
+                </div>
+                <div class="fi" style="flex:0 0 100px;">
+                  <label>Clima</label>
+                  <select id="sel-clima">
+                    <option value="optima">Óptima</option><option value="viento_leve">Vto.leve</option>
+                    <option value="nublado">Nublado</option><option value="calor">Calor</option>
+                  </select>
+                </div>
+                <div class="fi" style="flex:0 0 70px;">
+                  <label>Dosis/ha</label>
+                  <input type="number" id="inp-dosis" placeholder="1.5" step="0.001">
+                </div>
+                <div class="fi" style="flex:1 1 120px;min-width:80px;">
+                  <label>Observación</label>
+                  <input type="text" id="inp-obs" placeholder="Opcional">
+                </div>
+                <div class="fi" style="flex:0 0 auto;">
+                  <label>Empleado</label>
+                  <select id="sel-empleado" style="min-width:140px;">
+                    <option value="">— opcional —</option>
+                  </select>
+                </div>
+                <div class="fi" style="flex:0 0 auto;">
+                  <label style="visibility:hidden;">_</label>
+                  <button class="btn btn-primary" id="btn-registrar" onclick="registrarAplicacion()" style="height:32px;padding:0 14px;white-space:nowrap;">
+                    <i data-lucide="save" style="width:13px;height:13px;"></i> Registrar
+                  </button>
+                </div>
               </div>
+              <div id="stock-info" style="font-size:10px;color:var(--verde);margin-top:4px;"></div>
+              <div id="mensaje" style="margin-top:4px;"></div>
+            </div>
+
+            <!-- Grilla de aplicaciones -->
+            <div class="juntada-historial-body">
+              <table>
+                <thead><tr>
+                  <th>Fecha</th>
+                  <th>Producto</th>
+                  <th style="text-align:right;">Cantidad</th>
+                  <th style="text-align:center;">Carencia</th>
+                  <th>Empleado</th>
+                  <th style="text-align:center;">Estado</th>
+                  <th style="text-align:center;"></th>
+                </tr></thead>
+                <tbody id="tbody-aplicaciones">
+                  <tr><td colspan="7" style="text-align:center;padding:20px;color:var(--texto-suave);">Seleccioná una parcela</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="juntada-historial-footer">
+              Total: <span id="aplic-total">—</span>
             </div>
           </div>
 
+          <div id="mensaje-global" style="margin-top:8px;"></div>
         </div>
 
+      </div><!-- /layout-aplic -->
+
+      <!-- ── TABS HISTORIAL / TOTALES ── -->
+      <div class="tabs" style="margin-top:16px;">
+        <button class="tab active" id="tab-btn-hist" onclick="mostrarTab('historial')">Historial Completo</button>
+        <button class="tab" id="tab-btn-tot" onclick="mostrarTab('totales')">Totales x Aplicador</button>
       </div>
+      <div id="tab-historial" class="tab-content active">
+        <div class="card" style="margin-top:0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+            <h3 style="margin:0;font-size:15px;">Historial completo de aplicaciones</h3>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input type="date" id="hist-desde" onchange="cargarHistorialCompleto()" style="height:32px;padding:0 8px;border:1px solid var(--borde);border-radius:6px;font-size:12px;">
+              <input type="date" id="hist-hasta" onchange="cargarHistorialCompleto()" style="height:32px;padding:0 8px;border:1px solid var(--borde);border-radius:6px;font-size:12px;">
+              <input type="search" id="hist-buscar" placeholder="Buscar..." oninput="filtrarHistCompleto()" style="height:32px;padding:0 8px;border:1px solid var(--borde);border-radius:6px;font-size:12px;width:140px;">
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:13px;">
+              <thead><tr style="background:var(--fondo-dark);">
+                <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">#</th>
+                <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Fecha</th>
+                <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Producto</th>
+                <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:right;color:var(--texto-suave);">Cantidad</th>
+                <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Empleado</th>
+                <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Parcela</th>
+                <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:center;color:var(--texto-suave);">Estado</th>
+                <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:center;color:var(--texto-suave);"></th>
+              </tr></thead>
+              <tbody id="tbody-hist-completo"><tr><td colspan="8" style="text-align:center;padding:20px;color:var(--texto-suave);">Cargando...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div id="tab-totales" class="tab-content">
+        <div class="card" style="margin-top:0;">
+          <h3 style="margin:0 0 12px;font-size:15px;">Totales campaña — por aplicador</h3>
+          <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:13px;">
+              <thead><tr style="background:var(--fondo-dark);">
+                <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Aplicador</th>
+                <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:center;color:var(--texto-suave);">Registros</th>
+                <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:center;color:var(--texto-suave);">Productos</th>
+                <th style="padding:8px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--texto-suave);">Últ. registro</th>
+              </tr></thead>
+              <tbody id="tbody-totales"><tr><td colspan="4" style="text-align:center;padding:20px;color:var(--texto-suave);">Cargando...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
   <!-- ── MODAL DETALLES ── -->
-  <div class="modal-overlay" id="modal-detalles" onclick="cerrarModal(event)">
+  <div class="modal-overlay" id="modal-detalles" onclick="if(event.target===this)this.classList.remove('open')">
     <div class="modal-box">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
         <h3 style="margin:0;">Detalles de la aplicación</h3>
@@ -441,407 +326,324 @@
 
   <!-- ── BOTTOM NAV ── -->
   <nav class="bottom-nav">
-    <a href="index.html" class="bottom-nav-item">
-      <span class="bottom-nav-icon"><i data-lucide="home"></i></span><span>Inicio</span>
-    </a>
-    <a href="juntada.html" class="bottom-nav-item">
-      <span class="bottom-nav-icon"><i data-lucide="wheat"></i></span><span>Cosecha</span>
-    </a>
-    <a href="despalillado.html" class="bottom-nav-item">
-      <span class="bottom-nav-icon"><i data-lucide="scissors"></i></span><span>Despalillado</span>
-    </a>
-    <a href="aplicaciones.html" class="bottom-nav-item active">
-      <span class="bottom-nav-icon"><i data-lucide="droplets"></i></span><span>Aplicaciones</span>
-    </a>
-    <a href="menu-campo.html" class="bottom-nav-item">
-      <span class="bottom-nav-icon"><i data-lucide="menu"></i></span><span>Menú</span>
-    </a>
+    <a href="index.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="home"></i></span><span>Inicio</span></a>
+    <a href="juntada.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="wheat"></i></span><span>Cosecha</span></a>
+    <a href="despalillado.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="scissors"></i></span><span>Despalillado</span></a>
+    <a href="aplicaciones.html" class="bottom-nav-item active"><span class="bottom-nav-icon"><i data-lucide="droplets"></i></span><span>Aplicaciones</span></a>
+    <a href="menu-campo.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="menu"></i></span><span>Menú</span></a>
   </nav>
 
 </div>
 
-<script src="js/jsqr.min.js"></script>
 <script src="https://unpkg.com/lucide@latest"></script>
 <script>
   lucide.createIcons();
   document.getElementById('topbar-date').textContent =
     new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
 
-  var scanning = false, stream = null, productos = [];
-  var _ultimaAplicacion = null;
-  var modoActualEmpleado = 'lista', empleadoId = null;
-  var _carenciaVisible = false;
-  var _movimientoMap = {};
-  var _historialData = [];
+  var _parcelas = [], _productos = [], _parcelaSeleccionada = null;
+  var _aplicData = [], _histData = [], _movMap = {};
+  var _temporadaId = null;
 
-  /* ── Tab switching ── */
-  function mostrarTabAplic(tab) {
-    document.getElementById('tab-historial-aplic').classList.toggle('active', tab === 'historial');
-    document.getElementById('tab-totales-aplic').classList.toggle('active', tab === 'totales');
-    document.getElementById('tab-btn-historial').classList.toggle('active', tab === 'historial');
-    document.getElementById('tab-btn-totales').classList.toggle('active', tab === 'totales');
-    if (tab === 'totales') renderTotalesAplic();
-  }
+  var mono = "font-family:'JetBrains Mono',monospace;";
 
-  /* ── Búsqueda en tiempo real ── */
-  var _aplicCols = [
-    {label:'Producto',campo:'producto'},
-    {label:'Parcela',campo:'parcela'},
-    {label:'Empleado',campo:'empleado'},
-    {label:'Estado',campo:'estado'}
-  ];
-
-  function buscarHistorial() {
-    var q = (document.getElementById('aplic-buscar').value || '').trim();
-    if (!q) { renderHistorialTabla(_historialData); return; }
-    var filtrado = _historialData.filter(function(m) {
-      return matchFiltro(m, q, _aplicCols);
-    });
-    renderHistorialTabla(filtrado);
-  }
-
-  /* ── Export CSV ── */
-  function exportarAplicCSV() {
-    if (!_historialData.length) { alert('Sin datos para exportar.'); return; }
-    var filas = [['#','Fecha y Hora','Producto','Cantidad','Aplicador','Parcela','Método','Estado']];
-    _historialData.forEach(function(m) {
-      filas.push([
-        m.id || '',
-        m.fecha_hora ? new Date(m.fecha_hora).toLocaleString('es-AR') : '',
-        '"' + (m.producto || '') + '"',
-        (parseFloat(m.cantidad_usada||0).toFixed(2) + ' ' + (m.unidad_aplicacion||'')).trim(),
-        '"' + (m.empleado || '') + '"',
-        '"' + (m.parcela || '') + '"',
-        '"' + (m.metodo || '') + '"',
-        '"' + (m.estado || 'activa') + '"'
-      ]);
-    });
-    var csv = filas.map(function(r){ return r.join(','); }).join('\n');
-    var blob = new Blob(['\uFEFF' + csv], { type:'text/csv;charset=utf-8;' });
-    var url  = URL.createObjectURL(blob);
-    var a    = document.createElement('a');
-    a.href = url; a.download = 'aplicaciones.csv'; a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  /* ── Timezone helpers ── */
-  function _fechasHoy() {
-    var _d = new Date();
-    var hoy = _d.getFullYear() + '-' + String(_d.getMonth()+1).padStart(2,'0') + '-' + String(_d.getDate()).padStart(2,'0');
-    var _m = new Date(_d.getFullYear(), _d.getMonth(), _d.getDate() + 1);
-    var manana = _m.getFullYear() + '-' + String(_m.getMonth()+1).padStart(2,'0') + '-' + String(_m.getDate()).padStart(2,'0');
-    return { hoy: hoy, manana: manana, d: _d };
-  }
-  function _esHoy(a, _d) {
-    var f = new Date(a.fecha_hora);
-    return f.getFullYear() === _d.getFullYear() && f.getMonth() === _d.getMonth() && f.getDate() === _d.getDate();
-  }
-
-  function fmtFechaHora(iso) {
+  function fmtFecha(iso) {
     if (!iso) return '—';
     var d = new Date(iso);
-    return String(d.getDate()).padStart(2,'0') + '/' +
-           String(d.getMonth()+1).padStart(2,'0') + '/' +
-           String(d.getFullYear()).slice(-2) + ' ' +
-           String(d.getHours()).padStart(2,'0') + ':' +
-           String(d.getMinutes()).padStart(2,'0');
+    return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + String(d.getFullYear()).slice(-2) + ' ' +
+           String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  }
+  function fmt(n) { return parseFloat(n||0).toLocaleString('es-AR',{maximumFractionDigits:2}); }
+
+  /* ══ TAB SWITCHING ══ */
+  function mostrarTab(tab) {
+    document.getElementById('tab-historial').classList.toggle('active', tab === 'historial');
+    document.getElementById('tab-totales').classList.toggle('active', tab === 'totales');
+    document.getElementById('tab-btn-hist').classList.toggle('active', tab === 'historial');
+    document.getElementById('tab-btn-tot').classList.toggle('active', tab === 'totales');
+    if (tab === 'totales') renderTotales();
   }
 
-  /* ── Cargar parcelas del formulario (campaña activa) ── */
-  function cargarParcelasForm() {
-    fetch('/api/temporadas/activa').then(r => r.json()).then(function(t) {
-      var sel = document.getElementById('parcela');
-      if (!t) { sel.innerHTML = '<option value="">Sin campaña activa</option>'; return; }
-      fetch('/api/parcelas?temporada_id=' + t.id).then(r => r.json()).then(function(parcelas) {
-        if (!parcelas.length) { sel.innerHTML = '<option value="">Sin parcelas</option>'; return; }
-        sel.innerHTML = '<option value="">Seleccionar parcela...</option>' +
-          parcelas.map(l => '<option value="' + l.id + '">' + l.nombre + '</option>').join('');
-        recordarSeleccion('parcela', 'ultimo_parcela_aplic');
+  /* ══ CARGAR DATOS INICIALES ══ */
+  function init() {
+    fetch('/api/temporadas/activa').then(function(r){ return r.json(); }).then(function(t) {
+      if (!t) return;
+      _temporadaId = t.id;
+      document.getElementById('temporada-activa-badge').textContent = t.nombre || 'Temporada';
+      cargarParcelas();
+      cargarKpis();
+      cargarHistorialCompleto();
+    });
+    fetch('/api/productos').then(function(r){ return r.json(); }).then(function(data) {
+      _productos = data;
+      var sel = document.getElementById('sel-producto');
+      sel.innerHTML = '<option value="">Seleccionar...</option>' +
+        data.map(function(p) { return '<option value="'+p.id+'">'+p.nombre+' ('+fmt(p.stock_actual)+' '+(p.presentacion||'')+')' + '</option>'; }).join('');
+    });
+    fetch('/api/juntadores').then(function(r){ return r.json(); }).then(function(data) {
+      var sel = document.getElementById('sel-empleado');
+      sel.innerHTML = '<option value="">— opcional —</option>' +
+        data.map(function(j) { return '<option value="'+j.id+'">'+j.apellido+', '+j.nombre+'</option>'; }).join('');
+    });
+  }
+
+  /* ══ CARGAR PARCELAS (columna izquierda) ══ */
+  function cargarParcelas() {
+    fetch('/api/parcelas?temporada_id=' + _temporadaId).then(function(r){ return r.json(); }).then(function(data) {
+      _parcelas = data;
+      document.getElementById('cnt-parcelas').textContent = data.length;
+      // Para cada parcela, contar aplicaciones y carencia
+      var promises = data.map(function(p) {
+        return Promise.all([
+          fetch('/api/aplicaciones?parcela_id='+p.id+'&temporada_id='+_temporadaId).then(function(r){return r.json();}),
+          fetch('/api/juntada/parcela/'+p.id+'/carencia-activa').then(function(r){return r.json();})
+        ]).then(function(res) {
+          p._aplics = res[0].filter(function(a){return a.estado !== 'anulada';}).length;
+          p._carencia = res[1];
+        });
       });
-    });
-  }
-  window.addEventListener('campanaChange', cargarParcelasForm);
-
-  /* ── Cargar datos iniciales ── */
-  function cargarDatos() {
-    fetch('/api/temporadas').then(r => r.json()).then(function(data) {
-      var activa = data.find(t => t.activa);
-      document.getElementById('temporada').innerHTML = '<option value="">Seleccionar...</option>' +
-        data.map(t => '<option value="' + t.id + '"' + (t.activa ? ' selected' : '') + '>' + t.nombre + '</option>').join('');
-      if (activa) cargarKpisCampana(activa.id);
-    });
-    cargarParcelasForm();
-    fetch('/api/juntadores').then(r => r.json()).then(function(data) {
-      document.getElementById('lista-empleados').innerHTML = '<option value="">— seleccionar empleado —</option>' +
-        data.map(function(j) {
-          var nombre = j.apellido + ', ' + j.nombre;
-          return '<option value="' + j.id + '" data-nombre="' + nombre + '">' + nombre + '</option>';
-        }).join('');
-    });
-    fetch('/api/productos').then(r => r.json()).then(function(data) {
-      productos = data;
-      document.getElementById('producto').innerHTML = '<option value="">Seleccionar producto...</option>' +
-        data.map(p => '<option value="' + p.id + '">' + p.nombre + ' (' + (p.tipo || '') + ')</option>').join('');
+      Promise.all(promises).then(function() { renderParcelas(); });
     });
   }
 
-  /* ── Stock info al seleccionar producto ── */
-  function mostrarStock() {
-    var id = document.getElementById('producto').value;
-    var prod = productos.find(p => p.id == id);
-    if (prod) {
-      var info = 'Stock: ' + (parseFloat(prod.stock_actual) || 0).toFixed(2) + ' ' + (prod.presentacion || '');
-      if (prod.costo_unitario) info += ' · $' + parseFloat(prod.costo_unitario).toLocaleString('es-AR');
-      document.getElementById('stock-info').textContent = info;
-      if (prod.carencia_dias) document.getElementById('carencia').value = prod.carencia_dias;
-      var pres = (prod.presentacion || '').toLowerCase(), us = document.getElementById('unidad-aplicacion');
-      if (pres.includes('ml')) us.value = 'ml';
-      else if (pres.includes('cc')) us.value = 'cc';
-      else if (pres.includes('kg') || pres.includes('kilo')) us.value = 'kg';
-      else if (pres.includes('gr') || (pres.includes('g') && !pres.includes('kg'))) us.value = 'g';
-      else if (pres.includes('lt') || pres.includes('litro')) us.value = 'lt';
-    } else { document.getElementById('stock-info').textContent = ''; }
-  }
-
-  /* ── Panel de carencia (toggle) ── */
-  function toggleCarencia() {
-    _carenciaVisible = !_carenciaVisible;
-    var panel = document.getElementById('panel-carencia');
-    var lbl   = document.getElementById('lbl-ver-carencia');
-    if (_carenciaVisible) {
-      lbl.textContent = 'Ocultar carencia';
-      panel.style.display = '';
-      cargarCarencia();
-    } else {
-      lbl.textContent = 'Ver carencia';
-      panel.style.display = 'none';
-    }
-  }
-  function cargarCarencia() {
-    fetch('/api/aplicaciones/carencia').then(r => r.json()).then(function(data) {
-      var panel = document.getElementById('panel-carencia');
-      if (!data.length) {
-        panel.innerHTML = '<div class="card-form" style="padding:10px 14px;color:var(--verde);font-size:13px;">Sin parcelas en carencia actualmente.</div>';
-        return;
-      }
-      var hoy = new Date().toISOString().split('T')[0];
-      panel.innerHTML = '<div class="card" style="padding:10px 14px;">' +
-        '<div style="font-weight:700;font-size:13px;margin-bottom:8px;">Parcelas en período de carencia</div>' +
-        '<div class="table-wrap"><table style="table-layout:auto;"><thead><tr>' +
-        '<th>Parcela</th><th>Producto</th><th>Libre desde</th></tr></thead><tbody>' +
-        data.map(function(a) {
-          var libre = a.fecha_libre ? a.fecha_libre.toString().split('T')[0] : '-';
-          return '<tr><td><strong>' + (a.parcela || '—') + '</strong></td><td>' + (a.producto || '—') + '</td>' +
-            '<td style="color:#c0392b;font-weight:600;">' + libre + '</td></tr>';
-        }).join('') +
-        '</tbody></table></div></div>';
-    });
-  }
-
-  /* ── Modos empleado ── */
-  function setModoEmpleado(modo) {
-    modoActualEmpleado = modo;
-    document.getElementById('btn-modo-lista').classList.toggle('active', modo === 'lista');
-    document.getElementById('btn-modo-qr').classList.toggle('active', modo === 'qr');
-    document.getElementById('modo-lista-empleado').style.display = modo === 'lista' ? '' : 'none';
-    document.getElementById('modo-qr-empleado').style.display = modo === 'qr' ? '' : 'none';
-    limpiarEmpleado();
-  }
-  function seleccionarEmpleadoLista(id) {
-    if (!id) return;
-    var sel = document.getElementById('lista-empleados');
-    var opt = sel.options[sel.selectedIndex];
-    empleadoId = parseInt(id);
-    mostrarChipEmpleado(opt.dataset.nombre || opt.text);
-  }
-  function mostrarChipEmpleado(nombre) {
-    document.getElementById('empleado-chip-nombre').textContent = nombre;
-    document.getElementById('empleado-chip').style.display = 'flex';
+  function renderParcelas() {
+    var cont = document.getElementById('lista-parcelas');
+    if (!_parcelas.length) { cont.innerHTML = '<div class="sin-desp">Sin parcelas en esta temporada</div>'; return; }
+    cont.innerHTML = _parcelas.map(function(p) {
+      var sel = _parcelaSeleccionada && _parcelaSeleccionada.id === p.id ? ' seleccionado' : '';
+      var carBadge = p._carencia && p._carencia.tiene_carencia
+        ? '<span class="badge-estado badge-carencia">CARENCIA</span>'
+        : '';
+      var ha = p.hectareas ? fmt(p.hectareas) + ' ha' : '';
+      return '<div class="lote-card'+sel+'" onclick="seleccionarParcela('+p.id+')">' +
+        '<div class="lote-info">' +
+          '<div class="lote-codigo">'+p.nombre+' '+carBadge+'</div>' +
+          '<div class="lote-meta">'+ha+(p.variedad ? ' · '+p.variedad : '')+' · '+p._aplics+' aplicaciones</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
     lucide.createIcons();
   }
-  function limpiarEmpleado() {
-    empleadoId = null;
-    document.getElementById('empleado-chip').style.display = 'none';
-    if (modoActualEmpleado === 'lista') {
-      document.getElementById('lista-empleados').value = '';
+
+  /* ══ SELECCIONAR PARCELA ══ */
+  function seleccionarParcela(id) {
+    _parcelaSeleccionada = _parcelas.find(function(p){ return p.id === id; });
+    if (!_parcelaSeleccionada) return;
+    renderParcelas();
+    document.getElementById('sec-aplicaciones').style.display = '';
+    document.getElementById('parcela-badge').textContent = _parcelaSeleccionada.nombre;
+
+    // Carencia banner
+    var banner = document.getElementById('carencia-banner');
+    if (_parcelaSeleccionada._carencia && _parcelaSeleccionada._carencia.tiene_carencia) {
+      var c = _parcelaSeleccionada._carencia;
+      var fechaLib = c.fecha_liberacion ? new Date(c.fecha_liberacion).toLocaleDateString('es-AR') : '—';
+      document.getElementById('carencia-texto').textContent =
+        'CARENCIA ACTIVA: ' + c.producto + ' — quedan ' + c.dias_restantes + ' días (libre el ' + fechaLib + ')';
+      banner.style.display = 'flex';
     } else {
-      var el = document.getElementById('empleado-info');
-      el.textContent = 'Escaneá el QR del empleado';
-      el.style.cssText = '';
+      banner.style.display = 'none';
     }
+
+    cargarAplicacionesParcela();
+    lucide.createIcons();
   }
 
-  /* ── Cámara QR ── */
-  function toggleCamera() { if (scanning) stopCamera(); else startCamera(); }
-  function startCamera() {
-    scanning = true;
-    document.getElementById('camera-container').classList.remove('hidden');
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then(function(s) {
-      stream = s; document.getElementById('video').srcObject = s; requestAnimationFrame(scanQR);
-    });
-  }
-  function stopCamera() {
-    scanning = false;
-    if (stream) stream.getTracks().forEach(t => t.stop());
-    document.getElementById('camera-container').classList.add('hidden');
-  }
-  function scanQR() {
-    if (!scanning) return;
-    var video = document.getElementById('video'), canvas = document.getElementById('canvas');
-    if (video.readyState === video.HAVE_ENOUGH_DATA) {
-      canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-      var ctx = canvas.getContext('2d'); ctx.drawImage(video, 0, 0);
-      var code = jsQR(ctx.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
-      if (code) { stopCamera(); buscarEmpleado(code.data); return; }
-    }
-    requestAnimationFrame(scanQR);
-  }
-  function buscarEmpleado(codigo) {
-    fetch('/api/juntadores/qr/' + codigo).then(r => r.json()).then(function(j) {
-      if (j.error) {
-        var el = document.getElementById('empleado-info');
-        el.textContent = 'QR no encontrado';
-        el.style.cssText = 'background:#FEE2E2;color:#991B1B;border-color:#FECACA;';
-      } else {
-        empleadoId = j.id;
-        mostrarChipEmpleado(j.apellido + ', ' + j.nombre);
-      }
-    });
+  /* ══ CARGAR APLICACIONES DE LA PARCELA ══ */
+  function cargarAplicacionesParcela() {
+    if (!_parcelaSeleccionada) return;
+    var tbody = document.getElementById('tbody-aplicaciones');
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--verde);">Cargando...</td></tr>';
+
+    fetch('/api/aplicaciones?parcela_id='+_parcelaSeleccionada.id+'&temporada_id='+_temporadaId)
+      .then(function(r){ return r.json(); })
+      .then(function(data) {
+        _aplicData = data;
+        data.forEach(function(m){ _movMap[m.id] = m; });
+        renderAplicaciones(data);
+      });
   }
 
-  /* ── Guardar aplicación ── */
-  function guardar(btn) {
-    var parcela_id     = document.getElementById('parcela').value;
-    var producto_id = document.getElementById('producto').value;
-    var cantidad    = document.getElementById('cantidad').value;
-    if (!parcela_id || !producto_id || !cantidad) { alert('Completá parcela, producto y cantidad'); return; }
-    setLoading(btn, true);
-    fetch('/api/aplicaciones', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        parcela_id, producto_id,
-        temporada_id:        document.getElementById('temporada').value || null,
-        empleado_id:         empleadoId || null,
-        cantidad_usada:      cantidad,
-        unidad_aplicacion:   document.getElementById('unidad-aplicacion').value,
-        metodo:              document.getElementById('metodo').value,
-        condicion_climatica: document.getElementById('clima').value,
-        dosis_por_hectarea:  document.getElementById('dosis').value || null,
-        carencia_dias:       document.getElementById('carencia').value || null,
-        observacion:         document.getElementById('observacion').value
-      })
-    }).then(r => r.json()).then(function(data) {
-      setLoading(btn, false);
-      if (data.ok) {
-        mostrarMensaje('mensaje', 'success', 'Aplicación registrada');
-        ['cantidad', 'dosis', 'observacion'].forEach(id => document.getElementById(id).value = '');
-        cargarHistorial();
-        cargarKpisHoy();
-        fetch('/api/productos').then(r => r.json()).then(function(d) { productos = d; mostrarStock(); });
-      } else if (data.error) { mostrarMensaje('mensaje', 'error', data.error); }
-    }).catch(function() { setLoading(btn, false); mostrarMensaje('mensaje', 'error', 'Error de conexión'); });
-  }
-
-  /* ── Última aplicación para Repetir ── */
-  function guardarUltimaAplicacion(data) {
-    if (data.length > 0) {
-      _ultimaAplicacion = data[0];
-      document.getElementById('btn-repetir').style.display = '';
-    } else {
-      document.getElementById('btn-repetir').style.display = 'none';
-    }
-  }
-  function repetirUltimaAplicacion() {
-    if (!_ultimaAplicacion) return;
-    if (_ultimaAplicacion.parcela_id)            document.getElementById('parcela').value              = _ultimaAplicacion.parcela_id;
-    if (_ultimaAplicacion.producto_id)         document.getElementById('producto').value          = _ultimaAplicacion.producto_id;
-    mostrarStock();
-    if (_ultimaAplicacion.carencia_dias)       document.getElementById('carencia').value          = _ultimaAplicacion.carencia_dias;
-    if (_ultimaAplicacion.dosis_por_hectarea)  document.getElementById('dosis').value             = _ultimaAplicacion.dosis_por_hectarea;
-    if (_ultimaAplicacion.metodo)              document.getElementById('metodo').value            = _ultimaAplicacion.metodo;
-    if (_ultimaAplicacion.condicion_climatica) document.getElementById('clima').value             = _ultimaAplicacion.condicion_climatica;
-    if (_ultimaAplicacion.unidad_aplicacion)   document.getElementById('unidad-aplicacion').value = _ultimaAplicacion.unidad_aplicacion;
-    document.getElementById('cantidad').focus();
-  }
-
-  /* ── KPIs ── */
-  function cargarKpisHoy() {
-    var f = _fechasHoy();
-    fetch('/api/aplicaciones?desde=' + f.hoy + '&hasta=' + f.manana).then(r => r.json()).then(function(data) {
-      var hoyData = data.filter(function(a) { return _esHoy(a, f.d); });
-      document.getElementById('kpi-aplic-hoy').textContent = hoyData.length || '0';
-      var parcelaIds = {};
-      hoyData.forEach(function(a) { if (a.parcela_id) parcelaIds[a.parcela_id] = 1; });
-      document.getElementById('kpi-parcelas-hoy').textContent = Object.keys(parcelaIds).length || '0';
-      guardarUltimaAplicacion(hoyData);
-    });
-  }
-  function cargarKpisCampana(tid) {
-    if (!tid) { document.getElementById('kpi-campana').textContent = '—'; return; }
-    fetch('/api/aplicaciones?temporada_id=' + tid).then(r => r.json()).then(function(data) {
-      document.getElementById('kpi-campana').textContent = data.length;
-    });
-  }
-
-  function limpiarFiltrosHistorial() {
-    document.getElementById('aplic-buscar').value = '';
-    document.getElementById('hist-desde').value = '';
-    document.getElementById('hist-hasta').value = '';
-    cargarHistorial();
-  }
-
-  /* ── Render tabla historial ── */
-  function renderHistorialTabla(data) {
-    var tbody = document.getElementById('tbody-historial');
-    var tfoot = document.getElementById('tfoot-historial');
+  function renderAplicaciones(data) {
+    var tbody = document.getElementById('tbody-aplicaciones');
     if (!data.length) {
-      tbody.innerHTML = '<tr><td colspan="8" class="activity-empty">Sin aplicaciones para los filtros seleccionados</td></tr>';
-      tfoot.innerHTML = '';
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--texto-suave);">Sin aplicaciones en esta parcela</td></tr>';
+      document.getElementById('aplic-total').textContent = '0 aplicaciones';
+      document.getElementById('aplic-contador').textContent = '';
       return;
     }
     var totalCant = 0;
-    var mono = "font-family:'JetBrains Mono',monospace;";
+    var activas = 0;
     tbody.innerHTML = data.map(function(m) {
       var esAnulada = m.estado === 'anulada';
       var cant = parseFloat(m.cantidad_usada || 0);
-      if (!esAnulada) totalCant += cant;
-      var idChip = '<span style="' + mono + 'font-size:11px;background:var(--fondo-dark);border:1px solid var(--borde);border-radius:4px;padding:1px 5px;">#' + m.id + '</span>';
-      var accionesHtml = esAnulada
+      if (!esAnulada) { totalCant += cant; activas++; }
+      var carLabel = m.carencia_dias ? m.carencia_dias + 'd' : '—';
+      var carColor = m.estado_carencia === 'carencia' ? 'color:var(--sem-rojo);font-weight:700;' : '';
+      var acciones = esAnulada
         ? '<span class="badge-anulada">Anulada</span>'
-        : '<div class="aplic-row-actions">' +
-            '<button class="btn-icon" title="Ver detalles" onclick="event.stopPropagation();verDetalles(' + m.id + ')"><i data-lucide="eye"></i></button>' +
-            '<button class="btn-icon-danger" title="Anular" onclick="event.stopPropagation();anularAplicacion(' + m.id + ')"><i data-lucide="ban"></i></button>' +
-          '</div>';
-      return '<tr class="' + (esAnulada ? 'row-anulada' : '') + '" style="cursor:pointer;" onclick="verDetalles(' + m.id + ')">' +
-        '<td style="text-align:center;">' + idChip + '</td>' +
-        '<td style="font-size:12px;white-space:nowrap;">' + fmtFechaHora(m.fecha_hora) + '</td>' +
-        '<td style="font-size:12px;">' + (m.producto || '—') + '</td>' +
-        '<td style="text-align:right;' + mono + 'color:#c0392b;font-weight:700;">' +
-          cant.toLocaleString('es-AR', {minimumFractionDigits:0,maximumFractionDigits:2}) + ' ' + (m.unidad_aplicacion || m.presentacion || '') + '</td>' +
-        '<td style="font-size:12px;">' + (m.empleado || '—') + '</td>' +
-        '<td style="font-size:12px;">' + (m.parcela || '—') + '</td>' +
-        '<td style="text-align:center;">' + (esAnulada ? '<span class="badge-anulada">Anulada</span>' : '<span class="badge" style="background:var(--sem-verde-bg);color:var(--sem-verde);">Activa</span>') + '</td>' +
-        '<td style="text-align:center;" onclick="event.stopPropagation();">' + accionesHtml + '</td>' +
-        '</tr>';
+        : '<button class="btn-icon" title="Ver" onclick="verDetalles('+m.id+')"><i data-lucide="eye"></i></button> ' +
+          '<button class="btn-icon-danger" title="Anular" onclick="anularAplic('+m.id+')"><i data-lucide="ban"></i></button>';
+      return '<tr' + (esAnulada ? ' style="opacity:.5;text-decoration:line-through;"' : '') + '>' +
+        '<td>'+fmtFecha(m.fecha_hora)+'</td>' +
+        '<td style="font-weight:600;">'+( m.producto || '—')+'</td>' +
+        '<td style="text-align:right;'+mono+'color:#c0392b;font-weight:700;">'+fmt(cant)+' '+(m.unidad_aplicacion||m.presentacion||'')+'</td>' +
+        '<td style="text-align:center;'+carColor+'">'+carLabel+'</td>' +
+        '<td style="font-size:11px;">'+(m.empleado || '—')+'</td>' +
+        '<td style="text-align:center;">'+(esAnulada ? '<span class="badge-anulada">Anulada</span>' : '<span style="background:var(--sem-verde-bg);color:var(--sem-verde);padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600;">Activa</span>')+'</td>' +
+        '<td style="text-align:center;">'+acciones+'</td>' +
+      '</tr>';
     }).join('');
-    var activas = data.filter(function(m){ return m.estado !== 'anulada'; });
-    tfoot.innerHTML = '<tr style="font-weight:700;background:var(--fondo);">' +
-      '<td colspan="3" style="font-size:12px;padding:8px 12px;color:var(--texto-suave);">' + activas.length + ' aplicaciones activas (' + data.length + ' total)</td>' +
-      '<td style="text-align:right;' + mono + 'font-size:12px;padding:8px 12px;color:#c0392b;">' +
-        totalCant.toLocaleString('es-AR',{maximumFractionDigits:2}) +
-      '</td>' +
-      '<td colspan="4"></td></tr>';
+    document.getElementById('aplic-total').textContent = activas + ' activas · ' + fmt(totalCant);
+    document.getElementById('aplic-contador').textContent = '(' + data.length + ' total)';
     lucide.createIcons();
   }
 
-  /* ── Render totales por aplicador ── */
-  function renderTotalesAplic() {
-    var tbody = document.getElementById('tbody-totales-aplic');
-    var activas = _historialData.filter(function(m){ return m.estado !== 'anulada'; });
-    if (!activas.length) {
-      tbody.innerHTML = '<tr><td colspan="4" class="activity-empty">Sin datos</td></tr>';
-      return;
+  /* ══ REGISTRAR APLICACIÓN ══ */
+  function registrarAplicacion() {
+    if (!_parcelaSeleccionada) { mostrarMensaje('mensaje','error','Seleccioná una parcela primero'); return; }
+    var producto_id = document.getElementById('sel-producto').value;
+    var cantidad = document.getElementById('inp-cantidad').value;
+    if (!producto_id || !cantidad) { mostrarMensaje('mensaje','error','Producto y cantidad son obligatorios'); return; }
+
+    var btn = document.getElementById('btn-registrar');
+    setLoading(btn, true);
+    fetch('/api/aplicaciones', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        parcela_id: _parcelaSeleccionada.id,
+        producto_id: parseInt(producto_id),
+        temporada_id: _temporadaId,
+        empleado_id: document.getElementById('sel-empleado').value || null,
+        cantidad_usada: parseFloat(cantidad),
+        unidad_aplicacion: document.getElementById('sel-unidad').value,
+        metodo: document.getElementById('sel-metodo').value,
+        condicion_climatica: document.getElementById('sel-clima').value,
+        dosis_por_hectarea: document.getElementById('inp-dosis').value || null,
+        carencia_dias: document.getElementById('inp-carencia').value || null,
+        observacion: document.getElementById('inp-obs').value
+      })
+    }).then(function(r){ return r.json(); }).then(function(data) {
+      setLoading(btn, false);
+      if (data.ok) {
+        mostrarMensaje('mensaje','success','Aplicación registrada');
+        ['inp-cantidad','inp-dosis','inp-obs'].forEach(function(id){ document.getElementById(id).value = ''; });
+        cargarAplicacionesParcela();
+        cargarParcelas();
+        cargarKpis();
+        cargarHistorialCompleto();
+        // Refresh productos para stock actualizado
+        fetch('/api/productos').then(function(r){return r.json();}).then(function(d){
+          _productos = d;
+          var sel = document.getElementById('sel-producto');
+          var val = sel.value;
+          sel.innerHTML = '<option value="">Seleccionar...</option>' +
+            d.map(function(p){return '<option value="'+p.id+'">'+p.nombre+' ('+fmt(p.stock_actual)+' '+(p.presentacion||'')+')' + '</option>';}).join('');
+          sel.value = val;
+          onProductoChange();
+        });
+      } else { mostrarMensaje('mensaje','error',data.error || 'Error'); }
+    }).catch(function(){ setLoading(btn, false); mostrarMensaje('mensaje','error','Error de conexión'); });
+  }
+
+  /* ══ PRODUCTO CHANGE ══ */
+  function onProductoChange() {
+    var id = document.getElementById('sel-producto').value;
+    var prod = _productos.find(function(p){ return p.id == id; });
+    var info = document.getElementById('stock-info');
+    if (prod) {
+      info.textContent = 'Stock: ' + fmt(prod.stock_actual) + ' ' + (prod.presentacion||'');
+      if (prod.carencia_dias) document.getElementById('inp-carencia').value = prod.carencia_dias;
+      var pres = (prod.presentacion||'').toLowerCase(), us = document.getElementById('sel-unidad');
+      if (pres.includes('ml')) us.value='ml'; else if (pres.includes('cc')) us.value='cc';
+      else if (pres.includes('kg')) us.value='kg'; else if (pres.includes('g')&&!pres.includes('kg')) us.value='g';
+      else us.value='lt';
+    } else { info.textContent = ''; }
+  }
+
+  /* ══ ANULAR ══ */
+  function anularAplic(id) {
+    var motivo = prompt('Motivo de anulación:');
+    if (!motivo) return;
+    fetch('/api/aplicaciones/'+id+'/anular', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ motivo: motivo })
+    }).then(function(r){ return r.json(); }).then(function(data) {
+      if (data.ok) {
+        cargarAplicacionesParcela();
+        cargarParcelas();
+        cargarKpis();
+        cargarHistorialCompleto();
+      } else { alert(data.error || 'Error'); }
+    });
+  }
+
+  /* ══ KPIs ══ */
+  function cargarKpis() {
+    var hoy = new Date();
+    var hoyStr = hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0')+'-'+String(hoy.getDate()).padStart(2,'0');
+    fetch('/api/aplicaciones?desde='+hoyStr+'&hasta='+hoyStr).then(function(r){return r.json();}).then(function(data) {
+      var activas = data.filter(function(a){ return a.estado !== 'anulada'; });
+      document.getElementById('kpi-hoy').textContent = activas.length;
+      var pIds = {};
+      activas.forEach(function(a){ if(a.parcela_id) pIds[a.parcela_id]=1; });
+      document.getElementById('kpi-parcelas').textContent = Object.keys(pIds).length;
+    });
+    if (_temporadaId) {
+      fetch('/api/aplicaciones?temporada_id='+_temporadaId).then(function(r){return r.json();}).then(function(data) {
+        document.getElementById('kpi-campana').textContent = data.filter(function(a){return a.estado!=='anulada';}).length;
+      });
     }
+  }
+
+  /* ══ HISTORIAL COMPLETO (tabs) ══ */
+  function cargarHistorialCompleto() {
+    var params = new URLSearchParams();
+    if (_temporadaId) params.set('temporada_id', _temporadaId);
+    var desde = document.getElementById('hist-desde').value;
+    var hasta = document.getElementById('hist-hasta').value;
+    if (desde) params.set('desde', desde);
+    if (hasta) params.set('hasta', hasta);
+    var tbody = document.getElementById('tbody-hist-completo');
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--verde);">Cargando...</td></tr>';
+    fetch('/api/aplicaciones?'+params.toString()).then(function(r){return r.json();}).then(function(data) {
+      _histData = data;
+      data.forEach(function(m){ _movMap[m.id] = m; });
+      filtrarHistCompleto();
+    });
+  }
+  function filtrarHistCompleto() {
+    var q = (document.getElementById('hist-buscar').value||'').trim();
+    var data = q ? _histData.filter(function(m){ return matchFiltro(m,q,[{label:'Producto',campo:'producto'},{label:'Parcela',campo:'parcela'},{label:'Empleado',campo:'empleado'}]); }) : _histData;
+    renderHistCompleto(data);
+  }
+  function renderHistCompleto(data) {
+    var tbody = document.getElementById('tbody-hist-completo');
+    if (!data.length) { tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--texto-suave);">Sin resultados</td></tr>'; return; }
+    tbody.innerHTML = data.map(function(m) {
+      var esAnulada = m.estado === 'anulada';
+      var cant = parseFloat(m.cantidad_usada||0);
+      var acciones = esAnulada ? '<span class="badge-anulada">Anulada</span>'
+        : '<button class="btn-icon" title="Ver" onclick="verDetalles('+m.id+')"><i data-lucide="eye"></i></button> '+
+          '<button class="btn-icon-danger" title="Anular" onclick="anularAplic('+m.id+')"><i data-lucide="ban"></i></button>';
+      return '<tr'+(esAnulada?' style="opacity:.5;text-decoration:line-through;"':'')+'>'+
+        '<td style="padding:5px 8px;font-size:11px;'+mono+'">#'+m.id+'</td>'+
+        '<td style="padding:5px 8px;font-size:12px;">'+fmtFecha(m.fecha_hora)+'</td>'+
+        '<td style="padding:5px 8px;font-weight:600;">'+( m.producto||'—')+'</td>'+
+        '<td style="padding:5px 8px;text-align:right;'+mono+'color:#c0392b;font-weight:700;">'+fmt(cant)+' '+(m.unidad_aplicacion||'')+'</td>'+
+        '<td style="padding:5px 8px;font-size:12px;">'+(m.empleado||'—')+'</td>'+
+        '<td style="padding:5px 8px;font-size:12px;">'+(m.parcela||'—')+'</td>'+
+        '<td style="padding:5px 8px;text-align:center;">'+(esAnulada?'<span class="badge-anulada">Anulada</span>':'<span style="background:var(--sem-verde-bg);color:var(--sem-verde);padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600;">Activa</span>')+'</td>'+
+        '<td style="padding:5px 8px;text-align:center;">'+acciones+'</td></tr>';
+    }).join('');
+    lucide.createIcons();
+  }
+
+  /* ══ TOTALES x APLICADOR ══ */
+  function renderTotales() {
+    var tbody = document.getElementById('tbody-totales');
+    var activas = _histData.filter(function(m){ return m.estado !== 'anulada'; });
+    if (!activas.length) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--texto-suave);">Sin datos</td></tr>'; return; }
     var map = {};
     activas.forEach(function(m) {
       var key = m.empleado || 'Sin asignar';
@@ -852,117 +654,47 @@
       if (f && (!map[key].ultima || f > map[key].ultima)) map[key].ultima = f;
     });
     var filas = Object.keys(map).sort(function(a,b){ return map[b].registros - map[a].registros; });
-    var mono = "font-family:'JetBrains Mono',monospace;";
     tbody.innerHTML = filas.map(function(nombre) {
       var r = map[nombre];
-      return '<tr>' +
-        '<td style="font-weight:700;">' + nombre + '</td>' +
-        '<td style="text-align:center;' + mono + '">' + r.registros + '</td>' +
-        '<td style="text-align:center;' + mono + '">' + Object.keys(r.productos).length + '</td>' +
-        '<td style="font-size:12px;color:var(--texto-suave);">' + (r.ultima ? fmtFechaHora(r.ultima.toISOString()) : '—') + '</td>' +
-        '</tr>';
+      return '<tr><td style="padding:5px 8px;font-weight:700;">'+nombre+'</td>'+
+        '<td style="padding:5px 8px;text-align:center;'+mono+'">'+r.registros+'</td>'+
+        '<td style="padding:5px 8px;text-align:center;'+mono+'">'+Object.keys(r.productos).length+'</td>'+
+        '<td style="padding:5px 8px;font-size:12px;color:var(--texto-suave);">'+(r.ultima ? fmtFecha(r.ultima.toISOString()) : '—')+'</td></tr>';
     }).join('');
-    var totalReg = filas.reduce(function(s,n){ return s + map[n].registros; },0);
-    tbody.innerHTML += '<tr style="background:var(--fondo-dark);font-weight:700;">' +
-      '<td>TOTAL (' + filas.length + ' aplicadores)</td>' +
-      '<td style="text-align:center;' + mono + '">' + totalReg + '</td>' +
-      '<td colspan="2"></td></tr>';
   }
 
-  function cargarHistorial() {
-    var params = new URLSearchParams();
-    var desde = document.getElementById('hist-desde').value;
-    var hasta = document.getElementById('hist-hasta').value;
-    if (desde) params.set('desde', desde);
-    if (hasta) params.set('hasta', hasta);
-
-    var tbody = document.getElementById('tbody-historial');
-    var tfoot = document.getElementById('tfoot-historial');
-    tbody.innerHTML = '<tr><td colspan="8" class="activity-empty" style="color:var(--verde);">Cargando...</td></tr>';
-    tfoot.innerHTML = '';
-
-    fetch('/api/aplicaciones?' + params.toString())
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        _historialData = data;
-        _movimientoMap = {};
-        data.forEach(function(m){ _movimientoMap[m.id] = m; });
-        poblarDatalist('aplic-opciones', data, _aplicCols);
-        buscarHistorial();
-      })
-      .catch(function() {
-        tbody.innerHTML = '<tr><td colspan="8" class="activity-empty" style="color:#c0392b;">Error al cargar historial</td></tr>';
-      });
-  }
-
-  /* ── Anular aplicación ── */
-  function anularAplicacion(id) {
-    var motivo = prompt('Motivo de anulación:');
-    if (!motivo) return;
-    if (!confirm('¿Anular aplicación #' + id + '? Se restaurará el stock del producto.')) return;
-    fetch('/api/aplicaciones/' + id + '/anular', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ motivo: motivo })
-    }).then(function(r) { return r.json(); }).then(function(data) {
-      if (data.ok) { cargarHistorial(); }
-      else { alert('Error: ' + (data.error || 'No se pudo anular')); }
-    }).catch(function() { alert('Error de conexión'); });
-  }
-
-  /* ── Modal detalles ── */
+  /* ══ VER DETALLES (modal) ══ */
   function verDetalles(id) {
-    var m = _movimientoMap[id];
+    var m = _movMap[id];
     if (!m) return;
-    var cant  = parseFloat(m.cantidad_usada || 0);
-    var costo = parseFloat(m.costo_total || 0);
-
-    function fila(label, val, full) {
-      return '<div class="det-item' + (full ? ' full' : '') + '">' +
-        '<div class="det-label">' + label + '</div>' +
-        '<div class="det-val">' + (val || '—') + '</div>' +
-        '</div>';
+    function fila(label,val,full) {
+      return '<div class="det-item'+(full?' full':'')+'"><div class="det-label">'+label+'</div><div class="det-val">'+(val||'—')+'</div></div>';
     }
-
-    var metodosLabel = { mochila:'Mochila', tractor:'Tractor', manual:'Manual', otro:'Otro' };
-    var climaLabel   = { optima:'Óptima', viento_leve:'Viento leve', nublado:'Nublado', calor:'Calor intenso' };
-    var estadoLabel  = m.estado === 'anulada' ? 'Anulada' : 'Activa';
-
+    var metodos = {mochila:'Mochila',tractor:'Tractor',manual:'Manual',otro:'Otro'};
+    var climas = {optima:'Óptima',viento_leve:'Viento leve',nublado:'Nublado',calor:'Calor intenso'};
     var html = '<div class="det-grid">';
-    html += fila('# Aplicación', '#' + m.id);
-    html += fila('Estado', estadoLabel);
-    html += fila('Fecha y hora', fmtFechaHora(m.fecha_hora));
-    html += fila('Temporada', m.temporada);
-    html += fila('Producto', (m.producto || '—') + (m.presentacion ? ' · ' + m.presentacion : ''), true);
-    html += fila('Cantidad', cant.toLocaleString('es-AR', {maximumFractionDigits:2}) + ' ' + (m.unidad_aplicacion || m.presentacion || ''));
-    html += fila('Costo total', costo ? '$' + costo.toLocaleString('es-AR') : '—');
-    html += fila('Parcela', m.parcela);
-    html += fila('Aplicador', m.empleado);
-    html += fila('Método', metodosLabel[m.metodo] || m.metodo);
-    html += fila('Condición climática', climaLabel[m.condicion_climatica] || m.condicion_climatica);
-    html += fila('Dosis / hectárea', m.dosis_por_hectarea ? parseFloat(m.dosis_por_hectarea).toFixed(2) + ' ' + (m.unidad_aplicacion || '') : '—');
-    html += fila('Días de carencia', m.carencia_dias ? m.carencia_dias + ' días' : '—');
-    if (m.carencia_dias && m.fecha_libre) {
-      var libre = m.fecha_libre.toString().split('T')[0];
-      html += fila('Libre desde', libre);
-    }
-    html += fila('Estado carencia', m.estado_carencia === 'carencia' ? 'En carencia' : 'Libre');
-    if (m.observacion) html += fila('Observación', m.observacion, true);
+    html += fila('#','#'+m.id);
+    html += fila('Estado',m.estado==='anulada'?'Anulada':'Activa');
+    html += fila('Fecha',fmtFecha(m.fecha_hora));
+    html += fila('Temporada',m.temporada);
+    html += fila('Producto',(m.producto||'—')+(m.presentacion?' · '+m.presentacion:''),true);
+    html += fila('Cantidad',fmt(m.cantidad_usada)+' '+(m.unidad_aplicacion||''));
+    html += fila('Costo',m.costo_total?'$'+fmt(m.costo_total):'—');
+    html += fila('Parcela',m.parcela);
+    html += fila('Aplicador',m.empleado);
+    html += fila('Método',metodos[m.metodo]||m.metodo);
+    html += fila('Clima',climas[m.condicion_climatica]||m.condicion_climatica);
+    html += fila('Dosis/ha',m.dosis_por_hectarea?fmt(m.dosis_por_hectarea)+' '+(m.unidad_aplicacion||''):'—');
+    html += fila('Carencia',m.carencia_dias?m.carencia_dias+' días':'—');
+    if (m.carencia_dias && m.fecha_libre) html += fila('Libre desde',m.fecha_libre.toString().split('T')[0]);
+    html += fila('Estado carencia',m.estado_carencia==='carencia'?'En carencia':'Libre');
+    if (m.observacion) html += fila('Observación',m.observacion,true);
     html += '</div>';
-
     document.getElementById('modal-contenido').innerHTML = html;
     document.getElementById('modal-detalles').classList.add('open');
   }
 
-  function cerrarModal(e) {
-    if (e.target === document.getElementById('modal-detalles')) {
-      document.getElementById('modal-detalles').classList.remove('open');
-    }
-  }
-
-  cargarDatos();
-  cargarKpisHoy();
-  cargarHistorial();
+  init();
   cargarTemporadaActiva();
 </script>
 </body>
