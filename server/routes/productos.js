@@ -6,8 +6,9 @@ const { getPool, sql } = require('../db');
 router.get('/', async (req, res) => {
   try {
     const pool = await getPool();
-    const result = await pool.request()
-      .query(`
+    const dbReq = pool.request();
+    if (req.query.categoria) dbReq.input('categoria', sql.NVarChar, req.query.categoria);
+    const result = await dbReq.query(`
         SELECT
           p.id, p.nombre, p.descripcion, p.tipo, p.categoria,
           p.presentacion, ISNULL(p.unidad_medida, p.presentacion) AS unidad_medida,
@@ -27,6 +28,7 @@ router.get('/', async (req, res) => {
         FROM Productos p
         LEFT JOIN Proveedores pv ON p.proveedor_id = pv.id
         WHERE p.activo = 1
+        ${req.query.categoria ? 'AND p.categoria = @categoria' : ''}
         ORDER BY p.nombre
       `);
     res.json(result.recordset);

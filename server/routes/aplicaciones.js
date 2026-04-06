@@ -129,6 +129,8 @@ router.post('/', async (req, res) => {
 
   if (!parcela_id || !producto_id) return res.status(400).json({ error: 'Parcela y producto son obligatorios' });
   if (!cantidad_usada || parseFloat(cantidad_usada) <= 0) return res.status(400).json({ error: 'Cantidad debe ser mayor a 0' });
+  const listaEmpleados = Array.isArray(empleados) ? empleados : (empleado_id ? [empleado_id] : []);
+  if (listaEmpleados.length === 0) return res.status(400).json({ error: 'Debe asignar al menos 1 aplicador' });
 
   const pool = await getPool();
   const transaction = new sql.Transaction(pool);
@@ -141,10 +143,8 @@ router.post('/', async (req, res) => {
       .query('SELECT stock_actual, costo_unitario FROM Productos WHERE id = @producto_id');
 
     const stock = parseFloat(stockResult.recordset[0].stock_actual) || 0;
-    if (stock < parseFloat(cantidad_usada)) {
-      await transaction.rollback();
-      return res.status(400).json({ error: 'Stock insuficiente. Stock actual: ' + stock });
-    }
+    const stockResultante = stock - parseFloat(cantidad_usada);
+    const warningStock = stockResultante < 0;
 
     const costo_total = parseFloat(cantidad_usada) * (parseFloat(stockResult.recordset[0].costo_unitario) || 0);
 
@@ -174,7 +174,6 @@ router.post('/', async (req, res) => {
     const aplicacion_id = insResult.recordset[0].aplicacion_id;
 
     // Insertar empleados en AplicacionEmpleados
-    const listaEmpleados = Array.isArray(empleados) ? empleados : (empleado_id ? [empleado_id] : []);
     for (let i = 0; i < listaEmpleados.length; i++) {
       const empId = typeof listaEmpleados[i] === 'object' ? listaEmpleados[i].empleado_id : listaEmpleados[i];
       if (!empId) continue;
@@ -204,7 +203,7 @@ router.post('/', async (req, res) => {
               VALUES (@producto_id, 'aplicacion', @cantidad, @parcela_id, @costo_total, @empleado_id, @usuario_id, @aplicacion_id, 'Aplicacion registrada', GETDATE())`);
 
     await transaction.commit();
-    res.json({ ok: true });
+    res.json({ ok: true, warning_stock: warningStock, stock_resultante: stockResultante });
   } catch (err) {
     await transaction.rollback();
     console.error(err); res.status(500).json({ error: "Error interno del servidor" });
