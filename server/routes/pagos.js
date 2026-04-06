@@ -564,171 +564,6 @@ router.post('/liquidar', async (req, res) => {
 });
 
 // ────────────────────────────────────────────────────────────────
-// POST /:id/comprobante
-// ────────────────────────────────────────────────────────────────
-router.post('/:id/comprobante', upload.single('comprobante'), async (req, res) => {
-  try {
-    if (!req.file) return res.status(400).json({ error: 'Archivo no proporcionado o formato invalido' });
-    const pool = await getPool();
-    await pool.request()
-      .input('id', sql.Int, req.params.id)
-      .input('path', sql.VarChar(255), req.file.filename)
-      .query('UPDATE Pagos SET comprobante_path = @path WHERE id = @id');
-    res.json({ ok: true, filename: req.file.filename });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error interno del servidor' });
-  }
-});
-
-// ────────────────────────────────────────────────────────────────
-// GET /:id/comprobante
-// ────────────────────────────────────────────────────────────────
-router.get('/:id/comprobante', async (req, res) => {
-  try {
-    const pool = await getPool();
-    const r = await pool.request().input('id', sql.Int, req.params.id)
-      .query('SELECT comprobante_path FROM Pagos WHERE id=@id');
-    if (!r.recordset.length || !r.recordset[0].comprobante_path) return res.status(404).json({ error: 'Sin comprobante' });
-    const filePath = path.join(uploadsDir, r.recordset[0].comprobante_path);
-    if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Archivo no encontrado' });
-    res.sendFile(filePath);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error interno del servidor' });
-  }
-});
-
-// ────────────────────────────────────────────────────────────────
-// GET /:id/recibo — PDF
-// ────────────────────────────────────────────────────────────────
-router.get('/:id/recibo', async (req, res) => {
-  try {
-    const pool = await getPool();
-    // Pago data
-    const pRes = await pool.request().input('id', sql.Int, req.params.id)
-      .query('SELECT * FROM Pagos WHERE id=@id');
-    if (!pRes.recordset.length) return res.status(404).json({ error: 'Pago no encontrado' });
-    const pago = pRes.recordset[0];
-
-    // Worker
-    const wRes = await pool.request().input('id', sql.Int, pago.juntador_id)
-      .query("SELECT apellido+', '+nombre AS nombre FROM Juntadores WHERE id=@id");
-    const nombre = wRes.recordset[0] ? wRes.recordset[0].nombre : 'Desconocido';
-
-    // Operador
-    let operadorNombre = '-';
-    if (pago.usuario_id) {
-      const opRes = await pool.request().input('uid', sql.Int, pago.usuario_id)
-        .query('SELECT nombre FROM Usuarios WHERE id=@uid');
-      if (opRes.recordset.length) operadorNombre = opRes.recordset[0].nombre;
-    }
-
-    // Empresa
-    const eRes = await pool.request().query('SELECT TOP 1 * FROM ConfiguracionEmpresa');
-    const emp = eRes.recordset[0] || {};
-
-    // Detalle de actividades for liquidaciones
-    const temp = await getTemporadaActiva(pool);
-    let desglose = [];
-    if (pago.tipo === 'liquidacion' && temp) {
-      const precios = await getPreciosMap(pool, temp.id);
-      const totales = await calcularTotalesTrabajador(pool, pago.juntador_id,
-        pago.periodo_desde || temp.fecha_inicio, pago.periodo_hasta || temp.fecha_fin, temp.id);
-      const { items } = buildDesglose(totales, precios);
-      desglose = items;
-    }
-
-    // Format helper for PDF amounts
-    const fmtMoney = (n) => '$' + Number(n || 0).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-
-    // Generate PDF
-    const doc = new PDFDocument({ size: 'A4', margin: 50 });
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename=recibo-${pago.numero_recibo || pago.id}.pdf`);
-    doc.pipe(res);
-
-    // Header
-    doc.fontSize(18).font('Helvetica-Bold').text('COSECHA', { continued: true })
-       .font('Helvetica').text(' - Sistema de Cultivos');
-    if (emp.razon_social) doc.fontSize(10).text(emp.razon_social);
-    if (emp.cuit) doc.text(`CUIT: ${emp.cuit}`);
-    if (emp.direccion) doc.text(`${emp.direccion}${emp.localidad ? ', ' + emp.localidad : ''}${emp.provincia ? ', ' + emp.provincia : ''}`);
-    doc.moveDown();
-
-    // Recibo info
-    doc.fontSize(16).font('Helvetica-Bold').text('RECIBO DE PAGO');
-    const fechaPago = pago.fecha ? new Date(pago.fecha) : new Date();
-    doc.fontSize(11).font('Helvetica')
-       .text(`N\u00b0: ${pago.numero_recibo || '-'}`)
-       .text(`Fecha: ${fechaPago.toLocaleDateString('es-AR')} ${fechaPago.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}`)
-       .text(`Tipo: ${pago.tipo === 'anticipo' ? 'Anticipo' : 'Liquidacion'}`)
-       .text(`Trabajador: ${nombre}`)
-       .text(`Operador: ${operadorNombre}`);
-    doc.moveDown();
-
-    // Activity detail for liquidaciones
-    if (desglose.length > 0) {
-      doc.fontSize(13).font('Helvetica-Bold').text('DETALLE DE TRABAJOS');
-      doc.moveDown(0.3);
-      const tableTop = doc.y;
-      const col = [50, 180, 280, 360, 440];
-      doc.fontSize(9).font('Helvetica-Bold');
-      doc.text('Actividad', col[0], tableTop);
-      doc.text('Cantidad', col[1], tableTop);
-      doc.text('Precio', col[2], tableTop);
-      doc.text('Subtotal', col[3], tableTop);
-      doc.moveTo(50, tableTop + 14).lineTo(520, tableTop + 14).stroke();
-      let y = tableTop + 20;
-      doc.font('Helvetica').fontSize(9);
-      desglose.forEach(item => {
-        doc.text(item.actividad, col[0], y);
-        doc.text(`${item.cantidad} ${item.unidad}`, col[1], y);
-        doc.text(`${fmtMoney(item.precio)}/${item.unidad}`, col[2], y);
-        doc.text(fmtMoney(item.subtotal), col[3], y);
-        y += 16;
-      });
-      doc.moveTo(50, y).lineTo(520, y).stroke();
-      y += 6;
-      doc.font('Helvetica-Bold').fontSize(10);
-      doc.text('Total Bruto:', col[0], y);
-      doc.text(fmtMoney(pago.total_bruto), col[3], y);
-      y += 16;
-      if (parseFloat(pago.anticipos) > 0) {
-        doc.font('Helvetica').text('Anticipos descontados:', col[0], y);
-        doc.text(`-${fmtMoney(pago.anticipos)}`, col[3], y);
-        y += 16;
-      }
-      doc.font('Helvetica-Bold').fontSize(12);
-      doc.text('NETO PAGADO:', col[0], y);
-      doc.text(fmtMoney(pago.monto_pagado || pago.monto), col[3], y);
-      doc.y = y + 30;
-    } else {
-      // Anticipo
-      doc.fontSize(12).font('Helvetica-Bold').text(`Monto: ${fmtMoney(pago.monto)}`);
-      doc.moveDown();
-    }
-
-    // Forma de pago
-    doc.fontSize(10).font('Helvetica');
-    doc.text(`Forma de pago: ${pago.forma_pago || 'efectivo'}`);
-    if (pago.referencia_transferencia) doc.text(`Referencia: ${pago.referencia_transferencia}`);
-    if (pago.observacion) doc.text(`Observacion: ${pago.observacion}`);
-    doc.moveDown(3);
-
-    // Firma
-    doc.fontSize(11).text('Recibi conforme ___________________________________________');
-    doc.moveDown();
-    doc.text('Firma: _____________________    Aclaracion: _____________________');
-
-    doc.end();
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error interno del servidor' });
-  }
-});
-
-// ────────────────────────────────────────────────────────────────
 // GET /estadisticas
 // ────────────────────────────────────────────────────────────────
 router.get('/estadisticas', async (req, res) => {
@@ -807,7 +642,6 @@ router.get('/estadisticas', async (req, res) => {
         ORDER BY semana`);
 
     // Trabajadores con deuda pendiente > 0
-    // Reuse the workers-con-saldo logic but simplified
     const workersRes = await pool.request()
       .input('fi', sql.Date, temp.fecha_inicio)
       .input('ff', sql.Date, temp.fecha_fin)
@@ -1098,6 +932,171 @@ router.get('/exportar', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error generando Excel' });
+  }
+});
+
+// ────────────────────────────────────────────────────────────────
+// POST /:id/comprobante  (MUST be after literal routes to avoid /:id matching)
+// ────────────────────────────────────────────────────────────────
+router.post('/:id/comprobante', upload.single('comprobante'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'Archivo no proporcionado o formato invalido' });
+    const pool = await getPool();
+    await pool.request()
+      .input('id', sql.Int, req.params.id)
+      .input('path', sql.VarChar(255), req.file.filename)
+      .query('UPDATE Pagos SET comprobante_path = @path WHERE id = @id');
+    res.json({ ok: true, filename: req.file.filename });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// ────────────────────────────────────────────────────────────────
+// GET /:id/comprobante
+// ────────────────────────────────────────────────────────────────
+router.get('/:id/comprobante', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const r = await pool.request().input('id', sql.Int, req.params.id)
+      .query('SELECT comprobante_path FROM Pagos WHERE id=@id');
+    if (!r.recordset.length || !r.recordset[0].comprobante_path) return res.status(404).json({ error: 'Sin comprobante' });
+    const filePath = path.join(uploadsDir, r.recordset[0].comprobante_path);
+    if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Archivo no encontrado' });
+    res.sendFile(filePath);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// ────────────────────────────────────────────────────────────────
+// GET /:id/recibo — PDF
+// ────────────────────────────────────────────────────────────────
+router.get('/:id/recibo', async (req, res) => {
+  try {
+    const pool = await getPool();
+    // Pago data
+    const pRes = await pool.request().input('id', sql.Int, req.params.id)
+      .query('SELECT * FROM Pagos WHERE id=@id');
+    if (!pRes.recordset.length) return res.status(404).json({ error: 'Pago no encontrado' });
+    const pago = pRes.recordset[0];
+
+    // Worker
+    const wRes = await pool.request().input('id', sql.Int, pago.juntador_id)
+      .query("SELECT apellido+', '+nombre AS nombre FROM Juntadores WHERE id=@id");
+    const nombre = wRes.recordset[0] ? wRes.recordset[0].nombre : 'Desconocido';
+
+    // Operador
+    let operadorNombre = '-';
+    if (pago.usuario_id) {
+      const opRes = await pool.request().input('uid', sql.Int, pago.usuario_id)
+        .query('SELECT nombre FROM Usuarios WHERE id=@uid');
+      if (opRes.recordset.length) operadorNombre = opRes.recordset[0].nombre;
+    }
+
+    // Empresa
+    const eRes = await pool.request().query('SELECT TOP 1 * FROM ConfiguracionEmpresa');
+    const emp = eRes.recordset[0] || {};
+
+    // Detalle de actividades for liquidaciones
+    const temp = await getTemporadaActiva(pool);
+    let desglose = [];
+    if (pago.tipo === 'liquidacion' && temp) {
+      const precios = await getPreciosMap(pool, temp.id);
+      const totales = await calcularTotalesTrabajador(pool, pago.juntador_id,
+        pago.periodo_desde || temp.fecha_inicio, pago.periodo_hasta || temp.fecha_fin, temp.id);
+      const { items } = buildDesglose(totales, precios);
+      desglose = items;
+    }
+
+    // Format helper for PDF amounts
+    const fmtMoney = (n) => '$' + Number(n || 0).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+    // Generate PDF
+    const doc = new PDFDocument({ size: 'A4', margin: 50 });
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename=recibo-${pago.numero_recibo || pago.id}.pdf`);
+    doc.pipe(res);
+
+    // Header
+    doc.fontSize(18).font('Helvetica-Bold').text('COSECHA', { continued: true })
+       .font('Helvetica').text(' - Sistema de Cultivos');
+    if (emp.razon_social) doc.fontSize(10).text(emp.razon_social);
+    if (emp.cuit) doc.text(`CUIT: ${emp.cuit}`);
+    if (emp.direccion) doc.text(`${emp.direccion}${emp.localidad ? ', ' + emp.localidad : ''}${emp.provincia ? ', ' + emp.provincia : ''}`);
+    doc.moveDown();
+
+    // Recibo info
+    doc.fontSize(16).font('Helvetica-Bold').text('RECIBO DE PAGO');
+    const fechaPago = pago.fecha ? new Date(pago.fecha) : new Date();
+    doc.fontSize(11).font('Helvetica')
+       .text(`N\u00b0: ${pago.numero_recibo || '-'}`)
+       .text(`Fecha: ${fechaPago.toLocaleDateString('es-AR')} ${fechaPago.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}`)
+       .text(`Tipo: ${pago.tipo === 'anticipo' ? 'Anticipo' : 'Liquidacion'}`)
+       .text(`Trabajador: ${nombre}`)
+       .text(`Operador: ${operadorNombre}`);
+    doc.moveDown();
+
+    // Activity detail for liquidaciones
+    if (desglose.length > 0) {
+      doc.fontSize(13).font('Helvetica-Bold').text('DETALLE DE TRABAJOS');
+      doc.moveDown(0.3);
+      const tableTop = doc.y;
+      const col = [50, 180, 280, 360, 440];
+      doc.fontSize(9).font('Helvetica-Bold');
+      doc.text('Actividad', col[0], tableTop);
+      doc.text('Cantidad', col[1], tableTop);
+      doc.text('Precio', col[2], tableTop);
+      doc.text('Subtotal', col[3], tableTop);
+      doc.moveTo(50, tableTop + 14).lineTo(520, tableTop + 14).stroke();
+      let y = tableTop + 20;
+      doc.font('Helvetica').fontSize(9);
+      desglose.forEach(item => {
+        doc.text(item.actividad, col[0], y);
+        doc.text(`${item.cantidad} ${item.unidad}`, col[1], y);
+        doc.text(`${fmtMoney(item.precio)}/${item.unidad}`, col[2], y);
+        doc.text(fmtMoney(item.subtotal), col[3], y);
+        y += 16;
+      });
+      doc.moveTo(50, y).lineTo(520, y).stroke();
+      y += 6;
+      doc.font('Helvetica-Bold').fontSize(10);
+      doc.text('Total Bruto:', col[0], y);
+      doc.text(fmtMoney(pago.total_bruto), col[3], y);
+      y += 16;
+      if (parseFloat(pago.anticipos) > 0) {
+        doc.font('Helvetica').text('Anticipos descontados:', col[0], y);
+        doc.text(`-${fmtMoney(pago.anticipos)}`, col[3], y);
+        y += 16;
+      }
+      doc.font('Helvetica-Bold').fontSize(12);
+      doc.text('NETO PAGADO:', col[0], y);
+      doc.text(fmtMoney(pago.monto_pagado || pago.monto), col[3], y);
+      doc.y = y + 30;
+    } else {
+      // Anticipo
+      doc.fontSize(12).font('Helvetica-Bold').text(`Monto: ${fmtMoney(pago.monto)}`);
+      doc.moveDown();
+    }
+
+    // Forma de pago
+    doc.fontSize(10).font('Helvetica');
+    doc.text(`Forma de pago: ${pago.forma_pago || 'efectivo'}`);
+    if (pago.referencia_transferencia) doc.text(`Referencia: ${pago.referencia_transferencia}`);
+    if (pago.observacion) doc.text(`Observacion: ${pago.observacion}`);
+    doc.moveDown(3);
+
+    // Firma
+    doc.fontSize(11).text('Recibi conforme ___________________________________________');
+    doc.moveDown();
+    doc.text('Firma: _____________________    Aclaracion: _____________________');
+
+    doc.end();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 

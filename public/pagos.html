@@ -251,7 +251,7 @@ function fTime(d) { if (!d) return '-'; var t = new Date(d); return t.toLocaleTi
 
 // ── Recibo con JWT (FIX-05) ──
 function abrirRecibo(pagoId) {
-  var token = localStorage.getItem('token');
+  var token = localStorage.getItem('cosecha_token');
   fetch('/api/pagos/' + pagoId + '/recibo', { headers: { 'Authorization': 'Bearer ' + token } })
     .then(function(r) {
       if (!r.ok) throw new Error('Error al obtener recibo');
@@ -519,7 +519,7 @@ function actualizarBadgeAlertas(count) {
 // ── EXPORTAR EXCEL ──
 function exportarExcel() {
   var tid = _selectedId || '';
-  var token = localStorage.getItem('token');
+  var token = localStorage.getItem('cosecha_token');
   var url = '/api/pagos/exportar' + (tid ? '?trabajador_id=' + tid : '');
   fetch(url, { headers: { 'Authorization': 'Bearer ' + token } })
     .then(function(r) {
@@ -887,7 +887,7 @@ function subirComprobante(pagoId) {
     fd.append('comprobante', input.files[0]);
     fetch('/api/pagos/'+pagoId+'/comprobante', {
       method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('cosecha_token') },
       body: fd
     }).then(function(r) { return r.json(); }).then(function(data) {
       if (data.ok) cargarDetalle(_selectedId);
