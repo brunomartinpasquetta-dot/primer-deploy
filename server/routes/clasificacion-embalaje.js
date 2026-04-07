@@ -617,7 +617,7 @@ router.post('/embalar', async (req, res) => {
 
     const pool = await getPool();
     const uid = req.user ? req.user.id : null;
-    const tipoEmbalajeId = tipo_embalaje_id ? parseInt(tipo_embalaje_id) : null;
+    let tipoEmbalajeId = tipo_embalaje_id ? parseInt(tipo_embalaje_id) : null;
 
     const kilosNum = parseFloat(kilos);
     const cantEnvases = parseInt(cantidad_envases) || 1;
@@ -652,6 +652,17 @@ router.post('/embalar', async (req, res) => {
       .query('SELECT id, nombre, stock_actual FROM Productos WHERE id = @pid');
     if (!prodRes.recordset.length) return res.status(404).json({ error: 'Producto de embalaje no encontrado' });
     const producto = prodRes.recordset[0];
+
+    // Auto-resolver tipo_embalaje_id si no fue enviado
+    if (!tipoEmbalajeId && producto.nombre) {
+      const pesoMatch = producto.nombre.match(/(\d+(?:\.?\d+)?)\s*kg/i);
+      if (pesoMatch) {
+        const teRes = await pool.request()
+          .input('peso_pattern', sql.NVarChar, '%' + pesoMatch[1] + 'kg%')
+          .query('SELECT TOP 1 id FROM TiposEmbalaje WHERE activo = 1 AND LOWER(nombre) LIKE @peso_pattern');
+        if (teRes.recordset.length) tipoEmbalajeId = teRes.recordset[0].id;
+      }
+    }
 
     const depRes = await pool.request()
       .input('did', sql.Int, deposito_id)

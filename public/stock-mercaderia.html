@@ -623,8 +623,9 @@ function cargarEstadoLotes() {
         '<td style="text-align:right;font-weight:700;color:var(--sem-verde);font-family:\'JetBrains Mono\',monospace;">' + fmt(r.kilos) + ' kg</td>' +
         '<td>' + (r.deposito_actual || r.deposito || '—') + '</td>' +
         '<td><span class="etapa-badge ' + badgeClass + '">' + etiqueta + '</span></td>' +
-        '<td style="text-align:center;">' +
-          '<a href="trazabilidad.html?codigo=' + encodeURIComponent(codigo) + '" class="btn-icon-sm" title="Ver trazabilidad"><i data-lucide="git-branch"></i></a>' +
+        '<td style="text-align:center;white-space:nowrap;">' +
+          '<a href="trazabilidad.html?codigo=' + encodeURIComponent(codigo) + '" class="btn-icon-sm" title="Ver trazabilidad"><i data-lucide="eye"></i></a> ' +
+          '<button class="btn-icon-sm" onclick="imprimirEtiquetaLote(' + r.id + ')" title="Imprimir etiqueta"><i data-lucide="printer"></i></button>' +
         '</td>' +
       '</tr>';
     }).join('');
@@ -907,6 +908,21 @@ function imprimirHistorial() {
   var tabla = document.getElementById('tabla-historial').outerHTML;
   var temporada = (document.getElementById('hist-temporada').options[document.getElementById('hist-temporada').selectedIndex] || {}).text || 'Todas';
   _abrirVentanaImpresion('Stock Mercadería — Historial', 'Temporada: ' + temporada, tabla);
+}
+
+function imprimirEtiquetaLote(loteId) {
+  var token = localStorage.getItem('cosecha_token');
+  fetch('/api/clasificacion-embalaje/etiqueta/' + loteId + '/print?cantidad=1', {
+    headers: { 'Authorization': 'Bearer ' + token }
+  }).then(function(r){
+    if (!r.ok) throw new Error('Error');
+    return r.blob();
+  }).then(function(blob){
+    var url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+  }).catch(function(){
+    showAlert('Error al generar etiqueta', 'error');
+  });
 }
 
 init();

@@ -625,25 +625,32 @@ router.get('/stock-envases', async (req, res) => {
       where += ' AND md.temporada_id = @temporada_id';
     }
     const result = await r.query(`
-      SELECT te.nombre AS tipo_envase,
+      SELECT COALESCE(te.nombre, emb_info.tipo_envase) AS tipo_envase,
              cc.nombre AS categoria,
              sc.nombre AS sub_categoria,
              d.nombre  AS deposito,
-             SUM(CASE WHEN md.tipo LIKE 'ingreso%' THEN ISNULL(md.cantidad_envases,0) ELSE 0 END)
+             SUM(CASE WHEN md.tipo LIKE 'ingreso%' THEN ISNULL(md.cantidad_envases, ISNULL(emb_info.cantidad_envases, 0)) ELSE 0 END)
                - SUM(CASE WHEN md.tipo LIKE 'egreso%' AND md.tipo != 'egreso_anulacion' THEN ISNULL(md.cantidad_envases,0) ELSE 0 END) AS unidades_disponibles,
              SUM(CASE WHEN md.tipo LIKE 'ingreso%' THEN ISNULL(md.kilos,0) ELSE 0 END)
                - SUM(CASE WHEN md.tipo LIKE 'egreso%' AND md.tipo != 'egreso_anulacion' THEN ISNULL(md.kilos,0) ELSE 0 END) AS kg_disponibles
       FROM MovimientosDeposito md
-      LEFT JOIN TiposEmbalaje te ON md.tipo_embalaje_id = te.id
-      LEFT JOIN LotesMercaderia lm ON md.sub_lote_id = lm.id
+      LEFT JOIN LotesMercaderia lm ON COALESCE(md.sub_lote_id, md.lote_id) = lm.id
       LEFT JOIN CategoriasClasificacion cc ON lm.categoria_clasif_id = cc.id
       LEFT JOIN SubCategoriasClasificacion sc ON lm.sub_categoria_id = sc.id
       LEFT JOIN Depositos d ON md.deposito_id = d.id
+      LEFT JOIN TiposEmbalaje te ON md.tipo_embalaje_id = te.id
+      OUTER APPLY (
+        SELECT TOP 1 e2.tipo_envase, e2.cantidad_envases
+        FROM Embalaje e2
+        WHERE e2.sub_lote_id = COALESCE(md.sub_lote_id, md.lote_id)
+          AND ISNULL(e2.estado, 'confirmada') != 'anulada'
+          AND e2.kilos = md.kilos
+      ) emb_info
       WHERE ${where}
-      GROUP BY te.nombre, cc.nombre, sc.nombre, d.nombre
+      GROUP BY COALESCE(te.nombre, emb_info.tipo_envase), cc.nombre, sc.nombre, d.nombre
       HAVING SUM(CASE WHEN md.tipo LIKE 'ingreso%' THEN ISNULL(md.kilos,0) ELSE 0 END)
                - SUM(CASE WHEN md.tipo LIKE 'egreso%' AND md.tipo != 'egreso_anulacion' THEN ISNULL(md.kilos,0) ELSE 0 END) > 0
-      ORDER BY te.nombre, kg_disponibles DESC
+      ORDER BY COALESCE(te.nombre, emb_info.tipo_envase), kg_disponibles DESC
     `);
     res.json(result.recordset);
   } catch (err) {
@@ -657,7 +664,7 @@ router.get('/estado-lotes', async (req, res) => {
   try {
     const pool = await getPool();
     const r = pool.request();
-    let where = "lm.estado = 'activa'";
+    let where = "lm.estado NOT IN ('anulado', 'eliminado') AND lm.lote_padre_id IS NOT NULL";
     if (req.query.temporada_id) {
       r.input('temporada_id', sql.Int, parseInt(req.query.temporada_id));
       where += ' AND lm.temporada_id = @temporada_id';
@@ -679,7 +686,7 @@ router.get('/estado-lotes', async (req, res) => {
              d.nombre  AS deposito,
              dp.nombre AS deposito_actual,
              padre.codigo_externo AS lote_padre,
-             te.nombre AS tipo_envase,
+             COALESCE(te.nombre, emb.tipo_envase_txt) AS tipo_envase,
              emb.cantidad_envases AS unidades_embaladas
       FROM LotesMercaderia lm
       LEFT JOIN Parcelas p ON lm.parcela_id = p.id
@@ -689,10 +696,12 @@ router.get('/estado-lotes', async (req, res) => {
       LEFT JOIN Depositos dp ON lm.deposito_actual_id = dp.id
       LEFT JOIN LotesMercaderia padre ON lm.lote_padre_id = padre.id
       LEFT JOIN (
-        SELECT sub_lote_id, tipo_embalaje_id,
+        SELECT sub_lote_id,
+               MAX(tipo_embalaje_id) AS tipo_embalaje_id,
+               MAX(tipo_envase) AS tipo_envase_txt,
                SUM(cantidad_envases) AS cantidad_envases
-        FROM Embalaje WHERE ISNULL(estado,'activa') != 'anulada'
-        GROUP BY sub_lote_id, tipo_embalaje_id
+        FROM Embalaje WHERE ISNULL(estado,'confirmada') != 'anulada'
+        GROUP BY sub_lote_id
       ) emb ON emb.sub_lote_id = lm.id
       LEFT JOIN TiposEmbalaje te ON emb.tipo_embalaje_id = te.id
       WHERE ${where}
