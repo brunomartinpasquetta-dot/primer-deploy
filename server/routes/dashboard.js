@@ -91,13 +91,21 @@ router.get('/', async (req, res) => {
           .query(`SELECT ISNULL(SUM(j.kilos), 0) AS total
                   FROM Juntada j
                   JOIN Parcelas l ON j.parcela_id = l.id
-                  WHERE l.temporada_id = @tid`),
+                  WHERE l.temporada_id = @tid AND ISNULL(j.estado, 'activa') != 'anulada'`),
 
         pool.request()
           .input('tid', sql.Int, tid)
           .query(`SELECT
-                    ISNULL(SUM(CASE WHEN tipo = 'ingreso' THEN kilos ELSE 0 END), 0) AS ingresados,
-                    ISNULL(SUM(CASE WHEN tipo LIKE 'egreso%' THEN kilos ELSE 0 END), 0) AS vendidos
+                    ISNULL(SUM(CASE
+                      WHEN tipo = 'ingreso' THEN kilos
+                      WHEN tipo = 'egreso_anulacion' THEN -kilos
+                      ELSE 0
+                    END), 0) AS ingresados,
+                    ISNULL(SUM(CASE
+                      WHEN tipo LIKE 'egreso%' AND tipo != 'egreso_anulacion' THEN kilos
+                      WHEN tipo = 'ingreso_anulacion' THEN -kilos
+                      ELSE 0
+                    END), 0) AS vendidos
                   FROM StockMercaderia
                   WHERE temporada_id = @tid`),
 

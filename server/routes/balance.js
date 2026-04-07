@@ -13,7 +13,7 @@ router.get('/temporada/:id', async (req, res) => {
       .input('id', sql.Int, temporada_id)
       .query(`SELECT ISNULL(SUM(kilos * precio_kilo), 0) AS total
               FROM StockMercaderia
-              WHERE temporada_id = @id AND tipo LIKE 'egreso%' AND precio_kilo IS NOT NULL`);
+              WHERE temporada_id = @id AND tipo LIKE 'egreso%' AND tipo != 'egreso_anulacion' AND precio_kilo IS NOT NULL`);
 
     // Costo insumos (compras)
     const compras = await pool.request()
@@ -54,7 +54,7 @@ router.get('/temporada/:id', async (req, res) => {
       .query(`SELECT ISNULL(SUM(j.kilos), 0) AS total
               FROM Juntada j
               JOIN Parcelas l ON j.parcela_id = l.id
-              WHERE l.temporada_id = @id`);
+              WHERE l.temporada_id = @id AND ISNULL(j.estado, 'activa') != 'anulada'`);
 
     // Kilos en depósito y descartados (desde LotesMercaderia)
     const depositos = await pool.request()
@@ -123,7 +123,7 @@ router.get('/parcela/:id', async (req, res) => {
       .input('id', sql.Int, parcela_id)
       .query(`SELECT ISNULL(SUM(kilos * precio_kilo), 0) AS total
               FROM StockMercaderia
-              WHERE parcela_id = @id AND tipo LIKE 'egreso%' AND precio_kilo IS NOT NULL`);
+              WHERE parcela_id = @id AND tipo LIKE 'egreso%' AND tipo != 'egreso_anulacion' AND precio_kilo IS NOT NULL`);
 
     const insumos = await pool.request()
       .input('id', sql.Int, parcela_id)
@@ -144,7 +144,7 @@ router.get('/parcela/:id', async (req, res) => {
 
     const kilos = await pool.request()
       .input('id', sql.Int, parcela_id)
-      .query(`SELECT ISNULL(SUM(kilos), 0) AS total FROM Juntada WHERE parcela_id = @id`);
+      .query(`SELECT ISNULL(SUM(kilos), 0) AS total FROM Juntada WHERE parcela_id = @id AND ISNULL(estado, 'activa') != 'anulada'`);
 
     const ingresos = parseFloat(ventas.recordset[0].total);
     const costoInsumos = parseFloat(insumos.recordset[0].total);
@@ -184,7 +184,7 @@ router.get('/periodo', async (req, res) => {
     if (temporada_id) reqVentas.input('temporada_id', sql.Int, parseInt(temporada_id));
     const ventas = await reqVentas.query(`SELECT ISNULL(SUM(kilos * precio_kilo), 0) AS total
               FROM StockMercaderia
-              WHERE tipo LIKE 'egreso%' AND precio_kilo IS NOT NULL
+              WHERE tipo LIKE 'egreso%' AND tipo != 'egreso_anulacion' AND precio_kilo IS NOT NULL
               AND fecha >= @desde AND fecha <= @hasta
               ${temporada_id ? 'AND temporada_id = @temporada_id' : ''}`);
 
