@@ -1,0 +1,123 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - text: CO
+          - emphasis [ref=e8]: SE
+          - text: CHA
+        - generic [ref=e9]: SISTEMA DE CULTIVOS
+    - navigation [ref=e10]:
+      - link "Dashboard" [ref=e11] [cursor=pointer]:
+        - /url: index.html
+        - img [ref=e13]
+        - text: Dashboard
+      - generic [ref=e18]: Campo
+      - link "Cosecha" [ref=e19] [cursor=pointer]:
+        - /url: juntada.html
+        - img [ref=e21]
+        - text: Cosecha
+      - link "Despalillado" [ref=e30] [cursor=pointer]:
+        - /url: despalillado.html
+        - img [ref=e32]
+        - text: Despalillado
+      - link "Aplicaciones" [ref=e38] [cursor=pointer]:
+        - /url: aplicaciones.html
+        - img [ref=e40]
+        - text: Aplicaciones
+      - link "Trabajos de Campo" [ref=e43] [cursor=pointer]:
+        - /url: trabajos-campo.html
+        - img [ref=e45]
+        - text: Trabajos de Campo
+      - link "Clasif. + Embalaje" [ref=e49] [cursor=pointer]:
+        - /url: clasificacion-embalaje.html
+        - img [ref=e51]
+        - text: Clasif. + Embalaje
+      - generic [ref=e55]: Sistema
+      - link "Stock" [ref=e56] [cursor=pointer]:
+        - /url: menu-stock.html
+        - img [ref=e58]
+        - text: Stock
+      - link "Comercial" [ref=e62] [cursor=pointer]:
+        - /url: menu-comercial.html
+        - img [ref=e64]
+        - text: Comercial
+      - link "Administración Caja, cheques, pagos y reportes" [ref=e69] [cursor=pointer]:
+        - /url: menu-admin.html
+        - img [ref=e71]
+        - text: Administración Caja, cheques, pagos y reportes
+      - link "Mercado" [ref=e73] [cursor=pointer]:
+        - /url: mercado.html
+        - img [ref=e75]
+        - text: Mercado
+      - link "Configuración" [ref=e78] [cursor=pointer]:
+        - /url: menu-config.html
+        - img [ref=e80]
+        - text: Configuración
+    - generic [ref=e83]:
+      - generic [ref=e84]: Administrador · administrador
+      - button "Cerrar sesión" [ref=e85] [cursor=pointer]
+  - generic [ref=e86]:
+    - banner [ref=e87]:
+      - generic [ref=e88]:
+        - img [ref=e89]
+        - generic [ref=e90]:
+          - generic [ref=e91]:
+            - text: CO
+            - emphasis [ref=e92]: SE
+            - text: CHA
+          - generic [ref=e93]: SISTEMA DE CULTIVOS
+        - generic [ref=e94]: 🌱 Campaña FIX 2026 · Día 8
+      - generic [ref=e95]:
+        - generic [ref=e96] [cursor=pointer]:
+          - img [ref=e97]
+          - text: Administrador
+        - generic [ref=e100]: martes, 7 de abril
+    - generic [ref=e101]:
+      - link "← Volver" [ref=e102] [cursor=pointer]:
+        - /url: "#"
+      - generic [ref=e103]:
+        - generic [ref=e104]: Administración
+        - generic [ref=e105]: Finanzas, pagos y reportes
+      - generic [ref=e106]:
+        - link "Caja Movimientos del día" [ref=e107] [cursor=pointer]:
+          - /url: caja.html
+          - img [ref=e109]
+          - generic [ref=e112]: Caja
+          - generic [ref=e113]: Movimientos del día
+        - link "Cheques Recibidos y emitidos" [ref=e114] [cursor=pointer]:
+          - /url: cheques.html
+          - img [ref=e116]
+          - generic [ref=e119]: Cheques
+          - generic [ref=e120]: Recibidos y emitidos
+        - link "Pagos Liquidaciones y anticipos" [ref=e121] [cursor=pointer]:
+          - /url: pagos.html
+          - img [ref=e123]
+          - generic [ref=e126]: Pagos
+          - generic [ref=e127]: Liquidaciones y anticipos
+        - link "Gastos Registro de egresos" [ref=e128] [cursor=pointer]:
+          - /url: gastos.html
+          - img [ref=e130]
+          - generic [ref=e133]: Gastos
+          - generic [ref=e134]: Registro de egresos
+        - link "Reportes Exportar datos" [ref=e135] [cursor=pointer]:
+          - /url: reportes.html
+          - img [ref=e137]
+          - generic [ref=e138]: Reportes
+          - generic [ref=e139]: Exportar datos
+        - link "Balance Resumen financiero" [ref=e140] [cursor=pointer]:
+          - /url: balance.html
+          - img [ref=e142]
+          - generic [ref=e145]: Balance
+          - generic [ref=e146]: Resumen financiero
+        - link "Remitos Historial de remitos" [ref=e147] [cursor=pointer]:
+          - /url: remitos.html
+          - img [ref=e149]
+          - generic [ref=e152]: Remitos
+          - generic [ref=e153]: Historial de remitos
+        - link "Personal Legajos y empleados" [ref=e154] [cursor=pointer]:
+          - /url: personal.html
+          - img [ref=e156]
+          - generic [ref=e160]: Personal
+          - generic [ref=e161]: Legajos y empleados

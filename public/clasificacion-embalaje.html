@@ -7,6 +7,7 @@
   <title>Clasificacion + Embalaje — Campo</title>
   <link rel="icon" href="img/logo.png">
   <script src="js/utils.js"></script>
+  <script src="js/cosecha-dialogs.js"></script>
   <link rel="stylesheet" href="cosecha.css">
   <style>
     /* ── KPI cards ── */
@@ -44,13 +45,8 @@
     .sec-badge { font-size:11px; font-weight:700; padding:2px 8px; border-radius:10px; background:var(--sem-verde-bg); color:var(--sem-verde); }
     .sin-items { text-align:center; padding:20px; color:var(--texto-secundario); font-size:13px; }
 
-    /* ── Tabs ── */
-    .ce-tabs { display:flex; gap:0; border-bottom:2px solid var(--borde); margin-top:16px; margin-bottom:12px; }
-    .ce-tab { padding:8px 16px; font-size:12px; font-weight:700; color:var(--texto-suave); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; transition:.15s; }
-    .ce-tab:hover { color:var(--texto); }
-    .ce-tab.active { color:var(--verde); border-bottom-color:var(--verde); }
-    .ce-tab-content { display:none; }
-    .ce-tab-content.active { display:block; }
+    /* ── Section separator ── */
+    .ce-section-sep { margin-top:16px; padding-top:12px; border-top:2px solid var(--borde); }
 
     /* ── Clasificación cards (derecha) ── */
     .clasif-card {
@@ -99,9 +95,9 @@
     /* ── Historial (mismo patrón despalillado) ── */
     .ce-historial { background:var(--superficie); border:1px solid var(--borde); border-radius:12px; overflow:hidden; }
     .ce-historial-body { overflow-y:auto; max-height:300px; }
-    .ce-historial-body table { width:100%; border-collapse:collapse; font-size:13px; }
-    .ce-historial-body th { text-align:left; padding:6px 8px; font-size:10px; font-weight:600; color:var(--texto-suave); background:var(--fondo); text-transform:uppercase; letter-spacing:.5px; position:sticky; top:0; white-space:nowrap; }
-    .ce-historial-body td { padding:5px 8px; border-bottom:1px solid var(--borde); color:var(--texto); font-size:12px; white-space:nowrap; }
+    .ce-historial-body table { width:100%; border-collapse:collapse; font-size:11px; table-layout:auto; }
+    .ce-historial-body th { text-align:left; padding:4px 6px; font-size:9px; font-weight:600; color:var(--texto-suave); background:var(--fondo); text-transform:uppercase; letter-spacing:.4px; position:sticky; top:0; white-space:nowrap; }
+    .ce-historial-body td { padding:3px 6px; border-bottom:1px solid var(--borde); color:var(--texto); font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:90px; }
     .ce-historial-body tr:hover td { background:var(--fondo); }
     .ce-historial-body .anulado td { opacity:.5; text-decoration:line-through; }
     .mono { font-family:'JetBrains Mono',monospace; }
@@ -158,6 +154,7 @@
       <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
       <a href="clasificacion-embalaje.html" class="nav-item active"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
       <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
+      <a href="trabajos-campo.html" class="nav-item"><span class="nav-icon"><i data-lucide="hammer"></i></span> Trabajos de Campo</a>
       <div class="nav-section">Sistema</div>
       <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
       <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
@@ -179,9 +176,15 @@
 
     <div class="content">
       <a href="menu-campo.html" class="btn-volver">← Volver</a>
-      <div class="content-header">
-        <div class="content-title">Clasificación + Embalaje</div>
-        <div class="content-sub">Clasifica la fruta despalillada por categoría y preparala para despacho</div>
+      <div class="content-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div class="content-title">Clasificación + Embalaje</div>
+          <div class="content-sub">Clasifica la fruta despalillada por categoría y preparala para despacho</div>
+        </div>
+        <div id="acciones-lote" style="display:flex;gap:6px;">
+          <button class="btn btn-confirmar" onclick="verPagosLote()" style="padding:5px 14px;font-size:12px;">Pagos de jornada</button>
+          <button class="btn btn-confirmar" onclick="toggleSubLotes()" style="padding:5px 14px;font-size:12px;">Ver sub-lotes</button>
+        </div>
       </div>
 
       <!-- ── KPIs ── -->
@@ -203,21 +206,58 @@
             <span class="sec-title">Lotes en proceso</span>
           </div>
           <div id="lista-lotes"></div>
+
+          <!-- Historial del lote seleccionado -->
+          <div id="historial-lote" style="display:none;margin-top:12px;">
+            <!-- Distribución por categoría (resumen) -->
+            <div id="resumen-categorias" style="margin-bottom:8px;"></div>
+
+            <details open style="margin-bottom:8px;">
+              <summary style="cursor:pointer;font-size:11px;font-weight:700;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.4px;padding:6px 0;">Clasificaciones del lote</summary>
+              <div class="ce-historial" style="margin-top:4px;">
+                <div class="ce-historial-body" style="max-height:200px;">
+                  <table>
+                    <thead><tr><th>Fecha</th><th>Cat.</th><th>Sub</th><th style="text-align:right;">Kg</th><th style="text-align:center;">Acc.</th></tr></thead>
+                    <tbody id="tbody-hist-clasif"><tr><td colspan="5" class="sin-items">Sin registros</td></tr></tbody>
+                  </table>
+                </div>
+              </div>
+            </details>
+            <details open>
+              <summary style="cursor:pointer;font-size:11px;font-weight:700;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.4px;padding:6px 0;">Ingresos a stock del lote</summary>
+              <div class="ce-historial" style="margin-top:4px;">
+                <div class="ce-historial-body" style="max-height:200px;">
+                  <table>
+                    <thead><tr><th>Fecha</th><th>Insumo</th><th>Env.</th><th style="text-align:right;">Kg</th><th>Dep.</th><th style="text-align:center;">Acc.</th></tr></thead>
+                    <tbody id="tbody-hist-emb"><tr><td colspan="6" class="sin-items">Sin registros</td></tr></tbody>
+                  </table>
+                </div>
+              </div>
+            </details>
+          </div>
         </div>
 
         <!-- ═══ COL DERECHA: Clasificación del lote seleccionado ═══ -->
         <div id="panel-derecho" style="display:none;">
 
-          <div class="sec-header">
-            <span class="sec-title">Clasificación del lote <span id="lote-sel-badge" class="sec-badge"></span></span>
+          <!-- Header clasificación (mismo estilo que embalaje) -->
+          <div id="clasif-header" style="display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--verde-suave);border:1px solid var(--sem-verde-borde);border-radius:8px;margin-bottom:8px;font-size:13px;">
+            <i data-lucide="layers" style="width:16px;height:16px;color:var(--verde);"></i>
+            <span id="clasif-header-text" style="font-weight:600;">Clasificación del lote</span>
           </div>
 
-          <!-- Info lote -->
-          <div id="lote-info-bar" style="display:flex;align-items:center;gap:12px;padding:8px 14px;background:var(--verde-suave);border:1px solid var(--sem-verde-borde);border-radius:8px;margin-bottom:12px;font-size:13px;flex-wrap:wrap;">
+          <!-- Estado del lote -->
+          <div id="lote-info-bar" style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;padding:8px 14px;background:var(--fondo);border:1px solid var(--borde);border-radius:8px;margin-bottom:12px;font-size:12px;">
             <span><strong>Despalillado:</strong> <span id="info-kg-desp" class="mono">—</span> kg</span>
             <span><strong>Clasificado:</strong> <span id="info-kg-clasif" class="mono">—</span> kg</span>
             <span><strong>Disp. clasif:</strong> <span id="info-kg-disp" class="mono" style="color:var(--sem-azul);font-weight:700;">—</span> kg</span>
             <span><strong>Embalado:</strong> <span id="info-kg-emb" class="mono">—</span> kg</span>
+          </div>
+          <div id="panel-sublotes-detalle" style="display:none;margin-bottom:12px;border:1px solid var(--borde);border-radius:8px;overflow:hidden;">
+            <table class="ce-historial" style="width:100%;">
+              <thead><tr><th>Código</th><th>Categoría</th><th>Sub-cat.</th><th style="text-align:right;">Kg</th><th>Etapa</th></tr></thead>
+              <tbody id="tbody-sublotes-detalle"></tbody>
+            </table>
           </div>
 
           <!-- Empleados del lote — Jornadas -->
@@ -248,30 +288,21 @@
 
           <!-- Form clasificar -->
           <div class="form-clasificar open" id="form-clasificar">
-            <div class="form-row-inline">
+            <div style="display:grid;grid-template-columns:2fr 2fr 1fr;gap:6px;margin-bottom:8px;">
               <div>
-                <label for="sel-categoria">Categoría</label>
-                <select id="sel-categoria">
+                <label for="sel-categoria" style="font-size:11px;font-weight:700;color:var(--texto-suave);margin-bottom:2px;display:block;">Categoría</label>
+                <select id="sel-categoria" style="padding:4px 6px;font-size:12px;height:28px;">
                   <option value="">Seleccionar...</option>
                 </select>
               </div>
               <div>
-                <label for="inp-subcategoria">Sub-categoría <span style="font-weight:400;color:var(--texto-suave);">(opcional)</span></label>
-                <input type="text" id="inp-subcategoria" placeholder="Ej: Pintona, Madura..." list="dl-subcategorias">
+                <label for="inp-subcategoria" style="font-size:11px;font-weight:700;color:var(--texto-suave);margin-bottom:2px;display:block;">Sub-cat.</label>
+                <input type="text" id="inp-subcategoria" placeholder="Pintona..." list="dl-subcategorias" style="padding:4px 6px;font-size:12px;height:28px;">
                 <datalist id="dl-subcategorias"></datalist>
               </div>
-            </div>
-            <div class="form-row-inline">
               <div>
-                <label for="inp-kilos">Kilos</label>
-                <input type="number" inputmode="decimal" id="inp-kilos" placeholder="0.00" min="0" step="any">
-              </div>
-              <div>
-                <label for="sel-destino-clasif">Destino</label>
-                <select id="sel-destino-clasif">
-                  <option value="fresco">Fresco (depósito)</option>
-                  <option value="camara_fria">Cámara fría</option>
-                </select>
+                <label for="inp-kilos" style="font-size:11px;font-weight:700;color:var(--texto-suave);margin-bottom:2px;display:block;">Kilos</label>
+                <input type="number" inputmode="decimal" id="inp-kilos" placeholder="0.00" min="0" step="any" style="padding:4px 6px;font-size:12px;height:28px;">
               </div>
             </div>
             <div class="form-btns">
@@ -279,29 +310,13 @@
             </div>
           </div>
 
-          <!-- Resumen por categoría -->
-          <div id="resumen-categorias" style="margin-top:12px;"></div>
-
-          <!-- Tabs -->
-          <div class="ce-tabs">
-            <div class="ce-tab active" onclick="cambiarTab(this,'tab-historial')">Historial</div>
-            <div class="ce-tab" onclick="cambiarTab(this,'tab-embalaje')">Embalaje</div>
-          </div>
-
-          <!-- Tab: Historial clasificación -->
-          <div class="ce-tab-content active" id="tab-historial">
-            <div class="ce-historial">
-              <div class="ce-historial-body">
-                <table>
-                  <thead><tr><th>Categoría</th><th>Sub-cat</th><th style="text-align:right;">Kg</th><th>Hora</th><th style="text-align:center;">Acc.</th></tr></thead>
-                  <tbody id="tbody-historial"><tr><td colspan="5" class="sin-items">Sin registros</td></tr></tbody>
-                </table>
-              </div>
+          <!-- ═══ SECCIÓN: EMBALAR ═══ -->
+          <div class="ce-section-sep" id="seccion-embalar">
+            <div id="emb-header" style="display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--verde-suave);border:1px solid var(--sem-verde-borde);border-radius:8px;margin-bottom:12px;font-size:13px;">
+              <i data-lucide="package" style="width:16px;height:16px;color:var(--verde);"></i>
+              <span id="emb-header-text" style="font-weight:600;">Seleccioná un lote para embalar</span>
             </div>
-          </div>
 
-          <!-- Tab: Embalaje -->
-          <div class="ce-tab-content" id="tab-embalaje">
             <!-- Sub-lotes clasificados disponibles para embalar -->
             <div class="sec-header" style="margin-top:0;">
               <span class="sec-title" style="font-size:12px;">Sub-lotes disponibles</span>
@@ -313,21 +328,21 @@
               <div id="emb-sel-info" style="padding:6px 0 10px;font-size:13px;font-weight:600;color:var(--verde);"></div>
               <div class="form-row-inline">
                 <div>
-                  <label for="emb-kilos">Kilos</label>
-                  <input type="number" inputmode="decimal" id="emb-kilos" placeholder="0.00" min="0" step="any">
-                </div>
-                <div>
-                  <label for="emb-producto">Embalaje</label>
+                  <label for="emb-producto">Insumo de embalaje</label>
                   <select id="emb-producto">
                     <option value="">Seleccionar...</option>
                   </select>
                   <div id="emb-stock-info" style="font-size:10px;color:var(--texto-suave);margin-top:2px;"></div>
                 </div>
+                <div>
+                  <label for="emb-cantidad">Cantidad de envases</label>
+                  <input type="number" inputmode="numeric" id="emb-cantidad" placeholder="0" min="1" step="1">
+                </div>
               </div>
               <div class="form-row-inline">
                 <div>
-                  <label for="emb-cantidad">Cant. envases</label>
-                  <input type="number" inputmode="numeric" id="emb-cantidad" placeholder="0" min="1" step="1">
+                  <label for="emb-kilos">Kilos embalados</label>
+                  <input type="number" inputmode="decimal" id="emb-kilos" placeholder="0.00" min="0" step="any">
                 </div>
                 <div>
                   <label for="emb-deposito">Depósito destino</label>
@@ -337,18 +352,8 @@
                 </div>
               </div>
               <div class="form-btns">
-                <button class="btn btn-confirmar" id="btn-embalar" onclick="embalar()">Embalar</button>
+                <button class="btn btn-confirmar" id="btn-embalar" onclick="embalar()">Registrar embalaje</button>
                 <button class="btn btn-cancelar" onclick="cerrarFormEmb()">Cancelar</button>
-              </div>
-            </div>
-
-            <!-- Embalados hoy -->
-            <div class="ce-historial" style="margin-top:12px;">
-              <div class="ce-historial-body" style="max-height:240px;">
-                <table>
-                  <thead><tr><th>Lote</th><th>Cat.</th><th style="text-align:right;">Kg</th><th>Embalaje</th><th>Depósito</th><th style="text-align:center;">Acc.</th></tr></thead>
-                  <tbody id="tbody-embalados"><tr><td colspan="6" class="sin-items">Sin registros</td></tr></tbody>
-                </table>
               </div>
             </div>
           </div>
@@ -358,6 +363,13 @@
             <i data-lucide="check-circle" style="width:18px;height:18px;color:var(--verde);"></i>
             <span style="font-size:13px;font-weight:600;">Clasificación completa</span>
             <button class="btn btn-confirmar" style="margin-left:auto;" onclick="finalizarClasificacion()">Finalizar clasificación</button>
+          </div>
+
+          <!-- Barra: Cerrar lote (todo embalado) -->
+          <div class="barra-acciones" id="barra-cerrar-lote" style="display:none;border-color:var(--verde);background:var(--verde-suave);">
+            <i data-lucide="check-circle-2" style="width:18px;height:18px;color:var(--verde);"></i>
+            <span style="font-size:13px;font-weight:600;color:var(--verde);">Lote completamente embalado</span>
+            <button class="btn btn-confirmar" style="margin-left:auto;" onclick="cerrarLote()">Cerrar lote</button>
           </div>
 
         </div>
@@ -384,11 +396,31 @@
       <button class="modal-close" onclick="cerrarModalEtiqueta()">&times;</button>
     </div>
     <div id="etiqueta-contenido"></div>
-    <div style="display:flex;gap:8px;margin-top:12px;">
-      <button class="btn btn-confirmar" onclick="imprimirEtiqueta()" style="flex:1;">
-        <i data-lucide="printer" style="width:14px;height:14px;"></i> Imprimir
+    <div style="display:flex;align-items:flex-end;gap:8px;margin-top:12px;">
+      <div style="display:flex;flex-direction:column;gap:2px;">
+        <label for="etiqueta-cantidad" style="font-size:11px;font-weight:600;color:var(--texto-suave);">Copias</label>
+        <input type="number" id="etiqueta-cantidad" min="1" max="100" value="1" style="width:60px;padding:4px 6px;font-size:13px;height:32px;text-align:center;">
+      </div>
+      <button class="btn btn-confirmar" id="btn-imprimir-termica" onclick="imprimirEtiquetaTermica()" style="flex:1;">
+        <i data-lucide="printer" style="width:14px;height:14px;"></i> Imprimir etiqueta
       </button>
       <button class="btn btn-cancelar" onclick="cerrarModalEtiqueta()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal Editar ── -->
+<div class="modal-overlay" id="modal-editar">
+  <div class="modal-box">
+    <div class="modal-title">
+      <i data-lucide="pencil" style="width:18px;height:18px;"></i>
+      <span id="editar-titulo-texto">Editar registro</span>
+      <button class="modal-close" onclick="document.getElementById('modal-editar').classList.remove('open')">&times;</button>
+    </div>
+    <div id="editar-contenido"></div>
+    <div style="display:flex;gap:8px;margin-top:12px;">
+      <button class="btn btn-confirmar" id="btn-guardar-edicion" style="flex:1;">Guardar cambios</button>
+      <button class="btn btn-cancelar" onclick="document.getElementById('modal-editar').classList.remove('open')">Cancelar</button>
     </div>
   </div>
 </div>
@@ -468,7 +500,7 @@
     loteSeleccionado = lotesPendientes[idx];
     renderLotes();
     document.getElementById('panel-derecho').style.display = '';
-    document.getElementById('lote-sel-badge').textContent = loteSeleccionado.codigo_interno || 'Lote #'+loteSeleccionado.id;
+    document.getElementById('clasif-header-text').textContent = 'Clasificación del lote ' + (loteSeleccionado.codigo_interno || '#'+loteSeleccionado.id);
     await cargarDetalleLote();
     await cargarClasificadores();
     lucide.createIcons();
@@ -491,21 +523,52 @@
     document.getElementById('info-kg-disp').textContent = formatearNumero(kgDisp);
     document.getElementById('info-kg-emb').textContent = '—'; // se actualiza desde sub-lotes
 
-    // Mostrar/ocultar formulario clasificación y barra finalizar según etapa
+    // Formulario clasificación siempre visible si hay lote seleccionado
+    document.getElementById('form-clasificar').style.display = '';
+
+    // Barra finalizar clasificación: solo si completa y no finalizada
     var clasificacionCompleta = kgDisp <= 0.01;
     var etapaClasificado = loteSeleccionado.etapa === 'clasificado';
-    document.getElementById('form-clasificar').style.display = etapaClasificado ? 'none' : '';
     document.getElementById('barra-finalizar').style.display = (clasificacionCompleta && !etapaClasificado) ? '' : 'none';
 
-    // Si ya está clasificado, abrir automáticamente la pestaña de embalaje
-    if (etapaClasificado) {
-      var tabEmb = document.querySelectorAll('.ce-tab')[1];
-      if (tabEmb) cambiarTab(tabEmb, 'tab-embalaje');
-    }
+    // Barra cerrar lote: se evalúa después de cargar sub-lotes (en cargarSubLotes)
+    document.getElementById('barra-cerrar-lote').style.display = 'none';
+
+    // Actualizar header embalaje con info del lote
+    document.getElementById('emb-header-text').textContent = 'Embalaje del lote ' + (loteSeleccionado.codigo_interno || '#'+loteSeleccionado.id);
 
     renderResumenCategorias();
-    renderHistorial();
+    renderHistorialLote();
     cargarSubLotes();
+  }
+
+  function verPagosLote() {
+    if (!loteSeleccionado) return;
+    var fecha = loteSeleccionado.fecha_inicio ? loteSeleccionado.fecha_inicio.slice(0, 10) : '';
+    window.open('pagos.html' + (fecha ? '?fecha=' + fecha : ''), '_blank');
+  }
+
+  function toggleSubLotes() {
+    var panel = document.getElementById('panel-sublotes-detalle');
+    if (panel.style.display !== 'none') { panel.style.display = 'none'; return; }
+    if (!loteDetalle) return;
+    var subs = loteDetalle.sub_lotes || [];
+    var tbody = document.getElementById('tbody-sublotes-detalle');
+    if (!subs.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="sin-items">Sin sub-lotes</td></tr>';
+    } else {
+      tbody.innerHTML = subs.map(function(s) {
+        var etapaBadge = s.etapa === 'embalado' ? 'badge-fresco' : s.etapa === 'vendido_parcial' ? 'badge-industria' : 'badge-deposito';
+        return '<tr>' +
+          '<td>' + (s.codigo_interno || '#'+s.id) + '</td>' +
+          '<td>' + (s.categoria || '—') + '</td>' +
+          '<td>' + (s.sub_categoria || '—') + '</td>' +
+          '<td style="text-align:right;" class="mono">' + formatearNumero(s.kilos) + '</td>' +
+          '<td><span class="badge '+etapaBadge+'" style="font-size:10px;padding:1px 6px;">' + (s.etapa || '—') + '</span></td>' +
+        '</tr>';
+      }).join('');
+    }
+    panel.style.display = '';
   }
 
   function renderResumenCategorias() {
@@ -525,26 +588,62 @@
       }).join('');
   }
 
-  function renderHistorial() {
-    var tbody = document.getElementById('tbody-historial');
-    if (!loteDetalle || !loteDetalle.registros.length) {
-      tbody.innerHTML = '<tr><td colspan="5" class="sin-items">Sin registros</td></tr>';
-      return;
+  // ══════════════════════════════════════════════════════════════
+  // HISTORIAL LATERAL POR LOTE (panel izquierdo)
+  // ══════════════════════════════════════════════════════════════
+
+  function renderHistorialLote() {
+    var panel = document.getElementById('historial-lote');
+    if (!loteDetalle) { panel.style.display = 'none'; return; }
+    panel.style.display = '';
+
+    // Clasificaciones (compact: fecha, cat, sub, kg, acciones)
+    var tbodyClasif = document.getElementById('tbody-hist-clasif');
+    var regs = loteDetalle.registros || [];
+    if (!regs.length) {
+      tbodyClasif.innerHTML = '<tr><td colspan="5" class="sin-items">Sin registros</td></tr>';
+    } else {
+      tbodyClasif.innerHTML = regs.map(function(r) {
+        var anulado = r.estado === 'anulada';
+        var fecha = r.fecha_hora ? new Date(r.fecha_hora).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit'}) : '';
+        var dataJson = JSON.stringify({id:r.id,categoria_clasif_id:r.categoria_clasif_id,categoria:r.categoria||'',sub_categoria_id:r.sub_categoria_id,sub_categoria:r.sub_categoria||'',kilos:r.kilos}).replace(/'/g,'&#39;').replace(/"/g,'&quot;');
+        return '<tr' + (anulado ? ' class="anulado"' : '') + '>' +
+          '<td>' + fecha + '</td>' +
+          '<td title="'+(r.categoria||'')+'">' + (r.categoria || '—') + '</td>' +
+          '<td title="'+(r.sub_categoria||'')+'">' + (r.sub_categoria || '—') + '</td>' +
+          '<td style="text-align:right;" class="mono">' + formatearNumero(r.kilos) + '</td>' +
+          '<td style="text-align:center;white-space:nowrap;">' +
+            (anulado ? '<span class="badge-anulada">Anulada</span>' :
+            '<button class="btn-icon" title="Editar" onclick="editarClasificacion('+dataJson+')"><i data-lucide="pencil" style="width:11px;height:11px;"></i></button>' +
+            '<button class="btn-icon-danger" title="Anular" onclick="anularClasificacion('+r.id+')"><i data-lucide="ban" style="width:11px;height:11px;"></i></button>') +
+          '</td></tr>';
+      }).join('');
     }
-    tbody.innerHTML = loteDetalle.registros.map(function(r) {
-      var anulado = r.estado === 'anulada';
-      var hora = r.fecha_hora ? new Date(r.fecha_hora).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}) : '';
-      return '<tr' + (anulado ? ' class="anulado"' : '') + '>' +
-        '<td>' + (r.categoria || '—') + '</td>' +
-        '<td>' + (r.sub_categoria || '—') + '</td>' +
-        '<td style="text-align:right;" class="mono">' + formatearNumero(r.kilos) + '</td>' +
-        '<td>' + hora + '</td>' +
-        '<td style="text-align:center;">' +
-          (anulado ? '<span class="badge-anulada">Anulada</span>' :
-          '<button class="btn-icon-danger" title="Anular" onclick="anularClasificacion('+r.id+')"><i data-lucide="ban" style="width:12px;height:12px;"></i></button>') +
-        '</td>' +
-      '</tr>';
-    }).join('');
+
+    // Ingresos a stock (embalajes)
+    var tbodyEmb = document.getElementById('tbody-hist-emb');
+    var embs = loteDetalle.embalajes || [];
+    if (!embs.length) {
+      tbodyEmb.innerHTML = '<tr><td colspan="6" class="sin-items">Sin registros</td></tr>';
+    } else {
+      tbodyEmb.innerHTML = embs.map(function(e) {
+        var anulado = e.estado === 'anulada';
+        var fecha = e.fecha_hora ? new Date(e.fecha_hora).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit'}) : '';
+        var dataJson = JSON.stringify({id:e.id,producto_id:e.producto_id,insumo:e.insumo||e.tipo_envase||'',cantidad_envases:e.cantidad_envases,kilos:e.kilos,deposito_id:e.deposito_id,deposito:e.deposito||''}).replace(/'/g,'&#39;').replace(/"/g,'&quot;');
+        return '<tr' + (anulado ? ' class="anulado"' : '') + '>' +
+          '<td>' + fecha + '</td>' +
+          '<td title="'+(e.insumo||e.tipo_envase||'')+'">' + (e.insumo || e.tipo_envase || '—') + '</td>' +
+          '<td style="text-align:center;">' + (e.cantidad_envases || '—') + '</td>' +
+          '<td style="text-align:right;" class="mono">' + formatearNumero(e.kilos) + '</td>' +
+          '<td title="'+(e.deposito||'')+'">' + (e.deposito || e.destino || '—') + '</td>' +
+          '<td style="text-align:center;white-space:nowrap;">' +
+            (anulado ? '<span class="badge-anulada">Anulada</span>' :
+            '<button class="btn-icon" title="Editar" onclick="editarEmbalaje('+dataJson+')"><i data-lucide="pencil" style="width:11px;height:11px;"></i></button>' +
+            '<button class="btn-icon-danger" title="Anular" onclick="anularEmbalaje('+e.id+')"><i data-lucide="ban" style="width:11px;height:11px;"></i></button>') +
+          '</td></tr>';
+      }).join('');
+    }
+
     lucide.createIcons();
   }
 
@@ -856,7 +955,6 @@
     var catId = document.getElementById('sel-categoria').value;
     var subCatNombre = document.getElementById('inp-subcategoria').value.trim();
     var kilos = parseFloat(document.getElementById('inp-kilos').value);
-    var destino = document.getElementById('sel-destino-clasif').value;
 
     if (!catId) { mostrarMensaje('mensaje','error','Selecciona una categoría'); return; }
     if (!kilos || kilos <= 0) { mostrarMensaje('mensaje','error','Ingresa los kilos'); return; }
@@ -872,7 +970,6 @@
           lote_id: loteSeleccionado.id,
           categoria_clasif_id: parseInt(catId),
           sub_categoria_nombre: subCatNombre || null,
-          destino: destino,
           kilos: kilos
         })
       });
@@ -895,7 +992,7 @@
 
   async function finalizarClasificacion() {
     if (!loteSeleccionado) return;
-    if (!confirm('¿Finalizar clasificación del lote ' + (loteSeleccionado.codigo_interno||'') + '?')) return;
+    if (!await showConfirm('¿Finalizar clasificación del lote ' + (loteSeleccionado.codigo_interno||'') + '?')) return;
 
     try {
       await fetchApi('/api/clasificacion-embalaje/finalizar-clasificacion/' + loteSeleccionado.id, {
@@ -904,10 +1001,33 @@
       });
       mostrarMensaje('mensaje','success','Clasificación finalizada');
       loteSeleccionado = null;
+      loteDetalle = null;
       document.getElementById('panel-derecho').style.display = 'none';
+      document.getElementById('historial-lote').style.display = 'none';
       cargarPendientes();
       cargarResumen();
     } catch(e) {}
+  }
+
+  async function cerrarLote() {
+    if (!loteSeleccionado) return;
+    if (!await showConfirm('¿Cerrar el lote ' + (loteSeleccionado.codigo_interno||'') + '? Todo el embalaje quedará finalizado.')) return;
+
+    try {
+      await fetchApi('/api/clasificacion-embalaje/finalizar-embalaje/' + loteSeleccionado.id, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'}
+      });
+      mostrarMensaje('mensaje','success','Lote cerrado correctamente');
+      loteSeleccionado = null;
+      loteDetalle = null;
+      document.getElementById('panel-derecho').style.display = 'none';
+      document.getElementById('historial-lote').style.display = 'none';
+      cargarPendientes();
+      cargarResumen();
+    } catch(e) {
+      mostrarMensaje('mensaje','error', e.message || 'Error al cerrar el lote');
+    }
   }
 
   // ══════════════════════════════════════════════════════════════
@@ -922,14 +1042,31 @@
       // Filtrar por lote padre seleccionado
       var subLotes = data.filter(function(s) { return s.lote_padre_id === loteSeleccionado.id; });
 
-      // Calcular total embalado para la barra de info
+      // Calcular total embalado (desde embalajes activos, no desde subLotes disponibles)
       var totalEmb = 0;
-      subLotes.forEach(function(s) { totalEmb += parseFloat(s.kilos_embalados) || 0; });
+      if (loteDetalle && loteDetalle.embalajes) {
+        loteDetalle.embalajes.forEach(function(e) {
+          if (e.estado !== 'anulada') totalEmb += parseFloat(e.kilos) || 0;
+        });
+      }
       var elEmb = document.getElementById('info-kg-emb');
       if (elEmb) elEmb.textContent = formatearNumero(totalEmb);
 
+      // Calcular total clasificado para evaluar si se puede cerrar
+      var totalClasif = 0;
+      if (loteDetalle && loteDetalle.resumen_categorias) {
+        loteDetalle.resumen_categorias.forEach(function(r) { totalClasif += parseFloat(r.kilos_clasificados) || 0; });
+      }
+
+      // Barra cerrar lote: todo clasificado Y todo embalado (sin kg disponibles en ningún sub-lote)
+      var etapaClasificado = loteSeleccionado.etapa === 'clasificado';
+      var todoEmbalado = etapaClasificado && totalEmb > 0 && subLotes.length === 0;
+      document.getElementById('barra-cerrar-lote').style.display = todoEmbalado ? '' : 'none';
+
       if (!subLotes.length) {
-        el.innerHTML = '<div class="sin-items">No hay sub-lotes clasificados para embalar</div>';
+        el.innerHTML = todoEmbalado
+          ? '<div class="sin-items" style="color:var(--verde);">Todo embalado</div>'
+          : '<div class="sin-items">No hay sub-lotes clasificados para embalar</div>';
         return;
       }
       el.innerHTML = subLotes.map(function(s,i) {
@@ -949,8 +1086,6 @@
         '</div>';
       }).join('');
 
-      // Embalados hoy para este lote
-      cargarEmbaladosHoy();
     } catch(e) { el.innerHTML = '<div class="sin-items">Error cargando sub-lotes</div>'; }
   }
 
@@ -958,8 +1093,7 @@
     subLoteSeleccionado = s;
     var form = document.getElementById('form-embalar');
     form.classList.add('open');
-    var destLabel = s.destino === 'camara_fria' ? ' (Cámara fría)' : s.destino === 'fresco' ? ' (Fresco)' : '';
-    document.getElementById('emb-sel-info').textContent = (s.codigo_interno||'Sub-lote #'+s.id) + ' — ' + formatearNumero(s.kilos_disponible) + ' kg disponibles' + destLabel;
+    document.getElementById('emb-sel-info').textContent = (s.codigo_interno||'Sub-lote #'+s.id) + ' — ' + formatearNumero(s.kilos_disponible) + ' kg disponibles';
     document.getElementById('emb-kilos').value = '';
     document.getElementById('emb-cantidad').value = '';
     document.getElementById('emb-producto').value = '';
@@ -986,10 +1120,10 @@
     var cantEnvases = parseInt(document.getElementById('emb-cantidad').value);
     var depositoId = document.getElementById('emb-deposito').value;
 
-    if (!kilos || kilos <= 0) { mostrarMensaje('mensaje','error','Ingresa los kilos'); return; }
-    if (!productoId) { mostrarMensaje('mensaje','error','Selecciona el tipo de embalaje'); return; }
-    if (!cantEnvases || cantEnvases <= 0) { mostrarMensaje('mensaje','error','Ingresa la cantidad de envases'); return; }
-    if (!depositoId) { mostrarMensaje('mensaje','error','Selecciona el depósito destino'); return; }
+    if (!kilos || kilos <= 0) { mostrarMensaje('mensaje','error','Ingresá los kilos embalados'); return; }
+    if (!productoId) { mostrarMensaje('mensaje','error','Seleccioná el insumo de embalaje'); return; }
+    if (!cantEnvases || cantEnvases <= 0) { mostrarMensaje('mensaje','error','Ingresá la cantidad de envases'); return; }
+    if (!depositoId) { mostrarMensaje('mensaje','error','Seleccioná el depósito destino'); return; }
 
     var btn = document.getElementById('btn-embalar');
     setLoading(btn, true);
@@ -1008,48 +1142,22 @@
       });
       mostrarMensaje('mensaje','success','Embalaje registrado — Lote: ' + (resp.lote.codigo_externo || resp.lote.codigo_interno));
 
-      // Mostrar etiqueta
+      // Warning stock negativo
+      if (resp.warning) {
+        showAlert(resp.warning, 'warning');
+      }
+
+      // Ofrecer imprimir etiqueta térmica
       if (resp.lote && resp.lote.id) {
-        mostrarEtiqueta(resp.lote.id);
+        mostrarEtiqueta(resp.lote.id, cantEnvases);
       }
 
       subLoteSeleccionado = null;
       document.getElementById('form-embalar').classList.remove('open');
       cargarSubLotes();
-      cargarProductosEmbalaje(); // refrescar stock
+      cargarProductosEmbalaje();
       cargarResumen();
     } catch(e) {} finally { setLoading(btn, false); }
-  }
-
-  // ══════════════════════════════════════════════════════════════
-  // EMBALADOS HOY
-  // ══════════════════════════════════════════════════════════════
-
-  async function cargarEmbaladosHoy() {
-    var tbody = document.getElementById('tbody-embalados');
-    try {
-      var data = await fetchApi('/api/clasificacion-embalaje/embalados-hoy');
-      if (!Array.isArray(data) || !data.length) {
-        tbody.innerHTML = '<tr><td colspan="6" class="sin-items">Sin embalajes hoy</td></tr>';
-        return;
-      }
-      tbody.innerHTML = data.map(function(r) {
-        var anulado = r.estado === 'anulada';
-        return '<tr' + (anulado ? ' class="anulado"' : '') + '>' +
-          '<td>' + (r.codigo_interno || '—') + '</td>' +
-          '<td>' + (r.categoria || '') + (r.sub_categoria ? ' · '+r.sub_categoria : '') + '</td>' +
-          '<td style="text-align:right;" class="mono">' + formatearNumero(r.kilos) + '</td>' +
-          '<td>' + (r.tipo_envase || '') + ' x' + (r.cantidad_envases || '') + '</td>' +
-          '<td>' + (r.deposito || r.destino || '—') + '</td>' +
-          '<td style="text-align:center;">' +
-            (anulado ? '<span style="color:var(--sem-rojo);font-size:10px;font-weight:700;">ANULADO</span>' :
-            '<button class="btn-icon" title="Etiqueta" onclick="mostrarEtiqueta('+(r.sub_lote_id||r.id)+')"><i data-lucide="tag" style="width:12px;height:12px;"></i></button>' +
-            '<button class="btn-icon-danger" title="Anular" onclick="anularEmbalaje('+r.id+')"><i data-lucide="ban" style="width:12px;height:12px;"></i></button>') +
-          '</td>' +
-        '</tr>';
-      }).join('');
-      lucide.createIcons();
-    } catch(e) {}
   }
 
   // ══════════════════════════════════════════════════════════════
@@ -1057,7 +1165,7 @@
   // ══════════════════════════════════════════════════════════════
 
   async function anularClasificacion(id) {
-    var motivo = prompt('Motivo de anulación:');
+    var motivo = await showPrompt('Motivo de anulación:', 'Ingresá el motivo', 'warning');
     if (!motivo) return;
     try {
       await fetchApi('/api/clasificacion-embalaje/clasificacion/'+id+'/anular', {
@@ -1072,7 +1180,7 @@
   }
 
   async function anularEmbalaje(id) {
-    var motivo = prompt('Motivo de anulación:');
+    var motivo = await showPrompt('Motivo de anulación:', 'Ingresá el motivo', 'warning');
     if (!motivo) return;
     try {
       await fetchApi('/api/clasificacion-embalaje/embalaje/'+id+'/anular', {
@@ -1080,16 +1188,135 @@
         body: JSON.stringify({ motivo: motivo })
       });
       mostrarMensaje('mensaje','success','Embalaje anulado');
+      await cargarDetalleLote();
       cargarSubLotes();
       cargarResumen();
     } catch(e) {}
   }
 
   // ══════════════════════════════════════════════════════════════
+  // EDICIÓN DE REGISTROS
+  // ══════════════════════════════════════════════════════════════
+
+  async function editarClasificacion(data) {
+    // data: {id, categoria_clasif_id, categoria, sub_categoria, kilos}
+    var modal = document.getElementById('modal-editar');
+    var contenido = document.getElementById('editar-contenido');
+
+    // Build selects
+    var catOpts = '<option value="">Seleccionar...</option>';
+    categorias.forEach(function(c) {
+      catOpts += '<option value="'+c.id+'"'+(c.id===data.categoria_clasif_id?' selected':'')+'>'+c.nombre+'</option>';
+    });
+
+    contenido.innerHTML =
+      '<div class="form-row-inline">' +
+        '<div><label>Categoría</label><select id="edit-cat">' + catOpts + '</select></div>' +
+        '<div><label>Sub-categoría</label><input type="text" id="edit-subcat" value="'+(data.sub_categoria||'')+'" placeholder="Opcional..."></div>' +
+      '</div>' +
+      '<div class="form-row-inline">' +
+        '<div><label>Kilos</label><input type="number" id="edit-kilos" value="'+data.kilos+'" step="any" min="0"></div>' +
+        '<div><label>Motivo de edición</label><input type="text" id="edit-motivo" placeholder="Ej: corrección de pesaje"></div>' +
+      '</div>';
+
+    document.getElementById('editar-titulo-texto').textContent = 'Editar clasificación #' + data.id;
+    modal.classList.add('open');
+
+    // Save handler
+    document.getElementById('btn-guardar-edicion').onclick = async function() {
+      var motivo = document.getElementById('edit-motivo').value.trim();
+      if (!motivo) { showAlert('Ingresá el motivo de edición', 'warning'); return; }
+
+      var newKilos = parseFloat(document.getElementById('edit-kilos').value);
+      if (newKilos !== data.kilos && !await showConfirm('Los kilos cambiaron de ' + formatearNumero(data.kilos) + ' a ' + formatearNumero(newKilos) + '. ¿Confirmar?')) return;
+
+      try {
+        await fetchApi('/api/clasificacion-embalaje/clasificacion/' + data.id, {
+          method:'PUT', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({
+            categoria_clasif_id: parseInt(document.getElementById('edit-cat').value),
+            sub_categoria_nombre: document.getElementById('edit-subcat').value.trim() || null,
+            kilos: newKilos,
+            motivo: motivo
+          })
+        });
+        modal.classList.remove('open');
+        mostrarMensaje('mensaje','success','Clasificación editada');
+        await cargarDetalleLote();
+        cargarPendientes();
+        cargarResumen();
+      } catch(e) {}
+    };
+  }
+
+  async function editarEmbalaje(data) {
+    // data: {id, producto_id, insumo, cantidad_envases, kilos, deposito_id, deposito}
+    var modal = document.getElementById('modal-editar');
+    var contenido = document.getElementById('editar-contenido');
+
+    var prodOpts = '<option value="">Seleccionar...</option>';
+    productosEmbalaje.forEach(function(p) {
+      prodOpts += '<option value="'+p.id+'"'+(p.id===data.producto_id?' selected':'')+'>'+p.nombre+'</option>';
+    });
+
+    var depSel = document.getElementById('emb-deposito');
+    var depOpts = depSel.innerHTML;
+
+    contenido.innerHTML =
+      '<div class="form-row-inline">' +
+        '<div><label>Insumo de embalaje</label><select id="edit-producto">' + prodOpts + '</select></div>' +
+        '<div><label>Cantidad de envases</label><input type="number" id="edit-cant" value="'+(data.cantidad_envases||1)+'" min="1" step="1"></div>' +
+      '</div>' +
+      '<div class="form-row-inline">' +
+        '<div><label>Kilos embalados</label><input type="number" id="edit-kilos" value="'+data.kilos+'" step="any" min="0"></div>' +
+        '<div><label>Depósito destino</label><select id="edit-deposito">' + depOpts + '</select></div>' +
+      '</div>' +
+      '<div class="form-row-inline">' +
+        '<div style="grid-column:1/-1;"><label>Motivo de edición</label><input type="text" id="edit-motivo" placeholder="Ej: corrección de envases"></div>' +
+      '</div>';
+
+    // Set deposito value after rendering
+    var editDep = document.getElementById('edit-deposito');
+    if (editDep && data.deposito_id) editDep.value = data.deposito_id;
+
+    document.getElementById('editar-titulo-texto').textContent = 'Editar embalaje #' + data.id;
+    modal.classList.add('open');
+
+    document.getElementById('btn-guardar-edicion').onclick = async function() {
+      var motivo = document.getElementById('edit-motivo').value.trim();
+      if (!motivo) { showAlert('Ingresá el motivo de edición', 'warning'); return; }
+
+      var newKilos = parseFloat(document.getElementById('edit-kilos').value);
+      if (newKilos !== data.kilos && !await showConfirm('Los kilos cambiaron de ' + formatearNumero(data.kilos) + ' a ' + formatearNumero(newKilos) + '. ¿Confirmar?')) return;
+
+      try {
+        await fetchApi('/api/clasificacion-embalaje/embalaje/' + data.id, {
+          method:'PUT', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({
+            producto_id: parseInt(document.getElementById('edit-producto').value),
+            cantidad_envases: parseInt(document.getElementById('edit-cant').value),
+            kilos: newKilos,
+            deposito_id: parseInt(document.getElementById('edit-deposito').value),
+            motivo: motivo
+          })
+        });
+        modal.classList.remove('open');
+        mostrarMensaje('mensaje','success','Embalaje editado');
+        await cargarDetalleLote();
+        cargarSubLotes();
+        cargarProductosEmbalaje();
+        cargarResumen();
+      } catch(e) {}
+    };
+  }
+
+  // ══════════════════════════════════════════════════════════════
   // ETIQUETA
   // ══════════════════════════════════════════════════════════════
 
-  async function mostrarEtiqueta(subLoteId) {
+  async function mostrarEtiqueta(subLoteId, cantidadEnvases) {
+    etiquetaSubLoteId = subLoteId;
+    etiquetaCantidad = cantidadEnvases || 1;
     try {
       var data = await fetchApi('/api/clasificacion-embalaje/etiqueta/' + subLoteId);
       var fechaElab = data.fecha_elaboracion ? new Date(data.fecha_elaboracion).toLocaleDateString('es-AR') : '—';
@@ -1111,29 +1338,35 @@
         '</div>' +
         '<p style="font-size:11px;color:var(--texto-suave);margin-top:8px;">Los campos RNE, RNPA, RENSPA y razón social se completarán desde Configuración → Empresa.</p>';
 
+      document.getElementById('etiqueta-cantidad').value = etiquetaCantidad;
       document.getElementById('modal-etiqueta').classList.add('open');
     } catch(e) {}
   }
+
+  var etiquetaSubLoteId = null;
+  var etiquetaCantidad = 1;
 
   function cerrarModalEtiqueta() {
     document.getElementById('modal-etiqueta').classList.remove('open');
   }
 
-  function imprimirEtiqueta() {
-    window.print();
+  async function imprimirEtiquetaTermica() {
+    if (!etiquetaSubLoteId) return;
+    try {
+      var cant = parseInt(document.getElementById('etiqueta-cantidad').value) || 1;
+      var token = localStorage.getItem('cosecha_token');
+      var resp = await fetch('/api/clasificacion-embalaje/etiqueta/' + etiquetaSubLoteId + '/print?cantidad=' + cant, {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (!resp.ok) throw new Error('Error al generar etiqueta');
+      var blob = await resp.blob();
+      var url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    } catch(e) {
+      mostrarMensaje('mensaje','error','Error al imprimir etiqueta');
+    }
   }
 
-  // ══════════════════════════════════════════════════════════════
-  // TABS
-  // ══════════════════════════════════════════════════════════════
-
-  function cambiarTab(tabEl, contentId) {
-    document.querySelectorAll('.ce-tab').forEach(function(t) { t.classList.remove('active'); });
-    document.querySelectorAll('.ce-tab-content').forEach(function(c) { c.classList.remove('active'); });
-    tabEl.classList.add('active');
-    document.getElementById(contentId).classList.add('active');
-    if (contentId === 'tab-embalaje') cargarSubLotes();
-  }
 </script>
 </body>
 </html>

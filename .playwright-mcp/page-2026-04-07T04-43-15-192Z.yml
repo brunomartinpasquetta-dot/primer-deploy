@@ -1,0 +1,177 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - text: CO
+          - emphasis [ref=e8]: SE
+          - text: CHA
+        - generic [ref=e9]: SISTEMA DE CULTIVOS
+    - navigation [ref=e10]:
+      - link "Dashboard" [ref=e11] [cursor=pointer]:
+        - /url: index.html
+        - img [ref=e13]
+        - text: Dashboard
+      - generic [ref=e18]: Campo
+      - link "Cosecha" [ref=e19] [cursor=pointer]:
+        - /url: juntada.html
+        - img [ref=e21]
+        - text: Cosecha
+      - link "Despalillado" [ref=e30] [cursor=pointer]:
+        - /url: despalillado.html
+        - img [ref=e32]
+        - text: Despalillado
+      - link "Aplicaciones" [ref=e38] [cursor=pointer]:
+        - /url: aplicaciones.html
+        - img [ref=e40]
+        - text: Aplicaciones
+      - link "Trabajos de Campo" [ref=e43] [cursor=pointer]:
+        - /url: trabajos-campo.html
+        - img [ref=e45]
+        - text: Trabajos de Campo
+      - link "Clasif. + Embalaje" [ref=e49] [cursor=pointer]:
+        - /url: clasificacion-embalaje.html
+        - img [ref=e51]
+        - text: Clasif. + Embalaje
+      - generic [ref=e55]: Sistema
+      - link "Stock" [ref=e56] [cursor=pointer]:
+        - /url: menu-stock.html
+        - img [ref=e58]
+        - text: Stock
+      - link "Comercial" [ref=e62] [cursor=pointer]:
+        - /url: menu-comercial.html
+        - img [ref=e64]
+        - text: Comercial
+      - link "Administración" [ref=e69] [cursor=pointer]:
+        - /url: menu-admin.html
+        - img [ref=e71]
+        - text: Administración
+      - link "Mercado" [ref=e73] [cursor=pointer]:
+        - /url: mercado.html
+        - img [ref=e75]
+        - text: Mercado
+      - link "Configuración" [ref=e78] [cursor=pointer]:
+        - /url: menu-config.html
+        - img [ref=e80]
+        - text: Configuración
+    - generic [ref=e83]:
+      - generic [ref=e84]: Administrador · administrador
+      - button "Cerrar sesión" [ref=e85] [cursor=pointer]
+  - generic [ref=e86]:
+    - banner [ref=e87]:
+      - generic [ref=e88]:
+        - img [ref=e89]
+        - generic [ref=e90]:
+          - generic [ref=e91]:
+            - text: CO
+            - emphasis [ref=e92]: SE
+            - text: CHA
+          - generic [ref=e93]: SISTEMA DE CULTIVOS
+        - generic [ref=e94]: Cargando...
+      - generic [ref=e95]:
+        - generic [ref=e96] [cursor=pointer]:
+          - img [ref=e97]
+          - text: Administrador
+        - generic [ref=e100]: martes, 7 de abril
+    - generic [ref=e101]:
+      - link "← Volver" [ref=e102] [cursor=pointer]:
+        - /url: "#"
+      - generic [ref=e103]:
+        - generic [ref=e104]:
+          - generic [ref=e105]: Stock Mercadería
+          - generic [ref=e106]: Inventario, depósitos y movimientos de cosecha
+        - generic [ref=e107]:
+          - button "Registrar Ingreso" [ref=e108] [cursor=pointer]:
+            - img [ref=e109]
+            - text: Registrar Ingreso
+          - button "Registrar Egreso" [ref=e113] [cursor=pointer]:
+            - img [ref=e114]
+            - text: Registrar Egreso
+          - button "Registrar Descarte" [ref=e115] [cursor=pointer]:
+            - img [ref=e116]
+            - text: Registrar Descarte
+          - button "Historial de Movimientos" [ref=e119] [cursor=pointer]:
+            - img [ref=e120]
+            - text: Historial de Movimientos
+      - generic [ref=e123]:
+        - generic [ref=e124]:
+          - img [ref=e126]
+          - generic [ref=e135]: —
+          - generic [ref=e136]: KG Cosechados
+        - generic [ref=e137]:
+          - img [ref=e139]
+          - generic [ref=e142]: —
+          - generic [ref=e143]: KG en Depósito
+        - generic [ref=e144]:
+          - img [ref=e146]
+          - generic [ref=e150]: —
+          - generic [ref=e151]: KG Vendidos
+        - generic [ref=e152]:
+          - img [ref=e154]
+          - generic [ref=e157]: —
+          - generic [ref=e158]: KG Descartados
+        - generic [ref=e159]:
+          - img [ref=e161]
+          - generic [ref=e164]: —
+          - generic [ref=e165]: En Proceso
+        - generic [ref=e166]:
+          - img [ref=e168]
+          - generic [ref=e173]: —
+          - generic [ref=e174]: Embalado (vendible)
+      - generic [ref=e175]:
+        - generic [ref=e176]:
+          - heading "Stock Actual" [level=3] [ref=e177]:
+            - img [ref=e178]
+            - text: Stock Actual
+          - generic [ref=e181]:
+            - combobox [ref=e182] [cursor=pointer]:
+              - option "Todas las temporadas" [selected]
+            - button "Exportar" [ref=e183] [cursor=pointer]:
+              - img [ref=e184]
+              - text: Exportar
+            - button "Imprimir" [ref=e187] [cursor=pointer]:
+              - img [ref=e188]
+              - text: Imprimir
+        - table [ref=e194]:
+          - rowgroup [ref=e195]:
+            - row "ETAPA VARIEDAD CATEGORÍA DEPÓSITO LOTES KG" [ref=e196]:
+              - columnheader "ETAPA" [ref=e197]
+              - columnheader "VARIEDAD" [ref=e198]
+              - columnheader "CATEGORÍA" [ref=e199]
+              - columnheader "DEPÓSITO" [ref=e200]
+              - columnheader "LOTES" [ref=e201]
+              - columnheader "KG" [ref=e202]
+          - rowgroup [ref=e203]:
+            - row "Cargando..." [ref=e204]:
+              - cell "Cargando..." [ref=e205]
+      - generic [ref=e206]:
+        - generic [ref=e207]:
+          - heading "Estado de mercadería por juntada" [level=3] [ref=e208]:
+            - img [ref=e209]
+            - text: Estado de mercadería por juntada
+          - generic [ref=e213]:
+            - combobox [ref=e214] [cursor=pointer]:
+              - option "Todas las temporadas" [selected]
+            - combobox [ref=e215] [cursor=pointer]:
+              - option "Todas las etapas" [selected]
+              - option "🟡 Pendiente despalillado"
+              - option "🟢 Fresco (sin despalillar)"
+              - option "🔵 Despalillado en stock"
+              - option "🔶 Vendida parcial"
+              - option "✅ Vendida"
+        - table [ref=e217]:
+          - rowgroup [ref=e218]:
+            - row "# Fecha Parcela Juntador Depósito Kg juntada Kg en stock Kg vendidos Etapa" [ref=e219]:
+              - columnheader "#" [ref=e220]
+              - columnheader "Fecha" [ref=e221]
+              - columnheader "Parcela" [ref=e222]
+              - columnheader "Juntador" [ref=e223]
+              - columnheader "Depósito" [ref=e224]
+              - columnheader "Kg juntada" [ref=e225]
+              - columnheader "Kg en stock" [ref=e226]
+              - columnheader "Kg vendidos" [ref=e227]
+              - columnheader "Etapa" [ref=e228]
+          - rowgroup [ref=e229]:
+            - row "Cargando..." [ref=e230]:
+              - cell "Cargando..." [ref=e231]

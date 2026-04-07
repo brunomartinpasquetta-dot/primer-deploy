@@ -1,0 +1,263 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - text: CO
+          - emphasis [ref=e8]: SE
+          - text: CHA
+        - generic [ref=e9]: SISTEMA DE CULTIVOS
+    - navigation [ref=e10]:
+      - link "Dashboard" [ref=e11] [cursor=pointer]:
+        - /url: index.html
+        - img [ref=e195]
+        - text: Dashboard
+      - generic [ref=e18]: Campo
+      - link "Cosecha" [ref=e19] [cursor=pointer]:
+        - /url: juntada.html
+        - img [ref=e200]
+        - text: Cosecha
+      - link "Despalillado" [ref=e30] [cursor=pointer]:
+        - /url: despalillado.html
+        - img [ref=e209]
+        - text: Despalillado
+      - link "Aplicaciones" [ref=e38] [cursor=pointer]:
+        - /url: aplicaciones.html
+        - img [ref=e215]
+        - text: Aplicaciones
+      - link "Trabajos de Campo" [ref=e43] [cursor=pointer]:
+        - /url: trabajos-campo.html
+        - img [ref=e218]
+        - text: Trabajos de Campo
+      - link "Clasif. + Embalaje" [ref=e49] [cursor=pointer]:
+        - /url: clasificacion-embalaje.html
+        - img [ref=e222]
+        - text: Clasif. + Embalaje
+      - generic [ref=e55]: Sistema
+      - link "Stock" [ref=e56] [cursor=pointer]:
+        - /url: menu-stock.html
+        - img [ref=e226]
+        - text: Stock
+      - link "Comercial" [ref=e62] [cursor=pointer]:
+        - /url: menu-comercial.html
+        - img [ref=e230]
+        - text: Comercial
+      - link "Administración" [ref=e69] [cursor=pointer]:
+        - /url: menu-admin.html
+        - img [ref=e235]
+        - text: Administración
+      - link "Mercado" [ref=e73] [cursor=pointer]:
+        - /url: mercado.html
+        - img [ref=e237]
+        - text: Mercado
+      - link "Configuración" [ref=e78] [cursor=pointer]:
+        - /url: menu-config.html
+        - img [ref=e240]
+        - text: Configuración
+    - generic [ref=e83]:
+      - generic [ref=e84]: Administrador · administrador
+      - button "Cerrar sesión" [ref=e85] [cursor=pointer]
+  - generic [ref=e86]:
+    - banner [ref=e87]:
+      - generic [ref=e88]:
+        - img [ref=e89]
+        - generic [ref=e90]:
+          - generic [ref=e91]:
+            - text: CO
+            - emphasis [ref=e92]: SE
+            - text: CHA
+          - generic [ref=e93]: SISTEMA DE CULTIVOS
+        - generic [ref=e94]: 🌱 Campaña FIX 2026 · Día 8
+      - generic [ref=e95]:
+        - generic [ref=e96] [cursor=pointer]:
+          - img [ref=e97]
+          - text: Administrador
+        - generic [ref=e101]: martes, 7 de abril
+    - generic [ref=e102]:
+      - link "← Volver" [ref=e103] [cursor=pointer]:
+        - /url: "#"
+      - generic [ref=e104]:
+        - generic [ref=e105]:
+          - generic [ref=e106]: Ventas
+          - generic [ref=e107]: Registro de ventas de mercadería
+        - generic [ref=e108]:
+          - link "Nuevo cliente" [ref=e109] [cursor=pointer]:
+            - /url: clientes.html?nuevo=1
+            - img [ref=e243]
+            - text: Nuevo cliente
+          - button "+ Nueva venta" [ref=e113] [cursor=pointer]:
+            - img [ref=e246]
+            - text: + Nueva venta
+      - generic [ref=e118]:
+        - generic [ref=e119]:
+          - img [ref=e250]
+          - generic [ref=e126]: 405,00
+          - generic [ref=e127]: Kg Vendidos
+        - generic [ref=e128]:
+          - img [ref=e255]
+          - generic [ref=e133]: $2.003.000,00
+          - generic [ref=e134]: Total Ingresos
+        - generic [ref=e135]:
+          - img [ref=e258]
+          - generic [ref=e140]: $4.945,679
+          - generic [ref=e141]: Precio Promedio / Kg
+        - generic [ref=e142]:
+          - img [ref=e261]
+          - generic [ref=e149]: $5.200/kg
+          - generic [ref=e150]: Cotización Frutilla
+        - generic [ref=e151]:
+          - img [ref=e266]
+          - generic [ref=e156]: 139,48
+          - generic [ref=e157]: Kg para Venta
+        - generic [ref=e158]:
+          - img [ref=e269]
+          - generic [ref=e165]: 824,49
+          - generic [ref=e166]: Kg en Proceso
+      - generic [ref=e167]:
+        - combobox "Temporada" [ref=e168] [cursor=pointer]:
+          - option "Todas"
+          - option "Campaña FIX 2026" [selected]
+        - searchbox "Filtrar..." [ref=e169]
+        - textbox "Desde" [ref=e170]
+        - textbox "Hasta" [ref=e171]
+        - button "✕" [ref=e172] [cursor=pointer]
+        - button "Auditoría" [ref=e173] [cursor=pointer]:
+          - img [ref=e274]
+          - text: Auditoría
+      - table [ref=e178]:
+        - rowgroup [ref=e179]:
+          - row "Remito Fecha Lote Categoría Cliente Kg Precio/Kg Total Estado Usuario" [ref=e180]:
+            - columnheader "Remito" [ref=e181]
+            - columnheader "Fecha" [ref=e182]
+            - columnheader "Lote" [ref=e183]
+            - columnheader "Categoría" [ref=e184]
+            - columnheader "Cliente" [ref=e185]
+            - columnheader "Kg" [ref=e186]
+            - columnheader "Precio/Kg" [ref=e187]
+            - columnheader "Total" [ref=e188]
+            - columnheader "Estado" [ref=e189]
+            - columnheader "Usuario" [ref=e190]
+            - columnheader [ref=e191]
+        - rowgroup [ref=e192]:
+          - row "R-0002 3/4/2026 03:23 p. m. L2026-0402-003.CH-PER-F CAMAROSA ARTESANA 20,00 kg $500,00 $10.000,00 Cobrado Efectivo Administrador Ver detalles Editar Anular venta" [ref=e277]:
+            - cell "R-0002" [ref=e278]
+            - cell "3/4/2026 03:23 p. m." [ref=e279]
+            - cell "L2026-0402-003.CH-PER-F" [ref=e280]
+            - cell "CAMAROSA" [ref=e281]
+            - cell "ARTESANA" [ref=e282]
+            - cell "20,00 kg" [ref=e283]
+            - cell "$500,00" [ref=e284]
+            - cell "$10.000,00" [ref=e285]
+            - cell "Cobrado Efectivo" [ref=e286]:
+              - generic [ref=e287]: Cobrado
+              - text: Efectivo
+            - cell "Administrador" [ref=e288]
+            - cell "Ver detalles Editar Anular venta" [ref=e289]:
+              - button "Ver detalles" [ref=e290] [cursor=pointer]:
+                - img [ref=e291]
+              - button "Editar" [ref=e294] [cursor=pointer]:
+                - img [ref=e295]
+              - button "Anular venta" [ref=e298] [cursor=pointer]:
+                - img [ref=e299]
+          - row "R-0003 2/4/2026 09:00 p. m. L2026-0402-003.GR-PIN-F CAMAROSA ARTESANA 10,00 kg $500,00 $5.000,00 Cobrado Efectivo Administrador Ver detalles Editar Anular venta" [ref=e302]:
+            - cell "R-0003" [ref=e303]
+            - cell "2/4/2026 09:00 p. m." [ref=e304]
+            - cell "L2026-0402-003.GR-PIN-F" [ref=e305]
+            - cell "CAMAROSA" [ref=e306]
+            - cell "ARTESANA" [ref=e307]
+            - cell "10,00 kg" [ref=e308]
+            - cell "$500,00" [ref=e309]
+            - cell "$5.000,00" [ref=e310]
+            - cell "Cobrado Efectivo" [ref=e311]:
+              - generic [ref=e312]: Cobrado
+              - text: Efectivo
+            - cell "Administrador" [ref=e313]
+            - cell "Ver detalles Editar Anular venta" [ref=e314]:
+              - button "Ver detalles" [ref=e315] [cursor=pointer]:
+                - img [ref=e316]
+              - button "Editar" [ref=e319] [cursor=pointer]:
+                - img [ref=e320]
+              - button "Anular venta" [ref=e323] [cursor=pointer]:
+                - img [ref=e324]
+          - row "R-0004 2/4/2026 09:00 p. m. L2026-0402-003.ME-ROJ-C CAMAROSA FRUTILLAS DEL LITORAL 7,00 kg $6.000,00 $42.000,00 ⏳ CC Pendiente Cuenta Corriente Administrador Ver detalles Editar Anular venta" [ref=e327]:
+            - cell "R-0004" [ref=e328]
+            - cell "2/4/2026 09:00 p. m." [ref=e329]
+            - cell "L2026-0402-003.ME-ROJ-C" [ref=e330]
+            - cell "CAMAROSA" [ref=e331]
+            - cell "FRUTILLAS DEL LITORAL" [ref=e332]
+            - cell "7,00 kg" [ref=e333]
+            - cell "$6.000,00" [ref=e334]
+            - cell "$42.000,00" [ref=e335]
+            - cell "⏳ CC Pendiente Cuenta Corriente" [ref=e336]:
+              - generic [ref=e337]: ⏳ CC Pendiente
+              - text: Cuenta Corriente
+            - cell "Administrador" [ref=e338]
+            - cell "Ver detalles Editar Anular venta" [ref=e339]:
+              - button "Ver detalles" [ref=e340] [cursor=pointer]:
+                - img [ref=e341]
+              - button "Editar" [ref=e344] [cursor=pointer]:
+                - img [ref=e345]
+              - button "Anular venta" [ref=e348] [cursor=pointer]:
+                - img [ref=e349]
+          - row "R-0005 2/4/2026 09:00 p. m. L2026-0402-003.CH-PER-F CAMAROSA ARTESANA 68,00 kg $7.000,00 $476.000,00 Cobrado Efectivo Administrador Ver detalles Editar Anular venta" [ref=e352]:
+            - cell "R-0005" [ref=e353]
+            - cell "2/4/2026 09:00 p. m." [ref=e354]
+            - cell "L2026-0402-003.CH-PER-F" [ref=e355]
+            - cell "CAMAROSA" [ref=e356]
+            - cell "ARTESANA" [ref=e357]
+            - cell "68,00 kg" [ref=e358]
+            - cell "$7.000,00" [ref=e359]
+            - cell "$476.000,00" [ref=e360]
+            - cell "Cobrado Efectivo" [ref=e361]:
+              - generic [ref=e362]: Cobrado
+              - text: Efectivo
+            - cell "Administrador" [ref=e363]
+            - cell "Ver detalles Editar Anular venta" [ref=e364]:
+              - button "Ver detalles" [ref=e365] [cursor=pointer]:
+                - img [ref=e366]
+              - button "Editar" [ref=e369] [cursor=pointer]:
+                - img [ref=e370]
+              - button "Anular venta" [ref=e373] [cursor=pointer]:
+                - img [ref=e374]
+          - row "R-0001 1/4/2026 09:00 p. m. CAMAROSA - ARTESANA 200,00 kg $5.000,00 $1.000.000,00 Anulada Administrador Ver detalles" [ref=e377]:
+            - cell "R-0001" [ref=e378]
+            - cell "1/4/2026 09:00 p. m." [ref=e379]
+            - cell "CAMAROSA" [ref=e380]
+            - cell "-" [ref=e381]
+            - cell "ARTESANA" [ref=e382]
+            - cell "200,00 kg" [ref=e383]
+            - cell "$5.000,00" [ref=e384]
+            - cell "$1.000.000,00" [ref=e385]
+            - cell "Anulada" [ref=e386]
+            - cell "Administrador" [ref=e387]
+            - cell "Ver detalles" [ref=e388]:
+              - button "Ver detalles" [ref=e389] [cursor=pointer]:
+                - img [ref=e390]
+          - row "R-0001 1/4/2026 09:00 p. m. CAMAROSA - ARTESANA 100,00 kg $4.700,00 $470.000,00 ⏳ CC Pendiente Cuenta Corriente Administrador Ver detalles Editar Anular venta" [ref=e393]:
+            - cell "R-0001" [ref=e394]
+            - cell "1/4/2026 09:00 p. m." [ref=e395]
+            - cell "CAMAROSA" [ref=e396]
+            - cell "-" [ref=e397]
+            - cell "ARTESANA" [ref=e398]
+            - cell "100,00 kg" [ref=e399]
+            - cell "$4.700,00" [ref=e400]
+            - cell "$470.000,00" [ref=e401]
+            - cell "⏳ CC Pendiente Cuenta Corriente" [ref=e402]:
+              - generic [ref=e403]: ⏳ CC Pendiente
+              - text: Cuenta Corriente
+            - cell "Administrador" [ref=e404]
+            - cell "Ver detalles Editar Anular venta" [ref=e405]:
+              - button "Ver detalles" [ref=e406] [cursor=pointer]:
+                - img [ref=e407]
+              - button "Editar" [ref=e410] [cursor=pointer]:
+                - img [ref=e411]
+              - button "Anular venta" [ref=e414] [cursor=pointer]:
+                - img [ref=e415]
+        - rowgroup [ref=e418]:
+          - row "TOTALES 205,00 kg $1.003.000,00" [ref=e419]:
+            - cell "TOTALES" [ref=e420]
+            - cell "205,00 kg" [ref=e421]
+            - cell [ref=e422]
+            - cell "$1.003.000,00" [ref=e423]
+            - cell [ref=e424]

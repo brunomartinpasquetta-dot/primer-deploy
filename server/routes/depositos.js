@@ -9,20 +9,22 @@ router.get('/resumen', async (req, res) => {
     const { temporada_id } = req.query;
     const pool = await getPool();
     const dbReq = pool.request();
-    let where = '1=1';
+    let where = "ISNULL(estado, '') != 'anulada'";
     if (temporada_id) {
       dbReq.input('temporada_id', sql.Int, parseInt(temporada_id));
-      where = 'temporada_id = @temporada_id';
+      where += ' AND temporada_id = @temporada_id';
     }
     const result = await dbReq.query(`
       SELECT
-        ISNULL(SUM(CASE WHEN tipo = 'ingreso'         THEN kilos ELSE 0 END), 0) AS kilos_ingresados,
-        ISNULL(SUM(CASE WHEN tipo = 'egreso_venta'    THEN kilos ELSE 0 END), 0) AS kilos_vendidos,
+        ISNULL(SUM(CASE WHEN tipo = 'ingreso' THEN kilos WHEN tipo = 'egreso_anulacion' THEN -kilos ELSE 0 END), 0) AS kilos_ingresados,
+        ISNULL(SUM(CASE WHEN tipo = 'egreso_venta' THEN kilos WHEN tipo = 'ingreso_anulacion' THEN -kilos ELSE 0 END), 0) AS kilos_vendidos,
         ISNULL(SUM(CASE WHEN tipo = 'egreso_descarte' THEN kilos ELSE 0 END), 0) AS kilos_descartados,
-        ISNULL(SUM(CASE WHEN tipo = 'ingreso'         THEN kilos ELSE 0 END), 0) -
-        ISNULL(SUM(CASE WHEN tipo = 'egreso_venta'    THEN kilos ELSE 0 END), 0) -
+        ISNULL(SUM(CASE WHEN tipo = 'ingreso' THEN kilos WHEN tipo = 'egreso_anulacion' THEN -kilos ELSE 0 END), 0) -
+        ISNULL(SUM(CASE WHEN tipo = 'egreso_venta' THEN kilos WHEN tipo = 'ingreso_anulacion' THEN -kilos ELSE 0 END), 0) -
         ISNULL(SUM(CASE WHEN tipo = 'egreso_descarte' THEN kilos ELSE 0 END), 0) AS kilos_en_deposito,
-        ISNULL(SUM(CASE WHEN tipo = 'egreso_venta' THEN kilos * ISNULL(precio_kilo, 0) ELSE 0 END), 0) AS ingresos_venta
+        ISNULL(SUM(CASE WHEN tipo = 'egreso_venta' THEN kilos * ISNULL(precio_kilo, 0)
+                        WHEN tipo = 'ingreso_anulacion' THEN -kilos * ISNULL(precio_kilo, 0)
+                        ELSE 0 END), 0) AS ingresos_venta
       FROM MovimientosDeposito
       WHERE ${where}`);
     res.json(result.recordset[0]);
@@ -211,6 +213,8 @@ router.get('/stock-vendible-resumen', async (req, res) => {
       ;WITH vendido AS (
         SELECT ri.sub_lote_id, SUM(ri.kilos) AS kg_vend
         FROM RemitoItems ri
+        JOIN MovimientosDeposito md ON ri.movimiento_id = md.id
+        WHERE ISNULL(md.estado, '') != 'anulada'
         GROUP BY ri.sub_lote_id
       )
       SELECT
@@ -285,7 +289,7 @@ router.get('/stock-vendible', async (req, res) => {
              ISNULL(p.variedad, '') AS variedad,
              lp.codigo_interno     AS lote_padre_codigo,
              sl.fecha_envasado,
-             ISNULL((SELECT SUM(ri.kilos) FROM RemitoItems ri WHERE ri.sub_lote_id = sl.id), 0) AS kilos_vendidos
+             ISNULL((SELECT SUM(ri.kilos) FROM RemitoItems ri JOIN MovimientosDeposito md ON ri.movimiento_id = md.id WHERE ri.sub_lote_id = sl.id AND ISNULL(md.estado, '') != 'anulada'), 0) AS kilos_vendidos
       FROM LotesMercaderia sl
       LEFT JOIN LotesMercaderia lp           ON sl.lote_padre_id        = lp.id
       LEFT JOIN CategoriasClasificacion cc    ON sl.categoria_clasif_id  = cc.id
@@ -385,7 +389,7 @@ router.post('/egreso', async (req, res) => {
       SELECT sl.id, sl.codigo_interno, sl.kilos, sl.etapa, sl.deposito_actual_id,
              sl.temporada_id, sl.parcela_id,
              ISNULL(p.variedad, '') AS variedad, ISNULL(p.nombre, '') AS parcela,
-             ISNULL((SELECT SUM(ri.kilos) FROM RemitoItems ri WHERE ri.sub_lote_id = sl.id), 0) AS kilos_vendidos
+             ISNULL((SELECT SUM(ri.kilos) FROM RemitoItems ri JOIN MovimientosDeposito md ON ri.movimiento_id = md.id WHERE ri.sub_lote_id = sl.id AND ISNULL(md.estado, '') != 'anulada'), 0) AS kilos_vendidos
       FROM LotesMercaderia sl
       LEFT JOIN Parcelas p ON sl.parcela_id = p.id
       WHERE ${where}
@@ -575,7 +579,7 @@ router.post('/descarte', async (req, res) => {
   const stockRes = await pool.request()
     .input('did', sql.Int, deposito_id)
     .query(`SELECT ISNULL(SUM(CASE WHEN tipo='ingreso' THEN kilos ELSE 0 END),0) -
-                   ISNULL(SUM(CASE WHEN tipo LIKE 'egreso%' THEN kilos ELSE 0 END),0) AS disponible
+                   ISNULL(SUM(CASE WHEN tipo LIKE 'egreso%' AND tipo != 'egreso_anulacion' THEN kilos ELSE 0 END),0) AS disponible
             FROM MovimientosDeposito WHERE deposito_id = @did`);
   const disponible = parseFloat(stockRes.recordset[0].disponible);
   if (disponible < parseFloat(kilos))
@@ -757,7 +761,7 @@ router.get('/ocupacion', async (req, res) => {
       const result = await dbReq.query(`
         SELECT d.id, d.nombre, d.tipo, d.tipo_deposito, d.capacidad_kg,
                ISNULL(SUM(CASE WHEN m.tipo = 'ingreso'    THEN m.kilos ELSE 0 END), 0) -
-               ISNULL(SUM(CASE WHEN m.tipo LIKE 'egreso%' THEN m.kilos ELSE 0 END), 0) AS ocupado_kg
+               ISNULL(SUM(CASE WHEN m.tipo LIKE 'egreso%' AND m.tipo != 'egreso_anulacion' THEN m.kilos ELSE 0 END), 0) AS ocupado_kg
         FROM Depositos d
         LEFT JOIN MovimientosDeposito m ON m.deposito_id = d.id
         WHERE ${where}

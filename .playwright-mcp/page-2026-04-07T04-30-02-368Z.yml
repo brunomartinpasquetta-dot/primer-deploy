@@ -1,0 +1,157 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - text: CO
+          - emphasis [ref=e8]: SE
+          - text: CHA
+        - generic [ref=e9]: SISTEMA DE CULTIVOS
+    - navigation [ref=e10]:
+      - link "Dashboard" [ref=e11] [cursor=pointer]:
+        - /url: index.html
+        - img [ref=e13]
+        - text: Dashboard
+      - generic [ref=e18]: Campo
+      - link "Cosecha" [ref=e19] [cursor=pointer]:
+        - /url: juntada.html
+        - img [ref=e21]
+        - text: Cosecha
+      - link "Despalillado" [ref=e30] [cursor=pointer]:
+        - /url: despalillado.html
+        - img [ref=e32]
+        - text: Despalillado
+      - link "Aplicaciones" [ref=e38] [cursor=pointer]:
+        - /url: aplicaciones.html
+        - img [ref=e40]
+        - text: Aplicaciones
+      - link "Trabajos de Campo" [ref=e43] [cursor=pointer]:
+        - /url: trabajos-campo.html
+        - img [ref=e45]
+        - text: Trabajos de Campo
+      - link "Clasif. + Embalaje" [ref=e49] [cursor=pointer]:
+        - /url: clasificacion-embalaje.html
+        - img [ref=e51]
+        - text: Clasif. + Embalaje
+      - generic [ref=e55]: Sistema
+      - link "Stock" [ref=e56] [cursor=pointer]:
+        - /url: menu-stock.html
+        - img [ref=e58]
+        - text: Stock
+      - link "Comercial" [ref=e62] [cursor=pointer]:
+        - /url: menu-comercial.html
+        - img [ref=e64]
+        - text: Comercial
+      - link "Administración Caja, cheques, pagos y reportes" [ref=e69] [cursor=pointer]:
+        - /url: menu-admin.html
+        - img [ref=e71]
+        - text: Administración Caja, cheques, pagos y reportes
+      - link "Mercado" [ref=e73] [cursor=pointer]:
+        - /url: mercado.html
+        - img [ref=e75]
+        - text: Mercado
+      - link "Configuración" [ref=e78] [cursor=pointer]:
+        - /url: menu-config.html
+        - img [ref=e80]
+        - text: Configuración
+    - generic [ref=e83]:
+      - generic [ref=e84]: Administrador · administrador
+      - button "Cerrar sesión" [ref=e85] [cursor=pointer]
+  - generic [ref=e86]:
+    - banner [ref=e87]:
+      - generic [ref=e88]:
+        - img [ref=e89]
+        - generic [ref=e90]:
+          - generic [ref=e91]:
+            - text: CO
+            - emphasis [ref=e92]: SE
+            - text: CHA
+          - generic [ref=e93]: SISTEMA DE CULTIVOS
+        - generic [ref=e94]: 🌱 Campaña FIX 2026 · Día 8
+      - generic [ref=e95]:
+        - generic [ref=e96] [cursor=pointer]:
+          - img [ref=e97]
+          - text: Administrador
+        - generic [ref=e100]: martes, 7 de abril
+    - generic [ref=e101]:
+      - link "← Volver" [ref=e102] [cursor=pointer]:
+        - /url: "#"
+      - generic [ref=e103]:
+        - generic [ref=e104]: Mercado
+        - generic [ref=e105]: Cotizaciones y referencias de precios
+      - generic [ref=e106]: Dólar
+      - generic [ref=e107]:
+        - generic [ref=e108]:
+          - generic [ref=e109]: Blue
+          - generic [ref=e110]: $ 1.400
+          - generic [ref=e111]: compra $ 1.390
+          - generic [ref=e112]: Act. 01:28 a. m. · caché
+        - generic [ref=e113]:
+          - generic [ref=e114]: Oficial
+          - generic [ref=e115]: $ 1.415
+          - generic [ref=e116]: compra $ 1.365
+        - generic [ref=e117]:
+          - generic [ref=e118]: MEP / Bolsa
+          - generic [ref=e119]: $ 1.431
+          - generic [ref=e120]: compra $ 1.426
+        - generic [ref=e121]:
+          - generic [ref=e122]: CCL
+          - generic [ref=e123]: $ 1.483
+          - generic [ref=e124]: compra $ 1.482
+      - generic [ref=e126]:
+        - text: Pizarra Rosario
+        - button "Cargando..." [disabled] [ref=e127]
+      - table [ref=e130]:
+        - rowgroup [ref=e131]:
+          - row "Cultivo FOB Rosario $/tn FOB Rosario USD/tn Chicago USD/tn Actualizado" [ref=e132]:
+            - columnheader "Cultivo" [ref=e133]
+            - columnheader "FOB Rosario $/tn" [ref=e134]
+            - columnheader "FOB Rosario USD/tn" [ref=e135]
+            - columnheader "Chicago USD/tn" [ref=e136]
+            - columnheader "Actualizado" [ref=e137]
+        - rowgroup [ref=e138]:
+          - row "Cargando..." [ref=e139]:
+            - cell "Cargando..." [ref=e140]
+      - generic [ref=e141]:
+        - text: Frutilla — Mercado Central
+        - button "Actualizar" [ref=e142] [cursor=pointer]:
+          - img [ref=e143]
+          - text: Actualizar
+      - generic [ref=e148]:
+        - generic [ref=e149]:
+          - generic [ref=e150]: Precio modal del día
+          - generic [ref=e151]: $ 5.200/kg
+          - generic [ref=e152]:
+            - generic [ref=e153]:
+              - generic [ref=e154]: Mínimo
+              - generic [ref=e155]: $ 3.200/kg
+            - generic [ref=e156]:
+              - generic [ref=e157]: Máximo
+              - generic [ref=e158]: $ 7.000/kg
+          - generic [ref=e159]: "Unidad: cajón · Actualizado: 7/4/2026 · (caché) · Mercado Central Buenos Aires"
+        - generic [ref=e160]: Precio mayorista Buenos Aires — referencia
+      - generic [ref=e161]: ¿Cuánto vale mi cosecha?
+      - generic [ref=e163]:
+        - generic [ref=e164]:
+          - generic [ref=e165]:
+            - generic [ref=e166]: Cultivo
+            - combobox [ref=e167] [cursor=pointer]:
+              - option "Frutilla" [selected]
+              - option "Soja"
+              - option "Trigo"
+              - option "Maíz"
+              - option "Girasol"
+              - option "Sorgo"
+              - option "Arándano"
+              - option "Otro"
+          - generic [ref=e168]:
+            - generic [ref=e169]: Cantidad (kg)
+            - spinbutton [ref=e170]
+          - generic [ref=e171]:
+            - generic [ref=e172]: Precio ($/kg)
+            - generic [ref=e173]:
+              - spinbutton [ref=e174]: "5200"
+              - generic [ref=e175]: AUTO
+            - generic [ref=e176]: Mercado Central BsAs — 7/4/2026
+        - generic [ref=e178]: Ingresá la cantidad para ver el resultado

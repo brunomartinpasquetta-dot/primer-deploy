@@ -246,10 +246,43 @@ router.get('/lote/:id/detalle', async (req, res) => {
               WHERE c.lote_id = @lote_id
               ORDER BY c.fecha_hora DESC`);
 
+    // Embalajes del lote (a través de sub-lotes)
+    const embalajesRes = await pool.request()
+      .input('lote_id2', sql.Int, loteId)
+      .query(`SELECT e.id, e.sub_lote_id, e.kilos, e.tipo_envase, e.cantidad_envases,
+                     e.destino, e.fecha_hora, e.estado, e.producto_id, e.deposito_id,
+                     lm.codigo_interno, lm.codigo_externo,
+                     cc.nombre AS categoria, sc.nombre AS sub_categoria,
+                     dep.nombre AS deposito,
+                     p.nombre AS insumo,
+                     u.nombre AS usuario
+              FROM Embalaje e
+              JOIN LotesMercaderia lm ON e.sub_lote_id = lm.id
+              LEFT JOIN CategoriasClasificacion cc ON lm.categoria_clasif_id = cc.id
+              LEFT JOIN SubCategoriasClasificacion sc ON lm.sub_categoria_id = sc.id
+              LEFT JOIN Depositos dep ON e.deposito_id = dep.id
+              LEFT JOIN Productos p ON e.producto_id = p.id
+              LEFT JOIN Usuarios u ON e.usuario_id = u.id
+              WHERE lm.lote_padre_id = @lote_id2
+              ORDER BY e.fecha_hora DESC`);
+
+    // Sub-lotes generados
+    const subLotesRes = await pool.request()
+      .input('lote_id3', sql.Int, loteId)
+      .query(`SELECT sl.id, sl.codigo_interno, sl.kilos, sl.etapa,
+                     cc.nombre AS categoria, sc.nombre AS sub_categoria
+              FROM LotesMercaderia sl
+              LEFT JOIN CategoriasClasificacion cc ON sl.categoria_clasif_id = cc.id
+              LEFT JOIN SubCategoriasClasificacion sc ON sl.sub_categoria_id = sc.id
+              WHERE sl.lote_padre_id = @lote_id3
+              ORDER BY cc.nombre, sc.nombre`);
+
     res.json({
       lote: loteRes.recordset[0],
       resumen_categorias: clasifRes.recordset,
-      registros: registrosRes.recordset
+      registros: registrosRes.recordset,
+      embalajes: embalajesRes.recordset,
+      sub_lotes: subLotesRes.recordset
     });
   } catch (err) {
     console.error(err); res.status(500).json({ error: "Error interno del servidor" });
@@ -463,6 +496,63 @@ router.post('/finalizar-clasificacion/:lote_id', async (req, res) => {
   }
 });
 
+// POST /finalizar-embalaje/:lote_id — Marcar lote como completamente embalado (cerrar lote)
+router.post('/finalizar-embalaje/:lote_id', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const loteId = parseInt(req.params.lote_id);
+
+    // Verificar que el lote existe y está en etapa clasificado
+    const loteRes = await pool.request()
+      .input('id', sql.Int, loteId)
+      .query(`SELECT id, etapa, codigo_interno FROM LotesMercaderia WHERE id = @id`);
+    if (!loteRes.recordset.length) return res.status(404).json({ error: 'Lote no encontrado' });
+    const lote = loteRes.recordset[0];
+    if (lote.etapa !== 'clasificado') return res.status(400).json({ error: 'El lote no está en etapa clasificado' });
+
+    // Verificar que hay embalajes registrados
+    const embRes = await pool.request()
+      .input('lote_id', sql.Int, loteId)
+      .query(`SELECT ISNULL(SUM(e.kilos), 0) AS total
+              FROM Embalaje e
+              JOIN LotesMercaderia sl ON e.sub_lote_id = sl.id
+              WHERE sl.lote_padre_id = @lote_id AND e.estado != 'anulada'`);
+    const totalEmb = parseFloat(embRes.recordset[0].total);
+    if (totalEmb <= 0) return res.status(400).json({ error: 'No hay embalajes registrados para este lote' });
+
+    // Verificar que no quedan sub-lotes con kilos disponibles
+    const dispRes = await pool.request()
+      .input('lote_id', sql.Int, loteId)
+      .query(`SELECT sl.id, sl.kilos - ISNULL(emb.kilos_embalados, 0) AS kilos_disponible
+              FROM LotesMercaderia sl
+              LEFT JOIN (
+                SELECT sub_lote_id, SUM(kilos) AS kilos_embalados
+                FROM Embalaje WHERE estado != 'anulada' GROUP BY sub_lote_id
+              ) emb ON sl.id = emb.sub_lote_id
+              WHERE sl.lote_padre_id = @lote_id
+                AND sl.etapa IN ('clasificado', 'embalado', 'vendido_parcial')
+                AND (sl.kilos - ISNULL(emb.kilos_embalados, 0)) > 0.01`);
+    if (dispRes.recordset.length > 0) {
+      return res.status(400).json({ error: 'Aún hay sub-lotes con kilos disponibles para embalar' });
+    }
+
+    // Actualizar etapa del lote padre a 'embalado'
+    await pool.request()
+      .input('id', sql.Int, loteId)
+      .query(`UPDATE LotesMercaderia SET etapa = 'embalado' WHERE id = @id`);
+
+    // Actualizar sub-lotes clasificados a 'embalado' (los que no tengan ventas parciales)
+    await pool.request()
+      .input('lote_id', sql.Int, loteId)
+      .query(`UPDATE LotesMercaderia SET etapa = 'embalado'
+              WHERE lote_padre_id = @lote_id AND etapa = 'clasificado'`);
+
+    res.json({ ok: true, kilos_embalados: totalEmb });
+  } catch (err) {
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
+  }
+});
+
 // ══════════════════════════════════════════════════════════════════════════════
 // SUB-LOTES CLASIFICADOS (disponibles para embalaje)
 // ══════════════════════════════════════════════════════════════════════════════
@@ -500,7 +590,7 @@ router.get('/clasificados', async (req, res) => {
                 GROUP BY sub_lote_id
               ) emb ON emb.sub_lote_id = sl.id
               WHERE sl.lote_padre_id IS NOT NULL
-                AND sl.etapa IN ('clasificado', 'embalado')
+                AND sl.etapa IN ('clasificado', 'embalado', 'vendido_parcial')
                 AND sl.estado != 'anulada'
                 AND (sl.kilos - ISNULL(emb.kilos_embalados, 0)) > 0
               ORDER BY sl.codigo_interno`);
@@ -515,16 +605,20 @@ router.get('/clasificados', async (req, res) => {
 // ══════════════════════════════════════════════════════════════════════════════
 
 // POST /embalar
-// Body: { sub_lote_id, kilos, producto_id, cantidad_envases, deposito_id }
+// Body: { sub_lote_id, kilos, producto_id, cantidad_envases, deposito_id, tipo_embalaje_id? }
 router.post('/embalar', async (req, res) => {
   try {
-    const { sub_lote_id, kilos, producto_id, cantidad_envases, deposito_id } = req.body;
-    if (!sub_lote_id || !kilos) return res.status(400).json({ error: 'sub_lote_id y kilos son obligatorios' });
+    const { sub_lote_id, kilos, producto_id, cantidad_envases, deposito_id, tipo_embalaje_id } = req.body;
+
+    if (!sub_lote_id) return res.status(400).json({ error: 'sub_lote_id es obligatorio' });
+    if (!kilos || parseFloat(kilos) <= 0) return res.status(400).json({ error: 'Ingresá los kilos embalados' });
     if (!deposito_id) return res.status(400).json({ error: 'Selecciona el depósito destino' });
-    if (!producto_id) return res.status(400).json({ error: 'Selecciona el tipo de embalaje' });
+    if (!producto_id) return res.status(400).json({ error: 'Selecciona el insumo de embalaje' });
 
     const pool = await getPool();
     const uid = req.user ? req.user.id : null;
+    const tipoEmbalajeId = tipo_embalaje_id ? parseInt(tipo_embalaje_id) : null;
+
     const kilosNum = parseFloat(kilos);
     const cantEnvases = parseInt(cantidad_envases) || 1;
     const now = new Date();
@@ -570,7 +664,7 @@ router.post('/embalar', async (req, res) => {
     await transaction.begin();
     try {
       // 4. Insertar registro de Embalaje
-      await transaction.request()
+      const insertEmbReq = transaction.request()
         .input('sub_lote_id', sql.Int, sub_lote_id)
         .input('kilos', sql.Decimal(10, 3), kilosNum)
         .input('tipo_envase', sql.NVarChar, producto.nombre)
@@ -579,10 +673,18 @@ router.post('/embalar', async (req, res) => {
         .input('destino', sql.NVarChar, destino)
         .input('deposito_id', sql.Int, deposito_id)
         .input('usuario_id', sql.Int, uid)
-        .input('fecha_envasado', sql.DateTime, now)
-        .query(`INSERT INTO Embalaje
+        .input('fecha_envasado', sql.DateTime, now);
+
+      if (tipoEmbalajeId) {
+        insertEmbReq.input('tipo_embalaje_id', sql.Int, tipoEmbalajeId);
+        await insertEmbReq.query(`INSERT INTO Embalaje
+                  (sub_lote_id, kilos, tipo_envase, producto_id, cantidad_envases, destino, deposito_id, usuario_id, fecha_envasado, tipo_embalaje_id)
+                VALUES (@sub_lote_id, @kilos, @tipo_envase, @producto_id, @cantidad_envases, @destino, @deposito_id, @usuario_id, @fecha_envasado, @tipo_embalaje_id)`);
+      } else {
+        await insertEmbReq.query(`INSERT INTO Embalaje
                   (sub_lote_id, kilos, tipo_envase, producto_id, cantidad_envases, destino, deposito_id, usuario_id, fecha_envasado)
                 VALUES (@sub_lote_id, @kilos, @tipo_envase, @producto_id, @cantidad_envases, @destino, @deposito_id, @usuario_id, @fecha_envasado)`);
+      }
 
       // 5. Actualizar sub-lote
       const sufijo = destino === 'fresco' ? '-F' : '-C';
@@ -653,6 +755,16 @@ router.post('/embalar', async (req, res) => {
         .input('cantidad', sql.Decimal(10, 3), cantEnvases)
         .query('UPDATE Productos SET stock_actual = ISNULL(stock_actual, 0) - @cantidad WHERE id = @producto_id');
 
+      // 7b. Verificar stock resultante para warning
+      const stockCheckRes = await transaction.request()
+        .input('producto_id', sql.Int, producto_id)
+        .query('SELECT stock_actual FROM Productos WHERE id = @producto_id');
+      const stockResultante = parseFloat(stockCheckRes.recordset[0].stock_actual);
+      let warningMsg = null;
+      if (stockResultante < 0) {
+        warningMsg = `Stock de insumo ${producto.nombre} en negativo (${stockResultante} unidades). Regularizar ingreso.`;
+      }
+
       // 8. Auto-generar codigo_externo (N° lote para etiqueta) si no existe
       let codigoExterno = subLote.codigo_externo;
       if (!codigoExterno) {
@@ -673,7 +785,7 @@ router.post('/embalar', async (req, res) => {
       }
 
       await transaction.commit();
-      res.json({
+      const response = {
         ok: true,
         lote: {
           id: sub_lote_id,
@@ -682,7 +794,9 @@ router.post('/embalar', async (req, res) => {
           fecha_envasado: now,
           fecha_cosecha: subLote.fecha_cosecha
         }
-      });
+      };
+      if (warningMsg) response.warning = warningMsg;
+      res.json(response);
     } catch (innerErr) {
       await transaction.rollback();
       throw innerErr;
@@ -756,6 +870,213 @@ router.get('/clasificados-hoy', async (req, res) => {
               WHERE CAST(c.fecha_hora AS DATE) = CAST(GETDATE() AS DATE)
               ORDER BY c.fecha_hora DESC`);
     res.json(result.recordset);
+  } catch (err) {
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// EDICIONES
+// ══════════════════════════════════════════════════════════════════════════════
+
+// PUT /clasificacion/:id — Editar registro de clasificación
+router.put('/clasificacion/:id', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const id = parseInt(req.params.id);
+    const { categoria_clasif_id, sub_categoria_nombre, kilos, motivo } = req.body;
+    if (!motivo) return res.status(400).json({ error: 'Motivo de edición es obligatorio' });
+
+    const cRes = await pool.request()
+      .input('id', sql.Int, id)
+      .query(`SELECT c.id, c.kilos, c.categoria_clasif_id, c.sub_categoria_id, c.lote_id, c.sub_lote_id, c.estado,
+                     cc.nombre AS categoria, sc.nombre AS sub_categoria
+              FROM Clasificacion c
+              LEFT JOIN CategoriasClasificacion cc ON c.categoria_clasif_id = cc.id
+              LEFT JOIN SubCategoriasClasificacion sc ON c.sub_categoria_id = sc.id
+              WHERE c.id = @id`);
+    if (!cRes.recordset.length) return res.status(404).json({ error: 'Clasificación no encontrada' });
+    const prev = cRes.recordset[0];
+    if (prev.estado === 'anulada') return res.status(400).json({ error: 'No se puede editar un registro anulado' });
+
+    const uid = req.user ? req.user.id : null;
+    const uNombre = req.user ? req.user.nombre : '';
+    const newKilos = kilos !== undefined ? parseFloat(kilos) : parseFloat(prev.kilos);
+    const newCatId = categoria_clasif_id ? parseInt(categoria_clasif_id) : prev.categoria_clasif_id;
+
+    const transaction = new sql.Transaction(pool);
+    await transaction.begin();
+    try {
+      // Resolver sub_categoria_id si viene nombre
+      let newSubCatId = prev.sub_categoria_id;
+      if (sub_categoria_nombre !== undefined) {
+        if (sub_categoria_nombre) {
+          const scRes = await transaction.request()
+            .input('cat_id', sql.Int, newCatId)
+            .input('nombre', sql.NVarChar, sub_categoria_nombre.trim())
+            .query(`SELECT id FROM SubCategoriasClasificacion WHERE categoria_clasif_id = @cat_id AND nombre = @nombre`);
+          if (scRes.recordset.length) {
+            newSubCatId = scRes.recordset[0].id;
+          } else {
+            const insRes = await transaction.request()
+              .input('cat_id', sql.Int, newCatId)
+              .input('nombre', sql.NVarChar, sub_categoria_nombre.trim())
+              .query(`INSERT INTO SubCategoriasClasificacion (categoria_clasif_id, nombre) OUTPUT INSERTED.id VALUES (@cat_id, @nombre)`);
+            newSubCatId = insRes.recordset[0].id;
+          }
+        } else {
+          newSubCatId = null;
+        }
+      }
+
+      // Ajustar kilos en sub-lote si cambió
+      const diffKilos = newKilos - parseFloat(prev.kilos);
+      if (Math.abs(diffKilos) > 0.001 && prev.sub_lote_id) {
+        await transaction.request()
+          .input('sub_lote_id', sql.Int, prev.sub_lote_id)
+          .input('diff', sql.Decimal(10,3), diffKilos)
+          .query('UPDATE LotesMercaderia SET kilos = kilos + @diff WHERE id = @sub_lote_id');
+      }
+
+      // Update clasificación
+      await transaction.request()
+        .input('id', sql.Int, id)
+        .input('cat_id', sql.Int, newCatId)
+        .input('sub_cat_id', sql.Int, newSubCatId)
+        .input('kilos', sql.Decimal(10,3), newKilos)
+        .query('UPDATE Clasificacion SET categoria_clasif_id = @cat_id, sub_categoria_id = @sub_cat_id, kilos = @kilos WHERE id = @id');
+
+      // Obtener nombres nuevos para auditoría
+      const newNames = await transaction.request()
+        .input('cat_id', sql.Int, newCatId)
+        .input('sub_cat_id', sql.Int, newSubCatId)
+        .query(`SELECT cc.nombre AS cat, sc.nombre AS sub FROM CategoriasClasificacion cc
+                LEFT JOIN SubCategoriasClasificacion sc ON sc.id = @sub_cat_id WHERE cc.id = @cat_id`);
+      const nn = newNames.recordset[0] || {};
+
+      // Auditoría
+      const valorAnterior = (prev.categoria || '') + '|' + (prev.sub_categoria || '') + '|' + prev.kilos;
+      const valorNuevo = (nn.cat || '') + '|' + (nn.sub || '') + '|' + newKilos;
+      await transaction.request()
+        .input('registro_id', sql.Int, id)
+        .input('tabla_origen', sql.NVarChar, 'Clasificacion')
+        .input('accion', sql.NVarChar, 'edicion')
+        .input('campo', sql.NVarChar, 'categoria|sub_categoria|kilos')
+        .input('valor_anterior', sql.NVarChar, valorAnterior)
+        .input('valor_nuevo', sql.NVarChar, valorNuevo)
+        .input('motivo', sql.NVarChar, motivo)
+        .input('usuario_id', sql.Int, uid)
+        .input('usuario_nombre', sql.NVarChar, uNombre)
+        .query(`INSERT INTO AuditoriaClasificacion
+                  (registro_id, tabla_origen, accion, campo, valor_anterior, valor_nuevo, motivo, usuario_id, usuario_nombre)
+                VALUES (@registro_id, @tabla_origen, @accion, @campo, @valor_anterior, @valor_nuevo, @motivo, @usuario_id, @usuario_nombre)`);
+
+      await transaction.commit();
+      res.json({ ok: true });
+    } catch (innerErr) { await transaction.rollback(); throw innerErr; }
+  } catch (err) {
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
+  }
+});
+
+// PUT /embalaje/:id — Editar registro de embalaje
+router.put('/embalaje/:id', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const id = parseInt(req.params.id);
+    const { producto_id, cantidad_envases, kilos, deposito_id, motivo } = req.body;
+    if (!motivo) return res.status(400).json({ error: 'Motivo de edición es obligatorio' });
+
+    const eRes = await pool.request()
+      .input('id', sql.Int, id)
+      .query(`SELECT e.id, e.kilos, e.producto_id, e.cantidad_envases, e.deposito_id, e.sub_lote_id, e.estado,
+                     p.nombre AS insumo, dep.nombre AS deposito
+              FROM Embalaje e
+              LEFT JOIN Productos p ON e.producto_id = p.id
+              LEFT JOIN Depositos dep ON e.deposito_id = dep.id
+              WHERE e.id = @id`);
+    if (!eRes.recordset.length) return res.status(404).json({ error: 'Embalaje no encontrado' });
+    const prev = eRes.recordset[0];
+    if (prev.estado === 'anulada') return res.status(400).json({ error: 'No se puede editar un registro anulado' });
+
+    const uid = req.user ? req.user.id : null;
+    const uNombre = req.user ? req.user.nombre : '';
+    const newKilos = kilos !== undefined ? parseFloat(kilos) : parseFloat(prev.kilos);
+    const newProductoId = producto_id ? parseInt(producto_id) : prev.producto_id;
+    const newCantEnvases = cantidad_envases ? parseInt(cantidad_envases) : prev.cantidad_envases;
+    const newDepositoId = deposito_id ? parseInt(deposito_id) : prev.deposito_id;
+
+    const transaction = new sql.Transaction(pool);
+    await transaction.begin();
+    try {
+      // Ajustar stock insumo si cambió producto o cantidad
+      const prevCant = prev.cantidad_envases || 1;
+      if (newProductoId !== prev.producto_id || newCantEnvases !== prevCant) {
+        // Devolver stock anterior
+        await transaction.request()
+          .input('pid', sql.Int, prev.producto_id)
+          .input('cant', sql.Int, prevCant)
+          .query('UPDATE Productos SET stock_actual = stock_actual + @cant WHERE id = @pid');
+        // Descontar nuevo stock
+        await transaction.request()
+          .input('pid', sql.Int, newProductoId)
+          .input('cant', sql.Int, newCantEnvases)
+          .query('UPDATE Productos SET stock_actual = stock_actual - @cant WHERE id = @pid');
+      }
+
+      // Ajustar kilos en MovimientosDeposito y StockMercaderia si cambió
+      const diffKilos = newKilos - parseFloat(prev.kilos);
+      if (Math.abs(diffKilos) > 0.001) {
+        // Actualizar sub-lote kilos
+        if (prev.sub_lote_id) {
+          await transaction.request()
+            .input('slid', sql.Int, prev.sub_lote_id)
+            .input('diff', sql.Decimal(10,3), diffKilos)
+            .query('UPDATE LotesMercaderia SET kilos = kilos + @diff WHERE id = @slid');
+        }
+      }
+
+      // Obtener nombre nuevo del producto
+      const prodRes = await transaction.request()
+        .input('pid', sql.Int, newProductoId)
+        .query('SELECT nombre FROM Productos WHERE id = @pid');
+      const newInsumo = prodRes.recordset.length ? prodRes.recordset[0].nombre : '';
+
+      const depRes = await transaction.request()
+        .input('did', sql.Int, newDepositoId)
+        .query('SELECT nombre FROM Depositos WHERE id = @did');
+      const newDeposito = depRes.recordset.length ? depRes.recordset[0].nombre : '';
+
+      // Update embalaje
+      await transaction.request()
+        .input('id', sql.Int, id)
+        .input('producto_id', sql.Int, newProductoId)
+        .input('cantidad_envases', sql.Int, newCantEnvases)
+        .input('kilos', sql.Decimal(10,3), newKilos)
+        .input('deposito_id', sql.Int, newDepositoId)
+        .input('tipo_envase', sql.NVarChar, newInsumo)
+        .query('UPDATE Embalaje SET producto_id = @producto_id, cantidad_envases = @cantidad_envases, kilos = @kilos, deposito_id = @deposito_id, tipo_envase = @tipo_envase WHERE id = @id');
+
+      // Auditoría
+      const valorAnterior = (prev.insumo || '') + '|' + prevCant + '|' + prev.kilos + '|' + (prev.deposito || '');
+      const valorNuevo = newInsumo + '|' + newCantEnvases + '|' + newKilos + '|' + newDeposito;
+      await transaction.request()
+        .input('registro_id', sql.Int, id)
+        .input('tabla_origen', sql.NVarChar, 'Embalaje')
+        .input('accion', sql.NVarChar, 'edicion')
+        .input('campo', sql.NVarChar, 'insumo|envases|kilos|deposito')
+        .input('valor_anterior', sql.NVarChar, valorAnterior)
+        .input('valor_nuevo', sql.NVarChar, valorNuevo)
+        .input('motivo', sql.NVarChar, motivo)
+        .input('usuario_id', sql.Int, uid)
+        .input('usuario_nombre', sql.NVarChar, uNombre)
+        .query(`INSERT INTO AuditoriaClasificacion
+                  (registro_id, tabla_origen, accion, campo, valor_anterior, valor_nuevo, motivo, usuario_id, usuario_nombre)
+                VALUES (@registro_id, @tabla_origen, @accion, @campo, @valor_anterior, @valor_nuevo, @motivo, @usuario_id, @usuario_nombre)`);
+
+      await transaction.commit();
+      res.json({ ok: true });
+    } catch (innerErr) { await transaction.rollback(); throw innerErr; }
   } catch (err) {
     console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
@@ -1067,5 +1388,162 @@ router.get('/etiqueta/:sub_lote_id', async (req, res) => {
     console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
 });
+
+// ══════════════════════════════════════════════════════════════════════════════
+// TIPOS DE EMBALAJE
+// ══════════════════════════════════════════════════════════════════════════════
+
+router.get('/tipos-embalaje', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const result = await pool.request()
+      .query('SELECT id, nombre, peso_kg FROM TiposEmbalaje WHERE activo = 1 ORDER BY nombre');
+    res.json(result.recordset);
+  } catch (err) {
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ETIQUETA TÉRMICA (HTML para impresora)
+// ══════════════════════════════════════════════════════════════════════════════
+
+router.get('/etiqueta/:sub_lote_id/print', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const subLoteId = parseInt(req.params.sub_lote_id);
+
+    const result = await pool.request()
+      .input('id', sql.Int, subLoteId)
+      .query(`SELECT sl.id,
+                     sl.codigo_interno,
+                     sl.codigo_externo      AS numero_lote,
+                     sl.kilos,
+                     sl.destino,
+                     sl.fecha_envasado,
+                     cc.nombre              AS categoria,
+                     cc.codigo              AS categoria_codigo,
+                     sc.nombre              AS sub_categoria,
+                     lp.codigo_interno      AS lote_padre_codigo,
+                     lp.fecha_inicio        AS fecha_elaboracion,
+                     p.nombre               AS parcela,
+                     e.tipo_envase,
+                     e.cantidad_envases,
+                     te.nombre              AS tipo_embalaje_nombre,
+                     te.peso_kg             AS peso_unitario
+              FROM LotesMercaderia sl
+              LEFT JOIN LotesMercaderia lp           ON sl.lote_padre_id        = lp.id
+              LEFT JOIN CategoriasClasificacion cc    ON sl.categoria_clasif_id  = cc.id
+              LEFT JOIN SubCategoriasClasificacion sc ON sl.sub_categoria_id     = sc.id
+              LEFT JOIN Parcelas p                   ON sl.parcela_id           = p.id
+              LEFT JOIN (
+                SELECT sub_lote_id, tipo_envase, cantidad_envases, tipo_embalaje_id,
+                       ROW_NUMBER() OVER (PARTITION BY sub_lote_id ORDER BY fecha_hora DESC) AS rn
+                FROM Embalaje WHERE estado != 'anulada'
+              ) e ON e.sub_lote_id = sl.id AND e.rn = 1
+              LEFT JOIN TiposEmbalaje te ON e.tipo_embalaje_id = te.id
+              WHERE sl.id = @id`);
+
+    if (!result.recordset.length) return res.status(404).json({ error: 'Sub-lote no encontrado' });
+    const data = result.recordset[0];
+
+    const empresaRes = await pool.request()
+      .query('SELECT TOP 1 razon_social, cuit, rne, rnpa, renspa, direccion, localidad, provincia FROM ConfiguracionEmpresa');
+    const emp = empresaRes.recordset[0] || {};
+
+    let nombreProducto = 'FRUTILLA';
+    if (data.categoria) nombreProducto += ` "${data.categoria.toUpperCase()}"`;
+    if (data.sub_categoria) nombreProducto += ` ${data.sub_categoria.toUpperCase()}`;
+
+    const numLote = data.numero_lote || data.codigo_interno || '—';
+    const fechaElab = data.fecha_elaboracion ? new Date(data.fecha_elaboracion).toLocaleDateString('es-AR') : '—';
+    const fechaEnv = data.fecha_envasado ? new Date(data.fecha_envasado).toLocaleDateString('es-AR') : '—';
+    let fechaVenc = '—';
+    if (data.fecha_elaboracion) {
+      const fv = new Date(data.fecha_elaboracion);
+      fv.setFullYear(fv.getFullYear() + 2);
+      fechaVenc = fv.toLocaleDateString('es-AR');
+    }
+
+    const pesoNeto = parseFloat(data.kilos) || 0;
+    const tipoEnvase = data.tipo_embalaje_nombre || data.tipo_envase || '—';
+    const razonSocial = emp.razon_social || 'CONFIGURAR EMPRESA';
+    const direccion = [emp.direccion, emp.localidad, emp.provincia].filter(Boolean).join(', ') || '';
+
+    const cantidad = Math.min(Math.max(parseInt(req.query.cantidad) || 1, 1), 100);
+    let etiquetasHtml = '';
+    for (let i = 0; i < cantidad; i++) {
+      etiquetasHtml += `
+<div class="etiqueta">
+  <div class="empresa">${esc(razonSocial)}</div>
+  <div class="producto">${esc(nombreProducto)}</div>
+  <div class="qr-row">
+    <div class="qr-box" id="qr-${i}"></div>
+    <div>
+      <div class="lote-label">N° LOTE</div>
+      <div class="lote-num">${esc(numLote)}</div>
+      <div style="font-size:9pt;margin-top:2mm;">${esc(tipoEnvase)}</div>
+      <div style="font-size:8pt;color:#555;">${data.cantidad_envases || ''} unidades</div>
+    </div>
+  </div>
+  <div class="campos">
+    <div class="row"><span class="label">Fecha elaboración:</span> <span>${fechaElab}</span></div>
+    <div class="row"><span class="label">Fecha envasado:</span> <span>${fechaEnv}</span></div>
+    <div class="row"><span class="label">Fecha vencimiento:</span> <span>${fechaVenc}</span></div>
+  </div>
+  <div class="peso">Peso Neto: ${pesoNeto.toFixed(1)} Kg</div>
+  <div class="regs">${[emp.rne ? 'RNE: '+emp.rne : '', emp.rnpa ? 'RNPA: '+emp.rnpa : '', emp.renspa ? 'RENSPA: '+emp.renspa : ''].filter(Boolean).join(' | ') || '—'}</div>
+  <div class="dir">${esc(direccion)}</div>
+</div>`;
+    }
+
+    const qrScript = Array.from({length: cantidad}, (_, i) =>
+      `new QRCode(document.getElementById('qr-${i}'), { text: ${JSON.stringify(numLote)}, width: 150, height: 150, correctLevel: QRCode.CorrectLevel.M });`
+    ).join('\n  ');
+
+    const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Etiqueta ${numLote} (x${cantidad})</title>
+<style>
+  @page { size: 100mm auto; margin: 2mm; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: Arial, Helvetica, sans-serif; width:100mm; padding:3mm; }
+  .etiqueta { border:2px solid #000; padding:3mm; page-break-after:always; }
+  .empresa { font-size:14pt; font-weight:900; text-align:center; margin-bottom:2mm; text-transform:uppercase; }
+  .producto { font-size:12pt; font-weight:700; text-align:center; margin-bottom:3mm; border-top:1px solid #000; border-bottom:1px solid #000; padding:2mm 0; }
+  .qr-row { display:flex; align-items:center; gap:4mm; margin-bottom:3mm; }
+  .qr-box { flex-shrink:0; }
+  .qr-box img, .qr-box canvas { width:40mm; height:40mm; }
+  .lote-num { font-size:18pt; font-weight:900; font-family:'Courier New',monospace; }
+  .lote-label { font-size:8pt; color:#555; }
+  .campos { font-size:9pt; line-height:1.8; }
+  .campos .row { display:flex; justify-content:space-between; }
+  .campos .label { font-weight:700; }
+  .peso { font-size:16pt; font-weight:900; text-align:right; margin-top:2mm; padding-top:2mm; border-top:2px solid #000; }
+  .regs { font-size:7pt; color:#555; margin-top:2mm; text-align:center; }
+  .dir { font-size:7pt; color:#555; text-align:center; margin-top:1mm; }
+  @media print { body { width:100mm; } }
+</style>
+</head>
+<body>
+${etiquetasHtml}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+<script>
+  ${qrScript}
+  setTimeout(function() { window.print(); }, 400);
+<\/script>
+</body>
+</html>`;
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch (err) {
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
+  }
+});
+
+function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 module.exports = router;

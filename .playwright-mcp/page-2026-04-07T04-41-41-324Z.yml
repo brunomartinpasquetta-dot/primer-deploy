@@ -1,0 +1,135 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - text: CO
+          - emphasis [ref=e8]: SE
+          - text: CHA
+        - generic [ref=e9]: SISTEMA DE CULTIVOS
+    - navigation [ref=e10]:
+      - link "Dashboard" [ref=e11] [cursor=pointer]:
+        - /url: index.html
+        - img [ref=e13]
+        - text: Dashboard
+      - generic [ref=e18]: Campo
+      - link "Cosecha" [ref=e19] [cursor=pointer]:
+        - /url: juntada.html
+        - img [ref=e21]
+        - text: Cosecha
+      - link "Despalillado" [ref=e30] [cursor=pointer]:
+        - /url: despalillado.html
+        - img [ref=e32]
+        - text: Despalillado
+      - link "Aplicaciones" [ref=e38] [cursor=pointer]:
+        - /url: aplicaciones.html
+        - img [ref=e40]
+        - text: Aplicaciones
+      - link "Trabajos de Campo" [ref=e43] [cursor=pointer]:
+        - /url: trabajos-campo.html
+        - img [ref=e45]
+        - text: Trabajos de Campo
+      - link "Clasif. + Embalaje" [ref=e49] [cursor=pointer]:
+        - /url: clasificacion-embalaje.html
+        - img [ref=e51]
+        - text: Clasif. + Embalaje
+      - generic [ref=e55]: Sistema
+      - link "Stock" [ref=e56] [cursor=pointer]:
+        - /url: menu-stock.html
+        - img [ref=e58]
+        - text: Stock
+      - link "Comercial" [ref=e62] [cursor=pointer]:
+        - /url: menu-comercial.html
+        - img [ref=e64]
+        - text: Comercial
+      - link "Administración" [ref=e69] [cursor=pointer]:
+        - /url: menu-admin.html
+        - img [ref=e71]
+        - text: Administración
+      - link "Mercado" [ref=e73] [cursor=pointer]:
+        - /url: mercado.html
+        - img [ref=e75]
+        - text: Mercado
+      - link "Configuración" [ref=e78] [cursor=pointer]:
+        - /url: menu-config.html
+        - img [ref=e80]
+        - text: Configuración
+    - generic [ref=e83]:
+      - generic [ref=e84]: Administrador · administrador
+      - button "Cerrar sesión" [ref=e85] [cursor=pointer]
+  - generic [ref=e86]:
+    - banner [ref=e87]:
+      - generic [ref=e88]:
+        - img [ref=e89]
+        - generic [ref=e90]:
+          - generic [ref=e91]:
+            - text: CO
+            - emphasis [ref=e92]: SE
+            - text: CHA
+          - generic [ref=e93]: SISTEMA DE CULTIVOS
+        - generic [ref=e94]: 🌱 Campaña FIX 2026 · Día 8
+      - generic [ref=e95]:
+        - generic [ref=e96] [cursor=pointer]:
+          - img [ref=e97]
+          - text: Administrador
+        - generic [ref=e100]: martes, 7 de abril
+    - generic [ref=e101]:
+      - link "← Volver" [ref=e102] [cursor=pointer]:
+        - /url: "#"
+      - generic [ref=e103]:
+        - generic [ref=e104]: Cuentas Corrientes — Clientes
+        - generic [ref=e105]: Ventas en cuenta corriente y cobros registrados
+      - generic [ref=e106]:
+        - generic [ref=e107]:
+          - generic [ref=e108]: Total a cobrar
+          - generic [ref=e109]: $ 1.412.000
+          - generic [ref=e110]: 2 con saldo
+        - generic [ref=e111]:
+          - generic [ref=e112]: Cobrado total
+          - generic [ref=e113]: $ 100.000
+          - generic [ref=e114]: acumulado
+        - generic [ref=e115]:
+          - generic [ref=e116]: Clientes
+          - generic [ref=e117]: "2"
+          - generic [ref=e118]: con saldo pendiente
+      - generic [ref=e119]:
+        - generic [ref=e120]:
+          - generic [ref=e121]:
+            - searchbox "Buscar cliente..." [ref=e122]
+            - button "Solo con deuda" [ref=e123] [cursor=pointer]
+            - button "✕" [ref=e124] [cursor=pointer]
+          - generic [ref=e125]:
+            - generic [ref=e139] [cursor=pointer]:
+              - generic [ref=e140]:
+                - generic [ref=e141]: ARTESANA
+                - generic [ref=e142]: "2 ventas en CC · último: 2026-04-02"
+              - generic [ref=e143]: $ 1.370.000
+            - generic [ref=e144] [cursor=pointer]:
+              - generic [ref=e145]:
+                - generic [ref=e146]: FRUTILLAS DEL LITORAL
+                - generic [ref=e147]: "1 ventas en CC · último: 2026-04-03"
+              - generic [ref=e148]: $ 42.000
+        - generic [ref=e149]:
+          - generic [ref=e150]:
+            - generic [ref=e151]:
+              - generic [ref=e152]: ARTESANA
+              - generic [ref=e153]: "2 ventas en CC | Tel: 34253434"
+            - generic [ref=e154]:
+              - generic [ref=e155]:
+                - generic [ref=e156]: Saldo
+                - generic [ref=e157]: $ 1.370.000
+              - button "+ Registrar cobro" [ref=e158] [cursor=pointer]
+          - table [ref=e160]:
+            - rowgroup [ref=e161]:
+              - row "Fecha Tipo Detalle Forma pago Monto Saldo CC" [ref=e162]:
+                - columnheader "Fecha" [ref=e163]
+                - columnheader "Tipo" [ref=e164]
+                - columnheader "Detalle" [ref=e165]
+                - columnheader "Forma pago" [ref=e166]
+                - columnheader "Monto" [ref=e167]
+                - columnheader "Saldo CC" [ref=e168]
+                - columnheader [ref=e169]
+            - rowgroup [ref=e170]:
+              - row "Sin movimientos registrados" [ref=e171]:
+                - cell "Sin movimientos registrados" [ref=e172]

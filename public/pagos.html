@@ -7,6 +7,7 @@
   <title>Pagos — Cosecha</title>
   <link rel="icon" href="img/logo.png">
   <script src="js/utils.js"></script>
+  <script src="js/cosecha-dialogs.js"></script>
   <link rel="stylesheet" href="cosecha.css">
   <script src="js/auth-check.js"></script>
   <style>
@@ -114,9 +115,9 @@
       <div class="nav-section">Campo</div>
       <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
       <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
       <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
       <a href="trabajos-campo.html" class="nav-item"><span class="nav-icon"><i data-lucide="hammer"></i></span> Trabajos de Campo</a>
-      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
       <div class="nav-section">Sistema</div>
       <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
       <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
@@ -261,7 +262,7 @@ function abrirRecibo(pagoId) {
       var url = URL.createObjectURL(blob);
       window.open(url, '_blank');
     })
-    .catch(function(err) { alert(err.message || 'Error al abrir recibo'); });
+    .catch(function(err) { showAlert(err.message || 'Error al abrir recibo', 'error'); });
 }
 
 // ── PANELES (toolbar) ──
@@ -532,7 +533,7 @@ function exportarExcel() {
       a.download = 'pagos-export.xlsx';
       a.click();
     })
-    .catch(function(err) { alert(err.message || 'Error al exportar'); });
+    .catch(function(err) { showAlert(err.message || 'Error al exportar', 'error'); });
 }
 
 // ── WORKERS LIST ──
@@ -574,8 +575,8 @@ function seleccionarTrabajador(id) {
 
 // ── DETALLE ──
 function cargarDetalle(id) {
-  var desde = document.getElementById('det-desde') ? document.getElementById('det-desde').value : '';
-  var hasta = document.getElementById('det-hasta') ? document.getElementById('det-hasta').value : '';
+  var desde = document.getElementById('det-desde') ? document.getElementById('det-desde').value : _filtroFecha;
+  var hasta = document.getElementById('det-hasta') ? document.getElementById('det-hasta').value : _filtroFecha;
   var url = '/api/pagos/trabajador/'+id+'/detalle';
   var params = [];
   if (desde) params.push('desde='+desde);
@@ -666,6 +667,12 @@ function renderDetalle(d) {
   }
 
   document.getElementById('detalle-panel').innerHTML = html;
+  if (_filtroFecha) {
+    var dDesde = document.getElementById('det-desde');
+    var dHasta = document.getElementById('det-hasta');
+    if (dDesde && !dDesde.value) dDesde.value = _filtroFecha;
+    if (dHasta && !dHasta.value) dHasta.value = _filtroFecha;
+  }
   lucide.createIcons();
 }
 
@@ -773,16 +780,16 @@ function autocompletarMixto(campo) {
 }
 
 // ── PAGO ──
-function confirmarPago() {
+async function confirmarPago() {
   var monto = _parseEl('pagar-monto');
   var fp = document.getElementById('pagar-fp').value;
-  if (!monto || monto <= 0) { alert('Ingresa un monto'); return; }
+  if (!monto || monto <= 0) { await showAlert('Ingresa un monto', 'warning'); return; }
 
   if (fp === 'mixto') {
     var me = _parseEl('pagar-efec') || 0;
     var mt = _parseEl('pagar-transf') || 0;
     if (Math.abs(me + mt - monto) > 0.01) {
-      alert('Efectivo + transferencia deben sumar ' + formatMoney(monto));
+      await showAlert('Efectivo + transferencia deben sumar ' + formatMoney(monto), 'warning');
       return;
     }
   }
@@ -825,9 +832,9 @@ function ejecutarPago() {
         }
       }, 300);
     } else {
-      alert(data.error || 'Error al registrar pago');
+      showAlert(data.error || 'Error al registrar pago', 'error');
     }
-  }).catch(function() { setLoading(btn, false); alert('Error de conexion'); });
+  }).catch(function() { setLoading(btn, false); showAlert('Error de conexion', 'error'); });
 }
 
 // ── ANTICIPO ──
@@ -839,11 +846,11 @@ function abrirAnticipo() {
 }
 function cerrarAnticipo() { document.getElementById('modal-anticipo').classList.remove('open'); }
 
-function guardarAnticipo() {
+async function guardarAnticipo() {
   var monto = parseFloat(document.getElementById('ant-monto').value);
-  if (!monto || monto <= 0) { alert('Ingresa un monto'); return; }
+  if (!monto || monto <= 0) { await showAlert('Ingresa un monto', 'warning'); return; }
   if (_detalle && _detalle.resumen && monto >= _detalle.resumen.saldo - 0.01 && _detalle.resumen.saldo > 0) {
-    alert('El monto ingresado es igual o mayor al total adeudado (' + formatMoney(_detalle.resumen.saldo) + '). Usa Liquidar para cerrar el pago.');
+    await showAlert('El monto ingresado es igual o mayor al total adeudado (' + formatMoney(_detalle.resumen.saldo) + '). Usa Liquidar para cerrar el pago.', 'warning');
     return;
   }
   var btn = document.getElementById('btn-ant-ok');
@@ -872,8 +879,8 @@ function guardarAnticipo() {
           lucide.createIcons();
         }
       }, 300);
-    } else { alert(data.error || 'Error'); }
-  }).catch(function() { setLoading(btn, false); alert('Error de conexion'); });
+    } else { showAlert(data.error || 'Error', 'error'); }
+  }).catch(function() { setLoading(btn, false); showAlert('Error de conexion', 'error'); });
 }
 
 // ── COMPROBANTE ──
@@ -891,13 +898,15 @@ function subirComprobante(pagoId) {
       body: fd
     }).then(function(r) { return r.json(); }).then(function(data) {
       if (data.ok) cargarDetalle(_selectedId);
-      else alert(data.error || 'Error al subir');
+      else showAlert(data.error || 'Error al subir', 'error');
     });
   };
   input.click();
 }
 
 // ── INIT ──
+var _urlParams = new URLSearchParams(window.location.search);
+var _filtroFecha = _urlParams.get('fecha') || '';
 cargarTrabajadores();
 cargarTemporadaActiva();
 cargarAlertasBadge();

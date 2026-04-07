@@ -1,0 +1,700 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - text: CO
+          - emphasis [ref=e8]: SE
+          - text: CHA
+        - generic [ref=e9]: SISTEMA DE CULTIVOS
+    - navigation [ref=e10]:
+      - link "Dashboard" [ref=e11] [cursor=pointer]:
+        - /url: index.html
+        - img [ref=e857]
+        - text: Dashboard
+      - generic [ref=e18]: Campo
+      - link "Cosecha" [ref=e19] [cursor=pointer]:
+        - /url: juntada.html
+        - img [ref=e862]
+        - text: Cosecha
+      - link "Despalillado" [ref=e30] [cursor=pointer]:
+        - /url: despalillado.html
+        - img [ref=e871]
+        - text: Despalillado
+      - link "Aplicaciones" [ref=e38] [cursor=pointer]:
+        - /url: aplicaciones.html
+        - img [ref=e877]
+        - text: Aplicaciones
+      - link "Trabajos de Campo" [ref=e43] [cursor=pointer]:
+        - /url: trabajos-campo.html
+        - img [ref=e880]
+        - text: Trabajos de Campo
+      - link "Clasif. + Embalaje" [ref=e49] [cursor=pointer]:
+        - /url: clasificacion-embalaje.html
+        - img [ref=e884]
+        - text: Clasif. + Embalaje
+      - generic [ref=e55]: Sistema
+      - link "Stock" [ref=e56] [cursor=pointer]:
+        - /url: menu-stock.html
+        - img [ref=e888]
+        - text: Stock
+      - link "Comercial" [ref=e62] [cursor=pointer]:
+        - /url: menu-comercial.html
+        - img [ref=e892]
+        - text: Comercial
+      - link "Administración" [ref=e897] [cursor=pointer]:
+        - /url: menu-admin.html
+        - img [ref=e898]
+        - text: Administración
+      - link "Mercado" [ref=e73] [cursor=pointer]:
+        - /url: mercado.html
+        - img [ref=e900]
+        - text: Mercado
+      - link "Configuración" [ref=e78] [cursor=pointer]:
+        - /url: menu-config.html
+        - img [ref=e903]
+        - text: Configuración
+    - generic [ref=e83]:
+      - generic [ref=e84]: Administrador · administrador
+      - button "Cerrar sesión" [ref=e85] [cursor=pointer]
+  - generic [ref=e86]:
+    - banner [ref=e87]:
+      - generic [ref=e88]:
+        - img [ref=e89]
+        - generic [ref=e90]:
+          - generic [ref=e91]:
+            - text: CO
+            - emphasis [ref=e92]: SE
+            - text: CHA
+          - generic [ref=e93]: SISTEMA DE CULTIVOS
+        - generic [ref=e94]: 🌱 Campaña FIX 2026 · Día 8
+      - generic [ref=e95]:
+        - generic [ref=e96] [cursor=pointer]:
+          - img [ref=e97]
+          - text: Administrador
+        - generic [ref=e100]: martes, 7 de abril
+    - generic [ref=e101]:
+      - link "← Volver" [ref=e102] [cursor=pointer]:
+        - /url: "#"
+      - generic [ref=e103]:
+        - generic [ref=e104]: Registrar juntada
+        - generic [ref=e105]: Gestión de lotes de cosecha — juntadas por cosechador
+      - generic [ref=e106]:
+        - generic [ref=e107]:
+          - generic [ref=e108]: Total de hoy
+          - generic [ref=e109]: 0 kg
+        - generic [ref=e110]:
+          - generic [ref=e111]: Lotes activos
+          - generic [ref=e112]: "6"
+        - generic [ref=e113]:
+          - generic [ref=e114]: Campaña actual
+          - generic [ref=e115]: 1.754,1 kg
+      - generic [ref=e116]:
+        - generic [ref=e117]:
+          - generic [ref=e119]: Lotes de cosecha (6)
+          - button "Iniciar nueva juntada" [ref=e120] [cursor=pointer]:
+            - img [ref=e906]
+            - text: Iniciar nueva juntada
+          - generic [ref=e123]:
+            - generic [ref=e908] [cursor=pointer]:
+              - generic [ref=e909]:
+                - generic [ref=e910]:
+                  - generic [ref=e911]: L2026-0402-003.CH-PER-F
+                  - generic [ref=e912]: Abierto
+                - generic [ref=e913]: 3/4, 01:06 p. m. · 0 juntadas
+              - generic [ref=e914]: 0 kg
+            - generic [ref=e915] [cursor=pointer]:
+              - generic [ref=e916]:
+                - generic [ref=e917]:
+                  - generic [ref=e918]: L2026-0402-003.DE
+                  - generic [ref=e919]: Abierto
+                - generic [ref=e920]: 3/4, 01:03 p. m. · 0 juntadas
+              - generic [ref=e921]: 0 kg
+            - generic [ref=e922] [cursor=pointer]:
+              - generic [ref=e923]:
+                - generic [ref=e924]:
+                  - generic [ref=e925]: L2026-0402-003.ME-ROJ-C
+                  - generic [ref=e926]: Abierto
+                - generic [ref=e927]: 3/4, 01:03 p. m. · 0 juntadas
+              - generic [ref=e928]: 0 kg
+            - generic [ref=e929] [cursor=pointer]:
+              - generic [ref=e930]:
+                - generic [ref=e931]:
+                  - generic [ref=e932]: L2026-0402-003.GR-PIN-F
+                  - generic [ref=e933]: Abierto
+                - generic [ref=e934]: 3/4, 01:03 p. m. · 0 juntadas
+              - generic [ref=e935]: 0 kg
+            - generic [ref=e936] [cursor=pointer]:
+              - generic [ref=e937]:
+                - generic [ref=e938]:
+                  - generic [ref=e939]: L2026-0403-002
+                  - generic [ref=e940]: En cosecha
+                - generic [ref=e941]: 3/4, 01:31 a. m. · 4 juntadas
+              - generic [ref=e942]: 140,1 kg
+            - generic [ref=e943] [cursor=pointer]:
+              - generic [ref=e944]:
+                - generic [ref=e945]:
+                  - generic [ref=e946]: L2026-0402-002
+                  - generic [ref=e947]: Abierto
+                - generic [ref=e948]: 2/4, 08:49 p. m. · 0 juntadas
+              - generic [ref=e949]: 0 kg
+        - generic [ref=e950]:
+          - generic [ref=e951]:
+            - generic [ref=e952]:
+              - heading "Cosechadores del lote" [level=3] [ref=e953]
+              - generic [ref=e954]: L2026-0403-002
+              - generic [ref=e955]: (3 cosecheros — 140,1 kg)
+              - combobox [ref=e957] [cursor=pointer]:
+                - option "Agregar cosechero" [selected]
+                - option "FULANITO, COSME"
+                - option "GARCIA, JOSE"
+                - option "GOMEZ, MARIA"
+                - option "GONZALES, MARCELO"
+                - option "PEREZ, JUAN"
+            - table [ref=e959]:
+              - rowgroup [ref=e960]:
+                - row "Cosechero Juntadas Kg Acum." [ref=e961]:
+                  - columnheader "Cosechero" [ref=e962]
+                  - columnheader "Juntadas" [ref=e963]
+                  - columnheader "Kg Acum." [ref=e964]
+                  - columnheader [ref=e965]
+              - rowgroup [ref=e966]:
+                - row "GOMEZ, MARIA 4 140,1 kg Juntada" [ref=e967]:
+                  - cell "GOMEZ, MARIA" [ref=e968]
+                  - cell "4" [ref=e969]
+                  - cell "140,1 kg" [ref=e970]
+                  - cell "Juntada" [ref=e971]:
+                    - button "Juntada" [ref=e972] [cursor=pointer]:
+                      - img [ref=e973]
+                      - text: Juntada
+                    - button [ref=e974] [cursor=pointer]:
+                      - img [ref=e975]
+                - row "GONZALES, MARCELO 0 0 kg Juntada" [ref=e978]:
+                  - cell "GONZALES, MARCELO" [ref=e979]
+                  - cell "0" [ref=e980]
+                  - cell "0 kg" [ref=e981]
+                  - cell "Juntada" [ref=e982]:
+                    - button "Juntada" [ref=e983] [cursor=pointer]:
+                      - img [ref=e984]
+                      - text: Juntada
+                    - button [ref=e985] [cursor=pointer]:
+                      - img [ref=e986]
+                    - button "Quitar cosechero" [ref=e989] [cursor=pointer]:
+                      - img [ref=e990]
+                - row "GARCIA, JOSE 0 0 kg Juntada" [ref=e993]:
+                  - cell "GARCIA, JOSE" [ref=e994]
+                  - cell "0" [ref=e995]
+                  - cell "0 kg" [ref=e996]
+                  - cell "Juntada" [ref=e997]:
+                    - button "Juntada" [ref=e998] [cursor=pointer]:
+                      - img [ref=e999]
+                      - text: Juntada
+                    - button [ref=e1000] [cursor=pointer]:
+                      - img [ref=e1001]
+                    - button "Quitar cosechero" [ref=e1004] [cursor=pointer]:
+                      - img [ref=e1005]
+            - generic [ref=e1008]:
+              - text: "Total lote:"
+              - generic [ref=e1009]: 140,1 kg
+          - generic [ref=e1010]:
+            - generic [ref=e1011]:
+              - img [ref=e1012]
+              - combobox [ref=e1015] [cursor=pointer]:
+                - option "Seleccionar galpón..." [selected]
+                - option "GALPON FRESCO"
+            - button "Cerrar y enviar a galpón" [ref=e1016] [cursor=pointer]:
+              - img [ref=e1017]
+              - text: Cerrar y enviar a galpón
+      - generic [ref=e125]:
+        - button "Historial" [ref=e126] [cursor=pointer]
+        - button "Totales x Cosechero" [ref=e127] [cursor=pointer]
+        - button "Lotes x Cosechero" [ref=e128] [cursor=pointer]
+        - button "Auditoría" [ref=e129] [cursor=pointer]
+      - generic [ref=e131]:
+        - generic [ref=e132]:
+          - heading "Historial completo de juntadas" [level=3] [ref=e133]
+          - generic [ref=e134]:
+            - textbox [ref=e135]
+            - textbox [ref=e136]
+            - searchbox "Buscar..." [ref=e137]
+        - table [ref=e139]:
+          - rowgroup [ref=e140]:
+            - row "# Cosechero Fecha/Hora Parcela Lote Kg Usuario" [ref=e141]:
+              - columnheader "#" [ref=e142]
+              - columnheader "Cosechero" [ref=e143]
+              - columnheader "Fecha/Hora" [ref=e144]
+              - columnheader "Parcela" [ref=e145]
+              - columnheader "Lote" [ref=e146]
+              - columnheader "Kg" [ref=e147]
+              - columnheader "Usuario" [ref=e148]
+              - columnheader [ref=e149]
+          - rowgroup [ref=e150]:
+            - row "#2065 GOMEZ, MARIA 3/4/2026 04:24 a. m. PARCELA NORTE L2026-0403-002 88,3 kg Administrador" [ref=e245]:
+              - cell "#2065" [ref=e246]
+              - cell "GOMEZ, MARIA" [ref=e247]
+              - cell "3/4/2026 04:24 a. m." [ref=e248]
+              - cell "PARCELA NORTE" [ref=e249]
+              - cell "L2026-0403-002" [ref=e250]
+              - cell "88,3 kg" [ref=e251]
+              - cell "Administrador" [ref=e252]
+              - cell [ref=e253]:
+                - button "Editar" [ref=e254] [cursor=pointer]:
+                  - img [ref=e1020]
+                - button "Anular" [ref=e258] [cursor=pointer]:
+                  - img [ref=e1023]
+            - row "#2064 GOMEZ, MARIA 3/4/2026 04:22 a. m. PARCELA NORTE L2026-0403-002 31,3 kg Administrador" [ref=e262]:
+              - cell "#2064" [ref=e263]
+              - cell "GOMEZ, MARIA" [ref=e264]
+              - cell "3/4/2026 04:22 a. m." [ref=e265]
+              - cell "PARCELA NORTE" [ref=e266]
+              - cell "L2026-0403-002" [ref=e267]
+              - cell "31,3 kg" [ref=e268]
+              - cell "Administrador" [ref=e269]
+              - cell [ref=e270]:
+                - button "Editar" [ref=e271] [cursor=pointer]:
+                  - img [ref=e1026]
+                - button "Anular" [ref=e275] [cursor=pointer]:
+                  - img [ref=e1029]
+            - row "#2063 GOMEZ, MARIA 3/4/2026 04:21 a. m. PARCELA NORTE L2026-0403-002 5,5 kg Administrador" [ref=e279]:
+              - cell "#2063" [ref=e280]
+              - cell "GOMEZ, MARIA" [ref=e281]
+              - cell "3/4/2026 04:21 a. m." [ref=e282]
+              - cell "PARCELA NORTE" [ref=e283]
+              - cell "L2026-0403-002" [ref=e284]
+              - cell "5,5 kg" [ref=e285]
+              - cell "Administrador" [ref=e286]
+              - cell [ref=e287]:
+                - button "Editar" [ref=e288] [cursor=pointer]:
+                  - img [ref=e1032]
+                - button "Anular" [ref=e292] [cursor=pointer]:
+                  - img [ref=e1035]
+            - row "#2061 GOMEZ, MARIA 3/4/2026 01:33 a. m. PARCELA NORTE L2026-0403-002 15 kg Administrador" [ref=e296]:
+              - cell "#2061" [ref=e297]
+              - cell "GOMEZ, MARIA" [ref=e298]
+              - cell "3/4/2026 01:33 a. m." [ref=e299]
+              - cell "PARCELA NORTE" [ref=e300]
+              - cell "L2026-0403-002" [ref=e301]
+              - cell "15 kg" [ref=e302]
+              - cell "Administrador" [ref=e303]
+              - cell [ref=e304]:
+                - button "Editar" [ref=e305] [cursor=pointer]:
+                  - img [ref=e1038]
+                - button "Anular" [ref=e309] [cursor=pointer]:
+                  - img [ref=e1041]
+            - row "#2060 GONZALES, MARCELO 2/4/2026 09:08 p. m. PARCELA NORTE L2026-0402-001 8,9 kg Administrador" [ref=e313]:
+              - cell "#2060" [ref=e314]
+              - cell "GONZALES, MARCELO" [ref=e315]
+              - cell "2/4/2026 09:08 p. m." [ref=e316]
+              - cell "PARCELA NORTE" [ref=e317]
+              - cell "L2026-0402-001" [ref=e318]
+              - cell "8,9 kg" [ref=e319]
+              - cell "Administrador" [ref=e320]
+              - cell [ref=e321]:
+                - button "Editar" [ref=e322] [cursor=pointer]:
+                  - img [ref=e1044]
+                - button "Anular" [ref=e326] [cursor=pointer]:
+                  - img [ref=e1047]
+            - row "#2059 GOMEZ, MARIA 2/4/2026 09:08 p. m. PARCELA NORTE L2026-0402-001 7,6 kg Administrador" [ref=e330]:
+              - cell "#2059" [ref=e331]
+              - cell "GOMEZ, MARIA" [ref=e332]
+              - cell "2/4/2026 09:08 p. m." [ref=e333]
+              - cell "PARCELA NORTE" [ref=e334]
+              - cell "L2026-0402-001" [ref=e335]
+              - cell "7,6 kg" [ref=e336]
+              - cell "Administrador" [ref=e337]
+              - cell [ref=e338]:
+                - button "Editar" [ref=e339] [cursor=pointer]:
+                  - img [ref=e1050]
+                - button "Anular" [ref=e343] [cursor=pointer]:
+                  - img [ref=e1053]
+            - row "#2058 GOMEZ, MARIA 2/4/2026 09:08 p. m. PARCELA NORTE L2026-0402-001 9,7 kg Administrador" [ref=e347]:
+              - cell "#2058" [ref=e348]
+              - cell "GOMEZ, MARIA" [ref=e349]
+              - cell "2/4/2026 09:08 p. m." [ref=e350]
+              - cell "PARCELA NORTE" [ref=e351]
+              - cell "L2026-0402-001" [ref=e352]
+              - cell "9,7 kg" [ref=e353]
+              - cell "Administrador" [ref=e354]
+              - cell [ref=e355]:
+                - button "Editar" [ref=e356] [cursor=pointer]:
+                  - img [ref=e1056]
+                - button "Anular" [ref=e360] [cursor=pointer]:
+                  - img [ref=e1059]
+            - row "#2057 GOMEZ, MARIA 2/4/2026 09:08 p. m. PARCELA NORTE L2026-0402-001 8,9 kg Administrador" [ref=e364]:
+              - cell "#2057" [ref=e365]
+              - cell "GOMEZ, MARIA" [ref=e366]
+              - cell "2/4/2026 09:08 p. m." [ref=e367]
+              - cell "PARCELA NORTE" [ref=e368]
+              - cell "L2026-0402-001" [ref=e369]
+              - cell "8,9 kg" [ref=e370]
+              - cell "Administrador" [ref=e371]
+              - cell [ref=e372]:
+                - button "Editar" [ref=e373] [cursor=pointer]:
+                  - img [ref=e1062]
+                - button "Anular" [ref=e377] [cursor=pointer]:
+                  - img [ref=e1065]
+            - row "#2056 GOMEZ, MARIA 2/4/2026 09:08 p. m. PARCELA NORTE L2026-0402-001 7,8 kg Administrador" [ref=e381]:
+              - cell "#2056" [ref=e382]
+              - cell "GOMEZ, MARIA" [ref=e383]
+              - cell "2/4/2026 09:08 p. m." [ref=e384]
+              - cell "PARCELA NORTE" [ref=e385]
+              - cell "L2026-0402-001" [ref=e386]
+              - cell "7,8 kg" [ref=e387]
+              - cell "Administrador" [ref=e388]
+              - cell [ref=e389]:
+                - button "Editar" [ref=e390] [cursor=pointer]:
+                  - img [ref=e1068]
+                - button "Anular" [ref=e394] [cursor=pointer]:
+                  - img [ref=e1071]
+            - row "#2055 GONZALES, MARCELO 2/4/2026 08:58 p. m. PARCELA SUR L2026-0402-004 32 kg Administrador" [ref=e398]:
+              - cell "#2055" [ref=e399]
+              - cell "GONZALES, MARCELO" [ref=e400]
+              - cell "2/4/2026 08:58 p. m." [ref=e401]
+              - cell "PARCELA SUR" [ref=e402]
+              - cell "L2026-0402-004" [ref=e403]
+              - cell "32 kg" [ref=e404]
+              - cell "Administrador" [ref=e405]
+              - cell [ref=e406]:
+                - button "Editar" [ref=e407] [cursor=pointer]:
+                  - img [ref=e1074]
+                - button "Anular" [ref=e411] [cursor=pointer]:
+                  - img [ref=e1077]
+            - row "#2054 GOMEZ, MARIA 2/4/2026 08:57 p. m. PARCELA NORTE L2026-0402-004 32 kg Administrador" [ref=e415]:
+              - cell "#2054" [ref=e416]
+              - cell "GOMEZ, MARIA" [ref=e417]
+              - cell "2/4/2026 08:57 p. m." [ref=e418]
+              - cell "PARCELA NORTE" [ref=e419]
+              - cell "L2026-0402-004" [ref=e420]
+              - cell "32 kg" [ref=e421]
+              - cell "Administrador" [ref=e422]
+              - cell [ref=e423]:
+                - button "Editar" [ref=e424] [cursor=pointer]:
+                  - img [ref=e1080]
+                - button "Anular" [ref=e428] [cursor=pointer]:
+                  - img [ref=e1083]
+            - row "#2053 GONZALES, MARCELO 2/4/2026 08:57 p. m. PARCELA SUR L2026-0402-003 17,5 kg Administrador" [ref=e432]:
+              - cell "#2053" [ref=e433]
+              - cell "GONZALES, MARCELO" [ref=e434]
+              - cell "2/4/2026 08:57 p. m." [ref=e435]
+              - cell "PARCELA SUR" [ref=e436]
+              - cell "L2026-0402-003" [ref=e437]
+              - cell "17,5 kg" [ref=e438]
+              - cell "Administrador" [ref=e439]
+              - cell [ref=e440]:
+                - button "Editar" [ref=e441] [cursor=pointer]:
+                  - img [ref=e1086]
+                - button "Anular" [ref=e445] [cursor=pointer]:
+                  - img [ref=e1089]
+            - row "#2052 GOMEZ, MARIA 2/4/2026 08:57 p. m. PARCELA SUR L2026-0402-003 5,6 kg Administrador" [ref=e449]:
+              - cell "#2052" [ref=e450]
+              - cell "GOMEZ, MARIA" [ref=e451]
+              - cell "2/4/2026 08:57 p. m." [ref=e452]
+              - cell "PARCELA SUR" [ref=e453]
+              - cell "L2026-0402-003" [ref=e454]
+              - cell "5,6 kg" [ref=e455]
+              - cell "Administrador" [ref=e456]
+              - cell [ref=e457]:
+                - button "Editar" [ref=e458] [cursor=pointer]:
+                  - img [ref=e1092]
+                - button "Anular" [ref=e462] [cursor=pointer]:
+                  - img [ref=e1095]
+            - row "#2051 GONZALES, MARCELO 2/4/2026 08:50 p. m. PARCELA SUR L2026-0402-003 65 kg Administrador" [ref=e466]:
+              - cell "#2051" [ref=e467]
+              - cell "GONZALES, MARCELO" [ref=e468]
+              - cell "2/4/2026 08:50 p. m." [ref=e469]
+              - cell "PARCELA SUR" [ref=e470]
+              - cell "L2026-0402-003" [ref=e471]
+              - cell "65 kg" [ref=e472]
+              - cell "Administrador" [ref=e473]
+              - cell [ref=e474]:
+                - button "Editar" [ref=e475] [cursor=pointer]:
+                  - img [ref=e1098]
+                - button "Anular" [ref=e479] [cursor=pointer]:
+                  - img [ref=e1101]
+            - row "#2050 GOMEZ, MARIA 2/4/2026 08:50 p. m. PARCELA SUR L2026-0402-003 65 kg Administrador" [ref=e483]:
+              - cell "#2050" [ref=e484]
+              - cell "GOMEZ, MARIA" [ref=e485]
+              - cell "2/4/2026 08:50 p. m." [ref=e486]
+              - cell "PARCELA SUR" [ref=e487]
+              - cell "L2026-0402-003" [ref=e488]
+              - cell "65 kg" [ref=e489]
+              - cell "Administrador" [ref=e490]
+              - cell [ref=e491]:
+                - button "Editar" [ref=e492] [cursor=pointer]:
+                  - img [ref=e1104]
+                - button "Anular" [ref=e496] [cursor=pointer]:
+                  - img [ref=e1107]
+            - row "#2049 GONZALES, MARCELO 2/4/2026 08:50 p. m. PARCELA NORTE L2026-0402-003 56 kg Administrador" [ref=e500]:
+              - cell "#2049" [ref=e501]
+              - cell "GONZALES, MARCELO" [ref=e502]
+              - cell "2/4/2026 08:50 p. m." [ref=e503]
+              - cell "PARCELA NORTE" [ref=e504]
+              - cell "L2026-0402-003" [ref=e505]
+              - cell "56 kg" [ref=e506]
+              - cell "Administrador" [ref=e507]
+              - cell [ref=e508]:
+                - button "Editar" [ref=e509] [cursor=pointer]:
+                  - img [ref=e1110]
+                - button "Anular" [ref=e513] [cursor=pointer]:
+                  - img [ref=e1113]
+            - row "#2048 GONZALES, MARCELO 2/4/2026 08:50 p. m. PARCELA NORTE L2026-0402-003 5 kg Administrador" [ref=e517]:
+              - cell "#2048" [ref=e518]
+              - cell "GONZALES, MARCELO" [ref=e519]
+              - cell "2/4/2026 08:50 p. m." [ref=e520]
+              - cell "PARCELA NORTE" [ref=e521]
+              - cell "L2026-0402-003" [ref=e522]
+              - cell "5 kg" [ref=e523]
+              - cell "Administrador" [ref=e524]
+              - cell [ref=e525]:
+                - button "Editar" [ref=e526] [cursor=pointer]:
+                  - img [ref=e1116]
+                - button "Anular" [ref=e530] [cursor=pointer]:
+                  - img [ref=e1119]
+            - row "#2047 GOMEZ, MARIA 2/4/2026 08:50 p. m. PARCELA NORTE L2026-0402-003 56 kg Administrador" [ref=e534]:
+              - cell "#2047" [ref=e535]
+              - cell "GOMEZ, MARIA" [ref=e536]
+              - cell "2/4/2026 08:50 p. m." [ref=e537]
+              - cell "PARCELA NORTE" [ref=e538]
+              - cell "L2026-0402-003" [ref=e539]
+              - cell "56 kg" [ref=e540]
+              - cell "Administrador" [ref=e541]
+              - cell [ref=e542]:
+                - button "Editar" [ref=e543] [cursor=pointer]:
+                  - img [ref=e1122]
+                - button "Anular" [ref=e547] [cursor=pointer]:
+                  - img [ref=e1125]
+            - row "#2046 GONZALES, MARCELO 2/4/2026 08:36 p. m. PARCELA NORTE L2026-0402-P1010-001 4,5 kg Administrador" [ref=e551]:
+              - cell "#2046" [ref=e552]
+              - cell "GONZALES, MARCELO" [ref=e553]
+              - cell "2/4/2026 08:36 p. m." [ref=e554]
+              - cell "PARCELA NORTE" [ref=e555]
+              - cell "L2026-0402-P1010-001" [ref=e556]
+              - cell "4,5 kg" [ref=e557]
+              - cell "Administrador" [ref=e558]
+              - cell [ref=e559]:
+                - button "Editar" [ref=e560] [cursor=pointer]:
+                  - img [ref=e1128]
+                - button "Anular" [ref=e564] [cursor=pointer]:
+                  - img [ref=e1131]
+            - row "#2045 GONZALES, MARCELO 2/4/2026 08:36 p. m. PARCELA NORTE L2026-0402-P1010-001 5,7 kg Administrador" [ref=e568]:
+              - cell "#2045" [ref=e569]
+              - cell "GONZALES, MARCELO" [ref=e570]
+              - cell "2/4/2026 08:36 p. m." [ref=e571]
+              - cell "PARCELA NORTE" [ref=e572]
+              - cell "L2026-0402-P1010-001" [ref=e573]
+              - cell "5,7 kg" [ref=e574]
+              - cell "Administrador" [ref=e575]
+              - cell [ref=e576]:
+                - button "Editar" [ref=e577] [cursor=pointer]:
+                  - img [ref=e1134]
+                - button "Anular" [ref=e581] [cursor=pointer]:
+                  - img [ref=e1137]
+            - row "#2044 GOMEZ, MARIA 2/4/2026 08:35 p. m. PARCELA SUR L2026-0402-P1010-001 12,7 kg Administrador" [ref=e585]:
+              - cell "#2044" [ref=e586]
+              - cell "GOMEZ, MARIA" [ref=e587]
+              - cell "2/4/2026 08:35 p. m." [ref=e588]
+              - cell "PARCELA SUR" [ref=e589]
+              - cell "L2026-0402-P1010-001" [ref=e590]
+              - cell "12,7 kg" [ref=e591]
+              - cell "Administrador" [ref=e592]
+              - cell [ref=e593]:
+                - button "Editar" [ref=e594] [cursor=pointer]:
+                  - img [ref=e1140]
+                - button "Anular" [ref=e598] [cursor=pointer]:
+                  - img [ref=e1143]
+            - row "#2043 GONZALES, MARCELO 2/4/2026 08:33 p. m. PARCELA SUR L2026-0402-P1010-001 9,7 kg Administrador" [ref=e602]:
+              - cell "#2043" [ref=e603]
+              - cell "GONZALES, MARCELO" [ref=e604]
+              - cell "2/4/2026 08:33 p. m." [ref=e605]
+              - cell "PARCELA SUR" [ref=e606]
+              - cell "L2026-0402-P1010-001" [ref=e607]
+              - cell "9,7 kg" [ref=e608]
+              - cell "Administrador" [ref=e609]
+              - cell [ref=e610]:
+                - button "Editar" [ref=e611] [cursor=pointer]:
+                  - img [ref=e1146]
+                - button "Anular" [ref=e615] [cursor=pointer]:
+                  - img [ref=e1149]
+            - row "#2042 GONZALES, MARCELO 2/4/2026 08:33 p. m. PARCELA SUR L2026-0402-P1010-001 8,8 kg Administrador" [ref=e619]:
+              - cell "#2042" [ref=e620]
+              - cell "GONZALES, MARCELO" [ref=e621]
+              - cell "2/4/2026 08:33 p. m." [ref=e622]
+              - cell "PARCELA SUR" [ref=e623]
+              - cell "L2026-0402-P1010-001" [ref=e624]
+              - cell "8,8 kg" [ref=e625]
+              - cell "Administrador" [ref=e626]
+              - cell [ref=e627]:
+                - button "Editar" [ref=e628] [cursor=pointer]:
+                  - img [ref=e1152]
+                - button "Anular" [ref=e632] [cursor=pointer]:
+                  - img [ref=e1155]
+            - row "#2041 GOMEZ, MARIA 2/4/2026 08:33 p. m. PARCELA SUR L2026-0402-P1010-001 9,7 kg Administrador" [ref=e636]:
+              - cell "#2041" [ref=e637]
+              - cell "GOMEZ, MARIA" [ref=e638]
+              - cell "2/4/2026 08:33 p. m." [ref=e639]
+              - cell "PARCELA SUR" [ref=e640]
+              - cell "L2026-0402-P1010-001" [ref=e641]
+              - cell "9,7 kg" [ref=e642]
+              - cell "Administrador" [ref=e643]
+              - cell [ref=e644]:
+                - button "Editar" [ref=e645] [cursor=pointer]:
+                  - img [ref=e1158]
+                - button "Anular" [ref=e649] [cursor=pointer]:
+                  - img [ref=e1161]
+            - row "#2040 GONZALES, MARCELO 2/4/2026 03:52 a. m. PARCELA SUR - 100 kg Administrador" [ref=e653]:
+              - cell "#2040" [ref=e654]
+              - cell "GONZALES, MARCELO" [ref=e655]
+              - cell "2/4/2026 03:52 a. m." [ref=e656]
+              - cell "PARCELA SUR" [ref=e657]
+              - cell "-" [ref=e658]
+              - cell "100 kg" [ref=e659]
+              - cell "Administrador" [ref=e660]
+              - cell [ref=e661]:
+                - button "Editar" [ref=e662] [cursor=pointer]:
+                  - img [ref=e1164]
+                - button "Anular" [ref=e666] [cursor=pointer]:
+                  - img [ref=e1167]
+            - row "#2039 GONZALES, MARCELO 2/4/2026 03:51 a. m. PARCELA NORTE - 240 kg Administrador" [ref=e670]:
+              - cell "#2039" [ref=e671]
+              - cell "GONZALES, MARCELO" [ref=e672]
+              - cell "2/4/2026 03:51 a. m." [ref=e673]
+              - cell "PARCELA NORTE" [ref=e674]
+              - cell "-" [ref=e675]
+              - cell "240 kg" [ref=e676]
+              - cell "Administrador" [ref=e677]
+              - cell [ref=e678]:
+                - button "Editar" [ref=e679] [cursor=pointer]:
+                  - img [ref=e1170]
+                - button "Anular" [ref=e683] [cursor=pointer]:
+                  - img [ref=e1173]
+            - row "#1044 GOMEZ, MARIA 30/3/2026 09:15 p. m. PARCELA NORTE - 54,9 kg Administrador" [ref=e687]:
+              - cell "#1044" [ref=e688]
+              - cell "GOMEZ, MARIA" [ref=e689]
+              - cell "30/3/2026 09:15 p. m." [ref=e690]
+              - cell "PARCELA NORTE" [ref=e691]
+              - cell "-" [ref=e692]
+              - cell "54,9 kg" [ref=e693]
+              - cell "Administrador" [ref=e694]
+              - cell [ref=e695]:
+                - button "Editar" [ref=e696] [cursor=pointer]:
+                  - img [ref=e1176]
+                - button "Anular" [ref=e700] [cursor=pointer]:
+                  - img [ref=e1179]
+            - row "#1043 GOMEZ, MARIA 30/3/2026 09:15 p. m. PARCELA NORTE - 122,7 kg Administrador" [ref=e704]:
+              - cell "#1043" [ref=e705]
+              - cell "GOMEZ, MARIA" [ref=e706]
+              - cell "30/3/2026 09:15 p. m." [ref=e707]
+              - cell "PARCELA NORTE" [ref=e708]
+              - cell "-" [ref=e709]
+              - cell "122,7 kg" [ref=e710]
+              - cell "Administrador" [ref=e711]
+              - cell [ref=e712]:
+                - button "Editar" [ref=e713] [cursor=pointer]:
+                  - img [ref=e1182]
+                - button "Anular" [ref=e717] [cursor=pointer]:
+                  - img [ref=e1185]
+            - row "#1042 GONZALES, MARCELO 30/3/2026 09:14 p. m. PARCELA NORTE - 100 kg Administrador" [ref=e721]:
+              - cell "#1042" [ref=e722]
+              - cell "GONZALES, MARCELO" [ref=e723]
+              - cell "30/3/2026 09:14 p. m." [ref=e724]
+              - cell "PARCELA NORTE" [ref=e725]
+              - cell "-" [ref=e726]
+              - cell "100 kg" [ref=e727]
+              - cell "Administrador" [ref=e728]
+              - cell [ref=e729]:
+                - button "Editar" [ref=e730] [cursor=pointer]:
+                  - img [ref=e1188]
+                - button "Anular" [ref=e734] [cursor=pointer]:
+                  - img [ref=e1191]
+            - row "#1041 GONZALES, MARCELO 30/3/2026 08:57 p. m. PARCELA NORTE - 12,6 kg Administrador" [ref=e738]:
+              - cell "#1041" [ref=e739]
+              - cell "GONZALES, MARCELO" [ref=e740]
+              - cell "30/3/2026 08:57 p. m." [ref=e741]
+              - cell "PARCELA NORTE" [ref=e742]
+              - cell "-" [ref=e743]
+              - cell "12,6 kg" [ref=e744]
+              - cell "Administrador" [ref=e745]
+              - cell [ref=e746]:
+                - button "Editar" [ref=e747] [cursor=pointer]:
+                  - img [ref=e1194]
+                - button "Anular" [ref=e751] [cursor=pointer]:
+                  - img [ref=e1197]
+            - row "#1040 GOMEZ, MARIA 30/3/2026 08:55 p. m. PARCELA NORTE - 50 kg Administrador" [ref=e755]:
+              - cell "#1040" [ref=e756]
+              - cell "GOMEZ, MARIA" [ref=e757]
+              - cell "30/3/2026 08:55 p. m." [ref=e758]
+              - cell "PARCELA NORTE" [ref=e759]
+              - cell "-" [ref=e760]
+              - cell "50 kg" [ref=e761]
+              - cell "Administrador" [ref=e762]
+              - cell [ref=e763]:
+                - button "Editar" [ref=e764] [cursor=pointer]:
+                  - img [ref=e1200]
+                - button "Anular" [ref=e768] [cursor=pointer]:
+                  - img [ref=e1203]
+            - row "#1039 GOMEZ, MARIA 30/3/2026 08:52 p. m. PARCELA NORTE - 73 kg Administrador" [ref=e772]:
+              - cell "#1039" [ref=e773]
+              - cell "GOMEZ, MARIA" [ref=e774]
+              - cell "30/3/2026 08:52 p. m." [ref=e775]
+              - cell "PARCELA NORTE" [ref=e776]
+              - cell "-" [ref=e777]
+              - cell "73 kg" [ref=e778]
+              - cell "Administrador" [ref=e779]
+              - cell [ref=e780]:
+                - button "Editar" [ref=e781] [cursor=pointer]:
+                  - img [ref=e1206]
+                - button "Anular" [ref=e785] [cursor=pointer]:
+                  - img [ref=e1209]
+            - row "#1038 GOMEZ, MARIA 30/3/2026 08:44 p. m. PARCELA NORTE - 87 kg Administrador" [ref=e789]:
+              - cell "#1038" [ref=e790]
+              - cell "GOMEZ, MARIA" [ref=e791]
+              - cell "30/3/2026 08:44 p. m." [ref=e792]
+              - cell "PARCELA NORTE" [ref=e793]
+              - cell "-" [ref=e794]
+              - cell "87 kg" [ref=e795]
+              - cell "Administrador" [ref=e796]
+              - cell [ref=e797]:
+                - button "Editar" [ref=e798] [cursor=pointer]:
+                  - img [ref=e1212]
+                - button "Anular" [ref=e802] [cursor=pointer]:
+                  - img [ref=e1215]
+            - row "#1037 GONZALES, MARCELO 30/3/2026 08:38 p. m. PARCELA NORTE - 100 kg Administrador" [ref=e806]:
+              - cell "#1037" [ref=e807]
+              - cell "GONZALES, MARCELO" [ref=e808]
+              - cell "30/3/2026 08:38 p. m." [ref=e809]
+              - cell "PARCELA NORTE" [ref=e810]
+              - cell "-" [ref=e811]
+              - cell "100 kg" [ref=e812]
+              - cell "Administrador" [ref=e813]
+              - cell [ref=e814]:
+                - button "Editar" [ref=e815] [cursor=pointer]:
+                  - img [ref=e1218]
+                - button "Anular" [ref=e819] [cursor=pointer]:
+                  - img [ref=e1221]
+            - row "#1036 GOMEZ, MARIA 30/3/2026 08:32 p. m. PARCELA NORTE - 100 kg -" [ref=e823]:
+              - cell "#1036" [ref=e824]
+              - cell "GOMEZ, MARIA" [ref=e825]
+              - cell "30/3/2026 08:32 p. m." [ref=e826]
+              - cell "PARCELA NORTE" [ref=e827]
+              - cell "-" [ref=e828]
+              - cell "100 kg" [ref=e829]
+              - cell "-" [ref=e830]
+              - cell [ref=e831]:
+                - button "Editar" [ref=e832] [cursor=pointer]:
+                  - img [ref=e1224]
+                - button "Anular" [ref=e836] [cursor=pointer]:
+                  - img [ref=e1227]
+            - row "#1035 GOMEZ, MARIA 30/3/2026 08:32 p. m. PARCELA NORTE - 146 kg -" [ref=e840]:
+              - cell "#1035" [ref=e841]
+              - cell "GOMEZ, MARIA" [ref=e842]
+              - cell "30/3/2026 08:32 p. m." [ref=e843]
+              - cell "PARCELA NORTE" [ref=e844]
+              - cell "-" [ref=e845]
+              - cell "146 kg" [ref=e846]
+              - cell "-" [ref=e847]
+              - cell [ref=e848]:
+                - button "Editar" [ref=e849] [cursor=pointer]:
+                  - img [ref=e1230]
+                - button "Anular" [ref=e853] [cursor=pointer]:
+                  - img [ref=e1233]

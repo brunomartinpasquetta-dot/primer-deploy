@@ -7,6 +7,7 @@
   <title>Parcelas — Cosecha</title>
   <link rel="icon" href="img/logo.png">
   <script src="js/utils.js"></script>
+  <script src="js/cosecha-dialogs.js"></script>
   <link rel="stylesheet" href="cosecha.css">
   <style>
     .two-col { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
@@ -48,9 +49,9 @@
       <div class="nav-section">Campo</div>
       <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
       <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
       <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
       <a href="trabajos-campo.html" class="nav-item"><span class="nav-icon"><i data-lucide="hammer"></i></span> Trabajos de Campo</a>
-      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
       <div class="nav-section">Sistema</div>
       <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
       <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
@@ -464,8 +465,8 @@
     function guardar(){
       var nombre=document.getElementById('nombre').value.trim();
       var temporada_id=document.getElementById('temporada_id').value;
-      if(!nombre){ alert('Ingresa el nombre de la parcela'); return; }
-      if(!temporada_id){ alert('Selecciona una temporada'); return; }
+      if(!nombre){ showAlert('Ingresa el nombre de la parcela', 'warning'); return; }
+      if(!temporada_id){ showAlert('Selecciona una temporada', 'warning'); return; }
       var c = document.getElementById('cultivo').value;
       var esSiembra = CULTIVOS_SIEMBRA.indexOf(c) >= 0;
       var btn=document.getElementById('btn-guardar');
@@ -513,7 +514,7 @@
     function guardarEdicion(btn) {
       var id = document.getElementById('edit-id').value;
       var nombre = document.getElementById('edit-nombre').value.trim();
-      if (!nombre) { alert('El nombre es obligatorio'); return; }
+      if (!nombre) { showAlert('El nombre es obligatorio', 'warning'); return; }
       btn.disabled = true; btn.textContent = 'Guardando...';
       fetch('/api/parcelas/' + id, {
         method: 'PUT',

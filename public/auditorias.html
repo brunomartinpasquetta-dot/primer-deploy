@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1A2E0A">
+  <title>Auditorías — Cosecha</title>
+  <link rel="icon" href="img/logo.png">
+  <script src="js/utils.js"></script>
+  <link rel="stylesheet" href="cosecha.css">
+  <script src="js/auth-check.js"></script>
+  <style>
+    .badge-edicion { background:var(--sem-azul-bg); color:var(--sem-azul); }
+    .badge-anulacion { background:var(--sem-rojo-bg); color:var(--sem-rojo); }
+    .badge-creacion { background:var(--sem-verde-bg); color:var(--sem-verde); }
+    .aud-filtros { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; align-items:flex-end; }
+    .aud-filtros > div { display:flex; flex-direction:column; gap:2px; }
+    .aud-filtros label { font-size:11px; font-weight:600; color:var(--texto-suave); }
+    .aud-filtros select, .aud-filtros input { padding:5px 8px; font-size:12px; height:30px; }
+    .aud-table { width:100%; border-collapse:collapse; font-size:12px; }
+    .aud-table th { text-align:left; padding:6px 8px; font-size:10px; font-weight:600; color:var(--texto-suave); background:var(--fondo); text-transform:uppercase; letter-spacing:.4px; position:sticky; top:0; white-space:nowrap; }
+    .aud-table td { padding:5px 8px; border-bottom:1px solid var(--borde); white-space:nowrap; }
+    .aud-table tr:hover td { background:var(--fondo); }
+    .pag { display:flex; justify-content:center; gap:6px; margin-top:12px; }
+    .pag button { padding:4px 12px; font-size:12px; border:1px solid var(--borde); border-radius:6px; background:var(--superficie); cursor:pointer; }
+    .pag button.active { background:var(--verde); color:#fff; border-color:var(--verde); }
+    .pag button:disabled { opacity:.4; cursor:default; }
+    .motivo-cell { max-width:200px; overflow:hidden; text-overflow:ellipsis; }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="img/logo-icon.png" class="brand-icon"><div class="brand-info"><span class="brand-name">CO<em>SE</em>CHA</span><span class="brand-sub">SISTEMA DE CULTIVOS</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-item"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard</a>
+      <div class="nav-section">Campo</div>
+      <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
+      <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
+      <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
+      <a href="trabajos-campo.html" class="nav-item"><span class="nav-icon"><i data-lucide="hammer"></i></span> Trabajos de Campo</a>
+      <div class="nav-section">Sistema</div>
+      <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
+      <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
+      <a href="menu-admin.html" class="nav-item active"><span class="nav-icon"><i data-lucide="landmark"></i></span> Administración</a>
+      <a href="mercado.html" class="nav-item"><span class="nav-icon"><i data-lucide="trending-up"></i></span> Mercado</a>
+      <a href="menu-config.html" class="nav-item"><span class="nav-icon"><i data-lucide="settings"></i></span> Configuración</a>
+    </nav>
+    <div class="sidebar-footer">Cosecha · Sistema de Cultivos</div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
+        <img src="img/logo-icon.png" class="brand-icon"><div class="brand-info"><span class="brand-name">CO<em>SE</em>CHA</span><span class="brand-sub">SISTEMA DE CULTIVOS</span></div><span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
+      </div>
+      <div class="topbar-right"><span class="topbar-date" id="topbar-date"></span></div>
+    </header>
+
+    <div class="content">
+      <a href="menu-admin.html" class="btn-volver">← Volver</a>
+      <div class="content-header">
+        <div class="content-title">Auditorías del sistema</div>
+        <div class="content-sub">Historial unificado de ediciones, anulaciones y cambios</div>
+      </div>
+
+      <div class="aud-filtros">
+        <div>
+          <label>Módulo</label>
+          <select id="fil-tabla">
+            <option value="">Todos</option>
+            <option value="Clasificacion">Clasificación</option>
+            <option value="Embalaje">Embalaje</option>
+            <option value="Compras">Compras</option>
+            <option value="MovimientosDeposito">Ventas</option>
+            <option value="StockMercaderia">Stock Merc.</option>
+            <option value="Gastos">Gastos</option>
+            <option value="TareasGenerales">Trabajos Campo</option>
+            <option value="Aplicaciones">Aplicaciones</option>
+            <option value="Juntada">Juntada</option>
+            <option value="Despalillado">Despalillado</option>
+          </select>
+        </div>
+        <div>
+          <label>Acción</label>
+          <select id="fil-accion">
+            <option value="">Todas</option>
+            <option value="edicion">Edición</option>
+            <option value="anulacion">Anulación</option>
+            <option value="creacion">Creación</option>
+          </select>
+        </div>
+        <div>
+          <label>Desde</label>
+          <input type="date" id="fil-desde">
+        </div>
+        <div>
+          <label>Hasta</label>
+          <input type="date" id="fil-hasta">
+        </div>
+        <div>
+          <button class="btn btn-confirmar" onclick="cargar(1)" style="height:30px;padding:0 16px;font-size:12px;">Aplicar</button>
+        </div>
+      </div>
+
+      <div style="background:var(--superficie);border:1px solid var(--borde);border-radius:12px;overflow:hidden;">
+        <div style="overflow-x:auto;">
+          <table class="aud-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Módulo</th>
+                <th>Acción</th>
+                <th>ID Reg.</th>
+                <th>Campo</th>
+                <th>Anterior</th>
+                <th>Nuevo</th>
+                <th>Operador</th>
+                <th>Motivo</th>
+              </tr>
+            </thead>
+            <tbody id="aud-body">
+              <tr><td colspan="9" style="text-align:center;padding:24px;color:var(--texto-suave);">Cargando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="pag" id="paginacion"></div>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="home"></i></span><span>Inicio</span></a>
+    <a href="juntada.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="wheat"></i></span><span>Cosecha</span></a>
+    <a href="despalillado.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="scissors"></i></span><span>Despalillado</span></a>
+    <a href="aplicaciones.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="droplets"></i></span><span>Aplicaciones</span></a>
+    <a href="menu-campo.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="menu"></i></span><span>Menú</span></a>
+  </nav>
+</div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+lucide.createIcons();
+document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
+cargarTemporadaActiva();
+
+var _pagActual = 1;
+
+async function cargar(page) {
+  _pagActual = page || 1;
+  var params = [];
+  var tabla = document.getElementById('fil-tabla').value;
+  var accion = document.getElementById('fil-accion').value;
+  var desde = document.getElementById('fil-desde').value;
+  var hasta = document.getElementById('fil-hasta').value;
+  if (tabla) params.push('tabla_origen=' + tabla);
+  if (accion) params.push('accion=' + accion);
+  if (desde) params.push('desde=' + desde);
+  if (hasta) params.push('hasta=' + hasta);
+  params.push('page=' + _pagActual);
+
+  try {
+    var resp = await fetchApi('/api/auditorias?' + params.join('&'));
+    renderTabla(resp.data);
+    renderPaginacion(resp.page, resp.pages, resp.total);
+  } catch(e) {
+    document.getElementById('aud-body').innerHTML = '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--sem-rojo);">Error al cargar</td></tr>';
+  }
+}
+
+function renderTabla(rows) {
+  var tbody = document.getElementById('aud-body');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--texto-suave);">Sin registros</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(function(r) {
+    var fecha = r.fecha_hora ? new Date(r.fecha_hora).toLocaleString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
+    var badgeCls = r.accion === 'edicion' ? 'badge-edicion' : r.accion === 'anulacion' ? 'badge-anulacion' : 'badge-creacion';
+    return '<tr>' +
+      '<td>' + fecha + '</td>' +
+      '<td>' + (r.tabla_origen || '—') + '</td>' +
+      '<td><span class="badge ' + badgeCls + '" style="font-size:10px;padding:1px 6px;">' + (r.accion || '—') + '</span></td>' +
+      '<td class="mono">' + (r.registro_id || '—') + '</td>' +
+      '<td>' + (r.campo || '—') + '</td>' +
+      '<td title="' + esc(r.valor_anterior || '') + '" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;">' + esc(r.valor_anterior || '—') + '</td>' +
+      '<td title="' + esc(r.valor_nuevo || '') + '" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;">' + esc(r.valor_nuevo || '—') + '</td>' +
+      '<td>' + (r.usuario_nombre || '—') + '</td>' +
+      '<td class="motivo-cell" title="' + esc(r.motivo || '') + '">' + esc(r.motivo || '—') + '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function renderPaginacion(page, pages, total) {
+  var el = document.getElementById('paginacion');
+  if (pages <= 1) { el.innerHTML = '<span style="font-size:11px;color:var(--texto-suave);">' + total + ' registros</span>'; return; }
+  var html = '<button ' + (page <= 1 ? 'disabled' : 'onclick="cargar(' + (page-1) + ')"') + '>&laquo;</button>';
+  var start = Math.max(1, page - 2);
+  var end = Math.min(pages, page + 2);
+  for (var i = start; i <= end; i++) {
+    html += '<button class="' + (i === page ? 'active' : '') + '" onclick="cargar(' + i + ')">' + i + '</button>';
+  }
+  html += '<button ' + (page >= pages ? 'disabled' : 'onclick="cargar(' + (page+1) + ')"') + '>&raquo;</button>';
+  html += '<span style="font-size:11px;color:var(--texto-suave);margin-left:8px;">' + total + ' registros</span>';
+  el.innerHTML = html;
+}
+
+cargar(1);
+</script>
+</body>
+</html>

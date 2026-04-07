@@ -55,19 +55,15 @@ router.get('/:cliente_id', async (req, res) => {
           sm.kilos, sm.precio_kilo, sm.destino,
           l.nombre   AS parcela,
           -- Saldo acumulado (running total)
-          SUM(CASE WHEN cc2.tipo = 'debito' THEN cc2.monto ELSE -cc2.monto END)
-            OVER (PARTITION BY cc.cliente_id ORDER BY cc.fecha_hora, cc.id
+          SUM(CASE WHEN cc.tipo = 'debito' THEN cc.monto ELSE -cc.monto END)
+            OVER (ORDER BY cc.fecha_hora, cc.id
                   ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS saldo_acumulado
         FROM CuentaCorrienteClientes cc
         LEFT JOIN FormasPago             fp ON cc.forma_pago_id      = fp.id
         LEFT JOIN Temporadas             t  ON cc.temporada_id        = t.id
         LEFT JOIN StockMercaderia        sm ON cc.stock_mercaderia_id = sm.id
-        LEFT JOIN Parcelas                  l  ON sm.parcela_id             = l.id
-        LEFT JOIN CuentaCorrienteClientes cc2 ON cc2.cliente_id = cc.cliente_id
+        LEFT JOIN Parcelas               l  ON sm.parcela_id          = l.id
         WHERE cc.cliente_id = @cliente_id
-        GROUP BY cc.id, cc.tipo, cc.monto, cc.fecha, cc.fecha_hora,
-                 cc.observacion, cc.cliente_id, fp.nombre, fp.es_cuenta_corriente,
-                 t.nombre, sm.kilos, sm.precio_kilo, sm.destino, l.nombre
         ORDER BY cc.fecha_hora DESC, cc.id DESC`);
     res.json(result.recordset);
   } catch (err) {

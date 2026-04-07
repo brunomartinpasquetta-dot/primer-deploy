@@ -40,6 +40,8 @@ app.use('/api/cuentas-proveedores', requireAuth, soloAdmin, require('./routes/cu
 app.use('/api/cuentas-clientes',  requireAuth, soloAdmin, require('./routes/cuentas-clientes'));
 app.use('/api/usuarios',          requireAuth, soloAdmin, require('./routes/usuarios'));
 app.use('/api/remitos',           requireAuth, soloAdmin, require('./routes/remitos'));
+app.use('/api/auditorias',        requireAuth, soloAdmin, require('./routes/auditorias'));
+app.use('/api/trazabilidad',      requireAuth, encargadoOAdmin, require('./routes/trazabilidad'));
 
 // ── Rutas encargado y admin ─────────────────────────────────────
 app.use('/api/aplicaciones',      requireAuth, encargadoOAdmin, require('./routes/aplicaciones'));

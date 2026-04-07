@@ -7,6 +7,7 @@
   <title>Gastos — Cosecha</title>
   <link rel="icon" href="img/logo.png">
   <script src="js/utils.js"></script>
+  <script src="js/cosecha-dialogs.js"></script>
   <link rel="stylesheet" href="cosecha.css">
   <style>
     .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -35,9 +36,9 @@
       <div class="nav-section">Campo</div>
       <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
       <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
       <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
       <a href="trabajos-campo.html" class="nav-item"><span class="nav-icon"><i data-lucide="hammer"></i></span> Trabajos de Campo</a>
-      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
       <div class="nav-section">Sistema</div>
       <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
       <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
@@ -206,12 +207,12 @@
         });
     }
 
-    function guardar(btn) {
+    async function guardar(btn) {
       const temporada_id = document.getElementById('temporada').value;
       const categoria_id = document.getElementById('categoria').value;
       const concepto = document.getElementById('concepto').value.trim();
       const monto = document.getElementById('monto').value;
-      if (!temporada_id || !concepto || !monto) { alert('Completa temporada, concepto y monto'); return; }
+      if (!temporada_id || !concepto || !monto) { await showAlert('Completa temporada, concepto y monto', 'warning'); return; }
       setLoading(btn, true);
       fetch('/api/gastos', {
         method: 'POST',
@@ -320,10 +321,10 @@
         });
     }
 
-    function anularGasto(id) {
-      var motivo = prompt('Motivo de anulación:');
+    async function anularGasto(id) {
+      var motivo = await showPrompt('Motivo de anulación:', 'Ingresá el motivo', 'warning');
       if (!motivo) return;
-      if (!confirm('¿Anular este gasto? Se revertirá el movimiento en caja/CC.')) return;
+      if (!await showConfirm('¿Anular este gasto? Se revertirá el movimiento en caja/CC.')) return;
       fetch('/api/gastos/' + id + '/anular', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') },

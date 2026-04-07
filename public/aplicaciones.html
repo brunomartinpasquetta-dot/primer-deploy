@@ -7,6 +7,7 @@
   <title>Aplicaciones — Campo</title>
   <link rel="icon" href="img/logo.png">
   <script src="js/utils.js"></script>
+  <script src="js/cosecha-dialogs.js"></script>
   <link rel="stylesheet" href="cosecha.css">
   <script src="js/auth-check.js"></script>
   <style>
@@ -75,9 +76,9 @@
       <div class="nav-section">Campo</div>
       <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
       <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
       <a href="aplicaciones.html" class="nav-item active"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
       <a href="trabajos-campo.html" class="nav-item"><span class="nav-icon"><i data-lucide="hammer"></i></span> Trabajos de Campo</a>
-      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
       <div class="nav-section">Sistema</div>
       <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
       <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
@@ -549,12 +550,12 @@
   }
 
   /* ══ ANULAR ══ */
-  function anularAplic(id){
-    var motivo=prompt('Motivo de anulación:');if(!motivo)return;
+  async function anularAplic(id){
+    var motivo=await showPrompt('Motivo de anulación:', 'Ingresá el motivo', 'warning');if(!motivo)return;
     fetch('/api/aplicaciones/'+id+'/anular',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({motivo:motivo})})
       .then(function(r){return r.json();}).then(function(data){
         if(data.ok){cargarAplicacionesParcela();cargarParcelas();cargarKpis();cargarHistorialCompleto();}
-        else{alert(data.error||'Error');}
+        else{showAlert(data.error||'Error','error');}
       });
   }
 

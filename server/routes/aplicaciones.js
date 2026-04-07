@@ -271,6 +271,22 @@ router.post('/:id/anular', async (req, res) => {
       .input('id', sql.Int, id)
       .query("UPDATE Aplicaciones SET estado = 'anulada' WHERE id = @id");
 
+    // Auditoría
+    const reqAud = new sql.Request(transaction);
+    await reqAud
+      .input('registro_id', sql.Int, parseInt(id))
+      .input('tabla_origen', sql.NVarChar, 'Aplicaciones')
+      .input('accion', sql.NVarChar, 'anulacion')
+      .input('campo', sql.NVarChar, 'estado')
+      .input('valor_anterior', sql.NVarChar, 'activa')
+      .input('valor_nuevo', sql.NVarChar, 'anulada')
+      .input('motivo', sql.NVarChar, motivo)
+      .input('usuario_id', sql.Int, uid)
+      .input('usuario_nombre', sql.NVarChar, req.user ? req.user.nombre : '')
+      .query(`INSERT INTO AuditoriaClasificacion
+                (registro_id, tabla_origen, accion, campo, valor_anterior, valor_nuevo, motivo, usuario_id, usuario_nombre)
+              VALUES (@registro_id, @tabla_origen, @accion, @campo, @valor_anterior, @valor_nuevo, @motivo, @usuario_id, @usuario_nombre)`);
+
     await transaction.commit();
     res.json({ ok: true });
   } catch (err) {

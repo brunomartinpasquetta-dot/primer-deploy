@@ -201,9 +201,10 @@ router.get('/kpis', async (req, res) => {
     // KG cosechados desde Juntada
     const dbJ = pool.request();
     let qJuntada = `SELECT ISNULL(SUM(j.kilos), 0) AS kg_cosechados
-                    FROM Juntada j JOIN Parcelas l ON j.parcela_id = l.id`;
+                    FROM Juntada j JOIN Parcelas l ON j.parcela_id = l.id
+                    WHERE ISNULL(j.estado, 'activa') != 'anulada'`;
     if (temporada_id) {
-      qJuntada += ' WHERE l.temporada_id = @temporada_id';
+      qJuntada += ' AND l.temporada_id = @temporada_id';
       dbJ.input('temporada_id', sql.Int, parseInt(temporada_id));
     }
     const jRes = await dbJ.query(qJuntada);
@@ -219,10 +220,23 @@ router.get('/kpis', async (req, res) => {
       SELECT
         ISNULL(SUM(CASE WHEN etapa IN ('cosecha','despalillado','en_clasificacion','clasificado') THEN kilos ELSE 0 END), 0) AS kg_en_proceso,
         ISNULL(SUM(CASE WHEN etapa IN ('embalado','vendido_parcial') AND lote_padre_id IS NOT NULL THEN kilos ELSE 0 END), 0) AS kg_embalado,
-        ISNULL(SUM(CASE WHEN etapa IN ('vendido') THEN kilos ELSE 0 END), 0) AS kg_vendidos,
         ISNULL(SUM(CASE WHEN etapa = 'descartado' THEN kilos ELSE 0 END), 0) AS kg_descartados
       FROM LotesMercaderia
       WHERE ${wLm}`);
+
+    // KG vendidos desde MovimientosDeposito (dato real de ventas, no etapa de lotes)
+    const dbVend = pool.request();
+    let wVend = "ISNULL(estado, '') != 'anulada'";
+    if (temporada_id) {
+      wVend += ' AND temporada_id = @tid';
+      dbVend.input('tid', sql.Int, parseInt(temporada_id));
+    }
+    const vendRes = await dbVend.query(`
+      SELECT ISNULL(SUM(CASE WHEN tipo = 'egreso_venta' THEN kilos
+                             WHEN tipo = 'ingreso_anulacion' THEN -kilos
+                             ELSE 0 END), 0) AS kg_vendidos
+      FROM MovimientosDeposito
+      WHERE ${wVend} AND tipo IN ('egreso_venta', 'ingreso_anulacion')`);
 
     const lm = lmRes.recordset[0];
     res.json({
@@ -230,9 +244,44 @@ router.get('/kpis', async (req, res) => {
       kg_en_proceso:  parseFloat(lm.kg_en_proceso),
       kg_embalado:    parseFloat(lm.kg_embalado),
       kg_en_deposito: parseFloat(lm.kg_en_proceso) + parseFloat(lm.kg_embalado),
-      kg_vendidos:    parseFloat(lm.kg_vendidos),
+      kg_vendidos:    parseFloat(vendRes.recordset[0].kg_vendidos),
       kg_descartados: parseFloat(lm.kg_descartados)
     });
+  } catch (err) {
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
+  }
+});
+
+// Vista por lotes: ingresos a stock agrupados por sub_lote + fecha + envase
+router.get('/historial-lotes', async (req, res) => {
+  try {
+    const { temporada_id, desde, hasta } = req.query;
+    const pool = await getPool();
+    const dbReq = pool.request();
+
+    let where = "e.estado != 'anulada'";
+    if (temporada_id) { dbReq.input('temporada_id', sql.Int, parseInt(temporada_id)); where += ' AND sl.temporada_id = @temporada_id'; }
+    if (desde) { dbReq.input('desde', sql.Date, desde); where += ' AND CAST(e.fecha_hora AS DATE) >= @desde'; }
+    if (hasta) { dbReq.input('hasta', sql.Date, hasta); where += ' AND CAST(e.fecha_hora AS DATE) <= @hasta'; }
+
+    const result = await dbReq.query(`
+      SELECT CAST(e.fecha_hora AS DATE) AS fecha,
+             sl.codigo_externo AS lote,
+             cc.nombre AS categoria,
+             sc.nombre AS sub_categoria,
+             e.tipo_envase AS presentacion,
+             SUM(e.cantidad_envases) AS envases,
+             SUM(e.kilos) AS kilos,
+             dep.nombre AS deposito
+      FROM Embalaje e
+      JOIN LotesMercaderia sl ON e.sub_lote_id = sl.id
+      LEFT JOIN CategoriasClasificacion cc ON sl.categoria_clasif_id = cc.id
+      LEFT JOIN SubCategoriasClasificacion sc ON sl.sub_categoria_id = sc.id
+      LEFT JOIN Depositos dep ON e.deposito_id = dep.id
+      WHERE ${where}
+      GROUP BY CAST(e.fecha_hora AS DATE), sl.codigo_externo, cc.nombre, sc.nombre, e.tipo_envase, dep.nombre
+      ORDER BY CAST(e.fecha_hora AS DATE) DESC, sl.codigo_externo`);
+    res.json(result.recordset);
   } catch (err) {
     console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
@@ -303,6 +352,7 @@ router.get('/historial', async (req, res) => {
         'cobrada'                   AS estado_cobro,
         sm.estado,
         NULL                        AS numero_remito,
+        NULL                        AS remito_id,
         fp2.nombre                  AS forma_pago,
         NULL                        AS deposito,
         sm.parcela_id,
@@ -331,6 +381,7 @@ router.get('/historial', async (req, res) => {
              m.estado_cobro,
              m.estado,
              m.numero_remito,
+             m.remito_id,
              fp.nombre AS forma_pago,
              d.nombre  AS deposito,
              m.parcela_id,
@@ -413,8 +464,9 @@ router.get('/etapas', async (req, res) => {
       LEFT JOIN Depositos d    ON j.deposito_id = d.id
       LEFT JOIN Despalillado desp ON desp.juntada_id = j.id
       LEFT JOIN (
-        SELECT juntada_id, SUM(kilos) AS total_kg
-        FROM StockMercaderia WHERE tipo = 'ingreso'
+        SELECT juntada_id,
+               SUM(CASE WHEN tipo = 'ingreso' THEN kilos WHEN tipo = 'egreso_anulacion' THEN -kilos ELSE 0 END) AS total_kg
+        FROM StockMercaderia WHERE tipo IN ('ingreso', 'egreso_anulacion')
         GROUP BY juntada_id
       ) sm_ing ON sm_ing.juntada_id = j.id
       LEFT JOIN (
@@ -481,7 +533,7 @@ router.post('/historial/:id/anular', async (req, res) => {
     // Verificar que existe y es una venta confirmada
     const mov = await new sql.Request(transaction)
       .input('id', sql.Int, movId)
-      .query('SELECT id, tipo, kilos, precio_kilo, cliente_id, forma_pago_id, temporada_id, estado FROM MovimientosDeposito WHERE id = @id');
+      .query('SELECT id, tipo, kilos, precio_kilo, cliente_id, forma_pago_id, temporada_id, estado, sub_lote_id, remito_id FROM MovimientosDeposito WHERE id = @id');
     if (!mov.recordset.length) { await transaction.rollback(); return res.status(404).json({ error: 'Movimiento no encontrado' }); }
     const m = mov.recordset[0];
     if (m.estado === 'anulada') { await transaction.rollback(); return res.status(400).json({ error: 'Ya está anulado' }); }
@@ -525,6 +577,43 @@ router.post('/historial/:id/anular', async (req, res) => {
       .input('motivo', sql.NVarChar, motivo)
       .query(`INSERT INTO AuditoriaVentas (movimiento_id, tabla_origen, accion, campo, valor_anterior, valor_nuevo, usuario_id, usuario_nombre, fecha_hora)
               VALUES (@movimiento_id, 'MovimientosDeposito', 'anulacion', 'estado', 'confirmada', 'anulada — ' + @motivo, @usuario_id, @usuario_nombre, GETDATE())`);
+
+    // 4. Revertir etapa del sub-lote en LotesMercaderia
+    if (m.sub_lote_id) {
+      // Recalcular kilos vendidos restantes (excluyendo movimientos anulados)
+      const slRes = await new sql.Request(transaction)
+        .input('sl_id', sql.Int, m.sub_lote_id)
+        .query(`SELECT sl.kilos,
+                  ISNULL((SELECT SUM(ri.kilos) FROM RemitoItems ri
+                          JOIN MovimientosDeposito md ON ri.movimiento_id = md.id
+                          WHERE ri.sub_lote_id = @sl_id AND ISNULL(md.estado, '') != 'anulada'), 0) AS kilos_vendidos
+                FROM LotesMercaderia sl WHERE sl.id = @sl_id`);
+      if (slRes.recordset.length) {
+        const sl = slRes.recordset[0];
+        const kilosVendidos = parseFloat(sl.kilos_vendidos);
+        const kilosTotal = parseFloat(sl.kilos);
+        const nuevaEtapa = kilosVendidos <= 0 ? 'embalado' : (kilosVendidos >= kilosTotal ? 'vendido' : 'vendido_parcial');
+        await new sql.Request(transaction)
+          .input('sl_id', sql.Int, m.sub_lote_id)
+          .input('etapa', sql.NVarChar, nuevaEtapa)
+          .query('UPDATE LotesMercaderia SET etapa = @etapa WHERE id = @sl_id');
+      }
+    }
+
+    // 5. Si todos los movimientos del remito están anulados, marcar remito como anulado
+    if (m.remito_id) {
+      const remCheck = await new sql.Request(transaction)
+        .input('rem_id', sql.Int, m.remito_id)
+        .query(`SELECT COUNT(*) AS total,
+                  SUM(CASE WHEN estado = 'anulada' THEN 1 ELSE 0 END) AS anulados
+                FROM MovimientosDeposito WHERE remito_id = @rem_id`);
+      const rc = remCheck.recordset[0];
+      if (rc.total > 0 && rc.anulados >= rc.total) {
+        await new sql.Request(transaction)
+          .input('rem_id', sql.Int, m.remito_id)
+          .query("UPDATE Remitos SET estado = 'anulado' WHERE id = @rem_id");
+      }
+    }
 
     await transaction.commit();
     res.json({ ok: true });

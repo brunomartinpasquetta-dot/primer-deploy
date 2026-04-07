@@ -7,6 +7,7 @@
   <title>Proveedores — Cosecha</title>
   <link rel="icon" href="img/logo.png">
   <script src="js/utils.js"></script>
+  <script src="js/cosecha-dialogs.js"></script>
   <link rel="stylesheet" href="cosecha.css">
   <style>
 h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
@@ -45,9 +46,9 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
       <div class="nav-section">Campo</div>
       <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
       <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
       <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
       <a href="trabajos-campo.html" class="nav-item"><span class="nav-icon"><i data-lucide="hammer"></i></span> Trabajos de Campo</a>
-      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
       <div class="nav-section">Sistema</div>
       <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
       <a href="menu-comercial.html" class="nav-item active"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
@@ -210,7 +211,7 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
     function guardarEdicion(btn) {
       var id = document.getElementById('edit-id').value;
       var nombre = document.getElementById('edit-nombre').value.trim();
-      if(!nombre){ alert('El nombre es obligatorio'); return; }
+      if(!nombre){ showAlert('El nombre es obligatorio', 'warning'); return; }
       btn.disabled=true; btn.textContent='Guardando...';
       fetch('/api/proveedores/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({
@@ -226,13 +227,13 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
         else { document.getElementById('msg-edit').innerHTML='<div class="msg-error">'+(data.error||'Error')+'</div>'; }
       }).catch(function(){ btn.disabled=false; btn.textContent='Guardar cambios'; document.getElementById('msg-edit').innerHTML='<div class="msg-error">Error de conexión</div>'; });
     }
-    function desactivar(id, btn) {
-      if(!confirm('¿Desactivar este proveedor?')) return;
+    async function desactivar(id, btn) {
+      if(!await showConfirm('¿Desactivar este proveedor?')) return;
       btn.disabled=true;
       fetch('/api/proveedores/'+id+'/desactivar',{method:'PATCH'}).then(function(r){return r.json();}).then(function(data){
         btn.disabled=false;
-        if(data.ok){ cargar(); } else { alert(data.error||'Error'); }
-      }).catch(function(){ btn.disabled=false; alert('Error de conexión'); });
+        if(data.ok){ cargar(); } else { showAlert(data.error||'Error', 'error'); }
+      }).catch(function(){ btn.disabled=false; showAlert('Error de conexión', 'error'); });
     }
     function verInsumos(id, nombre) {
       document.getElementById('modal-insumos-title').textContent = 'Insumos de '+nombre;
@@ -257,7 +258,7 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
     function cerrarModalInsumos() { document.getElementById('modal-insumos').style.display = 'none'; }
     function guardar(){
       var nombre=document.getElementById('nombre').value.trim();
-      if(!nombre){ alert('Ingresa el nombre del proveedor'); return; }
+      if(!nombre){ showAlert('Ingresa el nombre del proveedor', 'warning'); return; }
       var btn=document.getElementById('btn-guardar');
       btn.disabled=true; btn.textContent='Guardando...';
       fetch('/api/proveedores',{method:'POST',headers:{'Content-Type':'application/json'},

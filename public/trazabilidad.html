@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1A2E0A">
+  <title>Trazabilidad — Cosecha</title>
+  <link rel="icon" href="img/logo.png">
+  <script src="js/utils.js"></script>
+  <script src="js/cosecha-dialogs.js"></script>
+  <link rel="stylesheet" href="cosecha.css">
+  <script src="js/auth-check.js"></script>
+  <style>
+    .trz-search { display:flex; gap:8px; max-width:600px; margin:0 auto 24px; }
+    .trz-search input[type=text] { flex:1; display:inline-block; width:auto; padding:10px 16px; font-size:15px; border:2px solid var(--borde); border-radius:10px; height:auto; }
+    .trz-search input:focus { border-color:var(--verde); outline:none; }
+    .trz-search button { padding:10px 20px; font-size:14px; }
+
+    .trz-resumen { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:24px; padding:16px; background:var(--superficie); border:1px solid var(--borde); border-radius:12px; }
+    .trz-lote-info { flex:1; min-width:200px; }
+    .trz-lote-codigo { font-size:24px; font-weight:900; color:var(--texto); font-family:'JetBrains Mono',monospace; }
+    .trz-lote-interno { font-size:12px; color:var(--texto-suave); margin-top:2px; }
+    .trz-lote-meta { font-size:12px; color:var(--texto-secundario); margin-top:4px; }
+    .trz-metricas { display:flex; flex-wrap:wrap; gap:12px; align-items:center; }
+    .trz-metrica { text-align:center; min-width:80px; }
+    .trz-metrica-valor { font-size:18px; font-weight:800; color:var(--verde); font-family:'JetBrains Mono',monospace; }
+    .trz-metrica-label { font-size:10px; font-weight:600; color:var(--texto-suave); text-transform:uppercase; letter-spacing:.3px; }
+
+    .trz-timeline { position:relative; padding-left:32px; }
+    .trz-timeline::before { content:''; position:absolute; left:11px; top:0; bottom:0; width:2px; background:var(--borde); }
+    .trz-etapa { position:relative; margin-bottom:16px; }
+    .trz-etapa-dot { position:absolute; left:-32px; top:14px; width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid var(--borde); background:var(--superficie); z-index:1; }
+    .trz-etapa-dot svg { width:12px; height:12px; }
+    .trz-etapa-dot.completado { border-color:var(--sem-verde); background:var(--sem-verde-bg); color:var(--sem-verde); }
+    .trz-etapa-dot.parcial { border-color:var(--sem-azul); background:var(--sem-azul-bg); color:var(--sem-azul); }
+    .trz-etapa-dot.pendiente { border-color:var(--borde); background:var(--fondo); color:var(--texto-suave); }
+
+    .trz-card { background:var(--superficie); border:1px solid var(--borde); border-radius:10px; overflow:hidden; }
+    .trz-card-header { display:flex; align-items:center; gap:8px; padding:10px 14px; border-bottom:1px solid var(--borde); background:var(--fondo); }
+    .trz-card-header h3 { font-size:13px; font-weight:700; margin:0; flex:1; }
+    .trz-card-header .badge { font-size:10px; padding:2px 8px; }
+    .trz-card-body { padding:10px 14px; font-size:12px; }
+    .trz-card-body.vacio { text-align:center; color:var(--texto-suave); padding:16px; }
+
+    .trz-tabla { width:100%; border-collapse:collapse; font-size:12px; }
+    .trz-tabla th { text-align:left; padding:4px 8px; font-size:10px; font-weight:600; color:var(--texto-suave); text-transform:uppercase; letter-spacing:.3px; background:var(--fondo); }
+    .trz-tabla td { padding:4px 8px; border-bottom:1px solid var(--borde); }
+    .trz-tabla tr:last-child td { border-bottom:none; }
+    .trz-tabla .mono { font-family:'JetBrains Mono',monospace; }
+    .trz-tabla .anulado { opacity:.4; text-decoration:line-through; }
+
+    .badge-completado { background:var(--sem-verde-bg); color:var(--sem-verde); }
+    .badge-parcial { background:var(--sem-azul-bg); color:var(--sem-azul); }
+    .badge-pendiente { background:var(--fondo); color:var(--texto-suave); border:1px solid var(--borde); }
+
+    @media(max-width:600px) {
+      .trz-resumen { flex-direction:column; }
+      .trz-metricas { justify-content:space-between; }
+      .trz-search input { font-size:13px; padding:8px 12px; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="img/logo-icon.png" class="brand-icon"><div class="brand-info"><span class="brand-name">CO<em>SE</em>CHA</span><span class="brand-sub">SISTEMA DE CULTIVOS</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-item"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard</a>
+      <div class="nav-section">Campo</div>
+      <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
+      <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
+      <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
+      <a href="trabajos-campo.html" class="nav-item"><span class="nav-icon"><i data-lucide="hammer"></i></span> Trabajos de Campo</a>
+      <div class="nav-section">Sistema</div>
+      <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
+      <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
+      <a href="menu-admin.html" class="nav-item active"><span class="nav-icon"><i data-lucide="landmark"></i></span> Administración</a>
+      <a href="mercado.html" class="nav-item"><span class="nav-icon"><i data-lucide="trending-up"></i></span> Mercado</a>
+      <a href="menu-config.html" class="nav-item"><span class="nav-icon"><i data-lucide="settings"></i></span> Configuración</a>
+    </nav>
+    <div class="sidebar-footer">Cosecha · Sistema de Cultivos</div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
+        <img src="img/logo-icon.png" class="brand-icon"><div class="brand-info"><span class="brand-name">CO<em>SE</em>CHA</span><span class="brand-sub">SISTEMA DE CULTIVOS</span></div><span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
+      </div>
+      <div class="topbar-right"><span class="topbar-date" id="topbar-date"></span></div>
+    </header>
+
+    <div class="content">
+      <a href="menu-admin.html" class="btn-volver">← Volver</a>
+      <div class="content-header">
+        <div class="content-title">Trazabilidad de lote</div>
+        <div class="content-sub">Seguimiento completo de origen a destino</div>
+      </div>
+
+      <div class="trz-search">
+        <input type="text" id="inp-codigo" placeholder="Ingresá código de lote (ej: 2026-0001)" onkeydown="if(event.key==='Enter')buscar()">
+        <button class="btn btn-confirmar" id="btn-buscar" onclick="buscar()">
+          <i data-lucide="search" style="width:14px;height:14px;"></i> Buscar
+        </button>
+      </div>
+
+      <div id="resultado" style="display:none;"></div>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="home"></i></span><span>Inicio</span></a>
+    <a href="juntada.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="wheat"></i></span><span>Cosecha</span></a>
+    <a href="despalillado.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="scissors"></i></span><span>Despalillado</span></a>
+    <a href="aplicaciones.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="droplets"></i></span><span>Aplicaciones</span></a>
+    <a href="menu-campo.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="menu"></i></span><span>Menú</span></a>
+  </nav>
+</div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+lucide.createIcons();
+document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
+cargarTemporadaActiva();
+
+// Auto-buscar si hay query param
+var _params = new URLSearchParams(window.location.search);
+var _codigoParam = _params.get('codigo');
+if (_codigoParam) {
+  document.getElementById('inp-codigo').value = _codigoParam;
+  buscar();
+}
+
+async function buscar() {
+  var codigo = document.getElementById('inp-codigo').value.trim();
+  if (!codigo) return;
+  var btn = document.getElementById('btn-buscar');
+  btn.disabled = true; btn.textContent = 'Buscando...';
+
+  try {
+    var data = await fetchApi('/api/trazabilidad/' + encodeURIComponent(codigo));
+    renderResultado(data);
+  } catch(e) {
+    document.getElementById('resultado').style.display = 'none';
+    showAlert(e.message || 'Lote no encontrado', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i data-lucide="search" style="width:14px;height:14px;"></i> Buscar';
+    lucide.createIcons();
+  }
+}
+
+function fDate(d) { return d ? new Date(d).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'}) : '—'; }
+function fDateTime(d) { return d ? new Date(d).toLocaleString('es-AR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—'; }
+function fNum(n) { return n != null ? parseFloat(n).toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1}) : '—'; }
+function fMoney(n) { return n != null ? '$' + parseFloat(n).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—'; }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function renderResultado(data) {
+  var el = document.getElementById('resultado');
+  var l = data.lote;
+  var r = data.resumen;
+
+  var etapaBadge = 'badge-pendiente';
+  if (['embalado','vendido','vendido_parcial'].includes(l.etapa_actual)) etapaBadge = 'badge-completado';
+  else if (['clasificado','en_clasificacion','despalillado'].includes(l.etapa_actual)) etapaBadge = 'badge-parcial';
+
+  var subLoteInfo = l.es_sub_lote ? '<div class="trz-lote-meta">Sub-lote de <strong>'+esc(l.lote_padre_codigo)+'</strong>' +
+    (l.categoria ? ' · '+esc(l.categoria) : '') + (l.sub_categoria ? ' · '+esc(l.sub_categoria) : '') + '</div>' : '';
+
+  var html = '';
+
+  // Resumen
+  html += '<div class="trz-resumen">' +
+    '<div class="trz-lote-info">' +
+      '<div class="trz-lote-codigo">' + esc(l.codigo_externo || l.codigo_interno) + '</div>' +
+      '<div class="trz-lote-interno">' + esc(l.codigo_interno) + '</div>' +
+      subLoteInfo +
+      '<div class="trz-lote-meta">' + esc(l.parcela||'') + ' · ' + esc(l.temporada||'') +
+        ' <span class="badge '+etapaBadge+'" style="margin-left:6px;">' + esc(l.etapa_actual) + '</span>' +
+      '</div>' +
+    '</div>' +
+    '<div class="trz-metricas">' +
+      metrica(fNum(r.kg_cosechados), 'Cosechados') +
+      metrica(fNum(r.kg_despalillados), 'Despalillados') +
+      metrica(fNum(r.kg_clasificados), 'Clasificados') +
+      metrica(fNum(r.kg_embalados), 'Embalados') +
+      metrica(fNum(r.kg_vendidos), 'Vendidos') +
+      metrica(r.merma_total_pct + '%', 'Merma') +
+    '</div>' +
+  '</div>';
+
+  // Timeline
+  html += '<div class="trz-timeline">';
+  html += renderEtapa('wheat', 'Cosecha', data.cosecha, function(rows) {
+    return tabla(['Fecha','Parcela','Juntador','Kg','Operador','Estado'], rows.map(function(r) {
+      return [fDateTime(r.fecha_hora), esc(r.parcela), esc(r.juntador), fNum(r.kilos), esc(r.usuario||r.operador), estadoBadge(r.estado)];
+    }));
+  });
+  html += renderEtapa('scissors', 'Despalillado', data.despalillado, function(rows) {
+    return tabla(['Fecha','Kg salida','Merma kg','Merma %','Despalillador','Estado'], rows.map(function(r) {
+      return [fDateTime(r.fecha_hora), fNum(r.kilos), fNum(r.merma_kg), (r.merma_pct||0)+'%', esc(r.despalillador||r.usuario), estadoBadge(r.estado)];
+    }));
+  });
+  html += renderEtapa('layers', 'Clasificación', data.clasificacion, function(rows) {
+    return tabla(['Fecha','Categoría','Sub-categoría','Kg','Operador','Estado'], rows.map(function(r) {
+      var cls = r.estado==='anulada' ? ' class="anulado"' : '';
+      return { cls:cls, cells:[fDateTime(r.fecha_hora), esc(r.categoria), esc(r.sub_categoria), fNum(r.kilos), esc(r.usuario), estadoBadge(r.estado)] };
+    }));
+  });
+  html += renderEtapa('package', 'Embalaje', data.embalaje, function(rows) {
+    return tabla(['Fecha','Envase','Cant.','Kg','Depósito','Operador','Estado'], rows.map(function(r) {
+      var cls = r.estado==='anulada' ? ' class="anulado"' : '';
+      return { cls:cls, cells:[fDateTime(r.fecha_hora), esc(r.tipo_envase), r.cantidad_envases||'—', fNum(r.kilos), esc(r.deposito), esc(r.usuario), estadoBadge(r.estado)] };
+    }));
+  });
+  html += renderEtapa('warehouse', 'Stock', data.stock, function(rows) {
+    return tabla(['Fecha','Tipo','Kg','Depósito','Estado'], rows.map(function(r) {
+      return [fDate(r.fecha), tipoBadge(r.tipo), fNum(r.kilos), esc(r.deposito), estadoBadge(r.estado)];
+    }));
+  });
+  html += renderEtapa('truck', 'Venta', data.venta, function(rows) {
+    return tabla(['Fecha','Remito','Cliente','Kg','Precio/kg','Total','Estado'], rows.map(function(r) {
+      return [fDate(r.fecha), esc(r.numero_remito), esc(r.cliente), fNum(r.kilos), fMoney(r.precio_kilo), fMoney(r.subtotal), estadoBadge(r.estado_remito)];
+    }));
+  });
+  html += '</div>';
+
+  el.innerHTML = html;
+  el.style.display = '';
+  lucide.createIcons();
+}
+
+function metrica(valor, label) {
+  return '<div class="trz-metrica"><div class="trz-metrica-valor">'+valor+'</div><div class="trz-metrica-label">'+label+'</div></div>';
+}
+
+function renderEtapa(icon, nombre, rows, renderFn) {
+  var tiene = rows && rows.length > 0;
+  var activos = tiene ? rows.filter(function(r){ return r.estado !== 'anulada' && r.estado_remito !== 'anulada'; }) : [];
+  var dotCls = !tiene ? 'pendiente' : activos.length === rows.length ? 'completado' : 'parcial';
+  var badgeCls = !tiene ? 'badge-pendiente' : 'badge-completado';
+  var badgeText = !tiene ? 'Sin datos' : activos.length + ' registro' + (activos.length !== 1 ? 's' : '');
+
+  var html = '<div class="trz-etapa">' +
+    '<div class="trz-etapa-dot '+dotCls+'"><i data-lucide="'+icon+'"></i></div>' +
+    '<div class="trz-card">' +
+      '<div class="trz-card-header"><h3>'+nombre+'</h3><span class="badge '+badgeCls+'">'+badgeText+'</span></div>';
+
+  if (!tiene) {
+    html += '<div class="trz-card-body vacio">Sin datos en esta etapa</div>';
+  } else {
+    html += '<div class="trz-card-body">' + renderFn(rows) + '</div>';
+  }
+  html += '</div></div>';
+  return html;
+}
+
+function tabla(headers, rows) {
+  var h = '<table class="trz-tabla"><thead><tr>' + headers.map(function(th){ return '<th>'+th+'</th>'; }).join('') + '</tr></thead><tbody>';
+  rows.forEach(function(r) {
+    var cls = '', cells = r;
+    if (r.cls !== undefined) { cls = r.cls; cells = r.cells; }
+    h += '<tr'+cls+'>' + cells.map(function(td){ return '<td>'+td+'</td>'; }).join('') + '</tr>';
+  });
+  h += '</tbody></table>';
+  return h;
+}
+
+function estadoBadge(estado) {
+  if (!estado) return '—';
+  var cls = estado === 'anulada' ? 'badge-negativo' : estado === 'activa' || estado === 'emitido' || estado === 'cobrada' ? 'badge-positivo' : 'badge-deposito';
+  return '<span class="badge '+cls+'" style="font-size:10px;padding:1px 6px;">'+esc(estado)+'</span>';
+}
+
+function tipoBadge(tipo) {
+  if (!tipo) return '—';
+  var cls = tipo === 'ingreso' ? 'badge-positivo' : 'badge-negativo';
+  return '<span class="badge '+cls+'" style="font-size:10px;padding:1px 6px;">'+esc(tipo)+'</span>';
+}
+</script>
+</body>
+</html>

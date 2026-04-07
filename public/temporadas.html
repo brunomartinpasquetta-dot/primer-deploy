@@ -7,6 +7,7 @@
   <title>Temporadas — Cosecha</title>
   <link rel="icon" href="img/logo.png">
   <script src="js/utils.js"></script>
+  <script src="js/cosecha-dialogs.js"></script>
   <link rel="stylesheet" href="cosecha.css">
   <style>
 h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
@@ -52,9 +53,9 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
       <div class="nav-section">Campo</div>
       <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
       <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
       <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
       <a href="trabajos-campo.html" class="nav-item"><span class="nav-icon"><i data-lucide="hammer"></i></span> Trabajos de Campo</a>
-      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
       <div class="nav-section">Sistema</div>
       <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
       <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
@@ -203,15 +204,15 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
       });
     }
 
-    function guardar(){
+    async function guardar(){
       var nombre=document.getElementById('nombre').value.trim();
-      if(!nombre){ alert('Ingresá el nombre de la campaña'); return; }
+      if(!nombre){ await showAlert('Ingresá el nombre de la campaña', 'warning'); return; }
       // Avisar si hay campaña activa que se desactivará
       var activa = document.querySelector('#tbody .badge-activa');
       if (activa) {
         var rowText = activa.closest('tr').querySelector('td:first-child strong');
         var nombreActiva = rowText ? rowText.textContent : 'la actual';
-        if (!confirm('Se desactivará automáticamente: "' + nombreActiva + '".\n\n¿Crear igualmente la nueva campaña?')) return;
+        if (!await showConfirm('Se desactivará automáticamente: "' + nombreActiva + '".\n\n¿Crear igualmente la nueva campaña?')) return;
       }
       var btn=document.getElementById('btn-guardar');
       btn.disabled=true; btn.textContent='Guardando...';
@@ -239,7 +240,7 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
       }).catch(function(){ mostrarMensaje('mensaje','error','Error de conexión'); btn.disabled=false; btn.textContent='Crear campaña'; });
     }
 
-    function cambiarEstado(id, activa){
+    async function cambiarEstado(id, activa){
       if (activa === 1) {
         // Buscar nombre de la campaña que se va a activar
         var row = document.querySelector('button[onclick="cambiarEstado('+id+',1)"]').closest('tr');
@@ -249,7 +250,7 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
         var nombreActiva = activaEl ? activaEl.closest('tr').querySelector('td:first-child strong').textContent : null;
         var msg = '¿Activar "' + nombre + '"?';
         if (nombreActiva) msg += '\nLa campaña "' + nombreActiva + '" se desactivará automáticamente.';
-        if (!confirm(msg)) return;
+        if (!await showConfirm(msg)) return;
       }
       fetch('/api/temporadas/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({activa:activa})})
       .then(function(r){return r.json();}).then(function(data){ if(data.ok) cargar(); });

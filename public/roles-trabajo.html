@@ -7,6 +7,7 @@
   <title>Roles de Trabajo — Cosecha</title>
   <link rel="icon" href="img/logo.png">
   <script src="js/utils.js"></script>
+  <script src="js/cosecha-dialogs.js"></script>
   <link rel="stylesheet" href="cosecha.css">
   <style>
     .rol-badge {
@@ -60,9 +61,9 @@
       <div class="nav-section">Campo</div>
       <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
       <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
       <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
       <a href="trabajos-campo.html" class="nav-item"><span class="nav-icon"><i data-lucide="hammer"></i></span> Trabajos de Campo</a>
-      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
       <div class="nav-section">Sistema</div>
       <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
       <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
@@ -230,21 +231,21 @@
       body: JSON.stringify({ personal_id: personal_id, rol: rol })
     }).then(function(r) { return r.json(); }).then(function(data) {
       if (data.ok) { cargar(); }
-      else { alert(data.error || 'Error al asignar rol'); }
+      else { showAlert(data.error || 'Error al asignar rol', 'error'); }
     });
   }
 
-  function quitarRol(personal_id, rol) {
+  async function quitarRol(personal_id, rol) {
     var p = _personal.find(function(x) { return x.id === personal_id; });
     var nombre = p ? p.apellido + ', ' + p.nombre : 'este empleado';
-    if (!confirm('¿Quitar rol "' + rol + '" a ' + nombre + '?')) return;
+    if (!await showConfirm('¿Quitar rol "' + rol + '" a ' + nombre + '?')) return;
     fetch('/api/roles-trabajo/quitar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ personal_id: personal_id, rol: rol })
     }).then(function(r) { return r.json(); }).then(function(data) {
       if (data.ok) { cargar(); }
-      else { alert(data.error || 'Error al quitar rol'); }
+      else { showAlert(data.error || 'Error al quitar rol', 'error'); }
     });
   }
 

@@ -7,6 +7,7 @@
   <title>Stock Insumos — Cosecha</title>
   <link rel="icon" href="img/logo.png">
   <script src="js/utils.js"></script>
+  <script src="js/cosecha-dialogs.js"></script>
   <link rel="stylesheet" href="cosecha.css">
   <style>
     /* ── KPI Cards ── */
@@ -237,9 +238,9 @@
       <div class="nav-section">Campo</div>
       <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
       <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
       <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
       <a href="trabajos-campo.html" class="nav-item"><span class="nav-icon"><i data-lucide="hammer"></i></span> Trabajos de Campo</a>
-      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
       <div class="nav-section">Sistema</div>
       <a href="menu-stock.html" class="nav-item active"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
       <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
@@ -795,7 +796,7 @@
   /* ── Exportar grilla stock actual (datos visibles filtrados) ── */
   function exportarCSV() {
     var datos = _stockDataVisible;
-    if (!datos.length) { alert('Sin datos visibles para exportar.'); return; }
+    if (!datos.length) { showAlert('Sin datos visibles para exportar.', 'info'); return; }
     var cabecera = ['Producto','Categoría','Proveedor','Depósito','Cantidad Disponible','Unidad'];
     var filas = [cabecera].concat(datos.map(function(p) {
       return [
@@ -813,7 +814,7 @@
   /* ── Exportar historial (datos cargados en historial) ── */
   function exportarCSVHistorial() {
     var datos = _historialInsumosData;
-    if (!datos.length) { alert('Sin datos en el historial para exportar.'); return; }
+    if (!datos.length) { showAlert('Sin datos en el historial para exportar.', 'info'); return; }
     var cabecera = ['#','Fecha','Producto','Movimiento','Cantidad','Aplica','Parcela','Depósito','Usuario'];
     var filas = [cabecera].concat(datos.map(function(m) {
       var esIngreso = m.tipo === 'compra';
@@ -1111,7 +1112,7 @@
     } else if (m.tipo === 'aplicacion' && m.aplicacion_id) {
       location.href = 'aplicaciones.html?ver=' + m.aplicacion_id;
     } else {
-      alert((m.producto || '') + ' — ' + (m.observacion || 'Sin observación'));
+      showAlert((m.producto || '') + ' — ' + (m.observacion || 'Sin observación'), 'info');
     }
   }
   function editarMovimiento(id) {

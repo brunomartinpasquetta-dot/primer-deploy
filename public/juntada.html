@@ -8,6 +8,7 @@
   <link rel="icon" href="img/logo.png">
   <script src="js/utils.js"></script>
   <script src="js/movimientos-grid.js"></script>
+  <script src="js/cosecha-dialogs.js"></script>
   <link rel="stylesheet" href="cosecha.css">
   <script src="js/auth-check.js"></script>
   <style>
@@ -131,9 +132,9 @@
       <div class="nav-section">Campo</div>
       <a href="juntada.html" class="nav-item active"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
       <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
       <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
       <a href="trabajos-campo.html" class="nav-item"><span class="nav-icon"><i data-lucide="hammer"></i></span> Trabajos de Campo</a>
-      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
       <div class="nav-section">Sistema</div>
       <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
       <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
@@ -458,15 +459,15 @@
           cargarLotesActivos();
           // Seleccionar el nuevo lote automáticamente
           setTimeout(function() { seleccionarLote(data.id); }, 300);
-        } else { alert(data.error || 'Error al crear lote'); }
-      }).catch(function() { alert('Error de conexión'); });
+        } else { showAlert(data.error || 'Error al crear lote', 'error'); }
+      }).catch(function() { showAlert('Error de conexión', 'error'); });
   }
 
   // ══ SELECCIONAR LOTE ══
   function seleccionarLote(loteId) {
     fetch('/api/juntada/lotes').then(function(r) { return r.json(); }).then(function(data) {
       var lote = data.find(function(l) { return l.id === loteId; });
-      if (!lote) { alert('Lote no encontrado'); return; }
+      if (!lote) { showAlert('Lote no encontrado', 'error'); return; }
       loteSeleccionado = lote;
 
       document.getElementById('sec-cosechadores').style.display = '';
@@ -642,7 +643,7 @@
     var sel = document.getElementById('sel-nuevo-juntador');
     var jid = parseInt(sel.value);
     if (!jid) return;
-    if (_juntAgrupados[jid]) { alert('Este cosechador ya está en el lote'); sel.value = ''; return; }
+    if (_juntAgrupados[jid]) { showAlert('Este cosechador ya está en el lote', 'warning'); sel.value = ''; return; }
     if (!loteSeleccionado) { sel.value = ''; return; }
     var nombre = sel.options[sel.selectedIndex].text;
     sel.value = '';
@@ -653,8 +654,8 @@
       if (data.ok) {
         _juntAgrupados[jid] = { id: jid, nombre: nombre, registros: [], totalKg: 0 };
         renderJuntadores();
-      } else { alert(data.error || 'Error'); }
-    }).catch(function() { alert('Error de conexión'); });
+      } else { showAlert(data.error || 'Error', 'error'); }
+    }).catch(function() { showAlert('Error de conexión', 'error'); });
   }
 
   // ══ VERIFICAR CARENCIA SENASA ══
@@ -685,7 +686,7 @@
   }
 
   // ══ REGISTRAR JUNTADA INLINE ══
-  function registrarJuntadaInline(jid) {
+  async function registrarJuntadaInline(jid) {
     if (!loteSeleccionado) return;
     var parcela_id = document.getElementById('juntada-parcela-' + jid).value;
     var kilosInput = document.getElementById('juntada-kg-' + jid);
@@ -695,7 +696,7 @@
 
     var carenciaActiva = _carenciaCache[jid];
     if (carenciaActiva) {
-      var confirmar = confirm('CARENCIA ACTIVA: ' + carenciaActiva.producto + ' — quedan ' + carenciaActiva.dias_restantes + ' dias.\n\nRegistrar de todas formas?');
+      var confirmar = await showConfirm('CARENCIA ACTIVA: ' + carenciaActiva.producto + ' — quedan ' + carenciaActiva.dias_restantes + ' dias.\n\nRegistrar de todas formas?');
       if (!confirmar) return;
     }
 
@@ -748,10 +749,10 @@
   }
 
   // ══ ANULAR JUNTADA ══
-  function anularJuntadaLote(id) {
-    var motivo = prompt('Motivo de anulación:');
+  async function anularJuntadaLote(id) {
+    var motivo = await showPrompt('Motivo de anulación:', 'Ingresá el motivo', 'warning');
     if (!motivo) return;
-    if (!confirm('¿Anular juntada #' + id + '?')) return;
+    if (!await showConfirm('¿Anular juntada #' + id + '?')) return;
     fetch('/api/juntada/lote-registro/' + id + '/anular', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ motivo: motivo })
@@ -761,9 +762,9 @@
     }).catch(function() { mostrarMensaje('mensaje', 'error', 'Error de conexión'); });
   }
 
-  function quitarCosechero(juntadorId, nombre) {
+  async function quitarCosechero(juntadorId, nombre) {
     if (!loteSeleccionado) return;
-    if (!confirm('¿Quitar a ' + nombre + ' de este lote?')) return;
+    if (!await showConfirm('¿Quitar a ' + nombre + ' de este lote?')) return;
     fetch('/api/juntada/lote/' + loteSeleccionado.id + '/cosechero/' + juntadorId, {
       method: 'DELETE'
     }).then(function(r) { return r.json(); }).then(function(data) {
@@ -779,12 +780,12 @@
     document.getElementById('cerrar-lote-bar').style.display = kgJunt > 0 ? '' : 'none';
   }
 
-  function cerrarYEnviar() {
+  async function cerrarYEnviar() {
     if (!loteSeleccionado) return;
     var deposito_id = parseInt(document.getElementById('sel-galpon').value);
-    if (!deposito_id) { alert('Seleccioná un galpón'); return; }
+    if (!deposito_id) { await showAlert('Seleccioná un galpón', 'warning'); return; }
     var kgLote = parseFloat(loteSeleccionado.kg_juntadas || 0);
-    if (kgLote <= 0) { alert('El lote no tiene juntadas registradas'); return; }
+    if (kgLote <= 0) { await showAlert('El lote no tiene juntadas registradas', 'warning'); return; }
 
     var resumen = Object.keys(_juntAgrupados).map(function(jid) {
       var j = _juntAgrupados[jid];
@@ -792,7 +793,7 @@
       return j.nombre + ': ' + fmt(j.totalKg) + ' kg (' + cant + ' juntadas)';
     }).join('\n');
 
-    if (!confirm('¿Cerrar lote ' + loteSeleccionado.codigo_interno + ' y enviar a galpón?\n\n' + resumen + '\n\nTotal: ' + fmt(kgLote) + ' kg')) return;
+    if (!await showConfirm('¿Cerrar lote ' + loteSeleccionado.codigo_interno + ' y enviar a galpón?\n\n' + resumen + '\n\nTotal: ' + fmt(kgLote) + ' kg')) return;
 
     fetch('/api/juntada/lote/' + loteSeleccionado.id + '/cerrar', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -905,33 +906,33 @@
     lucide.createIcons();
   }
 
-  function editarDesdeHistorial(id, kilosActuales) {
-    var newKilos = prompt('Nuevo peso en kg (actual: ' + fmt(kilosActuales) + ' kg):');
+  async function editarDesdeHistorial(id, kilosActuales) {
+    var newKilos = await showPrompt('Nuevo peso en kg (actual: ' + fmt(kilosActuales) + ' kg):', 'Kilos');
     if (newKilos === null) return;
     newKilos = parseFloat(newKilos);
-    if (!newKilos || newKilos <= 0) { alert('Kilos debe ser mayor a 0'); return; }
-    var motivo = prompt('Motivo de la edición:');
-    if (!motivo) { alert('El motivo es obligatorio'); return; }
+    if (!newKilos || newKilos <= 0) { await showAlert('Kilos debe ser mayor a 0', 'warning'); return; }
+    var motivo = await showPrompt('Motivo de la edición:', 'Ingresá el motivo');
+    if (!motivo) { await showAlert('El motivo es obligatorio', 'warning'); return; }
     fetch('/api/juntada/lote-registro/' + id, {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ kilos: newKilos, motivo: motivo })
     }).then(function(r) { return r.json(); }).then(function(data) {
       if (data.ok) { cargarHistorialCompleto(); if (loteSeleccionado) refreshLote(); }
-      else { alert(data.error || 'Error'); }
-    }).catch(function() { alert('Error de conexión'); });
+      else { showAlert(data.error || 'Error', 'error'); }
+    }).catch(function() { showAlert('Error de conexión', 'error'); });
   }
 
-  function anularDesdeHistorial(id) {
-    var motivo = prompt('Motivo de anulación:');
+  async function anularDesdeHistorial(id) {
+    var motivo = await showPrompt('Motivo de anulación:', 'Ingresá el motivo', 'warning');
     if (!motivo) return;
-    if (!confirm('¿Anular juntada #' + id + '?')) return;
+    if (!await showConfirm('¿Anular juntada #' + id + '?')) return;
     fetch('/api/juntada/lote-registro/' + id + '/anular', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ motivo: motivo })
     }).then(function(r) { return r.json(); }).then(function(data) {
       if (data.ok) { cargarHistorialCompleto(); if (loteSeleccionado) refreshLote(); }
-      else { alert(data.error || 'Error'); }
-    }).catch(function() { alert('Error de conexión'); });
+      else { showAlert(data.error || 'Error', 'error'); }
+    }).catch(function() { showAlert('Error de conexión', 'error'); });
   }
 
   // ══ TOTALES POR COSECHERO ══

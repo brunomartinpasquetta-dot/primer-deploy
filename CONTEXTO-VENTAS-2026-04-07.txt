@@ -1,0 +1,206 @@
+================================================================================
+CONTEXTO COMPLETO — MODULO VENTAS — 2026-04-07
+================================================================================
+
+ARCHIVOS DEL MODULO:
+  Frontend:
+    - public/ventas.html (~1028 lineas) — Interfaz principal de ventas
+    - public/remitos.html (~364 lineas) — Gestion de remitos
+    - public/stock-mercaderia.html (~1307 lineas) — Stock de mercaderia
+    - public/depositos.html (~699 lineas) — Gestion de depositos
+    - public/cuentas-clientes.html (~486 lineas) — Cuentas corrientes clientes
+  Backend:
+    - server/routes/remitos.js (~132 lineas) — API remitos
+    - server/routes/stock-mercaderia.js (~586 lineas) — API stock mercaderia
+    - server/routes/depositos.js (~780 lineas) — API depositos + endpoint venta principal
+    - server/routes/cuentas-clientes.js (~168 lineas) — API cuentas corrientes
+
+================================================================================
+1. FLUJO DE VENTA
+================================================================================
+
+1. Frontend (ventas.html) selecciona:
+   - Cliente (opcional, para CC)
+   - Temporada (obligatorio)
+   - Forma de pago (obligatorio)
+   - Items: categoria -> subcategoria -> kg -> precio/kg
+
+2. Backend: POST /api/depositos/egreso
+   - Validacion: stock suficiente
+   - Asignacion FIFO: resuelve sub-lotes automaticamente
+   - Transaccion SQL:
+     - INSERT Remitos (genera numero automatico)
+     - INSERT MovimientosDeposito (para cada sub-lote)
+     - INSERT RemitoItems
+     - INSERT StockMercaderia
+     - UPDATE LotesMercaderia (etapa: vendido_parcial/vendido)
+     - IF forma_pago = CC:
+         INSERT CuentaCorrienteClientes (debito)
+       ELSE:
+         INSERT Caja (ingreso)
+   - Response: OK + remito_id + numero_remito
+
+3. Visualizacion en:
+   - remitos.html: lista de remitos, cambio de estado
+   - cuentas-clientes.html: saldo del cliente
+   - stock-mercaderia.html: historial y auditoria
+
+================================================================================
+2. ENDPOINTS BACKEND
+================================================================================
+
+--- remitos.js (132 lineas) ---
+GET  /api/remitos/siguiente-numero     — Proximo numero remito (R-XXXX)
+GET  /api/remitos                      — Lista remitos (filtros: temporada, estado, cliente, fechas)
+GET  /api/remitos/:id                  — Detalle remito con items
+PATCH /api/remitos/:id/estado          — Actualizar estado (cobrado/pendiente_cc/anulado)
+
+--- stock-mercaderia.js (586 lineas) ---
+GET  /api/stock-mercaderia             — Resumen stock por parcela/destino
+POST /api/stock-mercaderia/ingreso     — DEPRECADO (usar /api/depositos/ingreso)
+POST /api/stock-mercaderia/egreso      — Registra venta (StockMercaderia + CC/Caja)
+GET  /api/stock-mercaderia/actual      — Stock actual por lote/variedad/deposito
+GET  /api/stock-mercaderia/kpis        — KPIs de stock
+GET  /api/stock-mercaderia/historial   — Historial de movimientos
+GET  /api/stock-mercaderia/etapas      — Estados/etapas de lotes
+GET  /api/stock-mercaderia/auditoria   — Auditoria de transacciones
+POST /api/stock-mercaderia/historial/:id/anular — Anular movimiento
+
+--- depositos.js (780 lineas) ---
+GET  /api/depositos/resumen            — Resumen kilos por temporada
+GET  /api/depositos                    — Lista depositos con stock actual
+POST /api/depositos                    — Crear deposito
+PUT  /api/depositos/:id                — Editar deposito
+GET  /api/depositos/:id/stock          — Stock de un deposito
+GET  /api/depositos/:id/movimientos    — Historial movimientos deposito
+POST /api/depositos/ingreso            — Ingreso a deposito (transaccion)
+GET  /api/depositos/stock-vendible-resumen — Stock por categoria con kg vendidos
+GET  /api/depositos/kg-en-proceso      — Kilos en etapas intermedias
+GET  /api/depositos/stock-vendible     — Sub-lotes embalados disponibles
+GET  /api/depositos/stock-disponible   — Stock disponible por deposito/parcela
+POST /api/depositos/egreso             — **VENTA PRINCIPAL** (FIFO, remito, CC/Caja)
+POST /api/depositos/descarte           — Descarte de mercaderia
+POST /api/depositos/devolucion-embalaje — Devolucion embalaje retornable
+GET  /api/depositos/embalaje/:movimiento_id — Detalle embalaje de venta
+GET  /api/depositos/cajones-circulacion — Cajones retornables sin devolver
+GET  /api/depositos/ocupacion          — Ocupacion de depositos
+
+--- cuentas-clientes.js (168 lineas) ---
+GET  /api/cuentas-clientes/resumen     — Resumen clientes (saldo, ventas, cobros)
+GET  /api/cuentas-clientes/formas-pago — Formas de pago disponibles
+GET  /api/cuentas-clientes/:cliente_id — Movimientos con saldo acumulado
+POST /api/cuentas-clientes/cobro       — Registrar cobro (credito CC + Caja)
+POST /api/cuentas-clientes/:id/anular  — Anular movimiento (contrapartida)
+
+================================================================================
+3. FRONTEND DETALLE
+================================================================================
+
+--- ventas.html (1028 lineas) ---
+  - Formulario dinamico: items con categoria -> subcategoria -> kg -> precio
+  - Calculo automatico de totales
+  - Consulta stock disponible por deposito
+  - Seleccion cliente y forma de pago
+  - Generacion automatica numero remito
+  - Historial con busqueda/filtrado
+  - Auditoria de ventas
+  - Anulacion y edicion
+
+--- remitos.html (364 lineas) ---
+  - Tabla con lista de remitos
+  - KPIs: cantidad, kg total, monto total, CC pendiente
+  - Filtros: estado, temporada, fechas
+  - Modal detalle con items
+  - Cambio de estado: cobrado / anular
+
+--- stock-mercaderia.html (1307 lineas) ---
+  - Resumen stock por temporada (ingresado, vendido, descartado, disponible)
+  - Vista por deposito con stock desglosado
+  - Historial movimientos
+  - Auditoria con usuario/fecha/cantidad/precio
+  - Cotizaciones de frutas
+  - KPIs cosecha/deposito/venta
+  - Busqueda y filtrado avanzado
+
+--- depositos.html (699 lineas) ---
+  - Grid de tarjetas con capacidad y ocupacion visual
+  - Stock actual, ingresado, vendido, descartado por deposito
+  - Modal ingreso de mercaderia
+  - Historial movimientos por deposito
+  - Resumen general kilos procesados
+
+--- cuentas-clientes.html (486 lineas) ---
+  - Lista clientes con saldo y badge vencimiento (>30 dias)
+  - KPIs: total a cobrar, cobrado, clientes con deuda
+  - Filtro solo con deuda
+  - Detalle: movimientos con saldo acumulado
+  - Modal registrar cobro
+  - Distincion debitos (ventas) / creditos (cobros)
+
+================================================================================
+4. TABLAS DE BASE DE DATOS
+================================================================================
+
+Remitos: id, numero_remito, cliente_id, temporada_id, forma_pago_id,
+  fecha, estado, observacion, usuario_id
+RemitoItems: id, remito_id, movimiento_id, sub_lote_id, kilos,
+  precio_kilo, subtotal
+MovimientosDeposito: id, deposito_id, temporada_id, parcela_id, tipo,
+  kilos, fecha, observacion, remito_id, forma_pago_id, cliente_id,
+  lote_id, sub_lote_id, precio_kilo, usuario_id
+StockMercaderia: id, temporada_id, parcela_id, tipo, kilos, destino,
+  fecha, observacion, juntada_id, juntador_id, usuario_id,
+  precio_kilo, lote_id, cliente_id, forma_pago_id
+LotesMercaderia: id, codigo_interno, kilos, estado, etapa,
+  fecha_inicio, fecha_fin, deposito_id, deposito_actual_id,
+  deposito_camara_id, parcela_id, temporada_id, categoria_id,
+  categoria_clasif_id, sub_categoria_id, lote_padre_id, usuario_id,
+  kilos_en_camara, merma_despalillado
+CuentaCorrienteClientes: id, cliente_id, tipo(debito/credito), monto,
+  fecha, observacion, stock_mercaderia_id, forma_pago_id,
+  cheque_id, temporada_id
+Caja: id, tipo(ingreso/egreso), concepto, monto, fecha,
+  usuario_nombre, medio_pago, temporada_id, cheque_id, forma_pago_id
+Clientes: id, nombre, contacto, telefono, email, direccion, activo
+FormasPago: id, nombre, es_cuenta_corriente, activo
+
+================================================================================
+5. TIPOS DE MOVIMIENTO EN StockMercaderia
+================================================================================
+
+tipo = 'ingreso'              — Fruta que entra (cosecha -> deposito)
+tipo = 'egreso_venta'         — Venta a cliente
+tipo = 'egreso_despalillado'  — Sale para despalillar
+tipo = 'egreso_descarte'      — Descarte
+tipo = 'ingreso_anulacion'    — Reversa un egreso (anulacion)
+tipo = 'egreso_anulacion'     — Reversa un ingreso (anulacion)
+
+================================================================================
+6. CARACTERISTICAS ESPECIALES
+================================================================================
+
+- Asignacion automatica FIFO: sub-lotes asignados por orden de entrada
+- Transacciones atomicas: toda venta es transaccion SQL completa
+- Saldo acumulado CC: window function SQL (SUM OVER ORDER BY)
+- Deteccion CC automatica: verifica forma_pago.es_cuenta_corriente
+- Historial paralelo: sincronizacion StockMercaderia + MovimientosDeposito
+- Auditoria completa: usuario, fecha, movimientos, anulacion
+- Embalaje retornable: cajones con saldo pendiente de devolucion
+- Cotizaciones integradas en stock-mercaderia.html
+
+================================================================================
+7. CORRECCION APLICADA (2026-04-07)
+================================================================================
+
+Bug en dashboard.js y balance.js: queries sobre StockMercaderia no
+contabilizaban anulaciones correctamente.
+
+Fix aplicado:
+- ingresados = SUM(ingreso) - SUM(egreso_anulacion)
+- vendidos = SUM(egreso% excl. egreso_anulacion) - SUM(ingreso_anulacion)
+- balance.js: todas las queries de ventas excluyen tipo='egreso_anulacion'
+- balance.js: SUM(kilos) de Juntada filtra estado != 'anulada'
+
+================================================================================
+FIN DEL CONTEXTO
+================================================================================

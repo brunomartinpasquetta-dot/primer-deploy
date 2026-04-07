@@ -7,6 +7,7 @@
   <title>Personal — Cosecha</title>
   <link rel="icon" href="img/logo.png">
   <script src="js/utils.js"></script>
+  <script src="js/cosecha-dialogs.js"></script>
   <link rel="stylesheet" href="cosecha.css">
   <style>
     .two-col { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
@@ -45,9 +46,9 @@
       <div class="nav-section">Campo</div>
       <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
       <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
       <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
       <a href="trabajos-campo.html" class="nav-item"><span class="nav-icon"><i data-lucide="hammer"></i></span> Trabajos de Campo</a>
-      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
       <div class="nav-section">Sistema</div>
       <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
       <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
@@ -355,16 +356,16 @@
   }
 
   // ── Dar de baja ──────────────────────────────────────────────────
-  function darBaja(evt, id) {
+  async function darBaja(evt, id) {
     evt.stopPropagation();
-    if (!confirm('¿Confirmar baja del empleado? Esta acción es una baja lógica (el registro se conserva como inactivo).')) return;
+    if (!await showConfirm('¿Confirmar baja del empleado? Esta acción es una baja lógica (el registro se conserva como inactivo).')) return;
     fetch('/api/personal/' + id, { method: 'DELETE' })
       .then(function(r) { return r.json(); })
       .then(function(data) {
         if (data.ok) cargar();
-        else alert('Error: ' + (data.error || 'No se pudo dar de baja'));
+        else showAlert('Error: ' + (data.error || 'No se pudo dar de baja'), 'error');
       })
-      .catch(function() { alert('Error de conexión'); });
+      .catch(function() { showAlert('Error de conexión', 'error'); });
   }
 
   // ── Modal detalle ────────────────────────────────────────────────
@@ -411,7 +412,7 @@
         document.getElementById('modal-overlay').classList.add('open');
         lucide.createIcons();
       })
-      .catch(function() { alert('Error al cargar detalle'); });
+      .catch(function() { showAlert('Error al cargar detalle', 'error'); });
   }
 
   function campo(label, valor) {

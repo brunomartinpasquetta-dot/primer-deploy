@@ -8,6 +8,7 @@
   <link rel="icon" href="img/logo.png">
   <script src="js/auth-check.js"></script>
   <script src="js/utils.js"></script>
+  <script src="js/cosecha-dialogs.js"></script>
   <link rel="stylesheet" href="cosecha.css">
   <style>
     /* ── Badges rol ── */
@@ -61,9 +62,9 @@
       <div class="nav-section">Campo</div>
       <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
       <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
       <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
       <a href="trabajos-campo.html" class="nav-item"><span class="nav-icon"><i data-lucide="hammer"></i></span> Trabajos de Campo</a>
-      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
       <div class="nav-section">Sistema</div>
       <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
       <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
@@ -252,7 +253,7 @@
 
   // ── Desactivar usuario ──────────────────────────────────────────
   async function desactivar(id, nombre) {
-    if (!confirm('¿Desactivar a ' + nombre + '?')) return;
+    if (!await showConfirm('¿Desactivar a ' + nombre + '?')) return;
     var res  = await fetch('/api/usuarios/' + id, { method: 'DELETE' });
     var data = await res.json();
     if (data.ok) cargar();
@@ -311,7 +312,7 @@
       // Revertir si falla
       checkbox.checked = !habilitado;
       if (lbl) lbl.classList.toggle('habilitado', !habilitado);
-      alert('Error: ' + res.error);
+      showAlert('Error: ' + res.error, 'error');
     } else {
       // Actualizar caché local
       if (_permisosData && _permisosData.data[rol]) {

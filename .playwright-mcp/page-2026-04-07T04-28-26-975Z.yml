@@ -1,0 +1,262 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - text: CO
+          - emphasis [ref=e8]: SE
+          - text: CHA
+        - generic [ref=e9]: SISTEMA DE CULTIVOS
+    - navigation [ref=e10]:
+      - link "Dashboard" [ref=e11] [cursor=pointer]:
+        - /url: index.html
+        - img [ref=e13]
+        - text: Dashboard
+      - generic [ref=e18]: Campo
+      - link "Cosecha" [ref=e19] [cursor=pointer]:
+        - /url: juntada.html
+        - img [ref=e21]
+        - text: Cosecha
+      - link "Despalillado" [ref=e30] [cursor=pointer]:
+        - /url: despalillado.html
+        - img [ref=e32]
+        - text: Despalillado
+      - link "Aplicaciones" [ref=e38] [cursor=pointer]:
+        - /url: aplicaciones.html
+        - img [ref=e40]
+        - text: Aplicaciones
+      - link "Trabajos de Campo" [ref=e43] [cursor=pointer]:
+        - /url: trabajos-campo.html
+        - img [ref=e45]
+        - text: Trabajos de Campo
+      - link "Clasif. + Embalaje" [ref=e49] [cursor=pointer]:
+        - /url: clasificacion-embalaje.html
+        - img [ref=e51]
+        - text: Clasif. + Embalaje
+      - generic [ref=e55]: Sistema
+      - link "Stock" [ref=e56] [cursor=pointer]:
+        - /url: menu-stock.html
+        - img [ref=e58]
+        - text: Stock
+      - link "Comercial" [ref=e62] [cursor=pointer]:
+        - /url: menu-comercial.html
+        - img [ref=e64]
+        - text: Comercial
+      - link "Administración" [ref=e69] [cursor=pointer]:
+        - /url: menu-admin.html
+        - img [ref=e71]
+        - text: Administración
+      - link "Mercado" [ref=e73] [cursor=pointer]:
+        - /url: mercado.html
+        - img [ref=e75]
+        - text: Mercado
+      - link "Configuración" [ref=e78] [cursor=pointer]:
+        - /url: menu-config.html
+        - img [ref=e80]
+        - text: Configuración
+    - generic [ref=e83]:
+      - generic [ref=e84]: Administrador · administrador
+      - button "Cerrar sesión" [ref=e85] [cursor=pointer]
+  - generic [ref=e86]:
+    - banner [ref=e87]:
+      - generic [ref=e88]:
+        - img [ref=e89]
+        - generic [ref=e90]:
+          - generic [ref=e91]:
+            - text: CO
+            - emphasis [ref=e92]: SE
+            - text: CHA
+          - generic [ref=e93]: SISTEMA DE CULTIVOS
+        - generic [ref=e94]: 🌱 Campaña FIX 2026 · Día 8
+      - generic [ref=e95]:
+        - generic [ref=e96] [cursor=pointer]:
+          - img [ref=e97]
+          - text: Administrador
+        - generic [ref=e100]: martes, 7 de abril
+    - generic [ref=e101]:
+      - generic [ref=e102]:
+        - generic [ref=e103]: Dashboard
+        - generic [ref=e104]:
+          - generic [ref=e105]: 7 de abril de 2026
+          - generic [ref=e106]: "Última actualización: 01:28 a. m."
+      - generic [ref=e108]:
+        - generic [ref=e109]:
+          - generic [ref=e111]: Campaña FIX 2026
+          - generic [ref=e112]: Frutilla
+          - generic [ref=e113]: Día 8
+          - link "Cambiar campaña →" [ref=e114] [cursor=pointer]:
+            - /url: temporadas.html
+        - generic [ref=e115]:
+          - generic [ref=e116]:
+            - generic [ref=e117]: Dólar Blue
+            - generic [ref=e118]: $1.400
+          - generic [ref=e120]:
+            - generic [ref=e121]: Oficial
+            - generic [ref=e122]: $1.415
+          - generic [ref=e124]:
+            - generic [ref=e125]: MEP
+            - generic [ref=e126]: $1.431
+          - generic [ref=e128]:
+            - generic [ref=e129]: CCL
+            - generic [ref=e130]: $1.483
+          - generic [ref=e132]:
+            - generic [ref=e133]: Frutilla hoy
+            - generic [ref=e134]: $---
+      - generic [ref=e135]:
+        - generic [ref=e136]:
+          - generic [ref=e137]: Hoy
+          - generic [ref=e138]:
+            - generic [ref=e139]:
+              - generic [ref=e140]:
+                - generic [ref=e141]: Cosecha hoy
+                - img [ref=e143]
+              - generic [ref=e152]: "0"
+              - generic [ref=e153]: 0 cosechadores activos
+            - generic [ref=e154]:
+              - generic [ref=e155]:
+                - generic [ref=e156]: En cámara
+                - img [ref=e158]
+              - generic [ref=e161]: 626,7
+              - generic [ref=e162]: kg disponibles
+            - generic [ref=e163]:
+              - generic [ref=e164]:
+                - generic [ref=e165]: Saldo caja
+                - img [ref=e167]
+              - generic [ref=e170]: "-$ 17.638.532"
+              - generic [ref=e171]: ≈ USD —
+          - generic [ref=e172]: Estado del stock
+          - generic [ref=e173]:
+            - generic [ref=e174]:
+              - generic [ref=e175]: Pendiente desp.
+              - generic [ref=e176]: 3 lot.
+              - generic [ref=e177]: 395 kg
+            - generic [ref=e178]:
+              - generic [ref=e179]: Fresco
+              - generic [ref=e180]: 7 lot.
+              - generic [ref=e181]: 618 kg
+            - generic [ref=e182]:
+              - generic [ref=e183]: Despalillado
+              - generic [ref=e184]: 2 lot.
+              - generic [ref=e185]: 173 kg
+          - generic [ref=e186]: Campaña · Campaña FIX 2026
+          - generic [ref=e187]:
+            - generic [ref=e188]:
+              - generic [ref=e189]:
+                - generic [ref=e190]: Total cosechado
+                - img [ref=e192]
+              - generic [ref=e201]: 1.754,1
+              - generic [ref=e202]: kg total temporada
+            - generic [ref=e203]:
+              - generic [ref=e204]:
+                - generic [ref=e205]: Vendido total
+                - img [ref=e207]
+              - generic [ref=e211]: "405"
+              - generic [ref=e212]: kg total temporada
+              - generic [ref=e216]: 23% del cosechado vendido
+        - generic [ref=e217]:
+          - generic [ref=e219]: Estado de depósitos
+          - generic [ref=e220]:
+            - generic [ref=e221]:
+              - generic [ref=e222]:
+                - generic [ref=e223]: CAMARA DE FRIO 1
+                - generic [ref=e224]: 0%
+              - generic [ref=e226]: 152,5 / 200.000 kg
+            - generic [ref=e227]:
+              - generic [ref=e228]:
+                - generic [ref=e229]: CAMARA DE FRIO 2
+                - generic [ref=e230]: 0%
+              - generic [ref=e232]: 0 / 160.000 kg
+            - generic [ref=e233]:
+              - generic [ref=e234]:
+                - generic [ref=e235]: GALPON FRESCO
+                - generic [ref=e236]: 0%
+              - generic [ref=e238]: 474,2 / 100.000 kg
+        - generic [ref=e239]:
+          - generic [ref=e240]:
+            - generic [ref=e241]: Alertas
+            - generic [ref=e242]:
+              - generic [ref=e243]: 10 activas
+              - generic "Alertas activas" [ref=e244] [cursor=pointer]:
+                - img [ref=e245]
+                - generic [ref=e248]: "10"
+          - generic [ref=e249]:
+            - generic [ref=e250]:
+              - generic [ref=e251]: Stock bajo de insumos (4)
+              - generic [ref=e255]:
+                - generic [ref=e256]: CAJONES PLASTICO 15KG
+                - generic [ref=e257]: u — -23 unidades
+              - generic [ref=e260]:
+                - generic [ref=e261]: GLIFOSATO 1.5L
+                - generic [ref=e262]: lt — 0 unidades
+              - generic [ref=e265]:
+                - generic [ref=e266]: GLIFOSATO 10L
+                - generic [ref=e267]: lt — 0 unidades
+              - generic [ref=e270]:
+                - generic [ref=e271]: MANGUERAS
+                - generic [ref=e272]: u — 0 unidades
+            - generic [ref=e273]:
+              - generic [ref=e274]: Carencia activa (3)
+              - generic [ref=e278]:
+                - generic [ref=e279]: PARCELA NORTE
+                - generic [ref=e280]: "GLIFOSATO 1.5L — libre: 2026-04-13"
+              - generic [ref=e283]:
+                - generic [ref=e284]: PARCELA NORTE
+                - generic [ref=e285]: "FERTILIZANTE X28 — libre: 2026-04-13"
+              - generic [ref=e288]:
+                - generic [ref=e289]: PARCELA NORTE
+                - generic [ref=e290]: "FUNGICIDA C-300 WTD — libre: 2026-04-20"
+            - generic [ref=e291]:
+              - generic [ref=e292]: Stock en tránsito (3)
+              - generic [ref=e296]:
+                - generic [ref=e297]: PARCELA NORTE — 100 kg
+                - generic [ref=e298]: CAMARA DE FRIO 1 · GONZALES, MARCELO
+              - generic [ref=e301]:
+                - generic [ref=e302]: PARCELA NORTE — 54,92 kg
+                - generic [ref=e303]: CAMARA DE FRIO 2 · GOMEZ, MARIA
+              - generic [ref=e306]:
+                - generic [ref=e307]: PARCELA NORTE — 240 kg
+                - generic [ref=e308]: CAMARA DE FRIO 2 · GONZALES, MARCELO
+      - generic [ref=e309]:
+        - generic [ref=e310]:
+          - generic [ref=e312]: Últimos registros de cosecha
+          - table [ref=e314]:
+            - rowgroup [ref=e315]:
+              - row "Hora Cosechador Parcela Kilos Destino" [ref=e316]:
+                - columnheader "Hora" [ref=e317]
+                - columnheader "Cosechador" [ref=e318]
+                - columnheader "Parcela" [ref=e319]
+                - columnheader "Kilos" [ref=e320]
+                - columnheader "Destino" [ref=e321]
+            - rowgroup [ref=e322]:
+              - row "Sin registros hoy" [ref=e323]:
+                - cell "Sin registros hoy" [ref=e324]
+        - generic [ref=e325]:
+          - generic [ref=e327]: Últimos registros de aplicaciones
+          - table [ref=e329]:
+            - rowgroup [ref=e330]:
+              - row "Fecha Producto Parcela Dosis Usuario" [ref=e331]:
+                - columnheader "Fecha" [ref=e332]
+                - columnheader "Producto" [ref=e333]
+                - columnheader "Parcela" [ref=e334]
+                - columnheader "Dosis" [ref=e335]
+                - columnheader "Usuario" [ref=e336]
+            - rowgroup [ref=e337]:
+              - row "2026-04-06 FERTILIZANTE X28 PARCELA NORTE — —" [ref=e338]:
+                - cell "2026-04-06" [ref=e339]
+                - cell "FERTILIZANTE X28" [ref=e340]
+                - cell "PARCELA NORTE" [ref=e341]
+                - cell "—" [ref=e342]
+                - cell "—" [ref=e343]
+              - row "2026-04-06 GLIFOSATO 1.5L PARCELA NORTE — —" [ref=e344]:
+                - cell "2026-04-06" [ref=e345]
+                - cell "GLIFOSATO 1.5L" [ref=e346]
+                - cell "PARCELA NORTE" [ref=e347]
+                - cell "—" [ref=e348]
+                - cell "—" [ref=e349]
+              - row "2026-04-06 FUNGICIDA C-300 WTD PARCELA NORTE — —" [ref=e350]:
+                - cell "2026-04-06" [ref=e351]
+                - cell "FUNGICIDA C-300 WTD" [ref=e352]
+                - cell "PARCELA NORTE" [ref=e353]
+                - cell "—" [ref=e354]
+                - cell "—" [ref=e355]

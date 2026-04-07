@@ -7,6 +7,7 @@
   <title>Despalillado — Campo</title>
   <link rel="icon" href="img/logo.png">
   <script src="js/utils.js"></script>
+  <script src="js/cosecha-dialogs.js"></script>
   <link rel="stylesheet" href="cosecha.css">
   <style>
     /* ── KPI cards ── */
@@ -163,9 +164,9 @@
       <div class="nav-section">Campo</div>
       <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
       <a href="despalillado.html" class="nav-item active"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
       <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
       <a href="trabajos-campo.html" class="nav-item"><span class="nav-icon"><i data-lucide="hammer"></i></span> Trabajos de Campo</a>
-      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
       <div class="nav-section">Sistema</div>
       <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
       <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
@@ -414,7 +415,7 @@
   // ══ INIT ══
   cargarDatosBase();
   cargarLotesPendientes();
-  cargarKpis();
+  cargarTemporadaActiva().then(function() { cargarKpis(); });
   cargarHistorialCompleto();
   cargarTotales();
 
@@ -495,7 +496,7 @@
   function seleccionarLote(loteId) {
     fetch('/api/despalillado/pendientes-lote').then(function(r) { return r.json(); }).then(function(data) {
       var lote = data.find(function(l) { return l.id === loteId; });
-      if (!lote) { alert('Lote no encontrado'); return; }
+      if (!lote) { showAlert('Lote no encontrado', 'error'); return; }
       loteSeleccionado = lote;
 
       document.getElementById('sec-despalilladores').style.display = '';
@@ -663,7 +664,7 @@
     var sel = document.getElementById('sel-nuevo-desp');
     var did = parseInt(sel.value);
     if (!did || !loteSeleccionado) return;
-    if (_despAgrupados[did]) { alert('Este despalillador ya está en el lote'); sel.value = ''; return; }
+    if (_despAgrupados[did]) { showAlert('Este despalillador ya está en el lote', 'warning'); sel.value = ''; return; }
     var nombre = sel.options[sel.selectedIndex].text;
     sel.value = '';
     fetch('/api/despalillado/lote/' + loteSeleccionado.id + '/despalillador', {
@@ -673,13 +674,13 @@
       if (data.ok) {
         _despAgrupados[did] = { id: did, nombre: nombre, registros: [], totalKg: 0 };
         renderDespalilladores();
-      } else { alert(data.error || 'Error al agregar'); }
-    }).catch(function() { alert('Error de conexión'); });
+      } else { showAlert(data.error || 'Error al agregar', 'error'); }
+    }).catch(function() { showAlert('Error de conexión', 'error'); });
   }
 
-  function quitarDespalillador(despId, nombre) {
+  async function quitarDespalillador(despId, nombre) {
     if (!loteSeleccionado) return;
-    if (!confirm('¿Quitar a ' + nombre + ' de este lote?')) return;
+    if (!await showConfirm('¿Quitar a ' + nombre + ' de este lote?')) return;
     fetch('/api/despalillado/lote/' + loteSeleccionado.id + '/despalillador/' + despId, {
       method: 'DELETE'
     }).then(function(r) { return r.json(); }).then(function(data) {
@@ -738,10 +739,10 @@
   }
 
   // ══ ANULAR ══
-  function anularDespalillado(id) {
-    var motivo = prompt('Motivo de anulación:');
+  async function anularDespalillado(id) {
+    var motivo = await showPrompt('Motivo de anulación:', 'Ingresá el motivo', 'warning');
     if (!motivo) return;
-    if (!confirm('¿Anular pesaje #' + id + '?')) return;
+    if (!await showConfirm('¿Anular pesaje #' + id + '?')) return;
     fetch('/api/despalillado/' + id + '/anular', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -767,10 +768,10 @@
     document.getElementById('camara-selector').classList.remove('open');
   }
 
-  function guardarEnCamara() {
+  async function guardarEnCamara() {
     if (!loteSeleccionado) return;
     var camaraId = parseInt(document.getElementById('sel-camara').value);
-    if (!camaraId) { alert('Seleccioná una cámara'); return; }
+    if (!camaraId) { await showAlert('Seleccioná una cámara', 'warning'); return; }
     fetch('/api/despalillado/' + loteSeleccionado.id + '/guardar-camara', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ deposito_camara_id: camaraId })
@@ -790,7 +791,7 @@
     }).catch(function() { mostrarMensaje('mensaje', 'error', 'Error de conexión'); });
   }
 
-  function finalizarLote() {
+  async function finalizarLote() {
     if (!loteSeleccionado) return;
     var kgOrig = parseFloat(loteSeleccionado.kilos) || 0;
     var kgDesp = parseFloat(loteSeleccionado.kg_despalillados) || 0;
@@ -800,7 +801,7 @@
       var d = _despAgrupados[did];
       return d.nombre + ': ' + fmt(d.totalKg) + ' kg (' + d.registros.length + ' pesajes)';
     }).join('\n');
-    if (!confirm('¿Finalizar despalillado del lote ' + loteSeleccionado.codigo_interno + '?\n\n' + resumen + '\n\nKg cosechados: ' + fmt(kgOrig) + '\nKg despalillados: ' + fmt(kgDesp) + '\nMerma: ' + fmt(merma) + ' kg (' + mermaPct + '%)')) return;
+    if (!await showConfirm('¿Finalizar despalillado del lote ' + loteSeleccionado.codigo_interno + '?\n\n' + resumen + '\n\nKg cosechados: ' + fmt(kgOrig) + '\nKg despalillados: ' + fmt(kgDesp) + '\nMerma: ' + fmt(merma) + ' kg (' + mermaPct + '%)')) return;
     fetch('/api/despalillado/' + loteSeleccionado.id + '/finalizar', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }
     }).then(function(r) { return r.json(); }).then(function(data) {
@@ -896,20 +897,20 @@
     lucide.createIcons();
   }
 
-  function editarDesdeHistorial(id, kilosActuales) {
-    var newKilos = prompt('Nuevo peso en kg (actual: ' + fmt(kilosActuales) + ' kg):');
+  async function editarDesdeHistorial(id, kilosActuales) {
+    var newKilos = await showPrompt('Nuevo peso en kg (actual: ' + fmt(kilosActuales) + ' kg):', 'Kilos');
     if (newKilos === null) return;
     newKilos = parseFloat(newKilos);
-    if (!newKilos || newKilos <= 0) { alert('Kilos debe ser mayor a 0'); return; }
-    var motivo = prompt('Motivo de la edición:');
-    if (!motivo) { alert('El motivo es obligatorio'); return; }
+    if (!newKilos || newKilos <= 0) { await showAlert('Kilos debe ser mayor a 0', 'warning'); return; }
+    var motivo = await showPrompt('Motivo de la edición:', 'Ingresá el motivo');
+    if (!motivo) { await showAlert('El motivo es obligatorio', 'warning'); return; }
     fetch('/api/despalillado/' + id, {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ kilos: newKilos, motivo: motivo })
     }).then(function(r) { return r.json(); }).then(function(data) {
       if (data.ok) { cargarHistorialCompleto(); if (loteSeleccionado) refreshLote(); cargarKpis(); }
-      else { alert(data.error || 'Error'); }
-    }).catch(function() { alert('Error de conexión'); });
+      else { showAlert(data.error || 'Error', 'error'); }
+    }).catch(function() { showAlert('Error de conexión', 'error'); });
   }
 
   // ══ TOTALES POR DESPALILLADOR ══

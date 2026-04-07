@@ -1,0 +1,113 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - text: CO
+          - emphasis [ref=e8]: SE
+          - text: CHA
+        - generic [ref=e9]: SISTEMA DE CULTIVOS
+    - navigation [ref=e10]:
+      - link "Dashboard" [ref=e11] [cursor=pointer]:
+        - /url: index.html
+        - img [ref=e13]
+        - text: Dashboard
+      - generic [ref=e18]: Campo
+      - link "Cosecha" [ref=e19] [cursor=pointer]:
+        - /url: juntada.html
+        - img [ref=e21]
+        - text: Cosecha
+      - link "Despalillado" [ref=e30] [cursor=pointer]:
+        - /url: despalillado.html
+        - img [ref=e32]
+        - text: Despalillado
+      - link "Aplicaciones" [ref=e38] [cursor=pointer]:
+        - /url: aplicaciones.html
+        - img [ref=e40]
+        - text: Aplicaciones
+      - link "Trabajos de Campo" [ref=e43] [cursor=pointer]:
+        - /url: trabajos-campo.html
+        - img [ref=e45]
+        - text: Trabajos de Campo
+      - link "Clasif. + Embalaje" [ref=e49] [cursor=pointer]:
+        - /url: clasificacion-embalaje.html
+        - img [ref=e51]
+        - text: Clasif. + Embalaje
+      - generic [ref=e55]: Sistema
+      - link "Stock" [ref=e56] [cursor=pointer]:
+        - /url: menu-stock.html
+        - img [ref=e58]
+        - text: Stock
+      - link "Comercial" [ref=e62] [cursor=pointer]:
+        - /url: menu-comercial.html
+        - img [ref=e64]
+        - text: Comercial
+      - link "Administración" [ref=e67] [cursor=pointer]:
+        - /url: menu-admin.html
+        - img [ref=e69]
+        - text: Administración
+      - link "Mercado" [ref=e71] [cursor=pointer]:
+        - /url: mercado.html
+        - img [ref=e73]
+        - text: Mercado
+      - link "Configuración Temporadas, lotes y configuración del sistema" [ref=e76] [cursor=pointer]:
+        - /url: menu-config.html
+        - img [ref=e78]
+        - text: Configuración Temporadas, lotes y configuración del sistema
+    - generic [ref=e81]:
+      - generic [ref=e82]: Administrador · administrador
+      - button "Cerrar sesión" [ref=e83] [cursor=pointer]
+  - generic [ref=e84]:
+    - banner [ref=e85]:
+      - generic [ref=e86]:
+        - img [ref=e87]
+        - generic [ref=e88]:
+          - generic [ref=e89]:
+            - text: CO
+            - emphasis [ref=e90]: SE
+            - text: CHA
+          - generic [ref=e91]: SISTEMA DE CULTIVOS
+        - generic [ref=e92]: 🌱 Campaña FIX 2026 · Día 8
+      - generic [ref=e93]:
+        - generic [ref=e94] [cursor=pointer]:
+          - img [ref=e95]
+          - text: Administrador
+        - generic [ref=e98]: martes, 7 de abril
+    - generic [ref=e99]:
+      - link "← Volver" [ref=e100] [cursor=pointer]:
+        - /url: "#"
+      - generic [ref=e101]:
+        - generic [ref=e102]: Configuración
+        - generic [ref=e103]: Estructura base del sistema
+      - generic [ref=e104]:
+        - link "Temporadas Gestión de temporadas" [ref=e105] [cursor=pointer]:
+          - /url: temporadas.html
+          - img [ref=e107]
+          - generic [ref=e109]: Temporadas
+          - generic [ref=e110]: Gestión de temporadas
+        - link "Parcelas Gestión de parcelas" [ref=e111] [cursor=pointer]:
+          - /url: parcelas.html
+          - img [ref=e113]
+          - generic [ref=e115]: Parcelas
+          - generic [ref=e116]: Gestión de parcelas
+        - link "Roles de Trabajo Cosechero · Despalillador · Aplicador" [ref=e117] [cursor=pointer]:
+          - /url: roles-trabajo.html
+          - img [ref=e119]
+          - generic [ref=e122]: Roles de Trabajo
+          - generic [ref=e123]: Cosechero · Despalillador · Aplicador
+        - link "Tarjetas QR Generar tarjetas" [ref=e124] [cursor=pointer]:
+          - /url: qr-generator.html
+          - img [ref=e126]
+          - generic [ref=e132]: Tarjetas QR
+          - generic [ref=e133]: Generar tarjetas
+        - link "Usuarios Accesos y roles" [ref=e134] [cursor=pointer]:
+          - /url: usuarios.html
+          - img [ref=e136]
+          - generic [ref=e139]: Usuarios
+          - generic [ref=e140]: Accesos y roles
+        - link "Mi Empresa Razón social, CUIT, RNE, RNPA" [ref=e141] [cursor=pointer]:
+          - /url: empresa.html
+          - img [ref=e143]
+          - generic [ref=e147]: Mi Empresa
+          - generic [ref=e148]: Razón social, CUIT, RNE, RNPA

@@ -7,6 +7,7 @@
   <title>Stock Mercadería — Cosecha</title>
   <link rel="icon" href="img/logo.png">
   <script src="js/utils.js"></script>
+  <script src="js/cosecha-dialogs.js"></script>
   <script src="js/auth-check.js"></script>
   <script src="js/cotizaciones.js"></script>
   <script src="js/movimientos-grid.js"></script>
@@ -232,9 +233,9 @@
       <div class="nav-section">Campo</div>
       <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
       <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
       <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
       <a href="trabajos-campo.html" class="nav-item"><span class="nav-icon"><i data-lucide="hammer"></i></span> Trabajos de Campo</a>
-      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
       <div class="nav-section">Sistema</div>
       <a href="menu-stock.html" class="nav-item active"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
       <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
@@ -431,7 +432,13 @@
           <button class="aplic-btn-export" onclick="imprimirHistorial()" title="Imprimir"><i data-lucide="printer"></i></button>
           <button class="fb-limpiar" onclick="limpiarFiltrosHistorial()">✕ Limpiar</button>
         </div>
-        <div class="card">
+        <!-- Toggle vista -->
+        <div style="display:flex;gap:4px;margin-bottom:8px;">
+          <button class="btn btn-sm" id="btn-vista-mov" onclick="cambiarVistaHist('movimientos')" style="padding:3px 10px;font-size:11px;background:var(--verde);color:#fff;border:1px solid var(--verde);border-radius:6px;">Movimientos</button>
+          <button class="btn btn-sm" id="btn-vista-lotes" onclick="cambiarVistaHist('lotes')" style="padding:3px 10px;font-size:11px;background:var(--superficie);border:1px solid var(--borde);border-radius:6px;">Por lotes</button>
+        </div>
+        <!-- Vista movimientos (actual) -->
+        <div id="vista-movimientos" class="card">
           <div class="table-wrap">
             <table>
               <thead>
@@ -453,6 +460,27 @@
                 <tr><td colspan="11" class="empty">Seleccioná filtros para ver movimientos</td></tr>
               </tbody>
               <tfoot id="tfoot-historial"></tfoot>
+            </table>
+          </div>
+        </div>
+        <!-- Vista por lotes -->
+        <div id="vista-lotes" class="card" style="display:none;">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Lote</th>
+                  <th>Categoría</th>
+                  <th>Presentación</th>
+                  <th style="text-align:right;">Envases</th>
+                  <th style="text-align:right;">Kg</th>
+                  <th>Depósito</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-hist-lotes">
+                <tr><td colspan="7" class="empty">Seleccioná filtros para ver</td></tr>
+              </tbody>
             </table>
           </div>
         </div>
@@ -843,7 +871,7 @@ function _fechaHoy() {
 /* ── Exportar historial (datos visibles en historial) ── */
 function exportarCSVHistorial() {
   var datos = _historialMercData;
-  if (!datos.length) { alert('Sin datos en el historial para exportar.'); return; }
+  if (!datos.length) { showAlert('Sin datos en el historial para exportar.', 'info'); return; }
   var cabecera = ['#','Cosechero','Fecha','Tipo','Parcela','Destino','Kg','Precio/kg','Total','Comprador','Usuario'];
   var filas = [cabecera].concat(datos.map(function(m) {
     return [
@@ -934,7 +962,7 @@ function cargarStockActual() {
 }
 
 function exportarStockActual() {
-  if (!_stockActualData.length) { alert('No hay datos para exportar'); return; }
+  if (!_stockActualData.length) { showAlert('No hay datos para exportar', 'info'); return; }
   var filas = _stockActualData.map(function(r){
     return [r.etapa||'', r.variedad||'', (r.categoria||'')+(r.sub_categoria?' '+r.sub_categoria:''),
             r.deposito||'', r.cantidad_lotes||1,
@@ -1299,6 +1327,61 @@ function cargarEstadoAlmacenesMerc() {
   });
 }
 cargarEstadoAlmacenesMerc();
+
+var _vistaHist = 'movimientos';
+
+function cambiarVistaHist(vista) {
+  _vistaHist = vista;
+  document.getElementById('vista-movimientos').style.display = vista === 'movimientos' ? '' : 'none';
+  document.getElementById('vista-lotes').style.display = vista === 'lotes' ? '' : 'none';
+  var btnMov = document.getElementById('btn-vista-mov');
+  var btnLot = document.getElementById('btn-vista-lotes');
+  btnMov.style.background = vista === 'movimientos' ? 'var(--verde)' : 'var(--superficie)';
+  btnMov.style.color = vista === 'movimientos' ? '#fff' : '';
+  btnMov.style.borderColor = vista === 'movimientos' ? 'var(--verde)' : 'var(--borde)';
+  btnLot.style.background = vista === 'lotes' ? 'var(--verde)' : 'var(--superficie)';
+  btnLot.style.color = vista === 'lotes' ? '#fff' : '';
+  btnLot.style.borderColor = vista === 'lotes' ? 'var(--verde)' : 'var(--borde)';
+  if (vista === 'lotes') cargarHistorialLotes();
+}
+
+function cargarHistorialLotes() {
+  var params = new URLSearchParams();
+  var temp = document.getElementById('hist-temporada').value;
+  var desde = document.getElementById('hist-desde').value;
+  var hasta = document.getElementById('hist-hasta').value;
+  if (temp) params.set('temporada_id', temp);
+  if (desde) params.set('desde', desde);
+  if (hasta) params.set('hasta', hasta);
+
+  var tbody = document.getElementById('tbody-hist-lotes');
+  tbody.innerHTML = '<tr><td colspan="7" class="empty">Cargando...</td></tr>';
+
+  fetchApi('/api/stock-mercaderia/historial-lotes?' + params.toString())
+    .then(function(data) {
+      if (!data.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="empty">Sin ingresos por lote</td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.map(function(r) {
+        var fecha = r.fecha ? new Date(r.fecha).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'}) : '—';
+        var cat = r.categoria || '—';
+        if (r.sub_categoria) cat += ' · ' + r.sub_categoria;
+        return '<tr>' +
+          '<td style="font-size:12px;white-space:nowrap;">' + fecha + '</td>' +
+          '<td style="font-weight:600;">' + (r.lote || '—') + '</td>' +
+          '<td>' + cat + '</td>' +
+          '<td>' + (r.presentacion || '—') + '</td>' +
+          '<td style="text-align:right;" class="mono">' + (r.envases || '—') + '</td>' +
+          '<td style="text-align:right;font-weight:700;color:#2d6a4f;" class="mono">' + fmt(r.kilos) + ' kg</td>' +
+          '<td>' + (r.deposito || '—') + '</td>' +
+        '</tr>';
+      }).join('');
+    })
+    .catch(function() {
+      tbody.innerHTML = '<tr><td colspan="7" class="empty">Error al cargar</td></tr>';
+    });
+}
 
 init();
 cargarTemporadaActiva();

@@ -7,6 +7,7 @@
   <title>Ventas — Cosecha</title>
   <link rel="icon" href="img/logo.png">
   <script src="js/utils.js"></script>
+  <script src="js/cosecha-dialogs.js"></script>
   <link rel="stylesheet" href="cosecha.css">
   <style>
     .empty { text-align:center; color:var(--texto-suave); padding:20px; }
@@ -85,9 +86,9 @@
       <div class="nav-section">Campo</div>
       <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
       <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
       <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
       <a href="trabajos-campo.html" class="nav-item"><span class="nav-icon"><i data-lucide="hammer"></i></span> Trabajos de Campo</a>
-      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
       <div class="nav-section">Sistema</div>
       <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
       <a href="menu-comercial.html" class="nav-item active"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
@@ -234,7 +235,7 @@
       <div class="card">
         <table>
           <thead>
-            <tr><th>Remito</th><th>Fecha</th><th>Lote</th><th>Categoría</th><th>Cliente</th><th>Kg</th><th>Precio/Kg</th><th>Total</th><th>Estado</th><th>Usuario</th><th></th></tr>
+            <tr><th>Remito</th><th>Fecha</th><th>Lote</th><th>Cliente</th><th>Kg</th><th>Precio/Kg</th><th>Total</th><th>Estado</th><th>Usuario</th><th></th></tr>
           </thead>
           <tbody id="tbody-historial">
             <tr><td colspan="11" class="empty">Cargando...</td></tr>
@@ -638,7 +639,7 @@
     var tbody = document.getElementById('tbody-historial');
     var tfoot = document.getElementById('tfoot-historial');
     if (!data.length) {
-      tbody.innerHTML = '<tr><td colspan="11" class="empty">Sin ventas registradas</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="10" class="empty">Sin ventas registradas</td></tr>';
       tfoot.innerHTML = ''; return;
     }
     var totalKg = 0, totalPesos = 0;
@@ -663,7 +664,6 @@
         '<td style="'+s+mono+'color:var(--verde);font-weight:600;">' + (v.numero_remito || '#' + (v.id || '-')) + '</td>' +
         '<td style="'+s+'white-space:nowrap;">' + formatFechaHora(v.fecha) + '</td>' +
         '<td style="'+s+mono+'font-size:10px;">' + loteCode + '</td>' +
-        '<td style="'+s+'">' + catLabel + '</td>' +
         '<td style="'+s+'">' + (v.comprador || '-') + '</td>' +
         '<td style="'+s+mono+'">' + kg.toLocaleString('es-AR', { minimumFractionDigits: 2 }) + ' kg</td>' +
         '<td style="'+s+mono+'">' + (precio > 0 ? '$' + precio.toLocaleString('es-AR', { minimumFractionDigits: 2 }) : '-') + '</td>' +
@@ -672,6 +672,8 @@
         '<td style="'+s+'color:var(--texto-suave);">' + (v.usuario || '-') + '</td>' +
         '<td style="'+s+'white-space:nowrap;">' +
           '<button style="background:none;border:none;cursor:pointer;color:var(--texto-suave);padding:2px 4px;" title="Ver detalles" onclick="verDetalleVenta('+idx+')"><i data-lucide="eye" style="width:15px;height:15px;"></i></button>' +
+          (v.remito_id ? '<button style="background:none;border:none;cursor:pointer;color:var(--verde);padding:2px 4px;" title="Ver remito" onclick="verRemito('+v.remito_id+')"><i data-lucide="file-text" style="width:13px;height:13px;"></i></button>' +
+            '<button style="background:none;border:none;cursor:pointer;color:var(--texto-suave);padding:2px 4px;" title="Imprimir remito" onclick="imprimirRemitoPDF('+v.remito_id+')"><i data-lucide="printer" style="width:13px;height:13px;"></i></button>' : '') +
           (esAnulada ? '' :
             '<button style="background:none;border:none;cursor:pointer;color:var(--texto-suave);padding:2px 4px;" title="Editar" onclick="abrirEditarVenta('+idx+')"><i data-lucide="pencil" style="width:13px;height:13px;"></i></button>' +
             '<button style="background:none;border:none;cursor:pointer;color:#c0392b;padding:2px 4px;" title="Anular venta" onclick="anularVenta('+idx+')"><i data-lucide="ban" style="width:13px;height:13px;"></i></button>') +
@@ -679,7 +681,7 @@
         '</tr>';
     }).join('');
     tfoot.innerHTML = '<tr style="background:var(--fondo-dark);font-weight:700;">' +
-      '<td colspan="5" style="padding:6px 8px;font-size:11px;">TOTALES</td>' +
+      '<td colspan="4" style="padding:6px 8px;font-size:11px;">TOTALES</td>' +
       '<td style="padding:6px 8px;'+mono+'font-size:11px;">' + totalKg.toLocaleString('es-AR', { minimumFractionDigits: 2 }) + ' kg</td>' +
       '<td></td>' +
       '<td style="padding:6px 8px;'+mono+'font-size:11px;">$' + totalPesos.toLocaleString('es-AR', { minimumFractionDigits: 2 }) + '</td>' +
@@ -839,21 +841,21 @@
     }).join('');
   }
 
-  function anularVenta(idx) {
+  async function anularVenta(idx) {
     var v = _historialVentas[idx];
     if (!v) return;
     var movId = v.movimiento_id || v.id;
-    var motivo = prompt('Motivo de anulación (obligatorio):');
+    var motivo = await showPrompt('Motivo de anulación (obligatorio):', 'Ingresá el motivo', 'warning');
     if (!motivo) return;
-    if (!confirm('¿Anular venta #' + movId + '? Se revertirán los movimientos financieros. Esta acción no se puede deshacer.')) return;
+    if (!await showConfirm('¿Anular venta #' + movId + '? Se revertirán los movimientos financieros. Esta acción no se puede deshacer.')) return;
     fetch('/api/stock-mercaderia/historial/' + movId + '/anular', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ motivo: motivo })
     }).then(function(r){ return r.json(); }).then(function(data){
       if (data.ok) { cargarHistorial(); }
-      else { alert('Error: ' + (data.error || 'No se pudo anular')); }
-    }).catch(function(){ alert('Error de conexión'); });
+      else { showAlert('Error: ' + (data.error || 'No se pudo anular'), 'error'); }
+    }).catch(function(){ showAlert('Error de conexión', 'error'); });
   }
 
   function abrirEditarVenta(idx) {
@@ -916,6 +918,96 @@
         else el.textContent = '$—';
       }).catch(function(){ el.textContent = '$—'; });
     }
+  }
+
+  /* ── Ver remito con detalle ── */
+  function verRemito(remitoId) {
+    fetch('/api/remitos/' + remitoId)
+      .then(function(r){ return r.json(); })
+      .then(function(rem) {
+        if (rem.error) { showAlert(rem.error, 'error'); return; }
+        var mono = "font-family:'JetBrains Mono',monospace;";
+        var fechaStr = rem.fecha ? new Date(rem.fecha).toLocaleDateString('es-AR') : '-';
+        var estadoMap = { cobrado:'Cobrado', pendiente_cc:'CC Pendiente', anulado:'Anulado' };
+        var estadoLabel = estadoMap[rem.estado] || rem.estado || '-';
+        var estadoColor = rem.estado === 'anulado' ? '#c0392b' : rem.estado === 'pendiente_cc' ? '#856404' : '#2d6a4f';
+
+        // Cabecera
+        var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;font-size:13px;margin-bottom:16px;">';
+        html += '<div><strong>N°:</strong> <span style="'+mono+'color:var(--verde);font-weight:700;">'+( rem.numero || '-')+'</span></div>';
+        html += '<div><strong>Fecha:</strong> ' + fechaStr + '</div>';
+        html += '<div><strong>Cliente:</strong> ' + (rem.cliente || '-') + '</div>';
+        html += '<div><strong>Forma pago:</strong> ' + (rem.forma_pago || '-') + '</div>';
+        html += '<div><strong>Temporada:</strong> ' + (rem.temporada || '-') + '</div>';
+        html += '<div><strong>Estado:</strong> <span style="color:'+estadoColor+';font-weight:700;">'+estadoLabel+'</span></div>';
+        if (rem.destino) html += '<div><strong>Destino:</strong> ' + rem.destino + '</div>';
+        if (rem.observacion) html += '<div><strong>Obs:</strong> ' + rem.observacion + '</div>';
+        html += '</div>';
+
+        // Tabla items
+        var items = rem.items || [];
+        if (items.length) {
+          html += '<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:12px;">';
+          html += '<thead><tr style="background:var(--fondo-dark);">';
+          html += '<th style="padding:6px 8px;text-align:left;font-size:10px;font-weight:600;color:var(--texto-suave);">Sub-lote</th>';
+          html += '<th style="padding:6px 8px;text-align:left;font-size:10px;font-weight:600;color:var(--texto-suave);">Categoría</th>';
+          html += '<th style="padding:6px 8px;text-align:left;font-size:10px;font-weight:600;color:var(--texto-suave);">Depósito</th>';
+          html += '<th style="padding:6px 8px;text-align:right;font-size:10px;font-weight:600;color:var(--texto-suave);">Kg</th>';
+          html += '<th style="padding:6px 8px;text-align:right;font-size:10px;font-weight:600;color:var(--texto-suave);">$/Kg</th>';
+          html += '<th style="padding:6px 8px;text-align:right;font-size:10px;font-weight:600;color:var(--texto-suave);">Subtotal</th>';
+          html += '</tr></thead><tbody>';
+          items.forEach(function(it){
+            var kg = parseFloat(it.kilos||0);
+            var pk = parseFloat(it.precio_kilo||0);
+            var st = parseFloat(it.subtotal||0);
+            var catLabel = [it.categoria, it.sub_categoria].filter(Boolean).join(' — ');
+            html += '<tr style="border-bottom:1px solid var(--borde);">';
+            html += '<td style="padding:5px 8px;'+mono+'font-size:10px;">' + (it.sub_lote_codigo || '-') + '</td>';
+            html += '<td style="padding:5px 8px;">' + (catLabel || '-') + '</td>';
+            html += '<td style="padding:5px 8px;">' + (it.deposito || '-') + '</td>';
+            html += '<td style="padding:5px 8px;text-align:right;'+mono+'">' + kg.toLocaleString('es-AR',{minimumFractionDigits:2}) + '</td>';
+            html += '<td style="padding:5px 8px;text-align:right;'+mono+'">' + (pk > 0 ? '$'+pk.toLocaleString('es-AR',{minimumFractionDigits:2}) : '-') + '</td>';
+            html += '<td style="padding:5px 8px;text-align:right;'+mono+'font-weight:700;">' + (st > 0 ? '$'+st.toLocaleString('es-AR',{minimumFractionDigits:2}) : '-') + '</td>';
+            html += '</tr>';
+          });
+          html += '</tbody></table>';
+        }
+
+        // Totales
+        var totalKg = parseFloat(rem.kilos_total||0);
+        var totalMonto = parseFloat(rem.total||0);
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:2px solid var(--verde);">';
+        html += '<span style="font-size:13px;font-weight:600;">Total: ' + totalKg.toLocaleString('es-AR',{minimumFractionDigits:2}) + ' kg</span>';
+        html += '<span style="font-size:18px;font-weight:700;color:var(--verde);'+mono+'">$' + totalMonto.toLocaleString('es-AR',{minimumFractionDigits:2}) + '</span>';
+        html += '</div>';
+
+        document.getElementById('remito-body').innerHTML = html;
+        document.getElementById('remito-titulo').textContent = 'Remito ' + (rem.numero || '#' + rem.id);
+        document.getElementById('btn-remito-pdf').onclick = function(){ imprimirRemitoPDF(remitoId); };
+        document.getElementById('modal-ver-remito').classList.add('open');
+        lucide.createIcons();
+      })
+      .catch(function(){ showAlert('Error al cargar remito', 'error'); });
+  }
+
+  function imprimirRemitoPDF(remitoId) {
+    var token = localStorage.getItem('cosecha_token');
+    var headers = {};
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+    fetch('/api/remitos/' + remitoId + '/pdf', { headers: headers })
+      .then(function(r){
+        if (!r.ok) throw new Error('Error al generar PDF');
+        return r.blob();
+      })
+      .then(function(blob){
+        var url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+      })
+      .catch(function(err){ showAlert(err.message || 'Error al generar PDF', 'error'); });
+  }
+
+  function cerrarVerRemito() {
+    document.getElementById('modal-ver-remito').classList.remove('open');
   }
 
   cargarDatos();
@@ -999,6 +1091,22 @@
       <button onclick="cerrarDetalleVenta()" style="background:var(--fondo-dark);border:1.5px solid var(--borde);border-radius:8px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;">✕ Cerrar</button>
     </div>
     <div id="det-venta-body"></div>
+  </div>
+</div>
+
+<!-- MODAL VER REMITO -->
+<div class="modal-overlay" id="modal-ver-remito" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:14px;padding:24px;width:90%;max-width:640px;max-height:85vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.15);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <h3 id="remito-titulo" style="color:var(--verde);margin:0;font-size:17px;font-weight:700;">Remito</h3>
+      <div style="display:flex;gap:8px;">
+        <button id="btn-remito-pdf" class="btn btn-primary" style="width:auto;margin:0;padding:7px 14px;font-size:12px;display:inline-flex;align-items:center;gap:5px;">
+          <i data-lucide="printer" style="width:14px;height:14px;"></i> Imprimir / PDF
+        </button>
+        <button onclick="cerrarVerRemito()" style="background:var(--fondo-dark);border:1.5px solid var(--borde);border-radius:8px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;">✕</button>
+      </div>
+    </div>
+    <div id="remito-body"></div>
   </div>
 </div>
 

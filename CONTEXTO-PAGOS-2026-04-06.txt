@@ -1,0 +1,231 @@
+================================================================================
+CONTEXTO COMPLETO — MÓDULO PAGOS — 2026-04-06
+================================================================================
+
+ARCHIVOS MODIFICADOS: public/pagos.html, server/routes/pagos.js
+COMMITS RELEVANTES:
+  e73b266 feat: pagos — liquidador universal, recibos PDF, comprobantes, precios por rol, anticipos, pagos parciales
+  b8bf852 fix: pagos — UX completo, formato numérico, panel precios, recibo PDF, usuario operador
+  89b8bc1 feat: pagos — validacion anticipo, formato monto, toolbar + estadisticas
+  bc9e49b fix: pagos — panels ocultan layout, alertas render+params configurables, toolbar 5 botones
+
+================================================================================
+1. ARQUITECTURA DEL MÓDULO
+================================================================================
+
+Stack: Node.js + Express 5 + SQL Server (mssql driver)
+Frontend: HTML/CSS/JS vanilla, Lucide icons, Chart.js 4 (CDN)
+Auth: JWT (req.user = {id, nombre, usuario, rol})
+CSS: cosecha.css + estilos locales en <style> del HTML
+
+Archivos:
+  - public/pagos.html (~880 líneas) — UI completa
+  - server/routes/pagos.js (~1080 líneas) — API REST
+
+================================================================================
+2. ENDPOINTS BACKEND (server/routes/pagos.js)
+================================================================================
+
+GET  /api/pagos/precios                        — Lista precios activos temporada activa
+PUT  /api/pagos/precios/:id                    — Actualizar precio {precio}
+GET  /api/pagos/trabajadores-con-saldo         — Workers con actividades y saldo calculado
+GET  /api/pagos/trabajador/:id/detalle         — Detalle completo: juntada, despalillado,
+                                                  clasificación, aplicaciones, trabajos campo,
+                                                  pagos, resumen (bruto, anticipos, liquidado, saldo)
+POST /api/pagos/anticipo                       — Registrar anticipo {trabajador_id, monto, forma_pago, referencia, observacion}
+                                                  Validación: monto < saldo (no puede cubrir el total)
+                                                  Genera: Pagos + Caja + numero_recibo
+POST /api/pagos/liquidar                       — Liquidar {trabajador_id, monto_pagado, forma_pago, referencia, monto_efectivo, monto_transferencia}
+                                                  Soporta: efectivo, transferencia, mixto
+                                                  Genera: Pagos + Caja (1 o 2 entries si mixto) + numero_recibo
+                                                  Estado: pagado | pago_parcial
+POST /api/pagos/:id/comprobante                — Upload comprobante (PDF/JPG, multer, 5MB max)
+GET  /api/pagos/:id/comprobante                — Download comprobante
+GET  /api/pagos/:id/recibo                     — PDF recibo con PDFKit (empresa, desglose, firma)
+GET  /api/pagos/estadisticas                   — KPIs: total_pagado, total_anticipos, total_liquidaciones,
+                                                  trabajadores_activos_deuda, desglose_actividad (con precio_promedio),
+                                                  gasto_semanal (últimas 4 sem), deudores, inactivos
+GET  /api/pagos/historial                      — Historial filtrable por trabajador, tipo, forma_pago, desde, hasta
+GET  /api/pagos/alertas?dias_sin_pago=N&dias_sin_actividad=N
+                                                — count + deuda_sin_pago [{nombre, saldo, dias_sin_pago}]
+                                                  + inactivos [nombre]. Defaults: 7 días. Parametrizado SQL.
+GET  /api/pagos/rendimiento                    — ranking [{nombre, juntada_kg, despalillado_kg, total_kg}] desc
+GET  /api/pagos/exportar?trabajador_id=X       — Excel download con ExcelJS (header verde, columnas auto)
+
+Helpers internos:
+  - nextRecibo(dbRequest) — genera REC-YYYY-NNNN secuencial
+  - getTemporadaActiva(pool) — TOP 1 WHERE activa=1
+  - getPreciosMap(pool, temporadaId) — mapa {actividad: {unidad, precio}}
+  - calcularTotalesTrabajador(pool, tid, fi, ff, tempId) — bruto de todas las actividades
+  - buildDesglose(totales, precios) — {items, bruto}
+
+================================================================================
+3. FRONTEND (public/pagos.html)
+================================================================================
+
+LAYOUT PRINCIPAL:
+  - Sidebar (nav, 38 archivos HTML)
+  - Topbar con temporada activa
+  - Toolbar: 5 botones
+      [sliders] Precios — abre precios-panel (convive con layout)
+      [bar-chart-2] Estadísticas — abre stats-panel (oculta layout)
+      [download] Exportar — descarga Excel directamente (no panel)
+      [bar-chart] Rendimiento — abre rendimiento-panel (oculta layout)
+      [bell] Alertas — abre alertas-panel (oculta layout), badge con count
+  - Layout 2 columnas (id="layout-pagos"): 280px workers list | 1fr detalle
+
+TOGGLE PANEL LOGIC:
+  - togglePanel(name) maneja 4 panels con mutual exclusion
+  - Mapa ocultaLayout = {stats:true, rendimiento:true, alertas:true}
+  - Al abrir stats/rendimiento/alertas → layout-pagos.style.display = 'none'
+  - Al abrir precios → layout-pagos.style.display = 'grid' (convive)
+  - Al cerrar cualquier panel → restaura display:grid
+
+PANEL PRECIOS:
+  - Tabla editable: Actividad | Unidad | Precio (input) | Guardar
+  - PUT /api/pagos/precios/:id, feedback "Precio actualizado"
+
+PANEL ESTADÍSTICAS:
+  - 4 KPI cards (grid 4 columnas, responsive a 2 y 1):
+    Total pagado | Total anticipos | Total liquidaciones | Trabajadores con deuda
+  - Tabla desglose: Actividad | Total kg/hs | Total pagado | Precio promedio
+  - Gráfico Chart.js bar (gasto semanal últimas 4 semanas)
+  - Lista deudores (nombre + saldo)
+  - Chips inactivos
+
+PANEL RENDIMIENTO:
+  - Tabla ranking: # | Trabajador | Juntada | Despalillado | Total kg
+  - Ordenado descendente por total_kg, formatKg()
+
+PANEL ALERTAS:
+  - Formulario inline: "Días sin pago" (input, default 7) + "Días sin actividad" (input, default 7) + botón "Actualizar"
+  - Sección "Con deuda sin pago": alerta-row con nombre + formatMoney(saldo) + badge días
+  - Sección "Sin actividad reciente": inactivo-chip con nombre
+  - Secciones vacías muestran "Sin alertas en esta categoría"
+  - Badge en botón toolbar: badge-count rojo, visible cuando count > 0, cargado en init
+
+DETALLE TRABAJADOR:
+  - Header con nombre + saldo formateado
+  - Filtros fecha (desde/hasta)
+  - Secciones por actividad: Juntada, Despalillado, Clasificación, Aplicaciones, Trabajos campo
+  - Resumen: total bruto - anticipos - pagos anteriores = SALDO A PAGAR
+  - Formulario Pagar: monto (con formatMoney live) + forma pago (efectivo/transferencia/mixto)
+  - Mixto: autocomplete bidireccional, validación suma
+  - Botones: Pagar (verde) + Anticipo (amarillo)
+  - Post-pago: botón "Ver recibo" aparece después de pagar
+  - Historial pagos: tabla con fecha, tipo (badge), monto, forma pago, operador, recibo, acciones (printer, upload)
+
+MODALS:
+  - modal-confirm: confirmar pago con monto y nombre
+  - modal-anticipo: form con monto, forma pago, referencia, observación
+    Validación: monto >= saldo → rechazado ("Usá Liquidar")
+
+FUNCIONES JS CLAVE:
+  - formatMoney(n), formatKg(n), formatHoras(n), fDate(d), fTime(d)
+  - fetchApi() — centralizado con JWT auth
+  - togglePanel(name) — mutual exclusion + layout toggle
+  - cargarPrecios(), guardarPrecio(id, btn)
+  - cargarEstadisticas() — fetch + render KPIs + Chart.js + deudores + inactivos
+  - cargarRendimiento() — fetch + render tabla ranking
+  - cargarAlertas(diasPago, diasInact) — fetch parametrizado + render form + secciones
+  - cargarAlertasBadge() — fetch solo count, actualiza badge
+  - actualizarBadgeAlertas(count) — toggle clase .visible en badge
+  - exportarExcel() — fetch blob + download
+  - cargarTrabajadores(), filtrarTrabajadores(), renderWorkers(list)
+  - seleccionarTrabajador(id), cargarDetalle(id), renderDetalle(d)
+  - confirmarPago(), ejecutarPago(), cerrarModal()
+  - abrirAnticipo(), cerrarAnticipo(), guardarAnticipo()
+  - checkMixto(), autocompletarMixto(campo)
+  - actualizarMontoFmt()
+  - abrirRecibo(pagoId) — fetch JWT + blob + window.open
+  - subirComprobante(pagoId) — file input + FormData + fetch
+
+INIT:
+  cargarTrabajadores()
+  cargarTemporadaActiva()
+  cargarAlertasBadge()
+
+================================================================================
+4. TABLAS DE BASE DE DATOS INVOLUCRADAS
+================================================================================
+
+Pagos: id, juntador_id(int!), monto(decimal!), tipo(nvarchar), fecha(date),
+  observacion, periodo_desde, periodo_hasta, kilos_liquidados, precio_kilo,
+  jornal_dias, anticipos, total_bruto, saldo_final, forma_pago_id, cheque_id,
+  estado_pago(varchar 20), numero_recibo(varchar 20), forma_pago(varchar 20),
+  referencia_transferencia(varchar 100), comprobante_path(varchar 255),
+  actividad_origen(varchar 30), monto_total, monto_pagado, usuario_id(int nullable)
+
+Juntadores: id, nombre(nvarchar!), apellido(nvarchar), qr_codigo(nvarchar!),
+  activo(bit), tipo(nvarchar), personal_id(int)
+
+PreciosRol: id, temporada_id(int!), actividad(varchar 30!), unidad(varchar 10!),
+  precio(decimal!), activo(bit), created_at
+
+Temporadas: id, nombre, activo, tipo, fecha_inicio(date), fecha_fin(date),
+  activa(bit), cultivo, descripcion
+
+Juntada: id, parcela_id(int!), juntador_id(int!), kilos(decimal), fecha_hora(datetime),
+  operador, observacion, deposito_id, destino, estado(nvarchar!), lote_id
+
+Despalillado: id, parcela_id, despalillador_id, kilos, fecha_hora, operador,
+  juntada_id, deposito_id, merma_kg, merma_pct, usuario_id, estado, lote_id
+
+LoteClasificadores: empleado_id, hora_inicio, hora_fin, fecha, lote_id
+
+AplicacionEmpleados: empleado_id, aplicacion_id, hora_inicio, hora_fin
+Aplicaciones: id, parcela_id, producto_id, fecha, temporada_id, estado
+
+TareaTrabajadores: trabajador_id, tarea_id, hora_inicio, hora_fin
+TareasGenerales: id, fecha, descripcion, temporada_id, estado
+
+Caja: tipo, concepto, monto, usuario_nombre, medio_pago, temporada_id
+Usuarios: id, nombre
+ConfiguracionEmpresa: razon_social, cuit, direccion, localidad, provincia
+
+================================================================================
+5. PATRONES Y CONVENCIONES
+================================================================================
+
+CSS:
+  - Variables: --verde (#2D5016), --borde, --superficie, --fondo, --texto, --texto-suave,
+    --texto-secundario, --sem-rojo, --sem-verde, --sem-amarillo, --verde-suave,
+    --sem-rojo-bg, --sem-verde-bg, --sem-amarillo-bg
+  - Clases sistema: ins-btn, ins-btn-primary, ins-btn-gray, btn, btn-green
+  - Clases locales: worker-card, det-section, stat-box, deudor-row, alerta-row,
+    inactivo-chip, badge-count, precios-panel, stats-panel, rendimiento-panel, alertas-panel
+  - Form pattern: .fg (flex row) > .fi (flex col) > label + input
+  - Responsive: media queries 900px y 600px
+
+JS:
+  - Vanilla JS, no frameworks
+  - fetchApi() para todas las llamadas API (JWT automático)
+  - innerHTML para render dinámico
+  - lucide.createIcons() después de inyectar HTML con iconos Lucide
+  - Funciones globales para onclick handlers en HTML dinámico
+
+Backend:
+  - SQL parametrizado con sql.Request().input() (nunca interpolación directa)
+  - sql.Transaction para operaciones multi-tabla
+  - SCOPE_IDENTITY() en mismo query string que INSERT para obtener ID
+  - ExcelJS para exports Excel
+  - PDFKit para recibos PDF
+  - multer para uploads
+
+================================================================================
+6. BUGS CONOCIDOS Y LIMITACIONES
+================================================================================
+
+- N+1 queries en /estadisticas y /alertas: calcularTotalesTrabajador() se ejecuta
+  por cada worker individual. Para volúmenes grandes podría ser lento.
+  Solución futura: refactorizar a una sola query agregada.
+
+- El botón Anticipo usa color hardcodeado (#f59e0b) en lugar de variable CSS.
+  Funcional pero inconsistente con el design system.
+
+- Chart.js usa colores hardcodeados (rgba(45,80,22,0.7), '#2D5016') ya que
+  no soporta CSS variables nativamente. Aceptable.
+
+================================================================================
+FIN DEL CONTEXTO
+================================================================================

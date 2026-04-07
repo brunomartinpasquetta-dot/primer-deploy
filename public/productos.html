@@ -7,6 +7,7 @@
   <title>Insumos — Cosecha</title>
   <link rel="icon" href="img/logo.png">
   <script src="js/utils.js"></script>
+  <script src="js/cosecha-dialogs.js"></script>
   <link rel="stylesheet" href="cosecha.css">
   <style>
 h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
@@ -59,9 +60,9 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
       <div class="nav-section">Campo</div>
       <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
       <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
       <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
       <a href="trabajos-campo.html" class="nav-item"><span class="nav-icon"><i data-lucide="hammer"></i></span> Trabajos de Campo</a>
-      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
       <div class="nav-section">Sistema</div>
       <a href="menu-stock.html" class="nav-item active"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
       <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
@@ -457,8 +458,8 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
     }).catch(function(){ btn.disabled=false; btn.textContent='Guardar cambios'; });
   }
 
-  function desactivar(id, nombre) {
-    if (!confirm('¿Desactivar el insumo "'+nombre+'"?\nNo se eliminará, solo se ocultará de las listas.')) return;
+  async function desactivar(id, nombre) {
+    if (!await showConfirm('¿Desactivar el insumo "'+nombre+'"?\nNo se eliminará, solo se ocultará de las listas.')) return;
     fetch('/api/productos/'+id+'/desactivar', { method:'PATCH' })
       .then(function(r){return r.json();})
       .then(function(data){ if(data.ok) cargar(); });
@@ -466,8 +467,8 @@ h1 { color: #2D5016; text-align: center; margin-bottom: 20px; }
 
   function guardar(){
     var nombre=document.getElementById('nombre').value.trim();
-    if(!nombre){ alert('Ingresa el nombre del insumo'); return; }
-    if(!document.getElementById('proveedor_id').value){ alert('Debés asignar un proveedor al insumo'); return; }
+    if(!nombre){ showAlert('Ingresa el nombre del insumo', 'warning'); return; }
+    if(!document.getElementById('proveedor_id').value){ showAlert('Debés asignar un proveedor al insumo', 'warning'); return; }
     var btn=document.getElementById('btn-guardar');
     btn.disabled=true; btn.textContent='Guardando...';
     fetch('/api/productos',{method:'POST',headers:{'Content-Type':'application/json'},

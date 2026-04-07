@@ -7,6 +7,7 @@
   <title>Compras — Cosecha</title>
   <link rel="icon" href="img/logo.png">
   <script src="js/utils.js"></script>
+  <script src="js/cosecha-dialogs.js"></script>
   <link rel="stylesheet" href="cosecha.css">
   <style>
     /* ── Form flat ── */
@@ -116,9 +117,9 @@
       <div class="nav-section">Campo</div>
       <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
       <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
       <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
       <a href="trabajos-campo.html" class="nav-item"><span class="nav-icon"><i data-lucide="hammer"></i></span> Trabajos de Campo</a>
-      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
       <div class="nav-section">Sistema</div>
       <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
       <a href="menu-comercial.html" class="nav-item active"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
@@ -538,9 +539,9 @@
     agregarItem();
   }
 
-  function guardarCompra() {
+  async function guardarCompra() {
     var proveedor_id = document.getElementById('proveedor').value;
-    if (!proveedor_id) { alert('Selecciona un proveedor'); return; }
+    if (!proveedor_id) { await showAlert('Selecciona un proveedor', 'warning'); return; }
     var items = [];
     document.querySelectorAll('.item-row').forEach(function(row) {
       var sel      = row.querySelector('select');
@@ -554,7 +555,7 @@
         items.push({ producto_id: producto_id, cantidad: cantidad, precio_unit: precio_unit, fecha_vencimiento: fecha_venc });
       }
     });
-    if (items.length === 0) { alert('Agrega al menos un producto con cantidad y precio'); return; }
+    if (items.length === 0) { await showAlert('Agrega al menos un producto con cantidad y precio', 'warning'); return; }
     var btn = document.getElementById('btn-guardar');
     btn.disabled = true;
     btn.textContent = 'Guardando...';
@@ -940,18 +941,18 @@
     });
   }
 
-  function anularCompra(id) {
-    var motivo = prompt('Motivo de anulación (obligatorio):');
+  async function anularCompra(id) {
+    var motivo = await showPrompt('Motivo de anulación (obligatorio):', 'Ingresá el motivo', 'warning');
     if (!motivo) return;
-    if (!confirm('¿Anular compra #' + id + '? Se revertirá el stock, caja y cuenta corriente. Esta acción no se puede deshacer.')) return;
+    if (!await showConfirm('¿Anular compra #' + id + '? Se revertirá el stock, caja y cuenta corriente. Esta acción no se puede deshacer.')) return;
     fetch('/api/compras/' + id + '/anular', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ motivo: motivo })
     }).then(function(r){ return r.json(); }).then(function(data){
       if (data.ok) { cargarHistorial(); }
-      else { alert('Error: ' + (data.error || 'No se pudo anular')); }
-    }).catch(function(){ alert('Error de conexión'); });
+      else { showAlert('Error: ' + (data.error || 'No se pudo anular'), 'error'); }
+    }).catch(function(){ showAlert('Error de conexión', 'error'); });
   }
 
   document.getElementById('fecha').value = hoy;

@@ -251,6 +251,21 @@ router.post('/:id/anular', async (req, res) => {
           VALUES (@producto_id, @cantidad, @tipo, @referencia, @usuario_id, GETDATE())`);
       }
 
+      // Auditoría
+      const audReq = new sql.Request(transaction);
+      audReq.input('registro_id', sql.Int, id);
+      audReq.input('tabla_origen', sql.NVarChar, 'TareasGenerales');
+      audReq.input('accion', sql.NVarChar, 'anulacion');
+      audReq.input('campo', sql.NVarChar, 'estado');
+      audReq.input('valor_anterior', sql.NVarChar, 'activa');
+      audReq.input('valor_nuevo', sql.NVarChar, 'anulada');
+      audReq.input('motivo', sql.NVarChar, motivo);
+      audReq.input('usuario_id', sql.Int, req.user ? req.user.id : null);
+      audReq.input('usuario_nombre', sql.NVarChar, req.user ? req.user.nombre : '');
+      await audReq.query(`INSERT INTO AuditoriaClasificacion
+                (registro_id, tabla_origen, accion, campo, valor_anterior, valor_nuevo, motivo, usuario_id, usuario_nombre)
+              VALUES (@registro_id, @tabla_origen, @accion, @campo, @valor_anterior, @valor_nuevo, @motivo, @usuario_id, @usuario_nombre)`);
+
       await transaction.commit();
       res.json({ ok: true });
     } catch (err) {
