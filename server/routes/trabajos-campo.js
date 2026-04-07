@@ -149,45 +149,53 @@ router.post('/', async (req, res) => {
       }
 
       // 3. INSERT TareaInsumos + UPDATE stock
-      let warningStock = false;
       if (insumos && insumos.length) {
         for (const ins of insumos) {
+          const cantidad = parseFloat(ins.cantidad);
+          const productoId = parseInt(ins.producto_id);
+
+          // Verificar stock disponible ANTES de descontar
+          const checkReq = new sql.Request(transaction);
+          checkReq.input('producto_id', sql.Int, productoId);
+          const stockCheck = await checkReq.query(`SELECT nombre, ISNULL(stock_actual, 0) AS stock_actual FROM Productos WHERE id = @producto_id`);
+          if (!stockCheck.recordset.length) {
+            await transaction.rollback();
+            return res.status(400).json({ error: `Producto con id ${productoId} no encontrado` });
+          }
+          const disponible = parseFloat(stockCheck.recordset[0].stock_actual);
+          if (disponible < cantidad) {
+            await transaction.rollback();
+            return res.status(400).json({ error: `Stock insuficiente para ${stockCheck.recordset[0].nombre}. Disponible: ${disponible}, requerido: ${cantidad}` });
+          }
+
           const insReq = new sql.Request(transaction);
           insReq.input('tarea_id', sql.Int, tareaId);
-          insReq.input('producto_id', sql.Int, parseInt(ins.producto_id));
-          insReq.input('cantidad', sql.Decimal(10, 2), parseFloat(ins.cantidad));
+          insReq.input('producto_id', sql.Int, productoId);
+          insReq.input('cantidad', sql.Decimal(10, 2), cantidad);
           insReq.input('costo', sql.Decimal(10, 2), parseFloat(ins.costo) || 0);
           await insReq.query(`INSERT INTO TareaInsumos (tarea_id, producto_id, cantidad, costo)
             VALUES (@tarea_id, @producto_id, @cantidad, @costo)`);
 
-          // Descontar stock
+          // Descontar stock (ya verificado que hay suficiente)
           const stockReq = new sql.Request(transaction);
-          stockReq.input('producto_id', sql.Int, parseInt(ins.producto_id));
-          stockReq.input('cantidad', sql.Decimal(10, 2), parseFloat(ins.cantidad));
+          stockReq.input('producto_id', sql.Int, productoId);
+          stockReq.input('cantidad', sql.Decimal(10, 2), cantidad);
           await stockReq.query(`UPDATE Productos SET stock_actual = stock_actual - @cantidad WHERE id = @producto_id`);
 
           // Registrar movimiento en StockInsumos
           const movReq = new sql.Request(transaction);
-          movReq.input('producto_id', sql.Int, parseInt(ins.producto_id));
-          movReq.input('cantidad', sql.Decimal(10, 2), parseFloat(ins.cantidad));
+          movReq.input('producto_id', sql.Int, productoId);
+          movReq.input('cantidad', sql.Decimal(10, 2), cantidad);
           movReq.input('tipo', sql.VarChar(50), 'tarea_general');
           movReq.input('referencia', sql.VarChar(200), 'Tarea de campo #' + tareaId);
           movReq.input('usuario_id', sql.Int, req.user ? req.user.id : null);
           await movReq.query(`INSERT INTO StockInsumos (producto_id, cantidad, tipo, referencia, usuario_id, fecha)
             VALUES (@producto_id, -@cantidad, @tipo, @referencia, @usuario_id, GETDATE())`);
-
-          // Check stock warning
-          const checkReq = new sql.Request(transaction);
-          checkReq.input('producto_id', sql.Int, parseInt(ins.producto_id));
-          const stockCheck = await checkReq.query(`SELECT stock_actual FROM Productos WHERE id = @producto_id`);
-          if (stockCheck.recordset.length && parseFloat(stockCheck.recordset[0].stock_actual) < 0) {
-            warningStock = true;
-          }
         }
       }
 
       await transaction.commit();
-      res.json({ ok: true, id: tareaId, warning_stock: warningStock });
+      res.json({ ok: true, id: tareaId });
     } catch (err) {
       await transaction.rollback();
       throw err;
