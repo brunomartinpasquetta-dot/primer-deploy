@@ -47,7 +47,7 @@ router.get('/', async (req, res) => {
       SELECT d.id, d.nombre, d.tipo, d.tipo_deposito, d.capacidad_kg, d.costo_kg_dia,
              d.ubicacion, d.observacion, d.activo,
              ISNULL(SUM(CASE WHEN m.tipo = 'ingreso'         THEN m.kilos ELSE 0 END), 0) -
-             ISNULL(SUM(CASE WHEN m.tipo LIKE 'egreso%'      THEN m.kilos ELSE 0 END), 0) AS stock_actual,
+             ISNULL(SUM(CASE WHEN m.tipo LIKE 'egreso%' AND m.tipo != 'egreso_anulacion' THEN m.kilos ELSE 0 END), 0) AS stock_actual,
              ISNULL(SUM(CASE WHEN m.tipo = 'ingreso'         THEN m.kilos ELSE 0 END), 0) AS total_ingresado,
              ISNULL(SUM(CASE WHEN m.tipo = 'egreso_venta'    THEN m.kilos ELSE 0 END), 0) AS total_vendido,
              ISNULL(SUM(CASE WHEN m.tipo = 'egreso_descarte' THEN m.kilos ELSE 0 END), 0) AS total_descartado
@@ -126,7 +126,7 @@ router.get('/:id/stock', async (req, res) => {
           ISNULL(SUM(CASE WHEN tipo = 'egreso_venta'    THEN kilos ELSE 0 END), 0) AS vendido,
           ISNULL(SUM(CASE WHEN tipo = 'egreso_descarte' THEN kilos ELSE 0 END), 0) AS descartado,
           ISNULL(SUM(CASE WHEN tipo = 'ingreso'         THEN kilos ELSE 0 END), 0) -
-          ISNULL(SUM(CASE WHEN tipo LIKE 'egreso%'      THEN kilos ELSE 0 END), 0) AS stock_actual
+          ISNULL(SUM(CASE WHEN tipo LIKE 'egreso%' AND tipo != 'egreso_anulacion' THEN kilos ELSE 0 END), 0) AS stock_actual
         FROM MovimientosDeposito WHERE deposito_id = @id`);
     res.json(result.recordset[0]);
   } catch (err) {
@@ -327,14 +327,14 @@ router.get('/stock-disponible', async (req, res) => {
         l.nombre AS parcela,
         ISNULL(l.variedad, 'Sin variedad') AS variedad,
         ISNULL(SUM(CASE WHEN m.tipo='ingreso'      THEN m.kilos ELSE 0 END),0) -
-        ISNULL(SUM(CASE WHEN m.tipo LIKE 'egreso%' THEN m.kilos ELSE 0 END),0) AS kg_disponibles
+        ISNULL(SUM(CASE WHEN m.tipo LIKE 'egreso%' AND m.tipo != 'egreso_anulacion' THEN m.kilos ELSE 0 END),0) AS kg_disponibles
       FROM MovimientosDeposito m
       JOIN Parcelas l ON m.parcela_id = l.id
       WHERE ${where}
       GROUP BY l.id, l.nombre, l.variedad
       HAVING
         ISNULL(SUM(CASE WHEN m.tipo='ingreso'      THEN m.kilos ELSE 0 END),0) -
-        ISNULL(SUM(CASE WHEN m.tipo LIKE 'egreso%' THEN m.kilos ELSE 0 END),0) > 0
+        ISNULL(SUM(CASE WHEN m.tipo LIKE 'egreso%' AND m.tipo != 'egreso_anulacion' THEN m.kilos ELSE 0 END),0) > 0
       ORDER BY variedad, parcela`);
     res.json(result.recordset);
   } catch (err) {

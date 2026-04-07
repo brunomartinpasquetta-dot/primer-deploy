@@ -10,11 +10,19 @@ router.get('/', async (req, res) => {
     const dbReq = pool.request();
     let query = `SELECT l.nombre AS parcela,
                  sm.destino,
-                 SUM(CASE WHEN sm.tipo = 'ingreso'       THEN sm.kilos ELSE 0 END) AS kilos_ingresados,
-                 SUM(CASE WHEN sm.tipo LIKE 'egreso%'   THEN sm.kilos ELSE 0 END) AS kilos_egresados,
-                 SUM(CASE WHEN sm.tipo = 'ingreso'       THEN sm.kilos ELSE 0 END) -
-                 SUM(CASE WHEN sm.tipo LIKE 'egreso%'   THEN sm.kilos ELSE 0 END) AS stock_actual,
-                 SUM(CASE WHEN sm.tipo LIKE 'egreso%'   THEN sm.kilos * sm.precio_kilo ELSE 0 END) AS total_vendido
+                 SUM(CASE WHEN sm.tipo = 'ingreso'       THEN sm.kilos
+                          WHEN sm.tipo = 'egreso_anulacion' THEN -sm.kilos
+                          ELSE 0 END) AS kilos_ingresados,
+                 SUM(CASE WHEN sm.tipo LIKE 'egreso%' AND sm.tipo != 'egreso_anulacion' THEN sm.kilos
+                          WHEN sm.tipo = 'ingreso_anulacion' THEN -sm.kilos
+                          ELSE 0 END) AS kilos_egresados,
+                 SUM(CASE WHEN sm.tipo = 'ingreso'       THEN sm.kilos
+                          WHEN sm.tipo = 'egreso_anulacion' THEN -sm.kilos
+                          ELSE 0 END) -
+                 SUM(CASE WHEN sm.tipo LIKE 'egreso%' AND sm.tipo != 'egreso_anulacion' THEN sm.kilos
+                          WHEN sm.tipo = 'ingreso_anulacion' THEN -sm.kilos
+                          ELSE 0 END) AS stock_actual,
+                 SUM(CASE WHEN sm.tipo LIKE 'egreso%' AND sm.tipo != 'egreso_anulacion' THEN sm.kilos * sm.precio_kilo ELSE 0 END) AS total_vendido
                  FROM StockMercaderia sm
                  JOIN Parcelas l ON sm.parcela_id = l.id`;
     if (temporada_id) {
@@ -411,10 +419,11 @@ router.get('/etapas', async (req, res) => {
       ) sm_ing ON sm_ing.juntada_id = j.id
       LEFT JOIN (
         SELECT juntada_id, SUM(kilos) AS total_kg
-        FROM StockMercaderia WHERE tipo LIKE 'egreso%'
+        FROM StockMercaderia WHERE tipo LIKE 'egreso%' AND tipo != 'egreso_anulacion'
         GROUP BY juntada_id
       ) sm_egr ON sm_egr.juntada_id = j.id
       WHERE ${where}
+        AND ISNULL(j.estado, 'activa') != 'anulada'
         AND j.destino NOT IN ('venta_directa','descarte')
       ORDER BY j.fecha_hora DESC
     `);
