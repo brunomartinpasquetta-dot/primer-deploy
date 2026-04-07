@@ -712,30 +712,21 @@ router.post('/embalar', async (req, res) => {
       // 6. Registrar movimiento de stock de mercadería en depósito
       const obs = `Embalaje lote ${codigoActualizado}`;
 
-      await transaction.request()
+      const movReq = transaction.request()
         .input('deposito_id', sql.Int, deposito_id)
         .input('temporada_id', sql.Int, subLote.temporada_id)
         .input('parcela_id', sql.Int, subLote.parcela_id)
         .input('kilos', sql.Decimal(10, 3), kilosNum)
         .input('fecha', sql.DateTime, now)
         .input('observacion', sql.NVarChar, obs)
-        .input('lote_id', sql.Int, sub_lote_id)
-        .input('usuario_id', sql.Int, uid)
-        .query(`INSERT INTO MovimientosDeposito
-                  (deposito_id, temporada_id, parcela_id, tipo, kilos, fecha, observacion, lote_id, usuario_id)
-                VALUES (@deposito_id, @temporada_id, @parcela_id, 'ingreso', @kilos, @fecha, @observacion, @lote_id, @usuario_id)`);
-
-      await transaction.request()
-        .input('temporada_id', sql.Int, subLote.temporada_id)
-        .input('parcela_id', sql.Int, subLote.parcela_id)
-        .input('kilos', sql.Decimal(10, 3), kilosNum)
-        .input('fecha', sql.DateTime, now)
-        .input('observacion', sql.NVarChar, obs)
-        .input('lote_id', sql.Int, sub_lote_id)
-        .input('usuario_id', sql.Int, uid)
-        .query(`INSERT INTO StockMercaderia
-                  (temporada_id, parcela_id, tipo, kilos, destino, fecha, observacion, lote_id, usuario_id)
-                VALUES (@temporada_id, @parcela_id, 'ingreso', @kilos, 'deposito', @fecha, @observacion, @lote_id, @usuario_id)`);
+        .input('lote_id', sql.Int, subLote.lote_padre_id || null)
+        .input('sub_lote_id', sql.Int, sub_lote_id)
+        .input('cantidad_envases', sql.Int, cantEnvases)
+        .input('usuario_id', sql.Int, uid);
+      if (tipoEmbalajeId) movReq.input('tipo_embalaje_id', sql.Int, tipoEmbalajeId);
+      await movReq.query(`INSERT INTO MovimientosDeposito
+                  (deposito_id, temporada_id, parcela_id, tipo, kilos, fecha, observacion, lote_id, sub_lote_id, cantidad_envases, tipo_embalaje_id, usuario_id)
+                VALUES (@deposito_id, @temporada_id, @parcela_id, 'ingreso_embalaje', @kilos, @fecha, @observacion, @lote_id, @sub_lote_id, @cantidad_envases, ${tipoEmbalajeId ? '@tipo_embalaje_id' : 'NULL'}, @usuario_id)`);
 
       // 7. Egreso de insumo (embalaje usado) — descontar stock
       const obsInsumo = `Embalaje lote ${codigoActualizado} — ${cantEnvases} x ${producto.nombre}`;
@@ -1192,6 +1183,12 @@ router.post('/embalaje/:id/anular', async (req, res) => {
         const sl = slRes.recordset[0];
         const obs = `Anulación embalaje #${id}`;
 
+        // Obtener lote_padre_id del sub-lote
+        const slParentRes = await transaction.request()
+          .input('sl_id', sql.Int, emb.sub_lote_id)
+          .query('SELECT lote_padre_id FROM LotesMercaderia WHERE id = @sl_id');
+        const lotePadreId = slParentRes.recordset[0]?.lote_padre_id || null;
+
         await transaction.request()
           .input('deposito_id', sql.Int, emb.deposito_id)
           .input('temporada_id', sql.Int, sl.temporada_id)
@@ -1199,23 +1196,12 @@ router.post('/embalaje/:id/anular', async (req, res) => {
           .input('kilos', sql.Decimal(10, 3), kilosNum)
           .input('fecha', sql.DateTime, now)
           .input('observacion', sql.NVarChar, obs)
-          .input('lote_id', sql.Int, emb.sub_lote_id)
+          .input('lote_id', sql.Int, lotePadreId)
+          .input('sub_lote_id', sql.Int, emb.sub_lote_id)
           .input('usuario_id', sql.Int, uid)
           .query(`INSERT INTO MovimientosDeposito
-                    (deposito_id, temporada_id, parcela_id, tipo, kilos, fecha, observacion, lote_id, usuario_id)
-                  VALUES (@deposito_id, @temporada_id, @parcela_id, 'egreso_anulacion', @kilos, @fecha, @observacion, @lote_id, @usuario_id)`);
-
-        await transaction.request()
-          .input('temporada_id', sql.Int, sl.temporada_id)
-          .input('parcela_id', sql.Int, sl.parcela_id)
-          .input('kilos', sql.Decimal(10, 3), kilosNum)
-          .input('fecha', sql.DateTime, now)
-          .input('observacion', sql.NVarChar, obs)
-          .input('lote_id', sql.Int, emb.sub_lote_id)
-          .input('usuario_id', sql.Int, uid)
-          .query(`INSERT INTO StockMercaderia
-                    (temporada_id, parcela_id, tipo, kilos, destino, fecha, observacion, lote_id, usuario_id)
-                  VALUES (@temporada_id, @parcela_id, 'egreso_anulacion', @kilos, 'deposito', @fecha, @observacion, @lote_id, @usuario_id)`);
+                    (deposito_id, temporada_id, parcela_id, tipo, kilos, fecha, observacion, lote_id, sub_lote_id, usuario_id)
+                  VALUES (@deposito_id, @temporada_id, @parcela_id, 'egreso_anulacion', @kilos, @fecha, @observacion, @lote_id, @sub_lote_id, @usuario_id)`);
       }
 
       // 1b. Revertir egreso de insumo (devolver embalajes al stock)

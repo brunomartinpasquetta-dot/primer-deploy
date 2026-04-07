@@ -287,90 +287,43 @@ router.get('/historial-lotes', async (req, res) => {
   }
 });
 
-// Historial de movimientos: MovimientosDeposito + ventas directas de StockMercaderia
+// Historial de movimientos: solo MovimientosDeposito (fuente unificada)
 router.get('/historial', async (req, res) => {
   try {
     const { temporada_id, desde, hasta, parcela_id, tipo } = req.query;
     const pool = await getPool();
     const dbReq = pool.request();
 
-    // Filtros reutilizables
     let wMov = '1=1';
-    let wSm  = "sm.destino = 'venta_directa' AND sm.tipo = 'egreso_venta'";
 
     if (temporada_id) {
       dbReq.input('temporada_id', sql.Int, parseInt(temporada_id));
       wMov += ' AND m.temporada_id = @temporada_id';
-      wSm  += ' AND sm.temporada_id = @temporada_id';
     }
     if (desde) {
       dbReq.input('desde', sql.Date, desde);
       wMov += ' AND CAST(m.fecha AS DATE) >= @desde';
-      wSm  += ' AND CAST(sm.fecha AS DATE) >= @desde';
     }
     if (hasta) {
       dbReq.input('hasta', sql.Date, hasta);
       wMov += ' AND CAST(m.fecha AS DATE) <= @hasta';
-      wSm  += ' AND CAST(sm.fecha AS DATE) <= @hasta';
     }
     if (parcela_id) {
       dbReq.input('parcela_id', sql.Int, parseInt(parcela_id));
       wMov += ' AND m.parcela_id = @parcela_id';
-      wSm  += ' AND sm.parcela_id = @parcela_id';
     }
 
     // Filtro de tipo
     let tipoFiltroMov = '';
-    let incluirSm = true;
     if (tipo === 'ingreso') {
-      tipoFiltroMov = " AND m.tipo = 'ingreso'";
-      incluirSm = false; // ventas directas son egresos
+      tipoFiltroMov = " AND m.tipo IN ('ingreso','ingreso_juntada','ingreso_embalaje')";
     } else if (tipo === 'egreso') {
       tipoFiltroMov = " AND m.tipo LIKE 'egreso%'";
     } else if (tipo === 'egreso_venta') {
       tipoFiltroMov = " AND m.tipo = 'egreso_venta'";
     } else if (tipo === 'egreso_descarte') {
       tipoFiltroMov = " AND m.tipo = 'egreso_descarte'";
-      incluirSm = false;
     }
-
-    const smUnion = incluirSm ? `
-      UNION ALL
-      SELECT
-        sm.id,
-        NULL                        AS movimiento_id,
-        'egreso_venta'              AS tipo,
-        sm.kilos,
-        sm.precio_kilo,
-        CASE WHEN sm.precio_kilo IS NOT NULL THEN sm.kilos * sm.precio_kilo ELSE NULL END AS total,
-        sm.comprador,
-        'venta_directa'             AS destino_venta,
-        sm.observacion,
-        sm.fecha,
-        NULL                        AS variedad,
-        NULL                        AS cliente_id,
-        'cobrada'                   AS estado_cobro,
-        sm.estado,
-        NULL                        AS numero_remito,
-        NULL                        AS remito_id,
-        fp2.nombre                  AS forma_pago,
-        NULL                        AS deposito,
-        sm.parcela_id,
-        l2.nombre                   AS parcela,
-        t2.nombre                   AS temporada,
-        ju2.apellido + ', ' + ju2.nombre AS cosechero,
-        sm.juntada_id,
-        COALESCE(sm.juntador_id, jref2.juntador_id) AS juntador_id,
-        sm.usuario_id,
-        u2.nombre                   AS usuario
-      FROM StockMercaderia sm
-      LEFT JOIN Parcelas    l2    ON sm.parcela_id      = l2.id
-      LEFT JOIN Temporadas  t2    ON sm.temporada_id    = t2.id
-      LEFT JOIN FormasPago  fp2   ON sm.forma_pago_id   = fp2.id
-      LEFT JOIN Juntada     jref2 ON sm.juntada_id   = jref2.id AND sm.juntador_id IS NULL
-      LEFT JOIN Juntadores  ju2   ON COALESCE(sm.juntador_id, jref2.juntador_id) = ju2.id
-      LEFT JOIN Usuarios    u2    ON sm.usuario_id   = u2.id
-      WHERE ${wSm}` : '';
 
     const query = `
       SELECT m.id, m.id AS movimiento_id, m.tipo, m.kilos, m.precio_kilo,
@@ -382,6 +335,7 @@ router.get('/historial', async (req, res) => {
              m.estado,
              m.numero_remito,
              m.remito_id,
+             m.cantidad_envases,
              fp.nombre AS forma_pago,
              d.nombre  AS deposito,
              m.parcela_id,
@@ -391,7 +345,9 @@ router.get('/historial', async (req, res) => {
              m.juntada_id,
              COALESCE(m.juntador_id, jref.juntador_id) AS juntador_id,
              m.usuario_id,
-             u.nombre  AS usuario
+             u.nombre  AS usuario,
+             sl.codigo_externo AS lote_codigo,
+             te.nombre AS tipo_envase
       FROM MovimientosDeposito m
       LEFT JOIN Depositos   d    ON m.deposito_id   = d.id
       LEFT JOIN Parcelas    l    ON m.parcela_id     = l.id
@@ -400,8 +356,9 @@ router.get('/historial', async (req, res) => {
       LEFT JOIN Juntada    jref ON m.juntada_id   = jref.id AND m.juntador_id IS NULL
       LEFT JOIN Juntadores ju   ON COALESCE(m.juntador_id, jref.juntador_id) = ju.id
       LEFT JOIN Usuarios   u    ON m.usuario_id   = u.id
+      LEFT JOIN LotesMercaderia sl ON m.sub_lote_id = sl.id
+      LEFT JOIN TiposEmbalaje  te ON m.tipo_embalaje_id = te.id
       WHERE ${wMov}${tipoFiltroMov}
-      ${smUnion}
       ORDER BY fecha DESC`;
 
     const result = await dbReq.query(query);
@@ -411,13 +368,7 @@ router.get('/historial', async (req, res) => {
   }
 });
 
-// Etapa actual de cada juntada
-// Lógica:
-//   stock_pendiente=1                              → 'pendiente_despalillado'
-//   stock_pendiente=0 + sin Despalillado           → 'fresco'
-//   stock_pendiente=0 + con Despalillado           → 'despalillado'
-//   kilos_egresados >= kilos_ingresados (y > 0)   → 'vendida'
-//   kilos_egresados > 0 pero < kilos_ingresados   → 'vendida_parcial'
+// Etapa actual de cada juntada — basado en LotesMercaderia + MovimientosDeposito
 router.get('/etapas', async (req, res) => {
   try {
     const { temporada_id } = req.query;
@@ -444,15 +395,15 @@ router.get('/etapas', async (req, res) => {
         d.requiere_despalillado,
         ISNULL(desp.kilos, 0)      AS kilos_despalillados,
         CASE WHEN desp.id IS NOT NULL THEN 1 ELSE 0 END AS tiene_despalillado,
-        ISNULL(sm_ing.total_kg, 0)  AS kilos_en_stock,
-        ISNULL(sm_egr.total_kg, 0)  AS kilos_vendidos,
+        ISNULL(md_ing.total_kg, 0)  AS kilos_en_stock,
+        ISNULL(md_egr.total_kg, 0)  AS kilos_vendidos,
         CASE
           WHEN j.stock_pendiente = 1
             THEN 'pendiente_despalillado'
-          WHEN ISNULL(sm_ing.total_kg,0) > 0
-           AND ISNULL(sm_egr.total_kg,0) >= ISNULL(sm_ing.total_kg,0)
+          WHEN ISNULL(md_ing.total_kg,0) > 0
+           AND ISNULL(md_egr.total_kg,0) >= ISNULL(md_ing.total_kg,0)
             THEN 'vendida'
-          WHEN ISNULL(sm_egr.total_kg,0) > 0
+          WHEN ISNULL(md_egr.total_kg,0) > 0
             THEN 'vendida_parcial'
           WHEN desp.id IS NOT NULL
             THEN 'despalillado'
@@ -465,15 +416,16 @@ router.get('/etapas', async (req, res) => {
       LEFT JOIN Despalillado desp ON desp.juntada_id = j.id
       LEFT JOIN (
         SELECT juntada_id,
-               SUM(CASE WHEN tipo = 'ingreso' THEN kilos WHEN tipo = 'egreso_anulacion' THEN -kilos ELSE 0 END) AS total_kg
-        FROM StockMercaderia WHERE tipo IN ('ingreso', 'egreso_anulacion')
+               SUM(CASE WHEN tipo IN ('ingreso','ingreso_juntada','ingreso_embalaje') THEN kilos
+                        WHEN tipo = 'egreso_anulacion' THEN -kilos ELSE 0 END) AS total_kg
+        FROM MovimientosDeposito WHERE tipo IN ('ingreso','ingreso_juntada','ingreso_embalaje','egreso_anulacion')
         GROUP BY juntada_id
-      ) sm_ing ON sm_ing.juntada_id = j.id
+      ) md_ing ON md_ing.juntada_id = j.id
       LEFT JOIN (
         SELECT juntada_id, SUM(kilos) AS total_kg
-        FROM StockMercaderia WHERE tipo LIKE 'egreso%' AND tipo != 'egreso_anulacion'
+        FROM MovimientosDeposito WHERE tipo LIKE 'egreso%' AND tipo != 'egreso_anulacion'
         GROUP BY juntada_id
-      ) sm_egr ON sm_egr.juntada_id = j.id
+      ) md_egr ON md_egr.juntada_id = j.id
       WHERE ${where}
         AND ISNULL(j.estado, 'activa') != 'anulada'
         AND j.destino NOT IN ('venta_directa','descarte')
@@ -485,27 +437,7 @@ router.get('/etapas', async (req, res) => {
   }
 });
 
-// PATCH /historial/:id — editar movimiento de venta
-router.patch('/historial/:id', async (req, res) => {
-  try {
-    const { observacion, numero_remito, fecha, forma_pago_id, precio_kilo, comprador, estado_cobro } = req.body;
-    const pool = await getPool();
-    const r = pool.request().input('id', sql.Int, req.params.id);
-    const sets = [];
-    if (observacion !== undefined)   { sets.push('observacion = @obs');       r.input('obs',   sql.NVarChar,     observacion || ''); }
-    if (numero_remito !== undefined) { sets.push('numero_remito = @rem');     r.input('rem',   sql.NVarChar,     numero_remito || null); }
-    if (fecha !== undefined)         { sets.push('fecha = @fecha');           r.input('fecha', sql.DateTime,     new Date(fecha)); }
-    if (forma_pago_id !== undefined) { sets.push('forma_pago_id = @fpid');   r.input('fpid',  sql.Int,          forma_pago_id || null); }
-    if (precio_kilo !== undefined)   { sets.push('precio_kilo = @pk');       r.input('pk',    sql.Decimal(10,2),parseFloat(precio_kilo) || 0); }
-    if (comprador !== undefined)     { sets.push('comprador = @comp');       r.input('comp',  sql.NVarChar,     comprador || null); }
-    if (estado_cobro !== undefined)  { sets.push('estado_cobro = @ec');      r.input('ec',    sql.NVarChar,     estado_cobro || null); }
-    if (!sets.length) return res.json({ ok: true });
-    await r.query('UPDATE MovimientosDeposito SET ' + sets.join(', ') + ' WHERE id = @id');
-    res.json({ ok: true });
-  } catch (err) {
-    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
-  }
-});
+// PATCH /historial/:id — ELIMINADO: usar PATCH /historial/:id/auditado en su lugar
 
 // GET /auditoria — historial de auditoría de ventas
 router.get('/auditoria', async (req, res) => {
@@ -679,6 +611,154 @@ router.patch('/historial/:id/auditado', async (req, res) => {
   } catch (err) {
     await transaction.rollback();
     console.error(err); res.status(500).json({ error: "Error interno del servidor" });
+  }
+});
+
+// GET /stock-envases — stock disponible agrupado por tipo de envase
+router.get('/stock-envases', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const r = pool.request();
+    let where = "md.estado != 'anulada'";
+    if (req.query.temporada_id) {
+      r.input('temporada_id', sql.Int, parseInt(req.query.temporada_id));
+      where += ' AND md.temporada_id = @temporada_id';
+    }
+    const result = await r.query(`
+      SELECT te.nombre AS tipo_envase,
+             cc.nombre AS categoria,
+             sc.nombre AS sub_categoria,
+             d.nombre  AS deposito,
+             SUM(CASE WHEN md.tipo LIKE 'ingreso%' THEN ISNULL(md.cantidad_envases,0) ELSE 0 END)
+               - SUM(CASE WHEN md.tipo LIKE 'egreso%' AND md.tipo != 'egreso_anulacion' THEN ISNULL(md.cantidad_envases,0) ELSE 0 END) AS unidades_disponibles,
+             SUM(CASE WHEN md.tipo LIKE 'ingreso%' THEN ISNULL(md.kilos,0) ELSE 0 END)
+               - SUM(CASE WHEN md.tipo LIKE 'egreso%' AND md.tipo != 'egreso_anulacion' THEN ISNULL(md.kilos,0) ELSE 0 END) AS kg_disponibles
+      FROM MovimientosDeposito md
+      LEFT JOIN TiposEmbalaje te ON md.tipo_embalaje_id = te.id
+      LEFT JOIN LotesMercaderia lm ON md.sub_lote_id = lm.id
+      LEFT JOIN CategoriasClasificacion cc ON lm.categoria_clasif_id = cc.id
+      LEFT JOIN SubCategoriasClasificacion sc ON lm.sub_categoria_id = sc.id
+      LEFT JOIN Depositos d ON md.deposito_id = d.id
+      WHERE ${where}
+      GROUP BY te.nombre, cc.nombre, sc.nombre, d.nombre
+      HAVING SUM(CASE WHEN md.tipo LIKE 'ingreso%' THEN ISNULL(md.kilos,0) ELSE 0 END)
+               - SUM(CASE WHEN md.tipo LIKE 'egreso%' AND md.tipo != 'egreso_anulacion' THEN ISNULL(md.kilos,0) ELSE 0 END) > 0
+      ORDER BY te.nombre, kg_disponibles DESC
+    `);
+    res.json(result.recordset);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al consultar stock por envase' });
+  }
+});
+
+// GET /estado-lotes — estado de lotes de mercadería (reemplaza etapas por juntada)
+router.get('/estado-lotes', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const r = pool.request();
+    let where = "lm.estado = 'activa'";
+    if (req.query.temporada_id) {
+      r.input('temporada_id', sql.Int, parseInt(req.query.temporada_id));
+      where += ' AND lm.temporada_id = @temporada_id';
+    }
+    if (req.query.etapa) {
+      r.input('etapa', sql.NVarChar, req.query.etapa);
+      where += ' AND lm.etapa = @etapa';
+    }
+    const result = await r.query(`
+      SELECT lm.id,
+             lm.codigo_externo,
+             lm.etapa,
+             lm.kilos,
+             lm.fecha_inicio,
+             lm.fecha_envasado,
+             p.nombre AS parcela,
+             cc.nombre AS categoria,
+             sc.nombre AS sub_categoria,
+             d.nombre  AS deposito,
+             dp.nombre AS deposito_actual,
+             padre.codigo_externo AS lote_padre,
+             te.nombre AS tipo_envase,
+             emb.cantidad_envases AS unidades_embaladas
+      FROM LotesMercaderia lm
+      LEFT JOIN Parcelas p ON lm.parcela_id = p.id
+      LEFT JOIN CategoriasClasificacion cc ON lm.categoria_clasif_id = cc.id
+      LEFT JOIN SubCategoriasClasificacion sc ON lm.sub_categoria_id = sc.id
+      LEFT JOIN Depositos d ON lm.deposito_id = d.id
+      LEFT JOIN Depositos dp ON lm.deposito_actual_id = dp.id
+      LEFT JOIN LotesMercaderia padre ON lm.lote_padre_id = padre.id
+      LEFT JOIN (
+        SELECT sub_lote_id, tipo_embalaje_id,
+               SUM(cantidad_envases) AS cantidad_envases
+        FROM Embalaje WHERE ISNULL(estado,'activa') != 'anulada'
+        GROUP BY sub_lote_id, tipo_embalaje_id
+      ) emb ON emb.sub_lote_id = lm.id
+      LEFT JOIN TiposEmbalaje te ON emb.tipo_embalaje_id = te.id
+      WHERE ${where}
+      ORDER BY lm.fecha_inicio DESC, lm.id DESC
+    `);
+    res.json(result.recordset);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al consultar estado de lotes' });
+  }
+});
+
+// POST /descarte — registrar descarte desde sub-lote embalado
+router.post('/descarte', async (req, res) => {
+  const { sub_lote_id, kilos, cantidad_envases, observacion } = req.body;
+  if (!sub_lote_id || !kilos) return res.status(400).json({ error: 'Sub-lote y kilos son obligatorios' });
+
+  const pool = await getPool();
+  const transaction = new sql.Transaction(pool);
+  try {
+    await transaction.begin();
+    const uid = req.user ? req.user.id : null;
+
+    // Verificar sub-lote existe y tiene stock
+    const slRes = await new sql.Request(transaction)
+      .input('sl_id', sql.Int, parseInt(sub_lote_id))
+      .query('SELECT id, kilos, temporada_id, parcela_id, deposito_actual_id, deposito_id FROM LotesMercaderia WHERE id = @sl_id');
+    if (!slRes.recordset.length) { await transaction.rollback(); return res.status(404).json({ error: 'Sub-lote no encontrado' }); }
+    const sl = slRes.recordset[0];
+    if (parseFloat(kilos) > parseFloat(sl.kilos)) { await transaction.rollback(); return res.status(400).json({ error: 'Kilos exceden stock del lote (' + sl.kilos + ' kg)' }); }
+
+    // Insertar movimiento de descarte
+    await new sql.Request(transaction)
+      .input('deposito_id',      sql.Int,           sl.deposito_actual_id || sl.deposito_id || null)
+      .input('temporada_id',     sql.Int,           sl.temporada_id)
+      .input('parcela_id',       sql.Int,           sl.parcela_id || null)
+      .input('tipo',             sql.NVarChar,      'egreso_descarte')
+      .input('kilos',            sql.Decimal(10,2), parseFloat(kilos))
+      .input('sub_lote_id',      sql.Int,           parseInt(sub_lote_id))
+      .input('cantidad_envases', sql.Int,           cantidad_envases ? parseInt(cantidad_envases) : null)
+      .input('fecha',            sql.DateTime,      new Date())
+      .input('observacion',      sql.NVarChar,      observacion || '')
+      .input('usuario_id',       sql.Int,           uid)
+      .input('destino_venta',    sql.NVarChar,      'descarte')
+      .query(`INSERT INTO MovimientosDeposito
+        (deposito_id, temporada_id, parcela_id, tipo, kilos, sub_lote_id, cantidad_envases, fecha, observacion, usuario_id, destino_venta)
+        VALUES (@deposito_id, @temporada_id, @parcela_id, @tipo, @kilos, @sub_lote_id, @cantidad_envases, @fecha, @observacion, @usuario_id, @destino_venta)`);
+
+    // Actualizar kilos del lote
+    const nuevosKilos = parseFloat(sl.kilos) - parseFloat(kilos);
+    if (nuevosKilos <= 0) {
+      await new sql.Request(transaction)
+        .input('sl_id', sql.Int, parseInt(sub_lote_id))
+        .query("UPDATE LotesMercaderia SET kilos = 0, etapa = 'descartado' WHERE id = @sl_id");
+    } else {
+      await new sql.Request(transaction)
+        .input('sl_id', sql.Int, parseInt(sub_lote_id))
+        .input('kilos', sql.Decimal(10,2), nuevosKilos)
+        .query('UPDATE LotesMercaderia SET kilos = @kilos WHERE id = @sl_id');
+    }
+
+    await transaction.commit();
+    res.json({ ok: true });
+  } catch (err) {
+    await transaction.rollback();
+    console.error(err); res.status(500).json({ error: 'Error al registrar descarte' });
   }
 });
 

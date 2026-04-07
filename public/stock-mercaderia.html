@@ -9,154 +9,54 @@
   <script src="js/utils.js"></script>
   <script src="js/cosecha-dialogs.js"></script>
   <script src="js/auth-check.js"></script>
-  <script src="js/cotizaciones.js"></script>
   <script src="js/movimientos-grid.js"></script>
   <link rel="stylesheet" href="cosecha.css">
   <style>
     .empty { text-align:center; color:var(--texto-suave); padding:24px 16px; font-size:13px; }
-    .badge-fresco    { background:var(--sem-verde-bg); color:var(--sem-verde); }
-    .badge-industria { background:var(--sem-azul-bg);  color:var(--sem-azul); }
-    .badge-congelado { background:var(--sem-azul-bg);  color:var(--sem-azul); }
-    .badge-descarte  { background:var(--sem-rojo-bg);  color:var(--sem-rojo); }
-    .badge-deposito  { background:var(--sem-amarillo-bg); color:#7d5a00; }
-    .dep-select-wrap { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
-    @media(max-width:600px){ .dep-select-wrap{grid-template-columns:1fr;} }
 
-    /* ── KPI Cards ── */
-    .merc-kpis {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 12px;
+    /* ── KPI Cards (ins-* pattern) ── */
+    .ins-kpis {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
     }
-    .merc-kpi {
+    .ins-kpi {
       background: #fff;
       border-radius: 8px;
-      padding: 8px 12px;
-      box-shadow: 0 1px 6px rgba(0,0,0,.06);
-      border: 1px solid rgba(0,0,0,.06);
+      padding: 12px 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.08);
       display: flex;
-      align-items: center;
-      gap: 8px;
-      flex: 0 0 auto;
+      flex-direction: column;
+      gap: 2px;
     }
-    .merc-kpi-icon {
-      width: 28px; height: 28px;
-      border-radius: 6px;
+    .ins-kpi-icon {
+      width: 36px; height: 36px;
+      border-radius: 8px;
       display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
+      margin-bottom: 8px;
+      background: #eef7ee; color: #2D5016;
     }
-    .merc-kpi-icon svg { width: 14px; height: 14px; }
-    .merc-kpi-icon.cosechados { background: #e8f0fe; color: #1565c0; }
-    .merc-kpi-icon.deposito   { background: #eef7ee; color: #2d6a4f; }
-    .merc-kpi-icon.vendidos   { background: #e8f5e2; color: #2d6a4f; }
-    .merc-kpi-icon.descartados{ background: #fde8e8; color: #c0392b; }
-    .merc-kpi-icon.transito   { background: #fff3cd; color: #856404; }
-    .merc-kpi-icon.cajones    { background: #f3e8ff; color: #7c3aed; }
-    /* Etapas */
-    .etapa-badge {
-      display: inline-flex; align-items: center; gap: 4px;
-      padding: 3px 8px; border-radius: 12px;
-      font-size: 11px; font-weight: 700; white-space: nowrap;
+    .ins-kpi-icon.azul    { background: var(--sem-azul-bg);  color: var(--sem-azul); }
+    .ins-kpi-icon.rojo    { background: var(--sem-rojo-bg);  color: var(--sem-rojo); }
+    .ins-kpi-icon.amarillo{ background: var(--sem-amarillo-bg); color: #856404; }
+    .ins-kpi-icon svg { width: 18px; height: 18px; }
+    .ins-kpi-valor {
+      font-size: 22px; font-weight: 700;
+      font-family: 'JetBrains Mono', monospace; line-height: 1;
+      color: var(--texto);
     }
-    .etapa-badge.pendiente_despalillado { background:#fff3cd; color:#856404; }
-    .etapa-badge.fresco                 { background:#e8f5e2; color:#2d6a4f; }
-    .etapa-badge.cosecha                { background:#fff3cd; color:#856404; }
-    .etapa-badge.despalillado           { background:#e8f0fe; color:#1565c0; }
-    .etapa-badge.en_clasificacion       { background:#fef3e2; color:#c0580a; }
-    .etapa-badge.clasificado            { background:#f3e8ff; color:#7c3aed; }
-    .etapa-badge.embalado               { background:#e8f5e2; color:#2d6a4f; }
-    .etapa-badge.vendido_parcial        { background:#fde8e8; color:#c0392b; }
-    .etapa-badge.vendida                { background:#f3e8ff; color:#7c3aed; }
-    .etapa-badge.vendida_parcial        { background:#fde8e8; color:#c0392b; }
-    /* Tabla etapas */
-    #tabla-etapas thead th {
-      background:#2D5016; color:#fff; font-weight:700;
-      text-transform:uppercase; font-size:11px; letter-spacing:.5px; padding:10px 12px;
-    }
-    #tabla-etapas tbody td { padding:9px 12px; font-size:13px; }
-    #tabla-etapas tbody tr:hover { background:var(--fondo-dark); }
-    .merc-kpi-valor {
-      font-size: 16px; font-weight: 700;
-      font-family: 'JetBrains Mono', monospace; line-height: 1; white-space: nowrap;
-    }
-    .merc-kpi-valor.azul  { color: #1565c0; }
-    .merc-kpi-valor.verde { color: #2d6a4f; }
-    .merc-kpi-valor.rojo  { color: #c0392b; }
-    .merc-kpi-label {
-      font-size: 9px; text-transform: uppercase;
-      letter-spacing: .4px; color: var(--texto-suave); margin-top: 1px;
-    }
-
-    /* ── Action bar ── */
-    .merc-action-bar {
-      display: flex; align-items: center;
-      justify-content: space-between; gap: 10px;
-      margin-bottom: 14px; flex-wrap: wrap;
-    }
-    .merc-action-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-
-    /* ── Shared stock buttons (identical across insumos + mercadería) ── */
-    .stock-btn {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 9px 16px; border-radius: 7px;
-      font-size: 13px; font-weight: 600; border: none;
-      cursor: pointer; text-decoration: none; line-height: 1;
-      transition: opacity .15s; white-space: nowrap;
-    }
-    .stock-btn:hover { opacity: .82; }
-    .stock-btn svg { width: 14px; height: 14px; }
-    .stock-btn-ingreso  { background: #2D5016; color: #fff; }
-    .stock-btn-egreso   { background: #F5A623; color: #fff; }
-    .stock-btn-descarte { background: #C0580A; color: #fff; }
-    .stock-btn-historial { background: #6c757d; color: #fff; }
-    .stock-btn-historial.activo { background: #343a40; }
-
-    .merc-search {
-      padding: 8px 12px; border: 1px solid var(--borde);
-      border-radius: 7px; font-size: 13px; min-width: 200px;
-      background: #fff; color: var(--texto); outline: none;
-    }
-    .merc-search:focus { border-color: #2D5016; }
-    .merc-filter-sel {
-      padding: 8px 10px; border: 1px solid var(--borde);
-      border-radius: 7px; font-size: 13px;
-      background: #fff; color: var(--texto); cursor: pointer; outline: none;
-    }
-    .merc-filter-sel:focus { border-color: #2D5016; }
-    .merc-temporada-sel {
-      padding: 8px 10px; border: 1px solid var(--borde);
-      border-radius: 7px; font-size: 13px; max-width: 160px;
-      background: #fff; color: var(--texto); cursor: pointer; outline: none;
-    }
-    .merc-temporada-sel:focus { border-color: #2D5016; }
-    .merc-export-group { display: flex; gap: 4px; }
-    .merc-btn-export {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 36px; height: 36px; border-radius: 7px;
-      border: 1px solid var(--borde); background: #fff;
-      cursor: pointer; transition: background .15s; color: var(--texto-suave);
-    }
-    .merc-btn-export:hover { background: var(--fondo-dark); color: var(--texto); }
-    .merc-btn-export svg { width: 16px; height: 16px; }
-
-    /* ── Stock grid table header ── */
-    #tabla-stock-grid thead th {
-      background: #2D5016; color: #fff;
-      font-weight: 700; text-transform: uppercase;
-      font-size: 11px; letter-spacing: .5px; padding: 11px 12px;
-    }
-    #tabla-stock-grid thead th:first-child { width: 36px; text-align: center; }
-    #tabla-stock-grid tbody td { padding: 10px 12px; }
-    #tabla-stock-grid tbody td:first-child { text-align: center; }
-    #tabla-stock-grid tbody tr:hover { background: var(--fondo-dark); }
-    input[type="checkbox"].row-check {
-      width: 15px; height: 15px; cursor: pointer; accent-color: #2D5016;
+    .ins-kpi-valor.rojo  { color: var(--sem-rojo); }
+    .ins-kpi-valor.verde { color: #2d6a4f; }
+    .ins-kpi-valor.azul  { color: var(--sem-azul); }
+    .ins-kpi-label {
+      font-size: 10px; text-transform: uppercase;
+      letter-spacing: .5px; color: var(--texto-suave); margin-top: 4px;
     }
 
     /* ── Estado almacenes ── */
-    .merc-almacenes { margin-bottom: 14px; }
-    .merc-almacenes-title { font-size: 12px; font-weight: 600; color: var(--texto-suave); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+    .ins-almacenes { margin-bottom: 14px; }
+    .ins-almacenes-title { font-size: 12px; font-weight: 600; color: var(--texto-suave); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
     #merc-almacenes-list { display: flex; flex-wrap: wrap; gap: 8px; }
     .merc-alm-row { flex: 1 1 150px; display: flex; flex-direction: column; gap: 4px; padding: 8px 12px; background: #fff; border: 1px solid var(--borde); border-radius: 8px; min-width: 140px; }
     .merc-alm-nombre { font-size: 13px; font-weight: 600; }
@@ -164,41 +64,57 @@
     .merc-alm-bar { height: 5px; background: var(--fondo-dark); border-radius: 4px; overflow: hidden; }
     .merc-alm-bar-fill { height: 100%; border-radius: 4px; background: #2d6a4f; transition: width .4s; }
     .merc-alm-bar-fill.warn { background: #f59e0b; }
-    .merc-alm-bar-fill.full { background: #c0392b; }
+    .merc-alm-bar-fill.full { background: var(--sem-rojo); }
     .merc-alm-stat { font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--texto-2); white-space: nowrap; }
 
-    /* ── Historial section (collapsible) ── */
-    #section-historial { margin-top: 16px; }
-    .merc-hist-header {
-      display: flex; align-items: center;
-      justify-content: space-between; margin-bottom: 10px;
+    /* ── Etapa badges ── */
+    .etapa-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 8px; border-radius: 12px;
+      font-size: 11px; font-weight: 700; white-space: nowrap;
     }
-    .merc-hist-header span { font-weight: 600; font-size: 14px; }
+    .etapa-badge.cosecha           { background: var(--sem-amarillo-bg); color: #856404; }
+    .etapa-badge.despalillado      { background: var(--sem-azul-bg);    color: var(--sem-azul); }
+    .etapa-badge.en_clasificacion  { background: #fef3e2; color: #c0580a; }
+    .etapa-badge.clasificado       { background: #f3e8ff; color: #7c3aed; }
+    .etapa-badge.embalado          { background: var(--sem-verde-bg);   color: var(--sem-verde); }
+    .etapa-badge.vendido_parcial   { background: var(--sem-rojo-bg);    color: var(--sem-rojo); }
+    .etapa-badge.vendido           { background: #f3e8ff; color: #7c3aed; }
 
-    /* ── Modals use .modal-overlay + .modal-box + .btn-cerrar from cosecha.css ── */
+    /* ── Tipo movimiento badges ── */
+    .tipo-badge {
+      display: inline-block; padding: 2px 7px; border-radius: 4px;
+      font-size: 10px; font-weight: 700; text-transform: uppercase; white-space: nowrap;
+    }
+    .tipo-badge.ingreso_juntada  { background: var(--sem-verde-bg);   color: var(--sem-verde); }
+    .tipo-badge.ingreso_embalaje { background: #e0f2f1; color: #00796b; }
+    .tipo-badge.ingreso          { background: var(--sem-verde-bg);   color: var(--sem-verde); }
+    .tipo-badge.egreso_venta     { background: var(--sem-rojo-bg);    color: var(--sem-rojo); }
+    .tipo-badge.egreso_descarte  { background: #fff3cd; color: #c0580a; }
+    .tipo-badge.egreso_anulacion { background: var(--fondo-dark);     color: var(--texto-suave); }
+    .tipo-badge.ingreso_anulacion{ background: var(--fondo-dark);     color: var(--texto-suave); }
 
-    /* ── btn-sm ── */
-    .btn-sm { padding: 6px 12px !important; font-size: 12px !important; }
-    .btn-sm svg { width: 13px; height: 13px; }
-
-    /* ── Stock Actual section ── */
-    .seccion-stock-actual { margin-bottom: 20px; }
+    /* ── Section headers ── */
     .seccion-header {
       display: flex; align-items: center;
       justify-content: space-between;
-      margin-bottom: 10px;
+      margin-bottom: 10px; flex-wrap: wrap; gap: 8px;
     }
     .seccion-header h3 {
       margin: 0; font-size: 14px; font-weight: 700; color: var(--texto);
       display: flex; align-items: center; gap: 6px;
     }
-    #tabla-stock-actual thead th {
+
+    /* ── Tables ── */
+    .merc-table thead th {
       background: #2D5016; color: #fff;
       font-weight: 700; text-transform: uppercase;
-      font-size: 11px; letter-spacing: .5px; padding: 11px 12px;
+      font-size: 11px; letter-spacing: .5px; padding: 10px 12px;
     }
-    #tabla-stock-actual tbody td { padding: 10px 12px; }
-    #tabla-stock-actual tbody tr:hover { background: var(--fondo-dark); }
+    .merc-table tbody td { padding: 9px 12px; font-size: 13px; }
+    .merc-table tbody tr:hover { background: var(--fondo-dark); }
+
+    /* ── Historial section ── */
     .seccion-historial-titulo {
       display: flex; align-items: center;
       justify-content: space-between;
@@ -210,13 +126,27 @@
       margin: 0; font-size: 14px; font-weight: 700; color: var(--texto);
     }
 
-    @media(max-width:900px) {
-      .merc-kpis { grid-template-columns: 1fr 1fr; }
-      .merc-action-bar { flex-direction: column; align-items: flex-start; }
-      .merc-action-right { width: 100%; }
-      .merc-search { min-width: 0; flex: 1; }
+    /* ── Dep select ── */
+    .dep-select-wrap { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
+    @media(max-width:600px){ .dep-select-wrap{grid-template-columns:1fr;} }
+
+    .btn-sm { padding: 6px 12px !important; font-size: 12px !important; }
+    .btn-sm svg { width: 13px; height: 13px; }
+
+    .btn-icon-sm {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--borde);
+      background: #fff; cursor: pointer; color: var(--texto-suave); transition: all .15s;
     }
-    @media(max-width:480px) { .merc-kpis { grid-template-columns: 1fr 1fr; } }
+    .btn-icon-sm:hover { background: var(--fondo-dark); color: var(--texto); }
+    .btn-icon-sm svg { width: 14px; height: 14px; }
+
+    @media(max-width:900px) {
+      .ins-kpis { grid-template-columns: 1fr 1fr; }
+    }
+    @media(max-width:480px) {
+      .ins-kpis { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
@@ -259,103 +189,91 @@
     </header>
 
     <div class="content">
-      <a href="menu-stock.html" class="btn-volver">← Volver</a>
+      <a href="menu-stock.html" class="btn-volver">&larr; Volver</a>
+
+      <!-- ═══ HEADER — Sec 5 ═══ -->
       <div class="content-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
         <div>
           <div class="content-title">Stock Mercadería</div>
-          <div class="content-sub">Inventario, depósitos y movimientos de cosecha</div>
+          <div class="content-sub">Inventario de cosecha, envases y movimientos</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-          <button class="stock-btn stock-btn-ingreso" onclick="openIngresoModal()">
-            <i data-lucide="package-plus"></i> Registrar Ingreso
-          </button>
-          <button class="stock-btn stock-btn-egreso" onclick="openEgresoModal()">
-            <i data-lucide="minus"></i> Registrar Egreso
-          </button>
-          <button class="stock-btn stock-btn-descarte" onclick="openDescarteModal()">
+          <button class="ins-btn ins-btn-gray" style="background:#C0580A;color:#fff;" onclick="openDescarteModal()">
             <i data-lucide="trash-2"></i> Registrar Descarte
           </button>
-          <button class="stock-btn stock-btn-historial" id="btn-toggle-hist" onclick="toggleHistorial()">
-            <i data-lucide="clock"></i> Historial de Movimientos
+          <button class="ins-btn ins-btn-gray" onclick="exportarStockEnvases()">
+            <i data-lucide="download"></i> Exportar
+          </button>
+          <button class="ins-btn ins-btn-gray" id="btn-toggle-hist" onclick="toggleHistorial()">
+            <i data-lucide="clock"></i> Historial
           </button>
         </div>
       </div>
 
-      <!-- KPI Cards -->
-      <div class="merc-kpis">
-        <div class="merc-kpi">
-          <div class="merc-kpi-icon cosechados"><i data-lucide="wheat"></i></div>
-          <div class="merc-kpi-valor azul" id="kpi-cosechados">—</div>
-          <div class="merc-kpi-label">KG Cosechados</div>
+      <!-- ═══ SECCIÓN 1 — KPIs ═══ -->
+      <div class="ins-kpis">
+        <div class="ins-kpi">
+          <div class="ins-kpi-icon azul"><i data-lucide="wheat"></i></div>
+          <div class="ins-kpi-valor azul" id="kpi-cosechados">—</div>
+          <div class="ins-kpi-label">KG Cosechados</div>
         </div>
-        <div class="merc-kpi">
-          <div class="merc-kpi-icon deposito"><i data-lucide="warehouse"></i></div>
-          <div class="merc-kpi-valor verde" id="kpi-deposito">—</div>
-          <div class="merc-kpi-label">KG en Depósito</div>
+        <div class="ins-kpi">
+          <div class="ins-kpi-icon"><i data-lucide="package-check"></i></div>
+          <div class="ins-kpi-valor verde" id="kpi-disponible">—</div>
+          <div class="ins-kpi-label">KG Disponibles para Venta</div>
         </div>
-        <div class="merc-kpi">
-          <div class="merc-kpi-icon vendidos"><i data-lucide="shopping-cart"></i></div>
-          <div class="merc-kpi-valor verde" id="kpi-vendidos">—</div>
-          <div class="merc-kpi-label">KG Vendidos</div>
+        <div class="ins-kpi">
+          <div class="ins-kpi-icon"><i data-lucide="check-circle"></i></div>
+          <div class="ins-kpi-valor verde" id="kpi-listo">—</div>
+          <div class="ins-kpi-label">Listo para Venta</div>
         </div>
-        <div class="merc-kpi">
-          <div class="merc-kpi-icon descartados"><i data-lucide="trash-2"></i></div>
-          <div class="merc-kpi-valor rojo" id="kpi-descartados">—</div>
-          <div class="merc-kpi-label">KG Descartados</div>
+        <div class="ins-kpi">
+          <div class="ins-kpi-icon azul"><i data-lucide="shopping-cart"></i></div>
+          <div class="ins-kpi-valor azul" id="kpi-vendidos">—</div>
+          <div class="ins-kpi-label">KG Vendidos</div>
         </div>
-        <div class="merc-kpi">
-          <div class="merc-kpi-icon transito"><i data-lucide="clock"></i></div>
-          <div class="merc-kpi-valor" style="color:#856404;" id="kpi-en-proceso">—</div>
-          <div class="merc-kpi-label">En Proceso</div>
+        <div class="ins-kpi">
+          <div class="ins-kpi-icon rojo"><i data-lucide="trash-2"></i></div>
+          <div class="ins-kpi-valor rojo" id="kpi-descartados">—</div>
+          <div class="ins-kpi-label">KG Descartados</div>
         </div>
-        <div class="merc-kpi">
-          <div class="merc-kpi-icon" style="background:#e8f5e2;color:#2D5016;"><i data-lucide="package-check"></i></div>
-          <div class="merc-kpi-valor verde" id="kpi-embalado">—</div>
-          <div class="merc-kpi-label">Embalado (vendible)</div>
-        </div>
-        <div class="merc-kpi" id="kpi-cajones-card" style="display:none;">
-          <div class="merc-kpi-icon cajones"><i data-lucide="package"></i></div>
-          <div class="merc-kpi-valor" style="color:#7c3aed;" id="kpi-cajones">—</div>
-          <div class="merc-kpi-label">Cajones en circulación</div>
+        <div class="ins-kpi">
+          <div class="ins-kpi-icon amarillo"><i data-lucide="clock"></i></div>
+          <div class="ins-kpi-valor" style="color:#856404;" id="kpi-en-proceso">—</div>
+          <div class="ins-kpi-label">En Proceso</div>
         </div>
       </div>
 
       <!-- Estado de almacenes -->
-      <div class="merc-almacenes" id="merc-almacenes" style="display:none;">
-        <div class="merc-almacenes-title">Estado de almacenes</div>
+      <div class="ins-almacenes" id="merc-almacenes" style="display:none;">
+        <div class="ins-almacenes-title">Estado de almacenes</div>
         <div id="merc-almacenes-list"></div>
       </div>
 
-      <!-- ── Stock Actual por variedad + depósito ── -->
-      <div class="seccion-stock-actual">
+      <!-- ═══ SECCIÓN 2 — Stock disponible por envase ═══ -->
+      <div style="margin-bottom:20px;">
         <div class="seccion-header">
-          <h3><i data-lucide="warehouse" style="width:15px;height:15px;"></i> Stock Actual</h3>
+          <h3><i data-lucide="package" style="width:15px;height:15px;"></i> Stock Disponible</h3>
           <div style="display:flex;align-items:center;gap:8px;">
-            <select id="filtro-temporada" onchange="cargarStock()" style="height:30px;padding:3px 10px;font-size:13px;border:1px solid var(--borde);border-radius:6px;background:#fff;color:var(--texto);outline:none;">
+            <select id="filtro-temporada" onchange="cargarTodo()" style="height:30px;padding:3px 10px;font-size:13px;border:1px solid var(--borde);border-radius:6px;background:#fff;color:var(--texto);outline:none;">
               <option value="">Todas las temporadas</option>
             </select>
-            <button class="btn btn-secondary btn-sm" onclick="exportarStockActual()">
-              <i data-lucide="download"></i> Exportar
-            </button>
-            <button class="btn btn-secondary btn-sm" onclick="imprimirStockActual()">
-              <i data-lucide="printer"></i> Imprimir
-            </button>
           </div>
         </div>
         <div class="card">
           <div class="table-wrap">
-            <table id="tabla-stock-actual">
+            <table class="merc-table" id="tabla-stock-envases">
               <thead>
                 <tr>
-                  <th>ETAPA</th>
-                  <th>VARIEDAD</th>
-                  <th>CATEGORÍA</th>
-                  <th>DEPÓSITO</th>
-                  <th style="text-align:right;">LOTES</th>
+                  <th>Tipo Envase</th>
+                  <th>Categoría</th>
+                  <th>Subcategoría</th>
+                  <th>Depósito</th>
+                  <th style="text-align:right;">Unidades</th>
                   <th style="text-align:right;">KG</th>
                 </tr>
               </thead>
-              <tbody id="tbody-stock-actual">
+              <tbody id="tbody-stock-envases">
                 <tr><td colspan="6" class="empty">Cargando...</td></tr>
               </tbody>
             </table>
@@ -363,50 +281,56 @@
         </div>
       </div>
 
-      <!-- ── Etapas por juntada ── -->
-      <div class="card" style="margin-top:16px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
-          <h3 style="margin:0;font-size:15px;"><i data-lucide="layers" style="width:15px;height:15px;vertical-align:middle;margin-right:6px;"></i>Estado de mercadería por juntada</h3>
+      <!-- ═══ SECCIÓN 3 — Estado por lote ═══ -->
+      <div style="margin-bottom:20px;">
+        <div class="seccion-header">
+          <h3><i data-lucide="layers" style="width:15px;height:15px;"></i> Estado por Lote</h3>
           <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-            <select id="etapa-temporada" onchange="cargarEtapas()" style="height:30px;padding:3px 10px;font-size:13px;border:1px solid var(--borde);border-radius:6px;background:#fff;color:var(--texto);outline:none;">
-              <option value="">Todas las temporadas</option>
-            </select>
-            <select id="etapa-filtro" onchange="filtrarEtapas()" style="height:30px;padding:3px 10px;font-size:13px;border:1px solid var(--borde);border-radius:6px;background:#fff;color:var(--texto);outline:none;">
+            <select id="lote-filtro-etapa" onchange="cargarEstadoLotes()" style="height:30px;padding:3px 10px;font-size:13px;border:1px solid var(--borde);border-radius:6px;background:#fff;color:var(--texto);outline:none;">
               <option value="">Todas las etapas</option>
-              <option value="pendiente_despalillado">🟡 Pendiente despalillado</option>
-              <option value="fresco">🟢 Fresco (sin despalillar)</option>
-              <option value="despalillado">🔵 Despalillado en stock</option>
-              <option value="vendida_parcial">🔶 Vendida parcial</option>
-              <option value="vendida">✅ Vendida</option>
+              <option value="cosecha">Cosecha</option>
+              <option value="despalillado">Despalillado</option>
+              <option value="en_clasificacion">En clasificación</option>
+              <option value="clasificado">Clasificado</option>
+              <option value="embalado">Embalado</option>
+              <option value="vendido_parcial">Vendido parcial</option>
+              <option value="vendido">Vendido</option>
             </select>
+            <button class="btn btn-secondary btn-sm" onclick="exportarEstadoLotes()">
+              <i data-lucide="download"></i>
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="imprimirEstadoLotes()">
+              <i data-lucide="printer"></i>
+            </button>
           </div>
         </div>
-        <div class="table-wrap">
-          <table id="tabla-etapas">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Fecha</th>
-                <th>Parcela</th>
-                <th>Juntador</th>
-                <th>Depósito</th>
-                <th style="text-align:right;">Kg juntada</th>
-                <th style="text-align:right;">Kg en stock</th>
-                <th style="text-align:right;">Kg vendidos</th>
-                <th>Etapa</th>
-              </tr>
-            </thead>
-            <tbody id="tbody-etapas">
-              <tr><td colspan="9" class="empty">Cargando...</td></tr>
-            </tbody>
-          </table>
+        <div class="card">
+          <div class="table-wrap">
+            <table class="merc-table" id="tabla-estado-lotes">
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Categoría</th>
+                  <th>Tipo Envase</th>
+                  <th style="text-align:right;">Unidades</th>
+                  <th style="text-align:right;">KG</th>
+                  <th>Depósito</th>
+                  <th>Etapa</th>
+                  <th style="text-align:center;">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-estado-lotes">
+                <tr><td colspan="8" class="empty">Cargando...</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      <!-- Historial (collapsible) -->
+      <!-- ═══ SECCIÓN 4 — Historial (collapsible) ═══ -->
       <div id="section-historial" style="display:none;">
-        <div class="merc-hist-header">
-          <span><i data-lucide="clock" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Historial de Movimientos</span>
+        <div class="seccion-historial-titulo">
+          <h3><i data-lucide="clock" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Historial de Movimientos</h3>
           <div style="display:flex;gap:4px;">
             <button class="btn btn-secondary btn-sm" onclick="exportarCSVHistorial()">
               <i data-lucide="download"></i> Exportar
@@ -416,71 +340,43 @@
             </button>
           </div>
         </div>
-        <!-- Barra de filtros historial -->
-        <div class="filtros-barra" style="margin-bottom:8px;">
-          <input type="search" class="fb-buscar" id="hist-buscar" placeholder="Filtrar por..." list="sm-hist-opciones" oninput="filtrarHistorialMerc()">
-          <datalist id="sm-hist-opciones"></datalist>
+        <div class="filtros-barra" style="margin-bottom:10px;">
+          <input type="search" class="fb-buscar" id="hist-buscar" placeholder="Buscar lote, operador..." oninput="filtrarHistorialMerc()">
           <div class="fb-sep"></div>
           <select id="hist-temporada" onchange="cargarHistorial()" title="Temporada">
             <option value="">Temporada: Todas</option>
+          </select>
+          <select id="hist-tipo" onchange="cargarHistorial()" title="Tipo">
+            <option value="">Tipo: Todos</option>
+            <option value="ingreso">Ingresos</option>
+            <option value="egreso_venta">Egreso venta</option>
+            <option value="egreso_descarte">Egreso descarte</option>
           </select>
           <div class="fb-sep"></div>
           <input type="date" id="hist-desde" onchange="cargarHistorial()" title="Desde">
           <input type="date" id="hist-hasta" onchange="cargarHistorial()" title="Hasta">
           <div class="fb-sep"></div>
-          <button class="aplic-btn-export" onclick="exportarCSVHistorial()" title="Exportar CSV"><i data-lucide="download"></i></button>
-          <button class="aplic-btn-export" onclick="imprimirHistorial()" title="Imprimir"><i data-lucide="printer"></i></button>
-          <button class="fb-limpiar" onclick="limpiarFiltrosHistorial()">✕ Limpiar</button>
+          <button class="fb-limpiar" onclick="limpiarFiltrosHistorial()">&#10005; Limpiar</button>
         </div>
-        <!-- Toggle vista -->
-        <div style="display:flex;gap:4px;margin-bottom:8px;">
-          <button class="btn btn-sm" id="btn-vista-mov" onclick="cambiarVistaHist('movimientos')" style="padding:3px 10px;font-size:11px;background:var(--verde);color:#fff;border:1px solid var(--verde);border-radius:6px;">Movimientos</button>
-          <button class="btn btn-sm" id="btn-vista-lotes" onclick="cambiarVistaHist('lotes')" style="padding:3px 10px;font-size:11px;background:var(--superficie);border:1px solid var(--borde);border-radius:6px;">Por lotes</button>
-        </div>
-        <!-- Vista movimientos (actual) -->
-        <div id="vista-movimientos" class="card">
+        <div class="card">
           <div class="table-wrap">
-            <table>
+            <table class="merc-table" id="tabla-historial">
               <thead>
                 <tr>
-                  <th style="text-align:center;">#</th>
-                  <th>Cosechero</th>
                   <th>Fecha</th>
                   <th>Tipo</th>
-                  <th>Parcela</th>
-                  <th>Destino</th>
-                  <th style="text-align:right;">Kilos</th>
-                  <th style="text-align:right;">Precio/kg</th>
-                  <th style="text-align:right;">Total</th>
-                  <th>Comprador</th>
-                  <th>Usuario</th>
+                  <th>Lote</th>
+                  <th>Tipo Envase</th>
+                  <th style="text-align:right;">Unidades</th>
+                  <th style="text-align:right;">KG</th>
+                  <th>Depósito</th>
+                  <th>Operador</th>
                 </tr>
               </thead>
               <tbody id="tbody-historial">
-                <tr><td colspan="11" class="empty">Seleccioná filtros para ver movimientos</td></tr>
+                <tr><td colspan="8" class="empty">Seleccioná filtros para ver movimientos</td></tr>
               </tbody>
               <tfoot id="tfoot-historial"></tfoot>
-            </table>
-          </div>
-        </div>
-        <!-- Vista por lotes -->
-        <div id="vista-lotes" class="card" style="display:none;">
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Fecha</th>
-                  <th>Lote</th>
-                  <th>Categoría</th>
-                  <th>Presentación</th>
-                  <th style="text-align:right;">Envases</th>
-                  <th style="text-align:right;">Kg</th>
-                  <th>Depósito</th>
-                </tr>
-              </thead>
-              <tbody id="tbody-hist-lotes">
-                <tr><td colspan="7" class="empty">Seleccioná filtros para ver</td></tr>
-              </tbody>
             </table>
           </div>
         </div>
@@ -499,141 +395,50 @@
   </nav>
 </div>
 
-<!-- ── MODAL: REGISTRAR INGRESO ── -->
-<div id="modal-ingreso-merc" class="modal-overlay" onclick="closeOnBackdropMerc(event,'modal-ingreso-merc')">
-  <div class="modal-box">
-    <h3><i data-lucide="package-plus" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i> Registrar Ingreso a Depósito</h3>
-      <div class="form-row">
-        <label>Temporada</label>
-        <select id="ing-temporada" onchange="filtrarParcelasPorTemporada('ing-parcela', this.value)">
-          <option value="">Seleccionar...</option>
-        </select>
-      </div>
-      <div class="form-row">
-        <label>Parcela</label>
-        <select id="ing-parcela"><option value="">Seleccionar...</option></select>
-      </div>
-      <div class="form-row">
-        <label>Depósito destino</label>
-        <select id="ing-deposito"><option value="">Seleccionar...</option></select>
-      </div>
-      <div class="form-row">
-        <label>Kilos</label>
-        <input type="number" id="ing-kilos" placeholder="Ej: 500" step="any" min="0" style="-moz-appearance:textfield;">
-      </div>
-      <div class="form-row">
-        <label>Fecha</label>
-        <input type="date" id="ing-fecha">
-      </div>
-      <div class="form-row">
-        <label>Observación</label>
-        <input type="text" id="ing-obs" placeholder="Opcional">
-      </div>
-      <button class="btn btn-primary" id="btn-ingreso" onclick="registrarIngreso(this)" style="margin-top:6px;width:100%;">
-        <i data-lucide="package-plus"></i> Registrar ingreso al depósito
-      </button>
-      <div id="msg-ingreso"></div>
-      <button class="btn-cerrar" onclick="closeIngresoModal()">Cerrar</button>
-  </div>
-</div>
-
-<!-- ── MODAL: REGISTRAR EGRESO ── -->
-<div id="modal-egreso-merc" class="modal-overlay" onclick="closeOnBackdropMerc(event,'modal-egreso-merc')">
-  <div class="modal-box">
-    <h3><i data-lucide="minus" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i> Registrar Egreso</h3>
-      <div class="dep-select-wrap">
-        <div class="form-row" style="margin-bottom:0;">
-          <label>Depósito origen</label>
-          <select id="venta-deposito"><option value="">Seleccionar...</option></select>
-        </div>
-        <div class="form-row" style="margin-bottom:0;">
-          <label>Stock disponible</label>
-          <div id="venta-stock-info" style="padding:10px 13px;background:var(--fondo);border:1.5px solid var(--borde);border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:var(--sem-verde);">—</div>
-        </div>
-      </div>
-      <div class="form-row">
-        <label>Kilos a retirar</label>
-        <input type="number" id="venta-kilos" placeholder="Ej: 300" step="0.01" min="0.01">
-      </div>
-      <div class="form-row">
-        <label>Motivo del egreso</label>
-        <select id="venta-destino">
-          <option value="transporte">Transporte / despacho</option>
-          <option value="procesamiento">Procesamiento</option>
-          <option value="transferencia">Transferencia a otro depósito</option>
-          <option value="otro">Otro</option>
-        </select>
-      </div>
-      <div class="form-row">
-        <label>Observación</label>
-        <input type="text" id="venta-obs" placeholder="Detalle opcional">
-      </div>
-      <button class="btn btn-primary" id="btn-venta" onclick="registrarEgreso(this)" style="margin-top:6px;width:100%;">
-        <i data-lucide="arrow-up-from-line"></i> Registrar egreso
-      </button>
-      <div id="msg-venta"></div>
-      <button class="btn-cerrar" onclick="closeEgresoModal()">Cerrar</button>
-  </div>
-</div>
-
-<!-- ── MODAL: REGISTRAR DESCARTE ── -->
-<div id="modal-descarte-merc" class="modal-overlay" onclick="closeOnBackdropMerc(event,'modal-descarte-merc')">
+<!-- ═══ MODAL: REGISTRAR DESCARTE — Sec 6 ═══ -->
+<div id="modal-descarte-merc" class="modal-overlay" onclick="if(event.target===this)this.classList.remove('open')">
   <div class="modal-box">
     <h3><i data-lucide="trash-2" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i> Registrar Descarte</h3>
-      <div class="form-row">
-        <label>Origen</label>
-        <select id="desc-origen" onchange="toggleOrigenDescarte()">
-          <option value="deposito">Desde depósito</option>
-          <option value="directo">Directo (no pasó por depósito)</option>
-        </select>
-      </div>
-      <div id="desc-dep-fields">
-        <div class="dep-select-wrap">
-          <div class="form-row" style="margin-bottom:0;">
-            <label>Depósito origen</label>
-            <select id="desc-deposito"><option value="">Seleccionar...</option></select>
-          </div>
-          <div class="form-row" style="margin-bottom:0;">
-            <label>Stock disponible</label>
-            <div id="desc-stock-info" style="padding:10px 13px;background:var(--fondo);border:1.5px solid var(--borde);border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:var(--sem-verde);">—</div>
-          </div>
-        </div>
-      </div>
-      <div id="desc-directo-fields" style="display:none;">
-        <div class="two-col">
-          <div class="form-row">
-            <label>Temporada</label>
-            <select id="desc-temporada"><option value="">Seleccionar...</option></select>
-          </div>
-          <div class="form-row">
-            <label>Parcela</label>
-            <select id="desc-parcela"><option value="">Seleccionar...</option></select>
-          </div>
-        </div>
-      </div>
-      <div class="form-row">
-        <label>Kilos descartados</label>
-        <input type="number" inputmode="decimal" id="desc-kilos" placeholder="Ej: 50" min="0" step="any" style="-moz-appearance:textfield;">
-      </div>
-      <div class="form-row">
-        <label>Motivo</label>
-        <select id="desc-motivo">
-          <option value="calidad">Calidad insuficiente</option>
-          <option value="plaga">Plaga / enfermedad</option>
-          <option value="daño_fisico">Daño físico</option>
-          <option value="vencimiento">Vencimiento en cámara</option>
-          <option value="otro">Otro</option>
-        </select>
-      </div>
-      <div class="form-row">
-        <label>Observación</label>
-        <input type="text" id="desc-obs" placeholder="Detalle adicional">
-      </div>
-      <button class="btn btn-primary" style="background:var(--sem-rojo);margin-top:6px;width:100%;" id="btn-descarte" onclick="registrarDescarte(this)">
-        Registrar descarte
-      </button>
-      <div id="msg-descarte"></div>
-      <button class="btn-cerrar" onclick="closeDescarteModal()">Cerrar</button>
+    <div class="form-row">
+      <label>Sub-lote origen (embalado)</label>
+      <select id="desc-sublote" onchange="onDescarteSubLoteChange()">
+        <option value="">Seleccionar sub-lote...</option>
+      </select>
+    </div>
+    <div id="desc-sublote-info" style="display:none;margin-bottom:10px;padding:8px 12px;background:var(--fondo);border:1px solid var(--borde);border-radius:8px;font-size:12px;"></div>
+    <div class="form-row">
+      <label>Tipo envase</label>
+      <select id="desc-tipo-envase" disabled>
+        <option value="">—</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Cantidad envases descartados</label>
+      <input type="number" id="desc-envases" placeholder="Ej: 5" min="1" step="1">
+    </div>
+    <div class="form-row">
+      <label>Kilos descartados</label>
+      <input type="number" inputmode="decimal" id="desc-kilos" placeholder="Ej: 50" min="0" step="any" style="-moz-appearance:textfield;">
+    </div>
+    <div class="form-row">
+      <label>Motivo</label>
+      <select id="desc-motivo">
+        <option value="calidad">Calidad insuficiente</option>
+        <option value="plaga">Plaga / enfermedad</option>
+        <option value="daño_fisico">Daño físico</option>
+        <option value="vencimiento">Vencimiento en cámara</option>
+        <option value="otro">Otro</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Observación</label>
+      <input type="text" id="desc-obs" placeholder="Detalle adicional">
+    </div>
+    <button class="btn btn-primary" style="background:var(--sem-rojo);margin-top:6px;width:100%;" id="btn-descarte" onclick="registrarDescarte(this)">
+      Registrar descarte
+    </button>
+    <div id="msg-descarte"></div>
+    <button class="btn-cerrar" onclick="document.getElementById('modal-descarte-merc').classList.remove('open')">Cerrar</button>
   </div>
 </div>
 
@@ -645,42 +450,63 @@ document.getElementById('topbar-date').textContent =
 
 var _temporadas = [], _parcelas = [], _depositos = [];
 var _historialVisible = false;
-var _historialMercData = [];  // datos del historial cargados
-var _stockActualData   = [];  // stock actual por variedad+depósito
+var _historialMercData = [];
+var _stockEnvasesData  = [];
+var _estadoLotesData   = [];
+var _lotesEmbalados    = []; // para modal descarte
 
 function fmt(n){ return parseFloat(n||0).toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:1}); }
-function fmtFecha(iso){ if(!iso)return '-'; return new Date(iso).toLocaleDateString('es-AR'); }
+function fmtFecha(iso){ if(!iso)return '—'; return new Date(iso).toLocaleDateString('es-AR'); }
 
-/* ── Modal helpers ── */
-function openIngresoModal() {
-  var hoy = new Date().toISOString().split('T')[0];
-  document.getElementById('ing-fecha').value = hoy;
-  document.getElementById('msg-ingreso').innerHTML = '';
-  document.getElementById('modal-ingreso-merc').classList.add('open');
-  lucide.createIcons();
-}
-function closeIngresoModal() {
-  document.getElementById('modal-ingreso-merc').classList.remove('open');
-}
-function openEgresoModal() {
-  document.getElementById('msg-venta').innerHTML = '';
-  document.getElementById('modal-egreso-merc').classList.add('open');
-  lucide.createIcons();
-}
-function closeEgresoModal() {
-  document.getElementById('modal-egreso-merc').classList.remove('open');
-}
+/* ── Modal descarte ── */
 function openDescarteModal() {
   document.getElementById('msg-descarte').innerHTML = '';
+  document.getElementById('desc-sublote-info').style.display = 'none';
+  cargarLotesEmbalados();
   document.getElementById('modal-descarte-merc').classList.add('open');
   lucide.createIcons();
 }
-function closeDescarteModal() {
-  document.getElementById('modal-descarte-merc').classList.remove('open');
+
+function cargarLotesEmbalados() {
+  var tid = document.getElementById('filtro-temporada').value;
+  var url = '/api/stock-mercaderia/estado-lotes?etapa=embalado' + (tid ? '&temporada_id='+tid : '');
+  fetch(url).then(function(r){ return r.json(); }).then(function(data){
+    _lotesEmbalados = data || [];
+    var sel = document.getElementById('desc-sublote');
+    sel.innerHTML = '<option value="">Seleccionar sub-lote...</option>' +
+      data.map(function(l){
+        return '<option value="'+l.id+'" data-deposito="'+(l.deposito_actual||l.deposito||'')+'" data-deposito-id="" data-kilos="'+l.kilos+'" data-envase="'+(l.tipo_envase||'')+'" data-unidades="'+(l.unidades_embaladas||0)+'">'
+          + (l.codigo_externo||'#'+l.id) + ' — ' + (l.categoria||'') + (l.sub_categoria?' '+l.sub_categoria:'') + ' — ' + fmt(l.kilos) + ' kg'
+          + '</option>';
+      }).join('');
+  });
 }
-function closeOnBackdropMerc(e, id) {
-  if (e.target === document.getElementById(id)) {
-    document.getElementById(id).classList.remove('open');
+
+function onDescarteSubLoteChange() {
+  var sel = document.getElementById('desc-sublote');
+  var opt = sel.options[sel.selectedIndex];
+  var info = document.getElementById('desc-sublote-info');
+  var envSel = document.getElementById('desc-tipo-envase');
+  if (!sel.value) {
+    info.style.display = 'none';
+    envSel.innerHTML = '<option value="">—</option>';
+    envSel.disabled = true;
+    return;
+  }
+  var deposito = opt.getAttribute('data-deposito') || '—';
+  var kg = opt.getAttribute('data-kilos') || '0';
+  var envase = opt.getAttribute('data-envase') || '';
+  var unidades = opt.getAttribute('data-unidades') || '0';
+  info.style.display = '';
+  info.innerHTML = '<strong>Depósito:</strong> ' + deposito +
+    ' &nbsp;|&nbsp; <strong>Stock:</strong> ' + fmt(kg) + ' kg' +
+    (envase ? ' &nbsp;|&nbsp; <strong>Envase:</strong> ' + envase + ' (' + unidades + ' u.)' : '');
+  if (envase) {
+    envSel.innerHTML = '<option value="' + envase + '">' + envase + '</option>';
+    envSel.disabled = true;
+  } else {
+    envSel.innerHTML = '<option value="">Sin envase</option>';
+    envSel.disabled = true;
   }
 }
 
@@ -706,478 +532,217 @@ function init() {
     fetch('/api/depositos').then(function(r){ return r.json(); })
   ]).then(function(results){
     _temporadas = results[0];
-    _parcelas      = results[1];
+    _parcelas   = results[1];
     _depositos  = results[2];
     poblarTemporadas();
-    poblarDepositos();
-    cargarStock();
-    cargarEtapas();
-    cargarCajonesCirculacion();
+    cargarTodo();
   });
 }
 
-var _etapasData = [];
-
-function cargarEtapas() {
-  var tid = document.getElementById('etapa-temporada') ? document.getElementById('etapa-temporada').value : '';
-  var url = '/api/stock-mercaderia/etapas' + (tid ? '?temporada_id=' + tid : '');
-  document.getElementById('tbody-etapas').innerHTML = '<tr><td colspan="9" class="empty" style="color:var(--verde);">Cargando...</td></tr>';
-  fetch(url).then(function(r){ return r.json(); }).then(function(data){
-    _etapasData = data;
-    filtrarEtapas();
-  }).catch(function(){
-    document.getElementById('tbody-etapas').innerHTML = '<tr><td colspan="9" class="empty" style="color:#c0392b;">Error al cargar</td></tr>';
-  });
+function cargarTodo() {
+  cargarKPIs();
+  cargarStockEnvases();
+  cargarEstadoLotes();
+  cargarEstadoAlmacenesMerc();
 }
 
-function filtrarEtapas() {
-  var filtro = document.getElementById('etapa-filtro') ? document.getElementById('etapa-filtro').value : '';
-  var data = filtro ? _etapasData.filter(function(r){ return r.etapa === filtro; }) : _etapasData;
-  var etapaLabel = {
-    pendiente_despalillado: '🟡 Pendiente despalillado',
-    fresco:                 '🟢 Fresco',
-    despalillado:           '🔵 Despalillado',
-    vendida_parcial:        '🔶 Vendida parcial',
-    vendida:                '✅ Vendida'
-  };
-  var tbody = document.getElementById('tbody-etapas');
-  if (!data.length) {
-    tbody.innerHTML = '<tr><td colspan="9" class="empty">Sin juntadas para los filtros seleccionados</td></tr>';
-    return;
-  }
-  tbody.innerHTML = data.map(function(r) {
-    var etiqueta = etapaLabel[r.etapa] || r.etapa;
-    var badgeClass = r.etapa || 'fresco';
-    var kgStock  = parseFloat(r.kilos_en_stock  || 0);
-    var kgVend   = parseFloat(r.kilos_vendidos  || 0);
-    var kgJunt   = parseFloat(r.kilos_juntada   || 0);
-    var fmtKg = function(v){ return v.toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:2})+' kg'; };
-    var mono = "font-family:'JetBrains Mono',monospace;font-weight:700;text-align:right;";
-    return '<tr>'+
-      '<td><span style="font-family:\'JetBrains Mono\',monospace;font-size:11px;background:var(--fondo-dark);border:1px solid var(--borde);border-radius:4px;padding:1px 5px;">#'+r.juntada_id+'</span></td>'+
-      '<td style="font-size:12px;white-space:nowrap;">'+(r.fecha_hora ? new Date(r.fecha_hora).toLocaleDateString('es-AR') : '—')+'</td>'+
-      '<td style="font-size:12px;">'+(r.parcela||'—')+'</td>'+
-      '<td style="font-size:12px;">'+(r.juntador||'—')+'</td>'+
-      '<td style="font-size:12px;">'+(r.deposito_nombre||'—')+'</td>'+
-      '<td style="'+mono+'color:var(--texto);">'+fmtKg(kgJunt)+'</td>'+
-      '<td style="'+mono+'color:#2d6a4f;">'+fmtKg(kgStock)+'</td>'+
-      '<td style="'+mono+'color:#7c3aed;">'+fmtKg(kgVend)+'</td>'+
-      '<td><span class="etapa-badge '+badgeClass+'">'+etiqueta+'</span></td>'+
-    '</tr>';
-  }).join('');
-}
-
-function cargarCajonesCirculacion() {
-  var tid = document.getElementById('filtro-temporada') ? document.getElementById('filtro-temporada').value : '';
-  var url = '/api/depositos/cajones-circulacion' + (tid ? '?temporada_id=' + tid : '');
-  fetch(url).then(function(r){ return r.json(); }).then(function(data){
-    if (!data.length) return;
-    var total = data.reduce(function(s, r){ return s + parseFloat(r.en_circulacion||0); }, 0);
-    var card = document.getElementById('kpi-cajones-card');
-    var val  = document.getElementById('kpi-cajones');
-    if (card) card.style.display = '';
-    if (val) val.textContent = Math.round(total).toLocaleString('es-AR') + ' u.';
-  }).catch(function(){});
-}
-
-function poblarTemporadas() {
-  var opts = _temporadas.map(function(t){ return '<option value="'+t.id+'">'+t.nombre+'</option>'; }).join('');
-  var base = '<option value="">Seleccionar...</option>';
-  ['filtro-temporada','ing-temporada','venta-temporada','desc-temporada','hist-temporada','etapa-temporada'].forEach(function(id){
-    var el = document.getElementById(id);
-    if (el) el.innerHTML = (id==='filtro-temporada'||id==='hist-temporada'||id==='etapa-temporada' ? '<option value="">Todas</option>' : base) + opts;
-  });
-  var activa = _temporadas.find(function(t){ return t.activa; });
-  if (activa) {
-    ['filtro-temporada','ing-temporada','venta-temporada','desc-temporada','hist-temporada','etapa-temporada'].forEach(function(id){
-      var el = document.getElementById(id);
-      if(el) el.value = activa.id;
-    });
-    filtrarParcelasPorTemporada('ing-parcela', activa.id);
-    filtrarParcelasPorTemporada('venta-parcela', activa.id);
-    filtrarParcelasPorTemporada('desc-parcela', activa.id);
-  }
-}
-
-function poblarDepositos() {
-  var opts = _depositos.map(function(d){ return '<option value="'+d.id+'">'+d.nombre+' ('+fmt(d.stock_actual)+' kg)</option>'; }).join('');
-  var base = '<option value="">Seleccionar...</option>';
-  ['ing-deposito','venta-deposito','desc-deposito','hist-deposito'].forEach(function(id){
-    var el = document.getElementById(id);
-    if(el) el.innerHTML = (id==='hist-deposito' ? '<option value="">Todos</option>' : base) + opts;
-  });
-  document.getElementById('venta-deposito').addEventListener('change', function(){ actualizarStockInfo('venta'); });
-  document.getElementById('desc-deposito').addEventListener('change', function(){ actualizarStockInfo('desc'); });
-}
-
-function filtrarParcelasPorTemporada(selectId, temporadaId) {
-  var sel = document.getElementById(selectId);
-  if(!sel) return;
-  var filtrados = temporadaId ? _parcelas.filter(function(l){ return String(l.temporada_id) === String(temporadaId); }) : _parcelas;
-  sel.innerHTML = '<option value="">Seleccionar parcela...</option>' +
-    filtrados.map(function(l){ return '<option value="'+l.id+'">'+l.nombre+'</option>'; }).join('');
-}
-
-function actualizarStockInfo(prefix) {
-  var did = document.getElementById(prefix + '-deposito').value;
-  var el  = document.getElementById(prefix + '-stock-info');
-  if (!did) { el.textContent = '—'; return; }
-  fetch('/api/depositos/' + did + '/stock').then(function(r){ return r.json(); }).then(function(s){
-    var disp = parseFloat(s.stock_actual || 0);
-    el.textContent = fmt(disp) + ' kg';
-    el.style.color = disp > 0 ? 'var(--sem-verde)' : 'var(--sem-rojo)';
-  });
-}
-
-/* ── Stock actual ── */
-var _historialMercData = [];
-
-function _fmtMercFecha(iso) {
-  if (!iso) return '—';
-  var d = new Date(iso);
-  return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' +
-         d.getFullYear() + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
-}
-function _fmtMerc(n) { return parseFloat(n||0).toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:1}); }
-function _chipM(id) {
-  if (!id && id !== 0) return '';
-  return ' <span style="font-family:\'JetBrains Mono\',monospace;font-size:10px;background:var(--fondo-dark);border:1px solid var(--borde);border-radius:4px;padding:1px 4px;opacity:.75;">#'+id+'</span>';
-}
-function _jidM(jid) {
-  if (!jid) return '—';
-  return '<span style="font-family:\'JetBrains Mono\',monospace;font-size:11px;background:var(--fondo-dark);border:1px solid var(--borde);border-radius:4px;padding:1px 5px;">#'+jid+'</span>';
-}
-
-/* ── CSV helper ── */
-function _descargarCSV(filas, nombreArchivo) {
-  var csv = filas.map(function(r) {
-    return r.map(function(v) {
-      return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
-    }).join(',');
-  }).join('\n');
-  var blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-  var url  = URL.createObjectURL(blob);
-  var a    = document.createElement('a');
-  a.href = url; a.download = nombreArchivo; a.click();
-  URL.revokeObjectURL(url);
-}
-
-function _fechaHoy() {
-  var d = new Date();
-  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-}
-
-
-/* ── Exportar historial (datos visibles en historial) ── */
-function exportarCSVHistorial() {
-  var datos = _historialMercData;
-  if (!datos.length) { showAlert('Sin datos en el historial para exportar.', 'info'); return; }
-  var cabecera = ['#','Cosechero','Fecha','Tipo','Parcela','Destino','Kg','Precio/kg','Total','Comprador','Usuario'];
-  var filas = [cabecera].concat(datos.map(function(m) {
-    return [
-      m.juntada_id || '',
-      m.cosechero  || '',
-      m.fecha ? new Date(m.fecha).toLocaleDateString('es-AR') : '',
-      m.tipo || '',
-      m.parcela || '',
-      m.destino_venta || m.deposito || '',
-      parseFloat(m.kilos||0).toFixed(1),
-      m.precio_kilo ? parseFloat(m.precio_kilo).toFixed(2) : '',
-      m.total ? parseFloat(m.total).toFixed(2) : '',
-      m.comprador || '',
-      m.usuario   || ''
-    ];
-  }));
-  _descargarCSV(filas, 'stock-mercaderia-historial-' + _fechaHoy() + '.csv');
-}
-
-
-/* ── Imprimir historial ── */
-function imprimirHistorial() {
-  var temporada = (document.getElementById('hist-temporada').options[document.getElementById('hist-temporada').selectedIndex] || {}).text || 'Todas';
-  var filtros = 'Temporada: ' + temporada;
-  var tabla = document.querySelector('#section-historial table').outerHTML;
-  _abrirVentanaImpresion('Stock Mercadería — Historial', filtros, tabla);
-}
-
-function _abrirVentanaImpresion(titulo, filtros, tablaHTML) {
-  var fecha = new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
-  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + titulo + '</title>' +
-    '<style>' +
-    'body{font-family:Arial,sans-serif;font-size:11px;margin:20px;color:#222;}' +
-    'h2{margin:0 0 4px;font-size:16px;}' +
-    'p.info{margin:0 0 14px;font-size:11px;color:#666;}' +
-    'table{width:100%;border-collapse:collapse;}' +
-    'th{background:#2D5016!important;color:#fff!important;padding:7px 8px;text-align:left;font-size:11px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}' +
-    'td{padding:6px 8px;border-bottom:1px solid #eee;font-size:11px;}' +
-    'tr:nth-child(even){background:#f8f8f8;}' +
-    'input[type=checkbox]{display:none;}' +
-    '</style></head><body>' +
-    '<h2>' + titulo + '</h2>' +
-    '<p class="info">' + filtros + ' &nbsp;|&nbsp; Impreso: ' + fecha + '</p>' +
-    tablaHTML +
-    '</body></html>';
-  var w = window.open('', '_blank');
-  w.document.write(html);
-  w.document.close();
-  w.focus();
-  setTimeout(function() { w.print(); w.close(); }, 400);
-}
-
-/* ── Stock Actual por variedad + depósito ── */
-function cargarStockActual() {
+/* ── KPIs — Sec 1 ── */
+function cargarKPIs() {
   var tid = document.getElementById('filtro-temporada').value;
-  var url = '/api/stock-mercaderia/actual' + (tid ? '?temporada_id=' + tid : '');
-  document.getElementById('tbody-stock-actual').innerHTML =
-    '<tr><td colspan="6" class="empty">Cargando...</td></tr>';
-  var etapaLabels = {
-    cosecha:'🟡 Cosecha', despalillado:'🔵 Despalillado',
-    en_clasificacion:'🟠 En clasif.', clasificado:'🟣 Clasificado',
-    embalado:'🟢 Embalado', vendido_parcial:'🔶 Venta parcial'
-  };
-  fetch(url).then(function(r){ return r.json(); }).then(function(data){
-    _stockActualData = data || [];
-    var tbody = document.getElementById('tbody-stock-actual');
-    if (!data || !data.length) {
-      tbody.innerHTML = '<tr><td colspan="6" class="empty">Sin stock en depósitos</td></tr>';
-      return;
-    }
-    tbody.innerHTML = data.map(function(row){
-      var etiqueta = etapaLabels[row.etapa] || row.etapa;
-      var catLabel = (row.categoria || '') + (row.sub_categoria ? ' ' + row.sub_categoria : '');
-      return '<tr>' +
-        '<td><span class="etapa-badge ' + (row.etapa||'') + '">' + etiqueta + '</span></td>' +
-        '<td style="font-weight:600;">' + (row.variedad || '—') + '</td>' +
-        '<td>' + (catLabel || '—') + '</td>' +
-        '<td>' + (row.deposito || '<em style="color:var(--texto-suave)">Sin asignar</em>') + '</td>' +
-        '<td style="text-align:right;font-size:12px;">' + (row.cantidad_lotes || 1) + '</td>' +
-        '<td style="text-align:right;font-weight:700;color:var(--sem-verde);">' +
-          fmt(row.kg_disponibles) + ' kg</td>' +
-        '</tr>';
-    }).join('');
-  }).catch(function(){
-    document.getElementById('tbody-stock-actual').innerHTML =
-      '<tr><td colspan="6" class="empty">Error al cargar stock actual</td></tr>';
-  });
-}
-
-function exportarStockActual() {
-  if (!_stockActualData.length) { showAlert('No hay datos para exportar', 'info'); return; }
-  var filas = _stockActualData.map(function(r){
-    return [r.etapa||'', r.variedad||'', (r.categoria||'')+(r.sub_categoria?' '+r.sub_categoria:''),
-            r.deposito||'', r.cantidad_lotes||1,
-            parseFloat(r.kg_disponibles||0).toFixed(1)];
-  });
-  filas.unshift(['Etapa','Variedad','Categoría','Depósito','Lotes','KG']);
-  _descargarCSV(filas, 'stock-mercaderia-actual-' + _fechaHoy() + '.csv');
-}
-
-function imprimirStockActual() {
-  var tid = document.getElementById('filtro-temporada');
-  var tNombre = tid && tid.selectedOptions[0] ? tid.selectedOptions[0].text : 'Todas';
-  var filtros = [['Temporada', tNombre]];
-  var thStyle = 'background:#2D5016;color:#fff;padding:8px 12px;text-align:left;font-size:12px;';
-  var filas = (_stockActualData || []).map(function(r){
-    var catLabel = (r.categoria||'') + (r.sub_categoria ? ' '+r.sub_categoria : '');
-    return '<tr><td style="padding:7px 12px;">' + (r.etapa||'—') + '</td>' +
-           '<td style="padding:7px 12px;font-weight:600;">' + (r.variedad||'—') + '</td>' +
-           '<td style="padding:7px 12px;">' + (catLabel||'—') + '</td>' +
-           '<td style="padding:7px 12px;">' + (r.deposito||'—') + '</td>' +
-           '<td style="padding:7px 12px;text-align:center;">' + (r.cantidad_lotes||1) + '</td>' +
-           '<td style="padding:7px 12px;text-align:right;font-weight:700;">' +
-             fmt(r.kg_disponibles) + ' kg</td></tr>';
-  }).join('');
-  var tabla = '<table style="width:100%;border-collapse:collapse;">' +
-    '<thead><tr>' +
-      '<th style="' + thStyle + '">ETAPA</th>' +
-      '<th style="' + thStyle + '">VARIEDAD</th>' +
-      '<th style="' + thStyle + '">CATEGORÍA</th>' +
-      '<th style="' + thStyle + '">DEPÓSITO</th>' +
-      '<th style="' + thStyle + 'text-align:center;">LOTES</th>' +
-      '<th style="' + thStyle + 'text-align:right;">KG</th>' +
-    '</tr></thead><tbody>' + filas + '</tbody></table>';
-  _abrirVentanaImpresion('Stock Actual — Mercadería', filtros, tabla);
-}
-
-function cargarStock() {
-  var tid = document.getElementById('filtro-temporada').value;
-  cargarStockActual();
-  var kpiUrl = '/api/stock-mercaderia/kpis' + (tid ? '?temporada_id='+tid : '');
-  fetch(kpiUrl).then(function(r){ return r.json(); }).then(function(k){
+  var url = '/api/stock-mercaderia/kpis' + (tid ? '?temporada_id='+tid : '');
+  fetch(url).then(function(r){ return r.json(); }).then(function(k){
     document.getElementById('kpi-cosechados').textContent  = fmt(k.kg_cosechados);
-    document.getElementById('kpi-deposito').textContent    = fmt(k.kg_en_deposito);
+    document.getElementById('kpi-disponible').textContent  = fmt(k.kg_embalado);
+    document.getElementById('kpi-listo').textContent       = fmt(k.kg_embalado);
     document.getElementById('kpi-vendidos').textContent    = fmt(k.kg_vendidos);
     document.getElementById('kpi-descartados').textContent = fmt(k.kg_descartados);
     document.getElementById('kpi-en-proceso').textContent  = fmt(k.kg_en_proceso);
-    document.getElementById('kpi-embalado').textContent    = fmt(k.kg_embalado);
   });
 }
 
-/* ── Egreso de depósito ── */
-function registrarEgreso(btn) {
-  var did = document.getElementById('venta-deposito').value;
-  var kg  = document.getElementById('venta-kilos').value;
-  var mot = document.getElementById('venta-destino').value;
-  var obs = document.getElementById('venta-obs').value;
-  if (!did || !kg) { mostrarMensaje('msg-venta','error','Seleccioná depósito e ingresá los kilos'); return; }
+/* ── SECCIÓN 2: Stock por envase ── */
+function cargarStockEnvases() {
+  var tid = document.getElementById('filtro-temporada').value;
+  var url = '/api/stock-mercaderia/stock-envases' + (tid ? '?temporada_id='+tid : '');
+  var tbody = document.getElementById('tbody-stock-envases');
+  tbody.innerHTML = '<tr><td colspan="6" class="empty" style="color:var(--sem-verde);">Cargando...</td></tr>';
+  fetch(url).then(function(r){ return r.json(); }).then(function(data){
+    _stockEnvasesData = data || [];
+    if (!data || !data.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty">Sin stock disponible</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(function(r){
+      return '<tr>' +
+        '<td style="font-weight:600;">' + (r.tipo_envase || '<em style="color:var(--texto-suave)">Sin envase</em>') + '</td>' +
+        '<td>' + (r.categoria || '—') + '</td>' +
+        '<td>' + (r.sub_categoria || '—') + '</td>' +
+        '<td>' + (r.deposito || '<em style="color:var(--texto-suave)">Sin asignar</em>') + '</td>' +
+        '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;">' + (parseInt(r.unidades_disponibles)||0).toLocaleString('es-AR') + '</td>' +
+        '<td style="text-align:right;font-weight:700;color:var(--sem-verde);font-family:\'JetBrains Mono\',monospace;">' + fmt(r.kg_disponibles) + ' kg</td>' +
+      '</tr>';
+    }).join('');
+  }).catch(function(){
+    tbody.innerHTML = '<tr><td colspan="6" class="empty" style="color:var(--sem-rojo);">Error al cargar</td></tr>';
+  });
+}
+
+/* ── SECCIÓN 3: Estado por lote ── */
+function cargarEstadoLotes() {
+  var tid = document.getElementById('filtro-temporada').value;
+  var etapa = document.getElementById('lote-filtro-etapa').value;
+  var params = new URLSearchParams();
+  if (tid)   params.set('temporada_id', tid);
+  if (etapa) params.set('etapa', etapa);
+  var url = '/api/stock-mercaderia/estado-lotes?' + params.toString();
+  var tbody = document.getElementById('tbody-estado-lotes');
+  tbody.innerHTML = '<tr><td colspan="8" class="empty" style="color:var(--sem-verde);">Cargando...</td></tr>';
+
+  var etapaLabels = {
+    cosecha:'Cosecha', despalillado:'Despalillado',
+    en_clasificacion:'En clasif.', clasificado:'Clasificado',
+    embalado:'Embalado', vendido_parcial:'Venta parcial', vendido:'Vendido'
+  };
+
+  fetch(url).then(function(r){ return r.json(); }).then(function(data){
+    _estadoLotesData = data || [];
+    if (!data || !data.length) {
+      tbody.innerHTML = '<tr><td colspan="8" class="empty">Sin lotes para los filtros seleccionados</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(function(r){
+      var etiqueta = etapaLabels[r.etapa] || r.etapa;
+      var badgeClass = r.etapa || '';
+      var catLabel = (r.categoria || '—') + (r.sub_categoria ? ' · ' + r.sub_categoria : '');
+      var codigo = r.codigo_externo || '—';
+      return '<tr>' +
+        '<td style="font-weight:600;">' + codigo + '</td>' +
+        '<td>' + catLabel + '</td>' +
+        '<td>' + (r.tipo_envase || '—') + '</td>' +
+        '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;">' + (r.unidades_embaladas || '—') + '</td>' +
+        '<td style="text-align:right;font-weight:700;color:var(--sem-verde);font-family:\'JetBrains Mono\',monospace;">' + fmt(r.kilos) + ' kg</td>' +
+        '<td>' + (r.deposito_actual || r.deposito || '—') + '</td>' +
+        '<td><span class="etapa-badge ' + badgeClass + '">' + etiqueta + '</span></td>' +
+        '<td style="text-align:center;">' +
+          '<a href="trazabilidad.html?codigo=' + encodeURIComponent(codigo) + '" class="btn-icon-sm" title="Ver trazabilidad"><i data-lucide="git-branch"></i></a>' +
+        '</td>' +
+      '</tr>';
+    }).join('');
+    lucide.createIcons();
+  }).catch(function(){
+    tbody.innerHTML = '<tr><td colspan="8" class="empty" style="color:var(--sem-rojo);">Error al cargar lotes</td></tr>';
+  });
+}
+
+/* ── Temporadas ── */
+function poblarTemporadas() {
+  var opts = _temporadas.map(function(t){ return '<option value="'+t.id+'">'+t.nombre+'</option>'; }).join('');
+  ['filtro-temporada','hist-temporada'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.innerHTML = '<option value="">Todas</option>' + opts;
+  });
   var activa = _temporadas.find(function(t){ return t.activa; });
-  if (!activa) { mostrarMensaje('msg-venta','error','No hay temporada activa'); return; }
+  if (activa) {
+    ['filtro-temporada','hist-temporada'].forEach(function(id){
+      var el = document.getElementById(id);
+      if(el) el.value = activa.id;
+    });
+  }
+}
+
+/* ── Descarte — Sec 6 ── */
+function registrarDescarte(btn) {
+  var subLoteId = document.getElementById('desc-sublote').value;
+  var kg        = _parseEl('desc-kilos');
+  var envases   = parseInt(document.getElementById('desc-envases').value) || 0;
+  var motivo    = document.getElementById('desc-motivo').value;
+  var obs       = document.getElementById('desc-obs').value;
+  if (!subLoteId) { mostrarMensaje('msg-descarte','error','Seleccioná un sub-lote'); return; }
+  if (!kg) { mostrarMensaje('msg-descarte','error','Ingresá la cantidad de kilos'); return; }
+
+  var obsCompleto = motivo + (obs ? ' — ' + obs : '');
+
   setLoading(btn, true);
-  fetch('/api/depositos/egreso', {
+  fetch('/api/stock-mercaderia/descarte', {
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({
-      deposito_id: parseInt(did),
-      temporada_id: activa.id,
-      tipo_egreso: 'egreso_venta',
-      kilos: parseFloat(kg),
-      observacion: mot + (obs ? ' - ' + obs : '')
+      sub_lote_id: parseInt(subLoteId),
+      kilos: kg,
+      cantidad_envases: envases || null,
+      observacion: obsCompleto
     })
   }).then(function(r){ return r.json(); }).then(function(data){
     setLoading(btn, false);
     if (data.ok) {
-      mostrarMensaje('msg-venta','success','Egreso registrado correctamente');
-      document.getElementById('venta-kilos').value='';
-      document.getElementById('venta-obs').value='';
-      closeEgresoModal();
-      init();
-    } else {
-      mostrarMensaje('msg-venta','error', data.error||'Error al registrar');
-    }
-  }).catch(function(){ setLoading(btn,false); mostrarMensaje('msg-venta','error','Error de conexión'); });
-}
-
-/* ── Ingreso a depósito ── */
-function registrarIngreso(btn) {
-  var dep  = document.getElementById('ing-deposito').value;
-  var tid  = document.getElementById('ing-temporada').value;
-  var lid  = document.getElementById('ing-parcela').value;
-  var kg   = document.getElementById('ing-kilos').value;
-  var fec  = document.getElementById('ing-fecha').value;
-  var obs  = document.getElementById('ing-obs').value;
-  if (!dep || !tid || !kg) { mostrarMensaje('msg-ingreso','error','Completá depósito, temporada y kilos'); return; }
-  setLoading(btn, true);
-  fetch('/api/depositos/ingreso', {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ deposito_id:parseInt(dep), temporada_id:parseInt(tid),
-      parcela_id: lid ? parseInt(lid) : null, kilos:parseFloat(kg), fecha:fec||null, observacion:obs })
-  }).then(function(r){ return r.json(); }).then(function(data){
-    setLoading(btn, false);
-    if (data.ok) {
-      mostrarMensaje('msg-ingreso','success','Ingreso registrado correctamente');
-      document.getElementById('ing-kilos').value='';
-      document.getElementById('ing-obs').value='';
-      closeIngresoModal();
-      init();
-    } else {
-      mostrarMensaje('msg-ingreso','error', data.error||'Error al registrar');
-    }
-  }).catch(function(){ setLoading(btn,false); mostrarMensaje('msg-ingreso','error','Error de conexión'); });
-}
-
-/* ── Descarte ── */
-function toggleOrigenDescarte() {
-  var v = document.getElementById('desc-origen').value;
-  document.getElementById('desc-dep-fields').style.display    = v==='deposito' ? '' : 'none';
-  document.getElementById('desc-directo-fields').style.display = v==='directo'  ? '' : 'none';
-}
-
-function registrarDescarte(btn) {
-  var origen = document.getElementById('desc-origen').value;
-  var kg     = _parseEl('desc-kilos');
-  var motivo = document.getElementById('desc-motivo').value;
-  var obs    = document.getElementById('desc-obs').value;
-  if (!kg) { mostrarMensaje('msg-descarte','error','Ingresá la cantidad de kilos'); return; }
-
-  setLoading(btn, true);
-  var obsCompleto = motivo + (obs ? ' — '+obs : '');
-  var p;
-  if (origen === 'deposito') {
-    var did = document.getElementById('desc-deposito').value;
-    if (!did) { setLoading(btn,false); mostrarMensaje('msg-descarte','error','Seleccioná un depósito'); return; }
-    var activa = _temporadas.find(function(t){ return t.activa; });
-    p = fetch('/api/depositos/egreso', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ deposito_id:parseInt(did),
-        temporada_id: activa ? activa.id : _temporadas[0].id,
-        tipo_egreso:'egreso_descarte', kilos:kg, observacion:obsCompleto })
-    });
-  } else {
-    var tempId = document.getElementById('desc-temporada').value;
-    var parcelaId = document.getElementById('desc-parcela').value;
-    if (!tempId || !parcelaId) { setLoading(btn,false); mostrarMensaje('msg-descarte','error','Seleccioná temporada y parcela'); return; }
-    p = fetch('/api/stock-mercaderia/egreso', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ temporada_id:parseInt(tempId), parcela_id:parseInt(parcelaId),
-        kilos:kg, destino:'descarte', precio_kilo:0, observacion:obsCompleto })
-    });
-  }
-  p.then(function(r){ return r.json(); }).then(function(data){
-    setLoading(btn, false);
-    if (data.ok) {
       mostrarMensaje('msg-descarte','success','Descarte registrado');
       document.getElementById('desc-kilos').value='';
+      document.getElementById('desc-envases').value='';
       document.getElementById('desc-obs').value='';
-      closeDescarteModal();
+      document.getElementById('modal-descarte-merc').classList.remove('open');
       init();
-    } else {
-      mostrarMensaje('msg-descarte','error', data.error||'Error');
-    }
+    } else { mostrarMensaje('msg-descarte','error', data.error||'Error'); }
   }).catch(function(){ setLoading(btn,false); mostrarMensaje('msg-descarte','error','Error de conexión'); });
 }
 
-/* ── Historial ── */
+/* ── SECCIÓN 4: Historial ── */
+var _tipoLabels = {
+  ingreso_juntada:  'Juntada',
+  ingreso_embalaje: 'Embalaje',
+  ingreso:          'Ingreso',
+  egreso_venta:     'Venta',
+  egreso_descarte:  'Descarte',
+  egreso_anulacion: 'Anulación',
+  ingreso_anulacion:'Anulación'
+};
+
 function filtrarHistorialMerc() {
-  var q = (document.getElementById('hist-buscar').value || '').trim();
-  var cols = [
-    {label:'Cosechero',campo:'cosechero'},{label:'Tipo',campo:'tipo'},
-    {label:'Parcela',campo:'parcela'},{label:'Depósito',campo:'deposito'},
-    {label:'Destino',campo:'destino_venta'},{label:'Comprador',campo:'comprador'},
-    {label:'Usuario',campo:'usuario'}
-  ];
-  var filtered = _historialMercData.filter(function(m) { return matchFiltro(m, q, cols); });
+  var q = (document.getElementById('hist-buscar').value || '').trim().toLowerCase();
+  if (!q) { renderHistorial(_historialMercData); return; }
+  var filtered = _historialMercData.filter(function(m) {
+    return (m.lote_codigo||'').toLowerCase().indexOf(q) >= 0 ||
+           (m.usuario||'').toLowerCase().indexOf(q) >= 0 ||
+           (m.cosechero||'').toLowerCase().indexOf(q) >= 0 ||
+           (m.tipo||'').toLowerCase().indexOf(q) >= 0 ||
+           (m.deposito||'').toLowerCase().indexOf(q) >= 0 ||
+           (m.tipo_envase||'').toLowerCase().indexOf(q) >= 0;
+  });
+  renderHistorial(filtered);
+}
+
+function renderHistorial(data) {
   var tbody = document.getElementById('tbody-historial');
   var tfoot = document.getElementById('tfoot-historial');
-  if (!filtered.length) {
-    tbody.innerHTML = '<tr><td colspan="11" class="empty">Sin movimientos para el filtro</td></tr>';
+  if (!data || !data.length) {
+    tbody.innerHTML = '<tr><td colspan="8" class="empty">Sin movimientos</td></tr>';
     tfoot.innerHTML = '';
     return;
   }
-  var totalKilosIngreso = 0, totalKilosEgreso = 0, totalPesos = 0;
-  tbody.innerHTML = filtered.map(function(m){
-    var esIngreso = m.tipo === 'ingreso';
-    var bg = esIngreso ? 'background:#f0faf0;' : 'background:#fff5f5;';
+  var totalIn = 0, totalOut = 0;
+  tbody.innerHTML = data.map(function(m){
+    var esIngreso = (m.tipo||'').indexOf('ingreso') >= 0;
     var signo = esIngreso ? '+' : '-';
-    var colorKilos = esIngreso ? 'color:#2d6a4f;' : 'color:#c0392b;';
-    var total = m.total ? '$' + parseFloat(m.total).toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0}) : '—';
-    var precioKg = m.precio_kilo ? '$' + parseFloat(m.precio_kilo).toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2}) : '—';
-    var jid     = m.juntada_id  ? '<span style="font-family:\'JetBrains Mono\',monospace;font-size:11px;background:var(--fondo-dark);border:1px solid var(--borde);border-radius:4px;padding:1px 5px;">#'+m.juntada_id+'</span>' : '—';
-    var cosChip = m.juntador_id ? ' <span style="font-family:\'JetBrains Mono\',monospace;font-size:10px;background:var(--fondo-dark);border:1px solid var(--borde);border-radius:4px;padding:1px 4px;opacity:.75;">#'+m.juntador_id+'</span>' : '';
-    var usuChip = m.usuario_id  ? ' <span style="font-family:\'JetBrains Mono\',monospace;font-size:10px;background:var(--fondo-dark);border:1px solid var(--borde);border-radius:4px;padding:1px 4px;opacity:.75;">#'+m.usuario_id+'</span>'  : '';
-    if (esIngreso) totalKilosIngreso += parseFloat(m.kilos)||0;
-    else { totalKilosEgreso += parseFloat(m.kilos)||0; totalPesos += parseFloat(m.total)||0; }
+    var colorKg = esIngreso ? 'color:var(--sem-verde);' : 'color:var(--sem-rojo);';
+    var bg = esIngreso ? 'background:#f8fdf8;' : 'background:#fef8f8;';
+    var tipoLabel = _tipoLabels[m.tipo] || m.tipo;
+    var tipoClass = (m.tipo||'').replace(/[^a-z_]/g,'');
+    if (esIngreso) totalIn += parseFloat(m.kilos)||0;
+    else totalOut += parseFloat(m.kilos)||0;
     return '<tr style="'+bg+'">'+
-      '<td style="text-align:center;">'+jid+'</td>'+
-      '<td style="font-size:12px;">'+(m.cosechero||'—')+cosChip+'</td>'+
       '<td style="font-size:12px;white-space:nowrap;">'+fmtFecha(m.fecha)+'</td>'+
-      '<td><span class="badge badge-'+(esIngreso?'positivo':'negativo')+'">'+
-        (esIngreso?'Ingreso':'Egreso')+'</span></td>'+
-      '<td>'+(m.parcela||'—')+'</td>'+
-      '<td style="font-size:12px;color:var(--texto-suave);">'+(m.destino_venta||m.deposito||'—')+'</td>'+
-      '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;font-weight:700;'+colorKilos+'">'+
-        signo+fmt(m.kilos)+' kg</td>'+
-      '<td style="text-align:right;font-size:12px;">'+precioKg+'</td>'+
-      '<td style="text-align:right;font-size:12px;font-weight:600;">'+total+'</td>'+
-      '<td style="font-size:12px;color:var(--texto-suave);">'+(m.comprador||'—')+'</td>'+
-      '<td style="font-size:12px;">'+(m.usuario||'—')+usuChip+'</td>'+
+      '<td><span class="tipo-badge '+tipoClass+'">'+tipoLabel+'</span></td>'+
+      '<td style="font-weight:600;">'+(m.lote_codigo||'—')+'</td>'+
+      '<td>'+(m.tipo_envase||'—')+'</td>'+
+      '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;">'+(m.cantidad_envases||'—')+'</td>'+
+      '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;font-weight:700;'+colorKg+'">'+signo+fmt(m.kilos)+' kg</td>'+
+      '<td>'+(m.deposito||'—')+'</td>'+
+      '<td style="font-size:12px;">'+(m.usuario||m.cosechero||'—')+'</td>'+
     '</tr>';
   }).join('');
   tfoot.innerHTML = '<tr style="background:var(--fondo-dark);font-weight:700;border-top:2px solid var(--borde);">'+
-    '<td colspan="6" style="text-align:right;padding:10px 8px;">TOTALES</td>'+
+    '<td colspan="5" style="text-align:right;padding:10px 8px;">TOTALES</td>'+
     '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;padding:10px 8px;">'+
-      '<span style="color:#2d6a4f;">+'+fmt(totalKilosIngreso)+'</span> / '+
-      '<span style="color:#c0392b;">-'+fmt(totalKilosEgreso)+'</span> kg</td>'+
-    '<td></td>'+
-    '<td style="text-align:right;padding:10px 8px;">'+(totalPesos>0?'$'+Math.round(totalPesos).toLocaleString('es-AR'):'—')+'</td>'+
+      '<span style="color:var(--sem-verde);">+'+fmt(totalIn)+'</span> / '+
+      '<span style="color:var(--sem-rojo);">-'+fmt(totalOut)+'</span> kg</td>'+
     '<td></td><td></td>'+
   '</tr>';
 }
@@ -1185,24 +750,28 @@ function filtrarHistorialMerc() {
 function limpiarFiltrosHistorial() {
   document.getElementById('hist-buscar').value = '';
   document.getElementById('hist-temporada').value = '';
+  document.getElementById('hist-tipo').value = '';
   document.getElementById('hist-desde').value = '';
   document.getElementById('hist-hasta').value = '';
-  document.getElementById('tbody-historial').innerHTML = '<tr><td colspan="11" class="empty">Seleccioná filtros para ver movimientos</td></tr>';
+  _historialMercData = [];
+  document.getElementById('tbody-historial').innerHTML = '<tr><td colspan="8" class="empty">Seleccioná filtros para ver movimientos</td></tr>';
   document.getElementById('tfoot-historial').innerHTML = '';
 }
 
 function cargarHistorial() {
   var params = new URLSearchParams();
-  var tid    = document.getElementById('hist-temporada').value;
-  var desde  = document.getElementById('hist-desde').value;
-  var hasta  = document.getElementById('hist-hasta').value;
-  if (tid)    params.set('temporada_id', tid);
-  if (desde)  params.set('desde', desde);
-  if (hasta)  params.set('hasta', hasta);
+  var tid   = document.getElementById('hist-temporada').value;
+  var tipo  = document.getElementById('hist-tipo').value;
+  var desde = document.getElementById('hist-desde').value;
+  var hasta = document.getElementById('hist-hasta').value;
+  if (tid)   params.set('temporada_id', tid);
+  if (tipo)  params.set('tipo', tipo);
+  if (desde) params.set('desde', desde);
+  if (hasta) params.set('hasta', hasta);
 
   var tbody = document.getElementById('tbody-historial');
   var tfoot = document.getElementById('tfoot-historial');
-  tbody.innerHTML = '<tr><td colspan="11" class="empty" style="color:var(--verde);">Cargando...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="8" class="empty" style="color:var(--sem-verde);">Cargando...</td></tr>';
   tfoot.innerHTML = '';
 
   fetch('/api/stock-mercaderia/historial?' + params.toString())
@@ -1210,97 +779,17 @@ function cargarHistorial() {
     .then(function(data){
       _historialMercData = data;
       if (!data.length) {
-        tbody.innerHTML = '<tr><td colspan="11" class="empty">Sin movimientos para los filtros seleccionados</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="empty">Sin movimientos para los filtros seleccionados</td></tr>';
         return;
       }
-      var _smHistCols = [
-        {label:'Cosechero',campo:'cosechero'},{label:'Tipo',campo:'tipo'},
-        {label:'Parcela',campo:'parcela'},{label:'Depósito',campo:'deposito'},
-        {label:'Destino',campo:'destino_venta'},{label:'Comprador',campo:'comprador'},
-        {label:'Usuario',campo:'usuario'}
-      ];
-      _historialMercData = data;
-      poblarDatalist('sm-hist-opciones', data, _smHistCols);
-      var totalKilosIngreso = 0, totalKilosEgreso = 0, totalPesos = 0;
-      tbody.innerHTML = data.map(function(m){
-        var esIngreso = m.tipo === 'ingreso';
-        var bg = esIngreso ? 'background:#f0faf0;' : 'background:#fff5f5;';
-        var signo = esIngreso ? '+' : '-';
-        var colorKilos = esIngreso ? 'color:#2d6a4f;' : 'color:#c0392b;';
-        var total = m.total ? '$' + parseFloat(m.total).toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0}) : '—';
-        var precioKg = m.precio_kilo ? '$' + parseFloat(m.precio_kilo).toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2}) : '—';
-        var jid     = m.juntada_id  ? '<span style="font-family:\'JetBrains Mono\',monospace;font-size:11px;background:var(--fondo-dark);border:1px solid var(--borde);border-radius:4px;padding:1px 5px;">#'+m.juntada_id+'</span>' : '—';
-        var cosChip = m.juntador_id ? ' <span style="font-family:\'JetBrains Mono\',monospace;font-size:10px;background:var(--fondo-dark);border:1px solid var(--borde);border-radius:4px;padding:1px 4px;opacity:.75;">#'+m.juntador_id+'</span>' : '';
-        var usuChip = m.usuario_id  ? ' <span style="font-family:\'JetBrains Mono\',monospace;font-size:10px;background:var(--fondo-dark);border:1px solid var(--borde);border-radius:4px;padding:1px 4px;opacity:.75;">#'+m.usuario_id+'</span>'  : '';
-        if (esIngreso) totalKilosIngreso += parseFloat(m.kilos)||0;
-        else { totalKilosEgreso += parseFloat(m.kilos)||0; totalPesos += parseFloat(m.total)||0; }
-        return '<tr style="'+bg+'">'+
-          '<td style="text-align:center;">'+jid+'</td>'+
-          '<td style="font-size:12px;">'+(m.cosechero||'—')+cosChip+'</td>'+
-          '<td style="font-size:12px;white-space:nowrap;">'+fmtFecha(m.fecha)+'</td>'+
-          '<td><span class="badge badge-'+(esIngreso?'positivo':'negativo')+'">'+
-            (esIngreso?'Ingreso':'Egreso')+'</span></td>'+
-          '<td>'+(m.parcela||'—')+'</td>'+
-          '<td style="font-size:12px;color:var(--texto-suave);">'+(m.destino_venta||m.deposito||'—')+'</td>'+
-          '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;font-weight:700;'+colorKilos+'">'+
-            signo+fmt(m.kilos)+' kg</td>'+
-          '<td style="text-align:right;font-size:12px;">'+precioKg+'</td>'+
-          '<td style="text-align:right;font-size:12px;font-weight:600;">'+total+'</td>'+
-          '<td style="font-size:12px;color:var(--texto-suave);">'+(m.comprador||'—')+'</td>'+
-          '<td style="font-size:12px;">'+(m.usuario||'—')+usuChip+'</td>'+
-        '</tr>';
-      }).join('');
-      tfoot.innerHTML = '<tr style="background:var(--fondo-dark);font-weight:700;border-top:2px solid var(--borde);">'+
-        '<td colspan="6" style="text-align:right;padding:10px 8px;">TOTALES</td>'+
-        '<td style="text-align:right;font-family:\'JetBrains Mono\',monospace;padding:10px 8px;">'+
-          '<span style="color:#2d6a4f;">+'+fmt(totalKilosIngreso)+'</span> / '+
-          '<span style="color:#c0392b;">-'+fmt(totalKilosEgreso)+'</span> kg</td>'+
-        '<td></td>'+
-        '<td style="text-align:right;padding:10px 8px;">'+(totalPesos>0?'$'+Math.round(totalPesos).toLocaleString('es-AR'):'—')+'</td>'+
-        '<td></td><td></td>'+
-      '</tr>';
+      renderHistorial(data);
     })
     .catch(function(){
-      tbody.innerHTML = '<tr><td colspan="11" class="empty">Error al cargar historial</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" class="empty" style="color:var(--sem-rojo);">Error al cargar historial</td></tr>';
     });
 }
 
-/* ── Helpers cotización (legacy, no-op if elements missing) ── */
-function actualizarHelperPrecio() {
-  var precioEl = document.getElementById('venta-precio');
-  if (!precioEl) return;
-  var precio = _parseVal(precioEl.value);
-  var kilos  = _parseEl('venta-kilos');
-  var el     = document.getElementById('helper-precio');
-  if (!el) return;
-  if (!precio) { el.textContent = ''; return; }
-  var rate = window.cotizacion && window.cotizacion.blue && window.cotizacion.blue.venta;
-  if (!rate) { el.textContent = ''; return; }
-  var usdKg    = (precio / rate).toFixed(2);
-  var totalARS = precio * kilos;
-  var totalUSD = Math.round(totalARS / rate);
-  var txt      = '= USD ' + usdKg + '/kg';
-  if (kilos > 0) txt += ' | Total: $' + Math.round(totalARS).toLocaleString('es-AR') + ' / USD ' + totalUSD.toLocaleString('es-AR');
-  el.textContent = txt;
-}
-
-function actualizarHelperRosario() {
-  var ptnARS = parseFloat((document.getElementById('venta-ref-rosario')||{}).value) || 0;
-  var el     = document.getElementById('helper-rosario');
-  if (!el) return;
-  if (!ptnARS) { el.textContent = ''; return; }
-  var rate = window.cotizacion && window.cotizacion.blue && window.cotizacion.blue.venta;
-  if (!rate) { el.textContent = ''; return; }
-  var usdTn  = Math.round(ptnARS / rate);
-  var pkgARS = (ptnARS / 1000).toFixed(2);
-  el.textContent = '= USD ' + usdTn.toLocaleString('es-AR') + '/tn | $' + parseFloat(pkgARS).toLocaleString('es-AR') + '/kg';
-}
-
-document.getElementById('venta-kilos').addEventListener('input', actualizarHelperPrecio);
-
-cargarCotizacion();
-
-/* ── Estado almacenes (mercadería) ── */
+/* ── Estado almacenes ── */
 function cargarEstadoAlmacenesMerc() {
   fetch('/api/depositos/ocupacion?tipo_stock=mercaderia').then(function(r) { return r.json(); }).then(function(data) {
     var sec  = document.getElementById('merc-almacenes');
@@ -1326,61 +815,98 @@ function cargarEstadoAlmacenesMerc() {
     document.getElementById('merc-almacenes').style.display = 'none';
   });
 }
-cargarEstadoAlmacenesMerc();
 
-var _vistaHist = 'movimientos';
-
-function cambiarVistaHist(vista) {
-  _vistaHist = vista;
-  document.getElementById('vista-movimientos').style.display = vista === 'movimientos' ? '' : 'none';
-  document.getElementById('vista-lotes').style.display = vista === 'lotes' ? '' : 'none';
-  var btnMov = document.getElementById('btn-vista-mov');
-  var btnLot = document.getElementById('btn-vista-lotes');
-  btnMov.style.background = vista === 'movimientos' ? 'var(--verde)' : 'var(--superficie)';
-  btnMov.style.color = vista === 'movimientos' ? '#fff' : '';
-  btnMov.style.borderColor = vista === 'movimientos' ? 'var(--verde)' : 'var(--borde)';
-  btnLot.style.background = vista === 'lotes' ? 'var(--verde)' : 'var(--superficie)';
-  btnLot.style.color = vista === 'lotes' ? '#fff' : '';
-  btnLot.style.borderColor = vista === 'lotes' ? 'var(--verde)' : 'var(--borde)';
-  if (vista === 'lotes') cargarHistorialLotes();
+/* ── CSV / Imprimir helpers ── */
+function _descargarCSV(filas, nombreArchivo) {
+  var csv = filas.map(function(r) {
+    return r.map(function(v) {
+      return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+    }).join(',');
+  }).join('\n');
+  var blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href = url; a.download = nombreArchivo; a.click();
+  URL.revokeObjectURL(url);
 }
 
-function cargarHistorialLotes() {
-  var params = new URLSearchParams();
-  var temp = document.getElementById('hist-temporada').value;
-  var desde = document.getElementById('hist-desde').value;
-  var hasta = document.getElementById('hist-hasta').value;
-  if (temp) params.set('temporada_id', temp);
-  if (desde) params.set('desde', desde);
-  if (hasta) params.set('hasta', hasta);
+function _fechaHoy() {
+  var d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
 
-  var tbody = document.getElementById('tbody-hist-lotes');
-  tbody.innerHTML = '<tr><td colspan="7" class="empty">Cargando...</td></tr>';
+function _abrirVentanaImpresion(titulo, filtros, tablaHTML) {
+  var fecha = new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + titulo + '</title>' +
+    '<style>' +
+    'body{font-family:Arial,sans-serif;font-size:11px;margin:20px;color:#222;}' +
+    'h2{margin:0 0 4px;font-size:16px;}' +
+    'p.info{margin:0 0 14px;font-size:11px;color:#666;}' +
+    'table{width:100%;border-collapse:collapse;}' +
+    'th{background:#2D5016!important;color:#fff!important;padding:7px 8px;text-align:left;font-size:11px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}' +
+    'td{padding:6px 8px;border-bottom:1px solid #eee;font-size:11px;}' +
+    'tr:nth-child(even){background:#f8f8f8;}' +
+    '</style></head><body>' +
+    '<h2>' + titulo + '</h2>' +
+    '<p class="info">' + filtros + ' &nbsp;|&nbsp; Impreso: ' + fecha + '</p>' +
+    tablaHTML +
+    '</body></html>';
+  var w = window.open('', '_blank');
+  w.document.write(html);
+  w.document.close();
+  w.focus();
+  setTimeout(function() { w.print(); w.close(); }, 400);
+}
 
-  fetchApi('/api/stock-mercaderia/historial-lotes?' + params.toString())
-    .then(function(data) {
-      if (!data.length) {
-        tbody.innerHTML = '<tr><td colspan="7" class="empty">Sin ingresos por lote</td></tr>';
-        return;
-      }
-      tbody.innerHTML = data.map(function(r) {
-        var fecha = r.fecha ? new Date(r.fecha).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'}) : '—';
-        var cat = r.categoria || '—';
-        if (r.sub_categoria) cat += ' · ' + r.sub_categoria;
-        return '<tr>' +
-          '<td style="font-size:12px;white-space:nowrap;">' + fecha + '</td>' +
-          '<td style="font-weight:600;">' + (r.lote || '—') + '</td>' +
-          '<td>' + cat + '</td>' +
-          '<td>' + (r.presentacion || '—') + '</td>' +
-          '<td style="text-align:right;" class="mono">' + (r.envases || '—') + '</td>' +
-          '<td style="text-align:right;font-weight:700;color:#2d6a4f;" class="mono">' + fmt(r.kilos) + ' kg</td>' +
-          '<td>' + (r.deposito || '—') + '</td>' +
-        '</tr>';
-      }).join('');
-    })
-    .catch(function() {
-      tbody.innerHTML = '<tr><td colspan="7" class="empty">Error al cargar</td></tr>';
-    });
+function exportarStockEnvases() {
+  if (!_stockEnvasesData.length) { showAlert('Sin datos para exportar', 'info'); return; }
+  var filas = [['Tipo Envase','Categoría','Subcategoría','Depósito','Unidades','KG']];
+  _stockEnvasesData.forEach(function(r) {
+    filas.push([r.tipo_envase||'', r.categoria||'', r.sub_categoria||'', r.deposito||'',
+      parseInt(r.unidades_disponibles)||0, parseFloat(r.kg_disponibles||0).toFixed(1)]);
+  });
+  _descargarCSV(filas, 'stock-mercaderia-envases-' + _fechaHoy() + '.csv');
+}
+
+function imprimirStockEnvases() {
+  var tabla = document.getElementById('tabla-stock-envases').outerHTML;
+  _abrirVentanaImpresion('Stock Mercadería — Por Envase', 'Temporada: ' +
+    (document.getElementById('filtro-temporada').selectedOptions[0] || {}).text, tabla);
+}
+
+function exportarEstadoLotes() {
+  if (!_estadoLotesData.length) { showAlert('Sin datos para exportar', 'info'); return; }
+  var filas = [['Código','Categoría','Tipo Envase','Unidades','KG','Depósito','Etapa']];
+  _estadoLotesData.forEach(function(r) {
+    var catLabel = (r.categoria||'') + (r.sub_categoria ? ' · '+r.sub_categoria : '');
+    filas.push([r.codigo_externo||'', catLabel, r.tipo_envase||'',
+      r.unidades_embaladas||'', parseFloat(r.kilos||0).toFixed(1),
+      r.deposito_actual||r.deposito||'', r.etapa||'']);
+  });
+  _descargarCSV(filas, 'stock-mercaderia-lotes-' + _fechaHoy() + '.csv');
+}
+
+function imprimirEstadoLotes() {
+  var tabla = document.getElementById('tabla-estado-lotes').outerHTML;
+  _abrirVentanaImpresion('Stock Mercadería — Estado por Lote', 'Temporada: ' +
+    (document.getElementById('filtro-temporada').selectedOptions[0] || {}).text, tabla);
+}
+
+function exportarCSVHistorial() {
+  if (!_historialMercData.length) { showAlert('Sin datos para exportar', 'info'); return; }
+  var filas = [['Fecha','Tipo','Lote','Tipo Envase','Unidades','KG','Depósito','Operador']];
+  _historialMercData.forEach(function(m) {
+    filas.push([m.fecha ? new Date(m.fecha).toLocaleDateString('es-AR') : '',
+      m.tipo||'', m.lote_codigo||'', m.tipo_envase||'', m.cantidad_envases||'',
+      parseFloat(m.kilos||0).toFixed(1), m.deposito||'', m.usuario||m.cosechero||'']);
+  });
+  _descargarCSV(filas, 'stock-mercaderia-historial-' + _fechaHoy() + '.csv');
+}
+
+function imprimirHistorial() {
+  var tabla = document.getElementById('tabla-historial').outerHTML;
+  var temporada = (document.getElementById('hist-temporada').options[document.getElementById('hist-temporada').selectedIndex] || {}).text || 'Todas';
+  _abrirVentanaImpresion('Stock Mercadería — Historial', 'Temporada: ' + temporada, tabla);
 }
 
 init();

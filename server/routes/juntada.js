@@ -499,25 +499,29 @@ router.post('/', async (req, res) => {
               .input('usuario_id',   sql.Int,          uid)
               .query(`INSERT INTO MovimientosDeposito
                       (deposito_id, temporada_id, parcela_id, tipo, kilos, fecha, observacion, juntada_id, juntador_id, usuario_id)
-                      VALUES (@deposito_id, @temporada_id, @parcela_id, 'ingreso', @kilos, @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id)`);
+                      VALUES (@deposito_id, @temporada_id, @parcela_id, 'ingreso_juntada', @kilos, @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id)`);
 
+          } else if (d.tipo === 'venta_directa') {
+            // MovimientosDeposito — fuente principal
             await transaction.request()
               .input('temporada_id', sql.Int,          temporada_id)
-              .input('parcela_id',      sql.Int,          parcela_id)
+              .input('parcela_id',   sql.Int,          parcela_id)
               .input('kilos',        sql.Decimal(10,3),d.kilos)
+              .input('precio_kilo',  sql.Decimal(10,3),d.precio_kilo || null)
+              .input('comprador',    sql.NVarChar,     d.comprador || '')
               .input('fecha',        sql.DateTime,     now)
-              .input('observacion',  sql.NVarChar,     `Juntada #${newId}`)
+              .input('observacion',  sql.NVarChar,     `Venta directa juntada #${newId}`)
               .input('juntada_id',   sql.Int,          newId)
               .input('juntador_id',  sql.Int,          juntador_id)
               .input('usuario_id',   sql.Int,          uid)
-              .query(`INSERT INTO StockMercaderia
-                      (temporada_id, parcela_id, tipo, kilos, destino, fecha, observacion, juntada_id, juntador_id, usuario_id)
-                      VALUES (@temporada_id, @parcela_id, 'ingreso', @kilos, 'deposito', @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id)`);
+              .query(`INSERT INTO MovimientosDeposito
+                      (temporada_id, parcela_id, tipo, kilos, precio_kilo, comprador, fecha, observacion, juntada_id, juntador_id, usuario_id, destino_venta)
+                      VALUES (@temporada_id, @parcela_id, 'egreso_venta', @kilos, @precio_kilo, @comprador, @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id, 'venta_directa')`);
 
-          } else if (d.tipo === 'venta_directa') {
+            // LEGACY — pendiente migración CC (CuentaCorrienteClientes depende de stock_mercaderia_id)
             await transaction.request()
               .input('temporada_id', sql.Int,          temporada_id)
-              .input('parcela_id',      sql.Int,          parcela_id)
+              .input('parcela_id',   sql.Int,          parcela_id)
               .input('kilos',        sql.Decimal(10,3),d.kilos)
               .input('precio_kilo',  sql.Decimal(10,3),d.precio_kilo || null)
               .input('comprador',    sql.NVarChar,     d.comprador || '')
@@ -545,9 +549,24 @@ router.post('/', async (req, res) => {
             }
 
           } else if (d.tipo === 'descarte') {
+            // MovimientosDeposito — fuente principal
             await transaction.request()
               .input('temporada_id', sql.Int,          temporada_id)
-              .input('parcela_id',      sql.Int,          parcela_id)
+              .input('parcela_id',   sql.Int,          parcela_id)
+              .input('kilos',        sql.Decimal(10,3),d.kilos)
+              .input('fecha',        sql.DateTime,     now)
+              .input('observacion',  sql.NVarChar,     `Descarte juntada #${newId}: ${d.motivo || ''}`)
+              .input('juntada_id',   sql.Int,          newId)
+              .input('juntador_id',  sql.Int,          juntador_id)
+              .input('usuario_id',   sql.Int,          uid)
+              .query(`INSERT INTO MovimientosDeposito
+                      (temporada_id, parcela_id, tipo, kilos, fecha, observacion, juntada_id, juntador_id, usuario_id, destino_venta)
+                      VALUES (@temporada_id, @parcela_id, 'egreso_descarte', @kilos, @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id, 'descarte')`);
+
+            // LEGACY — pendiente migración CC
+            await transaction.request()
+              .input('temporada_id', sql.Int,          temporada_id)
+              .input('parcela_id',   sql.Int,          parcela_id)
               .input('kilos',        sql.Decimal(10,3),d.kilos)
               .input('fecha',        sql.DateTime,     now)
               .input('observacion',  sql.NVarChar,     `Descarte juntada #${newId}: ${d.motivo || ''}`)
@@ -666,24 +685,27 @@ router.post('/:id/destino', async (req, res) => {
           .input('usuario_id',   sql.Int,          uid)
           .query(`INSERT INTO MovimientosDeposito
                   (deposito_id, temporada_id, parcela_id, tipo, kilos, fecha, observacion, juntada_id, juntador_id, usuario_id)
-                  VALUES (@deposito_id, @temporada_id, @parcela_id, 'ingreso', @kilos, @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id)`);
+                  VALUES (@deposito_id, @temporada_id, @parcela_id, 'ingreso_juntada', @kilos, @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id)`);
+
+      } else if (d.tipo === 'descarte') {
+        // MovimientosDeposito — fuente principal
         await transaction.request()
           .input('temporada_id', sql.Int,          temporada_id)
-          .input('parcela_id',      sql.Int,          parcela_id)
+          .input('parcela_id',   sql.Int,          parcela_id)
           .input('kilos',        sql.Decimal(10,3),d.kilos)
           .input('fecha',        sql.DateTime,     now)
-          .input('observacion',  sql.NVarChar,     `Juntada #${juntadaId}`)
+          .input('observacion',  sql.NVarChar,     `Descarte juntada #${juntadaId}: ${d.motivo || ''}`)
           .input('juntada_id',   sql.Int,          juntadaId)
           .input('juntador_id',  sql.Int,          juntador_id)
           .input('usuario_id',   sql.Int,          uid)
-          .query(`INSERT INTO StockMercaderia
-                  (temporada_id, parcela_id, tipo, kilos, destino, fecha, observacion, juntada_id, juntador_id, usuario_id)
-                  VALUES (@temporada_id, @parcela_id, 'ingreso', @kilos, 'deposito', @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id)`);
+          .query(`INSERT INTO MovimientosDeposito
+                  (temporada_id, parcela_id, tipo, kilos, fecha, observacion, juntada_id, juntador_id, usuario_id, destino_venta)
+                  VALUES (@temporada_id, @parcela_id, 'egreso_descarte', @kilos, @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id, 'descarte')`);
 
-      } else if (d.tipo === 'descarte') {
+        // LEGACY — pendiente migración CC
         await transaction.request()
           .input('temporada_id', sql.Int,          temporada_id)
-          .input('parcela_id',      sql.Int,          parcela_id)
+          .input('parcela_id',   sql.Int,          parcela_id)
           .input('kilos',        sql.Decimal(10,3),d.kilos)
           .input('fecha',        sql.DateTime,     now)
           .input('observacion',  sql.NVarChar,     `Descarte juntada #${juntadaId}: ${d.motivo || ''}`)
@@ -975,23 +997,24 @@ router.post('/:id/anular', async (req, res) => {
               .query(`INSERT INTO MovimientosDeposito
                       (deposito_id, temporada_id, parcela_id, tipo, kilos, fecha, observacion, juntada_id, juntador_id, usuario_id)
                       VALUES (@deposito_id, @temporada_id, @parcela_id, 'egreso_anulacion', @kilos, @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id)`);
-
-            await transaction.request()
-              .input('temporada_id', sql.Int,          temporada_id)
-              .input('parcela_id',   sql.Int,          parcela_id)
-              .input('kilos',        sql.Decimal(10,3), d.kilos)
-              .input('fecha',        sql.DateTime,     now)
-              .input('observacion',  sql.NVarChar,     `Anulación juntada #${juntadaId}`)
-              .input('juntada_id',   sql.Int,          juntadaId)
-              .input('juntador_id',  sql.Int,          juntador_id)
-              .input('usuario_id',   sql.Int,          uid)
-              .query(`INSERT INTO StockMercaderia
-                      (temporada_id, parcela_id, tipo, kilos, destino, fecha, observacion, juntada_id, juntador_id, usuario_id)
-                      VALUES (@temporada_id, @parcela_id, 'egreso_anulacion', @kilos, 'deposito', @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id)`);
           }
 
         } else if (d.tipo === 'venta_directa') {
-          // Revertir egreso_venta con ingreso_anulacion
+          // MovimientosDeposito — fuente principal
+          await transaction.request()
+            .input('temporada_id', sql.Int,          temporada_id)
+            .input('parcela_id',   sql.Int,          parcela_id)
+            .input('kilos',        sql.Decimal(10,3), d.kilos)
+            .input('fecha',        sql.DateTime,     now)
+            .input('observacion',  sql.NVarChar,     `Anulación venta directa juntada #${juntadaId}`)
+            .input('juntada_id',   sql.Int,          juntadaId)
+            .input('juntador_id',  sql.Int,          juntador_id)
+            .input('usuario_id',   sql.Int,          uid)
+            .query(`INSERT INTO MovimientosDeposito
+                    (temporada_id, parcela_id, tipo, kilos, fecha, observacion, juntada_id, juntador_id, usuario_id, destino_venta)
+                    VALUES (@temporada_id, @parcela_id, 'ingreso_anulacion', @kilos, @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id, 'venta_directa')`);
+
+          // LEGACY — pendiente migración CC
           await transaction.request()
             .input('temporada_id', sql.Int,          temporada_id)
             .input('parcela_id',   sql.Int,          parcela_id)
@@ -1019,7 +1042,21 @@ router.post('/:id/anular', async (req, res) => {
           }
 
         } else if (d.tipo === 'descarte') {
-          // Revertir egreso_descarte con ingreso_anulacion
+          // MovimientosDeposito — fuente principal
+          await transaction.request()
+            .input('temporada_id', sql.Int,          temporada_id)
+            .input('parcela_id',   sql.Int,          parcela_id)
+            .input('kilos',        sql.Decimal(10,3), d.kilos)
+            .input('fecha',        sql.DateTime,     now)
+            .input('observacion',  sql.NVarChar,     `Anulación descarte juntada #${juntadaId}`)
+            .input('juntada_id',   sql.Int,          juntadaId)
+            .input('juntador_id',  sql.Int,          juntador_id)
+            .input('usuario_id',   sql.Int,          uid)
+            .query(`INSERT INTO MovimientosDeposito
+                    (temporada_id, parcela_id, tipo, kilos, fecha, observacion, juntada_id, juntador_id, usuario_id, destino_venta)
+                    VALUES (@temporada_id, @parcela_id, 'ingreso_anulacion', @kilos, @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id, 'descarte')`);
+
+          // LEGACY — pendiente migración CC
           await transaction.request()
             .input('temporada_id', sql.Int,          temporada_id)
             .input('parcela_id',   sql.Int,          parcela_id)
