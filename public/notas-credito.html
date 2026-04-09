@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1A2E0A">
+  <title>Notas de Credito — Cosecha</title>
+  <link rel="icon" href="img/logo.png">
+  <script src="js/utils.js"></script>
+  <script src="js/cosecha-dialogs.js"></script>
+  <link rel="stylesheet" href="cosecha.css">
+  <style>
+    .empty { text-align:center; color:var(--texto-suave); padding:20px; }
+    .mono { font-family:'JetBrains Mono',monospace; }
+    .estado-badge { display:inline-block; padding:2px 10px; border-radius:12px; font-size:11px; font-weight:700; white-space:nowrap; }
+    .estado-badge.emitida { background:#fff3cd; color:#856404; }
+    .estado-badge.con_reembolso { background:#eef7ee; color:#2d6a4f; }
+    .estado-badge.anulada { background:#fde8e8; color:#c0392b; }
+    /* KPIs */
+    .nc-kpis { display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:12px; margin-bottom:16px; }
+    .nc-kpi { background:#fff; border-radius:10px; padding:16px 18px; box-shadow:0 2px 10px rgba(0,0,0,.08); }
+    .nc-kpi-icon { width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; margin-bottom:8px; }
+    .nc-kpi-icon.amarillo { background:#fff3cd; color:#856404; }
+    .nc-kpi-icon.verde { background:#eef7ee; color:#2D5016; }
+    .nc-kpi-icon.rojo  { background:#fde8e8; color:#c0392b; }
+    .nc-kpi-icon.azul  { background:#e8f0fe; color:#1565c0; }
+    .nc-kpi-icon svg { width:18px; height:18px; }
+    .nc-kpi-valor { font-size:22px; font-weight:700; font-family:'JetBrains Mono',monospace; line-height:1; }
+    .nc-kpi-label { font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:var(--texto-suave); margin-top:4px; }
+    /* Modal */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100; align-items:center; justify-content:center; }
+    .modal-overlay.open { display:flex; }
+    .modal-box { background:white; border-radius:14px; padding:24px; width:92%; max-width:640px; max-height:88vh; overflow-y:auto; box-shadow:0 8px 32px rgba(0,0,0,0.15); }
+    .modal-box h3 { color:var(--verde); margin-bottom:4px; font-size:17px; font-weight:700; }
+    .modal-meta { display:flex; flex-wrap:wrap; gap:6px; font-size:12px; margin-bottom:14px; }
+    .modal-meta span { background:var(--fondo); border:1px solid var(--borde); border-radius:20px; padding:3px 10px; }
+    .items-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .items-table th { background:var(--fondo-dark); font-size:10px; text-transform:uppercase; letter-spacing:.5px; font-weight:700; padding:8px 10px; text-align:left; }
+    .items-table td { padding:8px 10px; border-bottom:1px solid var(--borde); }
+    .btn-cerrar { background:var(--fondo-dark); color:var(--texto-2); border:1.5px solid var(--borde); border-radius:8px; padding:10px 20px; font-size:13px; font-weight:700; cursor:pointer; margin-top:16px; width:100%; }
+    /* Wizard steps */
+    .wizard-step { display:none; }
+    .wizard-step.active { display:block; }
+    .wizard-nav { display:flex; gap:8px; margin-top:16px; }
+    .wizard-nav .btn { flex:1; }
+    /* Remito search */
+    .remito-list { max-height:240px; overflow-y:auto; margin-top:8px; }
+    .remito-opt { padding:10px 12px; border:1px solid var(--borde); border-radius:8px; margin-bottom:6px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; }
+    .remito-opt:hover { background:var(--fondo); border-color:var(--verde); }
+    .remito-opt.selected { background:#eef7ee; border-color:var(--verde); }
+    /* Item devolucion row */
+    .dev-item { background:var(--fondo); border:1px solid var(--borde); border-radius:8px; padding:10px 12px; margin-bottom:8px; }
+    .dev-item-header { display:flex; justify-content:space-between; align-items:center; font-size:13px; font-weight:600; margin-bottom:6px; }
+    .dev-item-fields { display:flex; flex-wrap:wrap; gap:8px; align-items:flex-end; }
+    .dev-item-fields .fi { display:flex; flex-direction:column; gap:3px; }
+    .dev-item-fields .fi label { font-size:10px; font-weight:600; color:var(--texto-suave); text-transform:uppercase; }
+    .dev-item-fields .fi input, .dev-item-fields .fi select { height:34px; padding:0 8px; border:1px solid var(--borde); border-radius:6px; font-size:12px; background:#fff; }
+    .dev-item-fields .fi-kg { flex:0 0 100px; }
+    .dev-item-fields .fi-destino { flex:1 1 160px; }
+    .dev-item-fields .fi-cat { flex:1 1 140px; }
+    .dev-subtotal { font-size:12px; color:var(--texto-suave); margin-top:4px; }
+    .nc-total { font-size:20px; font-weight:700; color:var(--verde); text-align:right; padding:8px 0; }
+    /* Reembolso form */
+    .fg { display:flex; flex-wrap:wrap; gap:6px 10px; align-items:flex-end; margin-bottom:10px; }
+    .fi { display:flex; flex-direction:column; gap:3px; }
+    .fi label { font-size:11px; font-weight:600; color:var(--texto-suave); text-transform:uppercase; letter-spacing:.5px; }
+    .fi input, .fi select, .fi textarea { height:36px; padding:0 10px; border:1px solid var(--borde); border-radius:8px; font-size:13px; color:var(--texto); background:#fff; outline:none; box-sizing:border-box; width:100%; }
+    .fi textarea { height:60px; padding:8px 10px; resize:vertical; }
+    .fi input:focus, .fi select:focus, .fi textarea:focus { border-color:var(--verde); }
+    @media (max-width:600px) { .nc-kpis { grid-template-columns:1fr 1fr; } }
+    @media (max-width:400px) { .nc-kpis { grid-template-columns:1fr; } }
+  </style>
+  <script src="js/auth-check.js"></script>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="img/logo-icon.png" class="brand-icon"><div class="brand-info"><span class="brand-name">CO<em>SE</em>CHA</span><span class="brand-sub">SISTEMA DE CULTIVOS</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-item"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard</a>
+      <div class="nav-section">Campo</div>
+      <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
+      <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
+      <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
+      <a href="trabajos-campo.html" class="nav-item"><span class="nav-icon"><i data-lucide="hammer"></i></span> Trabajos de Campo</a>
+      <div class="nav-section">Sistema</div>
+      <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
+      <a href="menu-comercial.html" class="nav-item active"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
+      <a href="menu-admin.html" class="nav-item"><span class="nav-icon"><i data-lucide="landmark"></i></span> Administracion</a>
+      <a href="mercado.html" class="nav-item"><span class="nav-icon"><i data-lucide="trending-up"></i></span> Mercado</a>
+      <a href="menu-config.html" class="nav-item"><span class="nav-icon"><i data-lucide="settings"></i></span> Configuracion</a>
+    </nav>
+    <div class="sidebar-footer">Cosecha · Sistema de Cultivos</div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
+        <img src="img/logo-icon.png" class="brand-icon"><div class="brand-info"><span class="brand-name">CO<em>SE</em>CHA</span><span class="brand-sub">SISTEMA DE CULTIVOS</span></div><span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
+      </div>
+      <div class="topbar-right"><span class="topbar-date" id="topbar-date"></span></div>
+    </header>
+
+    <div class="content">
+      <a href="menu-comercial.html" class="btn-volver">← Volver</a>
+      <div class="content-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div class="content-title">Notas de Credito</div>
+          <div class="content-sub">Devoluciones de ventas y saldos a favor</div>
+        </div>
+        <button class="btn btn-primary" style="width:auto;margin:0;" onclick="abrirEmision()"><i data-lucide="file-plus" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Emitir NC</button>
+      </div>
+
+      <!-- KPIs -->
+      <div class="nc-kpis" id="nc-kpis"></div>
+
+      <!-- Filtros -->
+      <div class="filtros-barra">
+        <select id="filtro-cliente" onchange="cargarNC()" title="Cliente">
+          <option value="">Todos los clientes</option>
+        </select>
+        <div class="fb-sep"></div>
+        <select id="filtro-estado" onchange="cargarNC()" title="Estado">
+          <option value="">Todos los estados</option>
+          <option value="emitida">Emitida</option>
+          <option value="con_reembolso">Con reembolso</option>
+          <option value="anulada">Anulada</option>
+        </select>
+        <div class="fb-sep"></div>
+        <input type="date" id="filtro-desde" onchange="cargarNC()" title="Desde">
+        <input type="date" id="filtro-hasta" onchange="cargarNC()" title="Hasta">
+        <button class="fb-limpiar" onclick="limpiarFiltros()">✕ Limpiar</button>
+      </div>
+
+      <!-- Tabla -->
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>N° NC</th>
+                <th>Remito</th>
+                <th>Fecha</th>
+                <th>Cliente</th>
+                <th>Monto</th>
+                <th>Estado</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="tbody-nc">
+              <tr><td colspan="7" class="empty">Cargando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Modal Detalle NC ── -->
+  <div class="modal-overlay" id="modal-detalle">
+    <div class="modal-box">
+      <h3 id="det-titulo"></h3>
+      <div class="modal-meta" id="det-meta"></div>
+      <div id="det-motivo" style="font-size:13px;margin-bottom:12px;"></div>
+      <table class="items-table">
+        <thead>
+          <tr><th>Sub-lote</th><th>Kg devueltos</th><th>Precio</th><th>Subtotal</th><th>Destino</th></tr>
+        </thead>
+        <tbody id="det-items"></tbody>
+        <tfoot><tr><td colspan="3"></td><td id="det-total" style="font-weight:700;"></td><td></td></tr></tfoot>
+      </table>
+      <div id="det-reembolso" style="margin-top:12px;font-size:13px;"></div>
+      <div id="det-anulacion" style="margin-top:8px;font-size:13px;color:#c0392b;"></div>
+      <button class="btn-cerrar" onclick="cerrarModal('modal-detalle')">Cerrar</button>
+    </div>
+  </div>
+
+  <!-- ── Modal Emision NC (wizard) ── -->
+  <div class="modal-overlay" id="modal-emision">
+    <div class="modal-box" style="max-width:700px;">
+      <h3>Emitir Nota de Credito</h3>
+
+      <!-- Paso 1: Seleccionar remito -->
+      <div class="wizard-step active" id="wiz-paso1">
+        <p style="font-size:13px;color:var(--texto-suave);margin:8px 0 12px;">Selecciona el remito de la venta a devolver:</p>
+        <input type="search" id="wiz-buscar-remito" placeholder="Buscar por N° remito o cliente..." oninput="buscarRemitosWiz()" style="width:100%;height:38px;padding:0 12px;border:1px solid var(--borde);border-radius:8px;font-size:13px;margin-bottom:4px;">
+        <div class="remito-list" id="wiz-remitos"></div>
+        <div class="wizard-nav">
+          <button class="btn btn-secondary" onclick="cerrarModal('modal-emision')">Cancelar</button>
+          <button class="btn btn-primary" id="wiz-btn-paso2" onclick="wizPaso2()" disabled>Siguiente</button>
+        </div>
+      </div>
+
+      <!-- Paso 2: Items a devolver -->
+      <div class="wizard-step" id="wiz-paso2">
+        <p style="font-size:13px;color:var(--texto-suave);margin:8px 0 4px;">Remito: <strong id="wiz-rem-num"></strong> — <span id="wiz-rem-cli"></span></p>
+        <div id="wiz-items"></div>
+        <div class="nc-total">Total NC: $<span id="wiz-total">0</span></div>
+        <div class="fg">
+          <div class="fi" style="flex:1 1 100%;">
+            <label>Motivo de la devolucion</label>
+            <textarea id="wiz-motivo" placeholder="Ej: Fruta en mal estado, error de despacho..."></textarea>
+          </div>
+        </div>
+        <div class="wizard-nav">
+          <button class="btn btn-secondary" onclick="wizVolver1()">← Atras</button>
+          <button class="btn btn-primary" id="wiz-btn-emitir" onclick="emitirNC()">Emitir NC</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Modal Reembolso ── -->
+  <div class="modal-overlay" id="modal-reembolso">
+    <div class="modal-box" style="max-width:420px;">
+      <h3>Registrar Reembolso</h3>
+      <p style="font-size:13px;color:var(--texto-suave);margin:4px 0 12px;">NC <strong id="reemb-nc-num"></strong> — $<span id="reemb-monto" class="mono"></span></p>
+      <div class="fg">
+        <div class="fi" style="flex:1 1 100%;">
+          <label>Forma de pago</label>
+          <select id="reemb-fp"></select>
+        </div>
+        <div class="fi" style="flex:1 1 100%;">
+          <label>Referencia (N° transferencia, cheque, etc.)</label>
+          <input type="text" id="reemb-ref" placeholder="Opcional">
+        </div>
+      </div>
+      <div class="wizard-nav">
+        <button class="btn btn-secondary" onclick="cerrarModal('modal-reembolso')">Cancelar</button>
+        <button class="btn btn-primary" onclick="ejecutarReembolso()">Confirmar reembolso</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Modal Anular ── -->
+  <div class="modal-overlay" id="modal-anular">
+    <div class="modal-box" style="max-width:420px;">
+      <h3 style="color:#c0392b;">Anular Nota de Credito</h3>
+      <p style="font-size:13px;color:var(--texto-suave);margin:4px 0 12px;">NC <strong id="anul-nc-num"></strong> — $<span id="anul-monto" class="mono"></span></p>
+      <div class="fg">
+        <div class="fi" style="flex:1 1 100%;">
+          <label>Motivo de anulacion</label>
+          <textarea id="anul-motivo" placeholder="Obligatorio"></textarea>
+        </div>
+      </div>
+      <div class="wizard-nav">
+        <button class="btn btn-secondary" onclick="cerrarModal('modal-anular')">Cancelar</button>
+        <button class="btn" style="flex:1;background:#c0392b;color:#fff;border:none;border-radius:8px;padding:10px;font-weight:700;cursor:pointer;" onclick="ejecutarAnulacion()">Confirmar anulacion</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── BOTTOM NAV ── -->
+  <nav class="bottom-nav">
+    <a href="index.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="home"></i></span><span>Inicio</span></a>
+    <a href="juntada.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="wheat"></i></span><span>Cosecha</span></a>
+    <a href="menu-stock.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="package"></i></span><span>Stock</span></a>
+    <a href="menu-comercial.html" class="bottom-nav-item active"><span class="bottom-nav-icon"><i data-lucide="users"></i></span><span>Comercial</span></a>
+    <a href="menu-admin.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="landmark"></i></span><span>Admin</span></a>
+  </nav>
+</div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+var _token = localStorage.getItem('token');
+var _headers = { 'Authorization': 'Bearer ' + _token, 'Content-Type': 'application/json' };
+var _ncData = [];
+var _wizRemitos = [];
+var _wizSelectedRemito = null;
+var _wizItems = [];
+var _wizCategorias = [];
+var _wizSubcategorias = [];
+var _reembNCId = null;
+var _anulNCId = null;
+
+// ── Init ──
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof cargarTemporadaActiva === 'function') cargarTemporadaActiva();
+  if (typeof mostrarFecha === 'function') mostrarFecha();
+  cargarClientes();
+  cargarNC();
+  cargarKPIs();
+  cargarCategoriasCache();
+  lucide.createIcons();
+});
+
+function _fmt(n) { return n != null ? Number(n).toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2}) : '-'; }
+function _fmtKg(n) { return n != null ? Number(n).toLocaleString('es-AR', {minimumFractionDigits:1, maximumFractionDigits:3}) : '-'; }
+function _fmtFecha(f) { if (!f) return '-'; var d = new Date(f); return d.toLocaleDateString('es-AR'); }
+
+function cerrarModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ── Carga datos auxiliares ──
+function cargarClientes() {
+  fetch('/api/clientes', { headers: _headers }).then(function(r){ return r.json(); }).then(function(data) {
+    var sel = document.getElementById('filtro-cliente');
+    data.forEach(function(c) { var o = document.createElement('option'); o.value = c.id; o.textContent = c.nombre; sel.appendChild(o); });
+  });
+}
+
+function cargarCategoriasCache() {
+  fetch('/api/categorias-clasificacion', { headers: _headers }).then(function(r){ return r.json(); }).then(function(data) { _wizCategorias = data; });
+  fetch('/api/categorias-clasificacion/subcategorias', { headers: _headers }).then(function(r){ return r.json(); }).then(function(data) { _wizSubcategorias = data; }).catch(function(){});
+}
+
+// ── KPIs ──
+function cargarKPIs() {
+  fetch('/api/notas-credito', { headers: _headers }).then(function(r){ return r.json(); }).then(function(data) {
+    var now = new Date();
+    var mes = now.getMonth();
+    var anio = now.getFullYear();
+    var emitidas = 0, montoEmitidas = 0, pendientes = 0, montoPendientes = 0, reembolsadas = 0, montoReemb = 0, anuladas = 0;
+    data.forEach(function(nc) {
+      var f = new Date(nc.fecha_emision);
+      var esMes = f.getMonth() === mes && f.getFullYear() === anio;
+      if (nc.estado === 'emitida') { pendientes++; montoPendientes += parseFloat(nc.monto_total); if (esMes) { emitidas++; montoEmitidas += parseFloat(nc.monto_total); } }
+      if (nc.estado === 'con_reembolso' && esMes) { reembolsadas++; montoReemb += parseFloat(nc.monto_total); }
+      if (nc.estado === 'anulada' && esMes) { anuladas++; }
+    });
+    var html = '';
+    html += '<div class="nc-kpi"><div class="nc-kpi-icon amarillo"><i data-lucide="file-text"></i></div><div class="nc-kpi-valor">' + emitidas + '</div><div class="nc-kpi-label">NC emitidas (mes)</div></div>';
+    html += '<div class="nc-kpi"><div class="nc-kpi-icon azul"><i data-lucide="clock"></i></div><div class="nc-kpi-valor">$' + _fmt(montoPendientes) + '</div><div class="nc-kpi-label">Saldo a favor pendiente</div></div>';
+    html += '<div class="nc-kpi"><div class="nc-kpi-icon verde"><i data-lucide="check-circle"></i></div><div class="nc-kpi-valor">' + reembolsadas + '</div><div class="nc-kpi-label">Reembolsadas (mes)</div></div>';
+    html += '<div class="nc-kpi"><div class="nc-kpi-icon rojo"><i data-lucide="x-circle"></i></div><div class="nc-kpi-valor">' + anuladas + '</div><div class="nc-kpi-label">Anuladas (mes)</div></div>';
+    document.getElementById('nc-kpis').innerHTML = html;
+    lucide.createIcons();
+  });
+}
+
+// ── Listado NC ──
+function cargarNC() {
+  var params = [];
+  var cli = document.getElementById('filtro-cliente').value;
+  var est = document.getElementById('filtro-estado').value;
+  var desde = document.getElementById('filtro-desde').value;
+  var hasta = document.getElementById('filtro-hasta').value;
+  if (cli) params.push('cliente_id=' + cli);
+  if (est) params.push('estado=' + est);
+  if (desde) params.push('fecha_desde=' + desde);
+  if (hasta) params.push('fecha_hasta=' + hasta);
+  var url = '/api/notas-credito' + (params.length ? '?' + params.join('&') : '');
+
+  fetch(url, { headers: _headers }).then(function(r){ return r.json(); }).then(function(data) {
+    _ncData = data;
+    renderTabla(data);
+  });
+}
+
+function renderTabla(data) {
+  var tbody = document.getElementById('tbody-nc');
+  if (!data.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty">Sin notas de credito para los filtros seleccionados</td></tr>'; return; }
+  var html = '';
+  data.forEach(function(nc) {
+    var estadoCls = nc.estado === 'emitida' ? 'emitida' : nc.estado === 'con_reembolso' ? 'con_reembolso' : 'anulada';
+    var estadoLabel = nc.estado === 'emitida' ? 'Emitida' : nc.estado === 'con_reembolso' ? 'Reembolsada' : 'Anulada';
+    html += '<tr>';
+    html += '<td class="mono" style="font-weight:700;">' + nc.numero + '</td>';
+    html += '<td class="mono">' + (nc.remito_numero || '-') + '</td>';
+    html += '<td>' + _fmtFecha(nc.fecha_emision) + '</td>';
+    html += '<td>' + (nc.cliente_nombre || '-') + '</td>';
+    html += '<td class="mono" style="text-align:right;">$' + _fmt(nc.monto_total) + '</td>';
+    html += '<td><span class="estado-badge ' + estadoCls + '">' + estadoLabel + '</span></td>';
+    html += '<td style="white-space:nowrap;">';
+    html += '<button onclick="verDetalle(' + nc.id + ')" title="Ver detalle" style="background:none;border:none;cursor:pointer;padding:4px;"><i data-lucide="eye" style="width:16px;height:16px;color:var(--verde);"></i></button>';
+    if (nc.estado === 'emitida') {
+      html += '<button onclick="abrirReembolso(' + nc.id + ',\'' + nc.numero + '\',' + nc.monto_total + ')" title="Registrar reembolso" style="background:none;border:none;cursor:pointer;padding:4px;"><i data-lucide="dollar-sign" style="width:16px;height:16px;color:#1565c0;"></i></button>';
+    }
+    if (nc.estado !== 'anulada') {
+      html += '<button onclick="abrirAnulacion(' + nc.id + ',\'' + nc.numero + '\',' + nc.monto_total + ')" title="Anular NC" style="background:none;border:none;cursor:pointer;padding:4px;"><i data-lucide="x-circle" style="width:16px;height:16px;color:#c0392b;"></i></button>';
+    }
+    html += '</td></tr>';
+  });
+  tbody.innerHTML = html;
+  lucide.createIcons();
+}
+
+function limpiarFiltros() {
+  document.getElementById('filtro-cliente').value = '';
+  document.getElementById('filtro-estado').value = '';
+  document.getElementById('filtro-desde').value = '';
+  document.getElementById('filtro-hasta').value = '';
+  cargarNC();
+}
+
+// ── Detalle NC ──
+function verDetalle(id) {
+  fetch('/api/notas-credito/' + id, { headers: _headers }).then(function(r){ return r.json(); }).then(function(nc) {
+    document.getElementById('det-titulo').textContent = nc.numero;
+    var meta = '<span>Remito: ' + nc.remito_numero + '</span><span>Cliente: ' + nc.cliente_nombre + '</span><span>' + _fmtFecha(nc.fecha_emision) + '</span><span class="estado-badge ' + nc.estado + '">' + (nc.estado === 'emitida' ? 'Emitida' : nc.estado === 'con_reembolso' ? 'Reembolsada' : 'Anulada') + '</span>';
+    document.getElementById('det-meta').innerHTML = meta;
+    document.getElementById('det-motivo').textContent = nc.motivo ? 'Motivo: ' + nc.motivo : '';
+
+    var items = nc.items || [];
+    var html = '';
+    items.forEach(function(it) {
+      var destLabel = it.destino === 'reingreso_misma' ? 'Reingreso' : it.destino === 'reingreso_recategorizado' ? 'Recategorizado → ' + (it.categoria_destino_nombre || '') + (it.subcategoria_destino_nombre ? ' / ' + it.subcategoria_destino_nombre : '') : 'Merma';
+      html += '<tr><td class="mono">' + (it.sub_lote_codigo || '-') + '</td><td>' + _fmtKg(it.kg_devueltos) + ' kg</td><td>$' + _fmt(it.precio_unitario) + '</td><td>$' + _fmt(it.subtotal) + '</td><td>' + destLabel + '</td></tr>';
+    });
+    document.getElementById('det-items').innerHTML = html;
+    document.getElementById('det-total').textContent = '$' + _fmt(nc.monto_total);
+
+    var reembHtml = '';
+    if (nc.estado === 'con_reembolso') {
+      reembHtml = '<strong>Reembolso:</strong> ' + _fmtFecha(nc.fecha_reembolso) + ' — ' + (nc.forma_pago_reembolso || 'Sin forma de pago') + (nc.referencia_reembolso ? ' — Ref: ' + nc.referencia_reembolso : '');
+    }
+    document.getElementById('det-reembolso').innerHTML = reembHtml;
+
+    var anulHtml = '';
+    if (nc.estado === 'anulada') {
+      anulHtml = 'Anulada el ' + _fmtFecha(nc.fecha_anulacion) + (nc.motivo_anulacion ? ' — ' + nc.motivo_anulacion : '');
+    }
+    document.getElementById('det-anulacion').textContent = anulHtml;
+
+    document.getElementById('modal-detalle').classList.add('open');
+    lucide.createIcons();
+  });
+}
+
+// ── Wizard Emision ──
+function abrirEmision() {
+  _wizSelectedRemito = null;
+  _wizItems = [];
+  document.getElementById('wiz-buscar-remito').value = '';
+  document.getElementById('wiz-btn-paso2').disabled = true;
+  document.getElementById('wiz-paso1').classList.add('active');
+  document.getElementById('wiz-paso2').classList.remove('active');
+  document.getElementById('modal-emision').classList.add('open');
+  cargarRemitosWiz();
+}
+
+function cargarRemitosWiz() {
+  fetch('/api/remitos', { headers: _headers }).then(function(r){ return r.json(); }).then(function(data) {
+    _wizRemitos = data.filter(function(r) { return r.estado !== 'anulado'; });
+    renderRemitosWiz(_wizRemitos);
+  });
+}
+
+function buscarRemitosWiz() {
+  var q = document.getElementById('wiz-buscar-remito').value.toLowerCase();
+  var filtered = _wizRemitos.filter(function(r) {
+    return (r.numero || '').toLowerCase().indexOf(q) >= 0 || (r.cliente_nombre || '').toLowerCase().indexOf(q) >= 0;
+  });
+  renderRemitosWiz(filtered);
+}
+
+function renderRemitosWiz(remitos) {
+  var html = '';
+  remitos.slice(0, 20).forEach(function(r) {
+    var sel = _wizSelectedRemito && _wizSelectedRemito.id === r.id ? ' selected' : '';
+    html += '<div class="remito-opt' + sel + '" onclick="seleccionarRemito(' + r.id + ')">';
+    html += '<div><strong class="mono">' + r.numero + '</strong> — ' + (r.cliente_nombre || 'Sin cliente') + '</div>';
+    html += '<div style="font-size:12px;color:var(--texto-suave);">' + _fmtFecha(r.fecha) + ' — $' + _fmt(r.total) + ' — ' + _fmtKg(r.kilos_total) + ' kg</div>';
+    html += '</div>';
+  });
+  if (!remitos.length) html = '<div class="empty">No se encontraron remitos</div>';
+  document.getElementById('wiz-remitos').innerHTML = html;
+}
+
+function seleccionarRemito(id) {
+  _wizSelectedRemito = _wizRemitos.find(function(r) { return r.id === id; });
+  document.getElementById('wiz-btn-paso2').disabled = false;
+  renderRemitosWiz(_wizRemitos.filter(function(r) {
+    var q = document.getElementById('wiz-buscar-remito').value.toLowerCase();
+    return !q || (r.numero || '').toLowerCase().indexOf(q) >= 0 || (r.cliente_nombre || '').toLowerCase().indexOf(q) >= 0;
+  }));
+}
+
+function wizPaso2() {
+  if (!_wizSelectedRemito) return;
+  document.getElementById('wiz-rem-num').textContent = _wizSelectedRemito.numero;
+  document.getElementById('wiz-rem-cli').textContent = _wizSelectedRemito.cliente_nombre || 'Sin cliente';
+  document.getElementById('wiz-paso1').classList.remove('active');
+  document.getElementById('wiz-paso2').classList.add('active');
+
+  fetch('/api/notas-credito/remito/' + _wizSelectedRemito.id + '/items-devolvibles', { headers: _headers })
+    .then(function(r){ return r.json(); }).then(function(data) {
+      _wizItems = data.items || [];
+      renderWizItems();
+    });
+}
+
+function wizVolver1() {
+  document.getElementById('wiz-paso2').classList.remove('active');
+  document.getElementById('wiz-paso1').classList.add('active');
+}
+
+function renderWizItems() {
+  var html = '';
+  if (!_wizItems.length) { html = '<div class="empty">No hay items disponibles para devolver</div>'; document.getElementById('wiz-items').innerHTML = html; return; }
+  _wizItems.forEach(function(it, idx) {
+    html += '<div class="dev-item" id="dev-item-' + idx + '">';
+    html += '<div class="dev-item-header"><span>' + (it.sub_lote_codigo || it.variedad || 'Item') + '</span><span style="font-size:12px;color:var(--texto-suave);">Disponible: ' + _fmtKg(it.kg_disponibles) + ' kg — $' + _fmt(it.precio_kilo) + '/kg</span></div>';
+    html += '<div class="dev-item-fields">';
+    html += '<div class="fi fi-kg"><label>Kg a devolver</label><input type="number" step="0.001" min="0" max="' + it.kg_disponibles + '" value="" placeholder="0" onchange="calcularTotalWiz()" oninput="calcularTotalWiz()" id="wiz-kg-' + idx + '"></div>';
+    html += '<div class="fi fi-destino"><label>Destino</label><select id="wiz-dest-' + idx + '" onchange="toggleCatWiz(' + idx + ')">';
+    html += '<option value="">— Seleccionar —</option><option value="reingreso_misma">Reingreso misma categoria</option><option value="reingreso_recategorizado">Recategorizar</option><option value="merma">Merma (perdida)</option>';
+    html += '</select></div>';
+    html += '<div class="fi fi-cat" id="wiz-cat-wrap-' + idx + '" style="display:none;"><label>Categoria destino</label><select id="wiz-cat-' + idx + '" onchange="cargarSubcatWiz(' + idx + ')"><option value="">—</option>';
+    _wizCategorias.forEach(function(c) { html += '<option value="' + c.id + '">' + c.nombre + '</option>'; });
+    html += '</select></div>';
+    html += '<div class="fi fi-cat" id="wiz-scat-wrap-' + idx + '" style="display:none;"><label>Subcategoria</label><select id="wiz-scat-' + idx + '"><option value="">— Opcional —</option></select></div>';
+    html += '</div>';
+    html += '<div class="dev-subtotal" id="wiz-sub-' + idx + '"></div>';
+    html += '</div>';
+  });
+  document.getElementById('wiz-items').innerHTML = html;
+}
+
+function toggleCatWiz(idx) {
+  var dest = document.getElementById('wiz-dest-' + idx).value;
+  document.getElementById('wiz-cat-wrap-' + idx).style.display = dest === 'reingreso_recategorizado' ? '' : 'none';
+  document.getElementById('wiz-scat-wrap-' + idx).style.display = dest === 'reingreso_recategorizado' ? '' : 'none';
+}
+
+function cargarSubcatWiz(idx) {
+  var catId = parseInt(document.getElementById('wiz-cat-' + idx).value);
+  var sel = document.getElementById('wiz-scat-' + idx);
+  sel.innerHTML = '<option value="">— Opcional —</option>';
+  if (!catId) return;
+  var subs = _wizSubcategorias.filter(function(s) { return s.categoria_id === catId; });
+  subs.forEach(function(s) { var o = document.createElement('option'); o.value = s.id; o.textContent = s.nombre; sel.appendChild(o); });
+}
+
+function calcularTotalWiz() {
+  var total = 0;
+  _wizItems.forEach(function(it, idx) {
+    var kg = parseFloat(document.getElementById('wiz-kg-' + idx).value) || 0;
+    var sub = kg * parseFloat(it.precio_kilo || 0);
+    total += sub;
+    document.getElementById('wiz-sub-' + idx).textContent = kg > 0 ? 'Subtotal: $' + _fmt(sub) : '';
+  });
+  document.getElementById('wiz-total').textContent = _fmt(total);
+}
+
+function emitirNC() {
+  var items = [];
+  for (var i = 0; i < _wizItems.length; i++) {
+    var kg = parseFloat(document.getElementById('wiz-kg-' + i).value) || 0;
+    var dest = document.getElementById('wiz-dest-' + i).value;
+    if (kg <= 0) continue;
+    if (!dest) { alert('Selecciona destino para el item ' + (_wizItems[i].sub_lote_codigo || i+1)); return; }
+    var item = { remito_item_id: _wizItems[i].remito_item_id, kg_devueltos: kg, destino: dest };
+    if (dest === 'reingreso_recategorizado') {
+      var catId = document.getElementById('wiz-cat-' + i).value;
+      if (!catId) { alert('Selecciona categoria destino para recategorizacion'); return; }
+      item.categoria_destino_id = parseInt(catId);
+      var scatId = document.getElementById('wiz-scat-' + i).value;
+      if (scatId) item.subcategoria_destino_id = parseInt(scatId);
+    }
+    items.push(item);
+  }
+  if (!items.length) { alert('Selecciona al menos un item con kg a devolver'); return; }
+
+  var body = { remito_id: _wizSelectedRemito.id, motivo: document.getElementById('wiz-motivo').value, items: items };
+  fetch('/api/notas-credito', { method: 'POST', headers: _headers, body: JSON.stringify(body) })
+    .then(function(r){ return r.json(); }).then(function(data) {
+      if (data.error) { alert('Error: ' + data.error); return; }
+      cerrarModal('modal-emision');
+      cargarNC();
+      cargarKPIs();
+      alert('Nota de Credito ' + data.numero + ' emitida por $' + _fmt(data.monto_total));
+    }).catch(function(e) { alert('Error de red: ' + e.message); });
+}
+
+// ── Reembolso ──
+function abrirReembolso(id, numero, monto) {
+  _reembNCId = id;
+  document.getElementById('reemb-nc-num').textContent = numero;
+  document.getElementById('reemb-monto').textContent = _fmt(monto);
+  document.getElementById('reemb-ref').value = '';
+  var sel = document.getElementById('reemb-fp');
+  sel.innerHTML = '<option value="">Cargando...</option>';
+  fetch('/api/cuentas-clientes/formas-pago', { headers: _headers })
+    .then(function(r){ return r.json(); })
+    .then(function(fps) {
+      sel.innerHTML = '<option value="">— Seleccionar —</option>';
+      fps.forEach(function(fp) { var o = document.createElement('option'); o.value = fp.id; o.textContent = fp.nombre; sel.appendChild(o); });
+    });
+  document.getElementById('modal-reembolso').classList.add('open');
+}
+
+function ejecutarReembolso() {
+  var fpId = document.getElementById('reemb-fp').value;
+  if (!fpId) { alert('Selecciona forma de pago'); return; }
+  var body = { forma_pago_id: parseInt(fpId), referencia: document.getElementById('reemb-ref').value };
+  fetch('/api/notas-credito/' + _reembNCId + '/reembolso', { method: 'POST', headers: _headers, body: JSON.stringify(body) })
+    .then(function(r){ return r.json(); }).then(function(data) {
+      if (data.error) { alert('Error: ' + data.error); return; }
+      cerrarModal('modal-reembolso');
+      cargarNC();
+      cargarKPIs();
+      alert('Reembolso registrado');
+    }).catch(function(e) { alert('Error: ' + e.message); });
+}
+
+// ── Anulacion ──
+function abrirAnulacion(id, numero, monto) {
+  _anulNCId = id;
+  document.getElementById('anul-nc-num').textContent = numero;
+  document.getElementById('anul-monto').textContent = _fmt(monto);
+  document.getElementById('anul-motivo').value = '';
+  document.getElementById('modal-anular').classList.add('open');
+}
+
+function ejecutarAnulacion() {
+  var motivo = document.getElementById('anul-motivo').value.trim();
+  if (!motivo) { alert('El motivo es obligatorio'); return; }
+  fetch('/api/notas-credito/' + _anulNCId + '/anular', { method: 'POST', headers: _headers, body: JSON.stringify({ motivo: motivo }) })
+    .then(function(r){ return r.json(); }).then(function(data) {
+      if (data.error) { alert('Error: ' + data.error); return; }
+      cerrarModal('modal-anular');
+      cargarNC();
+      cargarKPIs();
+      alert('Nota de credito anulada');
+    }).catch(function(e) { alert('Error: ' + e.message); });
+}
+</script>
+</body>
+</html>
