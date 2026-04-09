@@ -56,7 +56,7 @@ router.get('/rinde-parcela', async (req, res) => {
     const r = pool.request();
     const where = applyJuntadaFilters(r, f);
     const result = await r.query(`
-      SELECT p.nombre AS parcela, ISNULL(vf.nombre, p.variedad) AS variedad,
+      SELECT p.nombre AS parcela, vf.nombre AS variedad,
              p.hectareas, SUM(j.kilos) AS kg_cosechados,
              CAST(SUM(j.kilos) / NULLIF(p.hectareas,0) AS DECIMAL(10,2)) AS kg_por_ha,
              COUNT(j.id) AS cantidad_juntadas,
@@ -65,7 +65,7 @@ router.get('/rinde-parcela', async (req, res) => {
       JOIN Parcelas p ON j.parcela_id = p.id
       LEFT JOIN variedades_frutilla vf ON p.variedad_id = vf.id
       WHERE ${where}
-      GROUP BY p.id, p.nombre, vf.nombre, p.variedad, p.hectareas
+      GROUP BY p.id, p.nombre, vf.nombre, p.hectareas
       ORDER BY kg_cosechados DESC`);
     res.json(result.recordset);
   } catch (err) { console.error(err); res.status(500).json({ error: 'Error interno' }); }
@@ -106,7 +106,7 @@ router.get('/descarte-por-variedad', async (req, res) => {
     conds.push("lm.estado != 'anulada'");
     const where = conds.join(' AND ');
     const result = await r.query(`
-      SELECT ISNULL(vf.nombre, p.variedad) AS variedad,
+      SELECT vf.nombre AS variedad,
              SUM(cl.kilos) AS kg_totales,
              SUM(CASE WHEN cc.nombre = 'Descarte' THEN cl.kilos ELSE 0 END) AS kg_descarte
       FROM Clasificacion cl
@@ -115,7 +115,7 @@ router.get('/descarte-por-variedad', async (req, res) => {
       LEFT JOIN variedades_frutilla vf ON p.variedad_id = vf.id
       LEFT JOIN CategoriasClasificacion cc ON cl.categoria_clasif_id = cc.id
       WHERE ${where}
-      GROUP BY vf.nombre, p.variedad
+      GROUP BY vf.nombre
       HAVING SUM(cl.kilos) > 0`);
     const rows = result.recordset.map(function(row) {
       const total = parseFloat(row.kg_totales);
@@ -258,6 +258,10 @@ router.get('/ingresos-vs-egresos', async (req, res) => {
 });
 
 // ── B10: Margen por categoria ─────────────────────────────────
+// Calcula costo real de insumos aplicados por parcela y lo distribuye a las
+// categorías vendidas según la parcela mayoritaria del lote padre (via Juntada).
+// Aplicaciones filtradas por temporada de la parcela (Aplicaciones.temporada_id
+// puede ser NULL en datos históricos).
 router.get('/margen-por-categoria', async (req, res) => {
   try {
     const pool = await getPool();
@@ -267,20 +271,51 @@ router.get('/margen-por-categoria', async (req, res) => {
     if (f.temporada_id) { r.input('tid', sql.Int, f.temporada_id); conds.push('md.temporada_id = @tid'); }
     const where = conds.join(' AND ');
     const result = await r.query(`
+      WITH costo_parcela AS (
+        SELECT p.id AS parcela_id,
+          CAST(
+            ISNULL((SELECT SUM(a.costo_total) FROM Aplicaciones a
+                    WHERE a.parcela_id = p.id AND ISNULL(a.estado,'activa') != 'anulada'), 0)
+            /
+            NULLIF((SELECT SUM(j.kilos) FROM Juntada j
+                    WHERE j.parcela_id = p.id AND ISNULL(j.estado,'activa') != 'anulada'), 0)
+          AS DECIMAL(18,4)) AS costo_por_kg
+        FROM Parcelas p
+      ),
+      lote_parcela_mayoritaria AS (
+        SELECT lote_id, parcela_id FROM (
+          SELECT j.lote_id, j.parcela_id,
+                 ROW_NUMBER() OVER (PARTITION BY j.lote_id ORDER BY SUM(j.kilos) DESC) AS rn
+          FROM Juntada j
+          WHERE ISNULL(j.estado,'activa') != 'anulada' AND j.lote_id IS NOT NULL
+          GROUP BY j.lote_id, j.parcela_id
+        ) t WHERE rn = 1
+      )
       SELECT ISNULL(cc.nombre,'Sin clasificar') AS categoria,
              SUM(ri.kilos) AS kg_vendidos,
              SUM(ri.subtotal) AS ingreso_bruto,
-             NULL AS costo_estimado,
-             NULL AS margen_bruto,
-             NULL AS margen_porcentual
+             SUM(ri.kilos * ISNULL(cp.costo_por_kg, 0)) AS costo_estimado,
+             SUM(ri.subtotal - ri.kilos * ISNULL(cp.costo_por_kg, 0)) AS margen_bruto
       FROM RemitoItems ri
       JOIN MovimientosDeposito md ON ri.movimiento_id = md.id
       LEFT JOIN LotesMercaderia sl ON ri.sub_lote_id = sl.id
+      LEFT JOIN lote_parcela_mayoritaria lpm ON sl.lote_padre_id = lpm.lote_id
+      LEFT JOIN costo_parcela cp ON lpm.parcela_id = cp.parcela_id
       LEFT JOIN CategoriasClasificacion cc ON sl.categoria_clasif_id = cc.id
       WHERE ${where}
       GROUP BY cc.nombre
       ORDER BY ingreso_bruto DESC`);
-    res.json(result.recordset);
+
+    // Calcular margen_porcentual en JS para evitar div/0 en SQL
+    const rows = result.recordset.map(function(row) {
+      const ing = parseFloat(row.ingreso_bruto) || 0;
+      const mar = parseFloat(row.margen_bruto) || 0;
+      return {
+        ...row,
+        margen_porcentual: ing > 0 ? parseFloat(((mar / ing) * 100).toFixed(2)) : null
+      };
+    });
+    res.json(rows);
   } catch (err) { console.error(err); res.status(500).json({ error: 'Error interno' }); }
 });
 
@@ -321,7 +356,7 @@ router.get('/rotacion-stock', async (req, res) => {
     const where = conds.join(' AND ');
     const result = await r.query(`
       SELECT sl.codigo_interno AS sub_lote,
-             ISNULL(vf.nombre, p.variedad) AS variedad,
+             vf.nombre AS variedad,
              sl.fecha_inicio AS fecha_cosecha,
              (SELECT MIN(md2.fecha) FROM MovimientosDeposito md2
               WHERE md2.sub_lote_id = sl.id AND md2.tipo = 'egreso_venta' AND ISNULL(md2.estado,'') != 'anulada') AS fecha_primera_venta,
