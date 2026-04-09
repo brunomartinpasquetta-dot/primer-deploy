@@ -105,7 +105,10 @@ router.post('/', async (req, res) => {
 
     const compra_id = compraResult.recordset[0].id;
 
-    // Obtener contenido_litros de todos los productos de la compra de una vez
+    // Obtener contenido_litros de todos los productos de la compra de una vez.
+    // contenido_litros es multiplicador legítimo envase → unidad de stock:
+    // ej. 1 bidón de 10L con cantidad=10 envases = 100 unidades de stock (lt).
+    // NO es bug aunque parezca inflado en validaciones E2E que ignoren el dato.
     const prodIdsParsed = items.map(i => parseInt(i.producto_id));
     const prodReq = new sql.Request(transaction);
     const prodParams = prodIdsParsed.map((id, i) => { prodReq.input(`prodId${i}`, sql.Int, id); return `@prodId${i}`; });
@@ -116,7 +119,7 @@ router.post('/', async (req, res) => {
 
     for (const item of items) {
       const unidades     = parseFloat(item.cantidad);       // envases comprados
-      const contenido    = prodMap[item.producto_id] || 1;  // lt/kg/u por envase
+      const contenido    = prodMap[item.producto_id] || 1;  // lt/kg/u por envase (multiplicador documentado arriba)
       const stockQty     = unidades * contenido;            // cantidad real que ingresa a stock
       const subtotal     = unidades * parseFloat(item.precio_unit);
       const fechaVenc    = item.fecha_vencimiento || null;

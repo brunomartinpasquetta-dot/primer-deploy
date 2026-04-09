@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#1A2E0A">
-  <title>Notas de Credito — Cosecha</title>
+  <title>Notas de Crédito — Cosecha</title>
   <link rel="icon" href="img/logo.png">
   <script src="js/utils.js"></script>
   <script src="js/cosecha-dialogs.js"></script>
@@ -111,7 +111,7 @@
       <a href="menu-comercial.html" class="btn-volver">← Volver</a>
       <div class="content-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
         <div>
-          <div class="content-title">Notas de Credito</div>
+          <div class="content-title">Notas de Crédito</div>
           <div class="content-sub">Devoluciones de ventas y saldos a favor</div>
         </div>
         <button class="btn btn-primary" style="width:auto;margin:0;" onclick="abrirEmision()"><i data-lucide="file-plus" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"></i>Emitir NC</button>
@@ -184,7 +184,7 @@
   <!-- ── Modal Emision NC (wizard) ── -->
   <div class="modal-overlay" id="modal-emision">
     <div class="modal-box" style="max-width:700px;">
-      <h3>Emitir Nota de Credito</h3>
+      <h3>Emitir Nota de Crédito</h3>
 
       <!-- Paso 1: Seleccionar remito -->
       <div class="wizard-step active" id="wiz-paso1">
@@ -241,7 +241,7 @@
   <!-- ── Modal Anular ── -->
   <div class="modal-overlay" id="modal-anular">
     <div class="modal-box" style="max-width:420px;">
-      <h3 style="color:#c0392b;">Anular Nota de Credito</h3>
+      <h3 style="color:#c0392b;">Anular Nota de Crédito</h3>
       <p style="font-size:13px;color:var(--texto-suave);margin:4px 0 12px;">NC <strong id="anul-nc-num"></strong> — $<span id="anul-monto" class="mono"></span></p>
       <div class="fg">
         <div class="fi" style="flex:1 1 100%;">
@@ -564,7 +564,7 @@ function emitirNC() {
       cerrarModal('modal-emision');
       cargarNC();
       cargarKPIs();
-      alert('Nota de Credito ' + data.numero + ' emitida por $' + _fmt(data.monto_total));
+      alert('Nota de Crédito ' + data.numero + ' emitida por $' + _fmt(data.monto_total));
     }).catch(function(e) { alert('Error de red: ' + e.message); });
 }
 

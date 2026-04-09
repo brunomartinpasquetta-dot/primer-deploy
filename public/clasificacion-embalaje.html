@@ -223,17 +223,6 @@
                 </div>
               </div>
             </details>
-            <details open>
-              <summary style="cursor:pointer;font-size:11px;font-weight:700;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.4px;padding:6px 0;">Ingresos a stock del lote</summary>
-              <div class="ce-historial" style="margin-top:4px;">
-                <div class="ce-historial-body" style="max-height:200px;">
-                  <table>
-                    <thead><tr><th>Fecha</th><th>Insumo</th><th>Env.</th><th style="text-align:right;">Kg</th><th>Dep.</th><th style="text-align:center;">Acc.</th></tr></thead>
-                    <tbody id="tbody-hist-emb"><tr><td colspan="6" class="sin-items">Sin registros</td></tr></tbody>
-                  </table>
-                </div>
-              </div>
-            </details>
           </div>
         </div>
 
@@ -369,7 +358,23 @@
           <div class="barra-acciones" id="barra-cerrar-lote" style="display:none;border-color:var(--verde);background:var(--verde-suave);">
             <i data-lucide="check-circle-2" style="width:18px;height:18px;color:var(--verde);"></i>
             <span style="font-size:13px;font-weight:600;color:var(--verde);">Lote completamente embalado</span>
-            <button class="btn btn-confirmar" style="margin-left:auto;" onclick="cerrarLote()">Cerrar lote</button>
+            <button class="btn btn-confirmar" style="margin-left:auto;" onclick="cerrarLote()" title="Guarda lo embalado hasta el momento. La tarea puede continuar más tarde o al día siguiente.">Cerrar lote</button>
+          </div>
+
+          <!-- ═══ Panel: Historial de embalajes del lote ═══ -->
+          <div id="panel-historial-embalajes" style="margin-top:16px;border:1px solid var(--borde);border-radius:8px;overflow:hidden;">
+            <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--fondo);border-bottom:1px solid var(--borde);font-size:12px;">
+              <i data-lucide="history" style="width:14px;height:14px;color:var(--texto-suave);"></i>
+              <span style="font-weight:700;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.4px;">Historial de embalajes del lote</span>
+            </div>
+            <div class="ce-historial">
+              <div class="ce-historial-body" style="max-height:260px;">
+                <table>
+                  <thead><tr><th>Fecha</th><th>Insumo</th><th>Env.</th><th style="text-align:right;">Kg</th><th>Dep.</th><th style="text-align:center;">Acc.</th></tr></thead>
+                  <tbody id="tbody-hist-emb"><tr><td colspan="6" class="sin-items">Sin embalajes registrados en este lote</td></tr></tbody>
+                </table>
+              </div>
+            </div>
           </div>
 
         </div>
@@ -620,11 +625,11 @@
       }).join('');
     }
 
-    // Ingresos a stock (embalajes)
+    // Historial de embalajes del lote (panel derecho)
     var tbodyEmb = document.getElementById('tbody-hist-emb');
     var embs = loteDetalle.embalajes || [];
     if (!embs.length) {
-      tbodyEmb.innerHTML = '<tr><td colspan="6" class="sin-items">Sin registros</td></tr>';
+      tbodyEmb.innerHTML = '<tr><td colspan="6" class="sin-items">Sin embalajes registrados en este lote</td></tr>';
     } else {
       tbodyEmb.innerHTML = embs.map(function(e) {
         var anulado = e.estado === 'anulada';
