@@ -9,3 +9,8 @@ CONTEXTO_*.md
 !.claude/agents/
 !.claude/rules/
 uploads/
+.playwright-mcp/
+.DS_Store
+e2e/*.png
+/tmp/
+/backups/

@@ -48,10 +48,16 @@ async function ensureUsersTable(pool) {
       )
     END
   `);
-  // Si no hay ningún usuario, crear admin por defecto (password: admin123)
+  // Si no hay ningún usuario, crear admin por defecto.
+  // En producción: setear ADMIN_DEFAULT_PASSWORD en .env antes del primer arranque.
+  // Si se usa el fallback 'admin123', emitir warning crítico en consola.
   const count = await pool.request().query('SELECT COUNT(*) AS n FROM Usuarios');
   if (count.recordset[0].n === 0) {
-    const hash = await bcrypt.hash('admin123', 10);
+    const defaultPass = process.env.ADMIN_DEFAULT_PASSWORD || 'admin123';
+    if (defaultPass === 'admin123') {
+      console.warn('[SECURITY] Admin creado con password default "admin123". Cambialo inmediatamente desde la UI.');
+    }
+    const hash = await bcrypt.hash(defaultPass, 10);
     await pool.request()
       .input('nombre', sql.NVarChar, 'Administrador')
       .input('usuario', sql.NVarChar, 'admin')

@@ -6,10 +6,14 @@ if (!process.env.JWT_SECRET) {
 }
 
 const express = require('express');
+const helmet = require('helmet');
+const cors = require('cors');
+const morgan = require('morgan');
 const { createServer } = require('http');
 const WebSocket = require('ws');
 const path = require('path');
 
+const { getPool } = require('./db');
 const requireAuth = require('./middleware/auth');
 const { soloAdmin, encargadoOAdmin } = require('./middleware/roles');
 
@@ -17,8 +21,28 @@ const app = express();
 const server = createServer(app);
 const wss = new WebSocket.Server({ server });
 
+// ── Middleware de seguridad y logging ──────────────────────────
+// helmet: headers HTTP de seguridad (CSP, HSTS, X-Frame-Options, etc)
+// Desactivo contentSecurityPolicy porque el frontend usa Lucide y Chart.js desde CDN
+app.use(helmet({ contentSecurityPolicy: false }));
+// cors: whitelist configurable via CORS_ORIGIN (default '*' para desarrollo)
+app.use(cors({ origin: process.env.CORS_ORIGIN || '*', credentials: true }));
+// morgan: access logs HTTP formato combined
+app.use(morgan('combined'));
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
+
+// ── Health check (sin auth, público) ──────────────────────────
+app.get('/health', async (req, res) => {
+  try {
+    const pool = await getPool();
+    await pool.request().query('SELECT 1 AS ok');
+    res.json({ status: 'ok', db: 'ok', uptime: process.uptime() });
+  } catch (err) {
+    res.status(503).json({ status: 'degraded', db: 'down', error: err.message });
+  }
+});
 
 // ── Rutas públicas ──────────────────────────────────────────────
 app.use('/api/auth',         require('./routes/auth'));
@@ -86,7 +110,7 @@ global.broadcastPeso = (peso) => {
   });
 };
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Servidor corriendo en http://localhost:${PORT}`);
+  console.log(`Servidor corriendo en puerto ${PORT}`);
 });
