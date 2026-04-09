@@ -1026,7 +1026,7 @@ router.put('/embalaje/:id', async (req, res) => {
           .query('UPDATE Productos SET stock_actual = stock_actual - @cant WHERE id = @pid');
       }
 
-      // Ajustar kilos en MovimientosDeposito y StockMercaderia si cambió
+      // Ajustar kilos en MovimientosDeposito si cambió
       const diffKilos = newKilos - parseFloat(prev.kilos);
       if (Math.abs(diffKilos) > 0.001) {
         // Actualizar sub-lote kilos

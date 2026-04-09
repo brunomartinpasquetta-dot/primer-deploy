@@ -52,7 +52,7 @@ router.get('/:cliente_id', async (req, res) => {
           fp.es_cuenta_corriente,
           t.nombre   AS temporada,
           -- Detalle de venta vinculada
-          sm.kilos, sm.precio_kilo, sm.destino,
+          md.kilos, md.precio_kilo, md.destino_venta AS destino,
           l.nombre   AS parcela,
           -- Saldo acumulado (running total)
           SUM(CASE WHEN cc.tipo = 'debito' THEN cc.monto ELSE -cc.monto END)
@@ -61,8 +61,8 @@ router.get('/:cliente_id', async (req, res) => {
         FROM CuentaCorrienteClientes cc
         LEFT JOIN FormasPago             fp ON cc.forma_pago_id      = fp.id
         LEFT JOIN Temporadas             t  ON cc.temporada_id        = t.id
-        LEFT JOIN StockMercaderia        sm ON cc.stock_mercaderia_id = sm.id
-        LEFT JOIN Parcelas               l  ON sm.parcela_id          = l.id
+        LEFT JOIN MovimientosDeposito    md ON cc.movimiento_deposito_id = md.id
+        LEFT JOIN Parcelas               l  ON md.parcela_id          = l.id
         WHERE cc.cliente_id = @cliente_id
         ORDER BY cc.fecha_hora DESC, cc.id DESC`);
     res.json(result.recordset);

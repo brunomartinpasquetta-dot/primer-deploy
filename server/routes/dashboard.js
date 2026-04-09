@@ -109,8 +109,8 @@ router.get('/', async (req, res) => {
                       WHEN tipo = 'ingreso_anulacion' THEN -kilos
                       ELSE 0
                     END), 0) AS vendidos
-                  FROM StockMercaderia
-                  WHERE temporada_id = @tid`),
+                  FROM MovimientosDeposito
+                  WHERE temporada_id = @tid AND ISNULL(estado, '') != 'anulada'`),
 
         pool.request()
           .input('tid', sql.Int, tid)

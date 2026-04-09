@@ -12,8 +12,8 @@ router.get('/temporada/:id', async (req, res) => {
     const ventas = await pool.request()
       .input('id', sql.Int, temporada_id)
       .query(`SELECT ISNULL(SUM(kilos * precio_kilo), 0) AS total
-              FROM StockMercaderia
-              WHERE temporada_id = @id AND tipo LIKE 'egreso%' AND tipo != 'egreso_anulacion' AND precio_kilo IS NOT NULL`);
+              FROM MovimientosDeposito
+              WHERE temporada_id = @id AND tipo LIKE 'egreso%' AND tipo != 'egreso_anulacion' AND precio_kilo IS NOT NULL AND ISNULL(estado, '') != 'anulada'`);
 
     // Costo insumos (compras)
     const compras = await pool.request()
@@ -122,8 +122,8 @@ router.get('/parcela/:id', async (req, res) => {
     const ventas = await pool.request()
       .input('id', sql.Int, parcela_id)
       .query(`SELECT ISNULL(SUM(kilos * precio_kilo), 0) AS total
-              FROM StockMercaderia
-              WHERE parcela_id = @id AND tipo LIKE 'egreso%' AND tipo != 'egreso_anulacion' AND precio_kilo IS NOT NULL`);
+              FROM MovimientosDeposito
+              WHERE parcela_id = @id AND tipo LIKE 'egreso%' AND tipo != 'egreso_anulacion' AND precio_kilo IS NOT NULL AND ISNULL(estado, '') != 'anulada'`);
 
     const insumos = await pool.request()
       .input('id', sql.Int, parcela_id)
@@ -183,8 +183,8 @@ router.get('/periodo', async (req, res) => {
       .input('hasta', sql.Date, hasta);
     if (temporada_id) reqVentas.input('temporada_id', sql.Int, parseInt(temporada_id));
     const ventas = await reqVentas.query(`SELECT ISNULL(SUM(kilos * precio_kilo), 0) AS total
-              FROM StockMercaderia
-              WHERE tipo LIKE 'egreso%' AND tipo != 'egreso_anulacion' AND precio_kilo IS NOT NULL
+              FROM MovimientosDeposito
+              WHERE tipo LIKE 'egreso%' AND tipo != 'egreso_anulacion' AND precio_kilo IS NOT NULL AND ISNULL(estado, '') != 'anulada'
               AND fecha >= @desde AND fecha <= @hasta
               ${temporada_id ? 'AND temporada_id = @temporada_id' : ''}`);
 

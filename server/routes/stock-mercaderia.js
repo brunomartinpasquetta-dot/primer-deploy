@@ -2,41 +2,6 @@ const express = require('express');
 const router = express.Router();
 const { getPool, sql } = require('../db');
 
-// Resumen de stock de mercaderia por temporada
-router.get('/', async (req, res) => {
-  try {
-    const temporada_id = req.query.temporada_id;
-    const pool = await getPool();
-    const dbReq = pool.request();
-    let query = `SELECT l.nombre AS parcela,
-                 sm.destino,
-                 SUM(CASE WHEN sm.tipo = 'ingreso'       THEN sm.kilos
-                          WHEN sm.tipo = 'egreso_anulacion' THEN -sm.kilos
-                          ELSE 0 END) AS kilos_ingresados,
-                 SUM(CASE WHEN sm.tipo LIKE 'egreso%' AND sm.tipo != 'egreso_anulacion' THEN sm.kilos
-                          WHEN sm.tipo = 'ingreso_anulacion' THEN -sm.kilos
-                          ELSE 0 END) AS kilos_egresados,
-                 SUM(CASE WHEN sm.tipo = 'ingreso'       THEN sm.kilos
-                          WHEN sm.tipo = 'egreso_anulacion' THEN -sm.kilos
-                          ELSE 0 END) -
-                 SUM(CASE WHEN sm.tipo LIKE 'egreso%' AND sm.tipo != 'egreso_anulacion' THEN sm.kilos
-                          WHEN sm.tipo = 'ingreso_anulacion' THEN -sm.kilos
-                          ELSE 0 END) AS stock_actual,
-                 SUM(CASE WHEN sm.tipo LIKE 'egreso%' AND sm.tipo != 'egreso_anulacion' THEN sm.kilos * sm.precio_kilo ELSE 0 END) AS total_vendido
-                 FROM StockMercaderia sm
-                 JOIN Parcelas l ON sm.parcela_id = l.id`;
-    if (temporada_id) {
-      query += ' WHERE sm.temporada_id = @temporada_id';
-      dbReq.input('temporada_id', sql.Int, parseInt(temporada_id));
-    }
-    query += ' GROUP BY l.nombre, sm.destino ORDER BY l.nombre, sm.destino';
-    const result = await dbReq.query(query);
-    res.json(result.recordset);
-  } catch (err) {
-    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
-  }
-});
-
 // Stock actual basado en LotesMercaderia (lotes y sub-lotes en depósitos)
 router.get('/actual', async (req, res) => {
   try {
