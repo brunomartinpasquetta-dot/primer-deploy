@@ -82,13 +82,15 @@ router.get('/', async (req, res) => {
     // ── Acumulados de la temporada (solo si hay temporada activa) ─
     let temporadaStats = {
       kilos_cosechados: 0,
+      kilos_cosechados_campana: 0,
+      kilos_cosechados_actuales: 0,
       kilos_vendidos:   0,
       kilos_camara:     0,
       saldo_caja:       0,
     };
 
     if (tid) {
-      const [kilosTemp, mercaderiaTemp, cajaTemp] = await Promise.all([
+      const [kilosTemp, mercaderiaTemp, cajaTemp, disponibleTemp] = await Promise.all([
         pool.request()
           .input('tid', sql.Int, tid)
           .query(`SELECT ISNULL(SUM(j.kilos), 0) AS total
@@ -119,15 +121,41 @@ router.get('/', async (req, res) => {
                     ISNULL(SUM(CASE WHEN tipo = 'egreso'  THEN monto ELSE 0     END), 0) AS saldo
                   FROM Caja
                   WHERE temporada_id = @tid`),
+
+        // Kg cosechados actuales (disponibles en sistema):
+        // cosechado - (vendido_neto - devueltos_NC_activas) - merma_despalillado
+        pool.request()
+          .input('tid', sql.Int, tid)
+          .query(`SELECT
+                    ISNULL((SELECT SUM(j.kilos) FROM Juntada j
+                            JOIN Parcelas p ON j.parcela_id = p.id
+                            WHERE p.temporada_id = @tid AND ISNULL(j.estado,'activa') != 'anulada'), 0) AS cosechado,
+                    ISNULL((SELECT SUM(kilos) FROM MovimientosDeposito
+                            WHERE temporada_id = @tid AND tipo = 'egreso_venta' AND ISNULL(estado,'') != 'anulada'), 0) AS vendido_neto,
+                    ISNULL((SELECT SUM(nci.kg_devueltos) FROM NotaCreditoItems nci
+                            JOIN NotasCredito nc ON nci.nota_credito_id = nc.id
+                            WHERE nc.temporada_id = @tid AND nc.estado != 'anulada' AND nci.destino != 'merma'), 0) AS devueltos_stock,
+                    ISNULL((SELECT SUM(merma_despalillado) FROM LotesMercaderia
+                            WHERE temporada_id = @tid AND lote_padre_id IS NULL), 0) AS merma_despalillado`),
       ]);
 
       const ingresados = parseFloat(mercaderiaTemp.recordset[0].ingresados);
       const vendidos   = parseFloat(mercaderiaTemp.recordset[0].vendidos);
+      const cosechadoCampana = parseFloat(kilosTemp.recordset[0].total);
+      const d = disponibleTemp.recordset[0];
+      const kgActuales = Math.max(0,
+        parseFloat(d.cosechado)
+        - (parseFloat(d.vendido_neto) - parseFloat(d.devueltos_stock))
+        - parseFloat(d.merma_despalillado)
+      );
+
       temporadaStats = {
-        kilos_cosechados: parseFloat(kilosTemp.recordset[0].total),
-        kilos_vendidos:   vendidos,
-        kilos_camara:     Math.max(0, ingresados - vendidos),
-        saldo_caja:       parseFloat(cajaTemp.recordset[0].saldo),
+        kilos_cosechados:          cosechadoCampana, // retrocompat: alias del total de campaña
+        kilos_cosechados_campana:  cosechadoCampana, // nuevo nombre claro
+        kilos_cosechados_actuales: parseFloat(kgActuales.toFixed(3)), // nuevo KPI: disponible en sistema
+        kilos_vendidos:            vendidos,
+        kilos_camara:              Math.max(0, ingresados - vendidos),
+        saldo_caja:                parseFloat(cajaTemp.recordset[0].saldo),
       };
     }
 

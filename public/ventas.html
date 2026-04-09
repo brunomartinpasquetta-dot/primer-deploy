@@ -799,46 +799,75 @@
   }
 
   /* ── Editar venta ── */
-  // ── Auditoría ventas ──
-  var _auditVData = [];
+  // ── Auditoría ventas (paginada) ──
+  var _auditVData = [];              // items de la página actual (ya filtrada server-side por tipo via cliente)
+  var _auditVPage = 1;
+  var _auditVPageSize = 25;
+  var _auditVTotal = 0;
+  var _auditVTotalPages = 1;
+
   function abrirAuditoriaVentas() {
+    _auditVPage = 1;
     document.getElementById('modal-auditoria-ventas').classList.add('open');
     cargarAuditoriaVentas();
   }
   function cargarAuditoriaVentas() {
-    var tipo = document.getElementById('audit-v-tipo').value;
-    fetch('/api/stock-mercaderia/auditoria').then(function(r){ return r.json(); }).then(function(data){
-      _auditVData = data;
-      if (tipo) _auditVData = _auditVData.filter(function(a){ return a.accion === tipo; });
+    var url = '/api/stock-mercaderia/auditoria?page=' + _auditVPage + '&pageSize=' + _auditVPageSize;
+    fetch(url).then(function(r){ return r.json(); }).then(function(resp){
+      _auditVData = resp.items || [];
+      _auditVTotal = resp.total || 0;
+      _auditVTotalPages = resp.totalPages || 1;
       filtrarAuditoriaVentas();
     }).catch(function(){
       document.getElementById('audit-v-tbody').innerHTML = '<tr><td colspan="7" style="text-align:center;color:#EF4444;padding:16px;">Error al cargar</td></tr>';
     });
   }
+  function cambiarPaginaAudit(delta) {
+    var nueva = _auditVPage + delta;
+    if (nueva < 1 || nueva > _auditVTotalPages) return;
+    _auditVPage = nueva;
+    cargarAuditoriaVentas();
+  }
+  function cambiarPageSizeAudit() {
+    _auditVPageSize = parseInt(document.getElementById('audit-v-pagesize').value) || 25;
+    _auditVPage = 1;
+    cargarAuditoriaVentas();
+  }
   function filtrarAuditoriaVentas() {
+    var tipo = document.getElementById('audit-v-tipo').value;
     var q = (document.getElementById('audit-v-buscar').value || '').toLowerCase();
-    var data = q ? _auditVData.filter(function(a){
+    // Filtros cliente-side sobre la página actual (búsqueda + tipo)
+    var data = _auditVData;
+    if (tipo) data = data.filter(function(a){ return a.accion === tipo; });
+    if (q) data = data.filter(function(a){
       return (a.campo||'').toLowerCase().includes(q) || (a.valor_nuevo||'').toLowerCase().includes(q) || (a.usuario_nombre||'').toLowerCase().includes(q) || String(a.movimiento_id).includes(q);
-    }) : _auditVData;
+    });
     var tbody = document.getElementById('audit-v-tbody');
     if (!data.length) {
       tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#94A3B8;padding:16px;">Sin registros de auditoría</td></tr>';
-      return;
+    } else {
+      tbody.innerHTML = data.map(function(a){
+        var accionBadge = a.accion === 'anulacion'
+          ? '<span style="background:#fde8e8;color:#c0392b;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;">Anulación</span>'
+          : '<span style="background:#E0F2FE;color:#0369A1;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;">Edición</span>';
+        return '<tr style="border-bottom:1px solid #F1F5F9;">' +
+          '<td style="padding:6px 8px;white-space:nowrap;font-size:11px;">' + formatFechaHora(a.fecha_hora) + '</td>' +
+          '<td style="padding:6px 8px;font-weight:600;color:var(--verde);">#' + a.movimiento_id + '</td>' +
+          '<td style="padding:6px 8px;">' + accionBadge + '</td>' +
+          '<td style="padding:6px 8px;font-size:11px;">' + (a.campo || '—') + '</td>' +
+          '<td style="padding:6px 8px;font-size:11px;color:#94A3B8;max-width:100px;overflow:hidden;text-overflow:ellipsis;">' + (a.valor_anterior || '—') + '</td>' +
+          '<td style="padding:6px 8px;font-size:11px;font-weight:600;max-width:100px;overflow:hidden;text-overflow:ellipsis;">' + (a.valor_nuevo || '—') + '</td>' +
+          '<td style="padding:6px 8px;font-size:11px;color:#64748B;">' + (a.usuario_nombre || '—') + '</td>' +
+        '</tr>';
+      }).join('');
     }
-    tbody.innerHTML = data.slice(0, 50).map(function(a){
-      var accionBadge = a.accion === 'anulacion'
-        ? '<span style="background:#fde8e8;color:#c0392b;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;">Anulación</span>'
-        : '<span style="background:#E0F2FE;color:#0369A1;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;">Edición</span>';
-      return '<tr style="border-bottom:1px solid #F1F5F9;">' +
-        '<td style="padding:6px 8px;white-space:nowrap;font-size:11px;">' + formatFechaHora(a.fecha_hora) + '</td>' +
-        '<td style="padding:6px 8px;font-weight:600;color:var(--verde);">#' + a.movimiento_id + '</td>' +
-        '<td style="padding:6px 8px;">' + accionBadge + '</td>' +
-        '<td style="padding:6px 8px;font-size:11px;">' + (a.campo || '—') + '</td>' +
-        '<td style="padding:6px 8px;font-size:11px;color:#94A3B8;max-width:100px;overflow:hidden;text-overflow:ellipsis;">' + (a.valor_anterior || '—') + '</td>' +
-        '<td style="padding:6px 8px;font-size:11px;font-weight:600;max-width:100px;overflow:hidden;text-overflow:ellipsis;">' + (a.valor_nuevo || '—') + '</td>' +
-        '<td style="padding:6px 8px;font-size:11px;color:#64748B;">' + (a.usuario_nombre || '—') + '</td>' +
-      '</tr>';
-    }).join('');
+    // Actualizar controles de paginación
+    var info = document.getElementById('audit-v-pageinfo');
+    if (info) info.textContent = 'Página ' + _auditVPage + ' de ' + _auditVTotalPages + ' — ' + _auditVTotal + ' registros';
+    var btnPrev = document.getElementById('audit-v-prev');
+    var btnNext = document.getElementById('audit-v-next');
+    if (btnPrev) btnPrev.disabled = _auditVPage <= 1;
+    if (btnNext) btnNext.disabled = _auditVPage >= _auditVTotalPages;
   }
 
   async function anularVenta(idx) {
@@ -1033,6 +1062,22 @@
         <thead><tr style="background:#F8FAFC;"><th style="padding:6px 8px;text-align:left;font-size:11px;font-weight:600;color:#64748B;text-transform:uppercase;">Fecha</th><th style="padding:6px 8px;text-align:left;font-size:11px;font-weight:600;color:#64748B;text-transform:uppercase;">Mov.</th><th style="padding:6px 8px;text-align:left;font-size:11px;font-weight:600;color:#64748B;text-transform:uppercase;">Acción</th><th style="padding:6px 8px;text-align:left;font-size:11px;font-weight:600;color:#64748B;text-transform:uppercase;">Campo</th><th style="padding:6px 8px;text-align:left;font-size:11px;font-weight:600;color:#64748B;text-transform:uppercase;">Anterior</th><th style="padding:6px 8px;text-align:left;font-size:11px;font-weight:600;color:#64748B;text-transform:uppercase;">Nuevo</th><th style="padding:6px 8px;text-align:left;font-size:11px;font-weight:600;color:#64748B;text-transform:uppercase;">Usuario</th></tr></thead>
         <tbody id="audit-v-tbody"><tr><td colspan="7" style="text-align:center;color:#94A3B8;padding:16px;">Cargando...</td></tr></tbody>
       </table>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid #E2E8F0;">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <label style="font-size:11px;color:#64748B;">Por página:</label>
+        <select id="audit-v-pagesize" onchange="cambiarPageSizeAudit()" style="height:28px;font-size:11px;padding:0 6px;border:1px solid #E2E8F0;border-radius:5px;">
+          <option value="25">25</option>
+          <option value="50">50</option>
+          <option value="100">100</option>
+          <option value="200">200</option>
+        </select>
+      </div>
+      <div id="audit-v-pageinfo" style="font-size:11px;color:#64748B;">—</div>
+      <div style="display:flex;gap:4px;">
+        <button id="audit-v-prev" onclick="cambiarPaginaAudit(-1)" style="background:#F8FAFC;color:#475569;border:1px solid #E2E8F0;border-radius:5px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;">← Anterior</button>
+        <button id="audit-v-next" onclick="cambiarPaginaAudit(1)" style="background:#F8FAFC;color:#475569;border:1px solid #E2E8F0;border-radius:5px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;">Siguiente →</button>
+      </div>
     </div>
     <button style="background:#F8FAFC;color:#475569;border:1.5px solid #E2E8F0;border-radius:7px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;margin-top:14px;width:100%;" onclick="document.getElementById('modal-auditoria-ventas').classList.remove('open')">Cerrar</button>
   </div>

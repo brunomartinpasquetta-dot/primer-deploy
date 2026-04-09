@@ -478,12 +478,15 @@ function renderDashboard(d) {
   cargarMermaHoy();
   cargarEtapasDashboard();
 
-  // ── KPIs temporada — 2 cards ──
+  // ── KPIs temporada — 3 cards: campaña + actuales + vendido ──
   var labelTemp = document.getElementById('label-temporada-stats');
   if (d.temporada) labelTemp.textContent = 'Campaña · ' + d.temporada.nombre;
-  var pctVendido = ts.kilos_cosechados > 0 ? Math.min(100, Math.round(ts.kilos_vendidos / ts.kilos_cosechados * 100)) : 0;
+  var cosechadoCampana = ts.kilos_cosechados_campana != null ? ts.kilos_cosechados_campana : ts.kilos_cosechados;
+  var cosechadoActuales = ts.kilos_cosechados_actuales != null ? ts.kilos_cosechados_actuales : ts.kilos_cosechados;
+  var pctVendido = cosechadoCampana > 0 ? Math.min(100, Math.round(ts.kilos_vendidos / cosechadoCampana * 100)) : 0;
   document.getElementById('kpis-temporada').innerHTML =
-    kpiCard('Total cosechado', 'wheat', 'verde', fmt(ts.kilos_cosechados), 'kg total temporada') +
+    kpiCard('Cosechado campaña', 'wheat', 'verde', fmt(cosechadoCampana), 'Total desde inicio de temporada') +
+    kpiCard('Cosechado actual', 'package', 'azul', fmt(cosechadoActuales), 'Disponible en sistema') +
     '<div class="kpi">' +
       '<div class="kpi-top">' +
         '<div class="kpi-label">Vendido total</div>' +
