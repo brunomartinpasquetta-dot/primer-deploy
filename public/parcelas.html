@@ -116,19 +116,9 @@
           </div>
           <div class="fi fi-variedad">
             <label>Variedad</label>
-            <select id="variedad">
-              <option value="">— Sin especificar —</option>
-              <option>Albion</option><option>Aromas</option><option>Benicia</option><option>Brilliance</option>
-              <option>Calinda</option><option>Camarosa</option><option>Camino Real</option><option>Chandler</option>
-              <option>Diamante</option><option>Douglas</option><option>Evie 2</option><option>Festival</option>
-              <option>Festival Florida</option><option>Florentina</option><option>Fortuna</option><option>Fronteras</option>
-              <option>Kabarla</option><option>Medallion</option><option>Monterey</option><option>Oso Grande</option>
-              <option>Pajaro</option><option>Palomar</option><option>Parker</option><option>Portola</option>
-              <option>Radiance</option><option>Redlands Hope</option><option>Rubygem</option><option>Sabrina</option>
-              <option>San Andreas</option><option>Seascape</option><option>Selva</option><option>Splendor</option>
-              <option>Sweet Charlie</option><option>Sweet Sensation</option><option>Tioga</option><option>Tufts</option>
-              <option>Ventana</option><option>Winter Dawn</option>
-            </select>
+            <input type="text" id="variedad" list="dl-variedad" placeholder="Escribi o selecciona..." autocomplete="off">
+            <datalist id="dl-variedad"></datalist>
+            <input type="hidden" id="variedad-id">
           </div>
         </div>
 
@@ -223,19 +213,9 @@
       <div class="fg" style="margin-bottom:10px;">
         <div class="fi" style="flex:1 1 100%;">
           <label style="font-size:12px;font-weight:600;color:var(--texto-2);margin:0;">Variedad</label>
-          <select id="edit-variedad" style="margin:0;padding:7px 9px;font-size:13px;height:34px;box-sizing:border-box;width:100%;">
-            <option value="">— Sin especificar —</option>
-            <option>Albion</option><option>Aromas</option><option>Benicia</option><option>Brilliance</option>
-            <option>Calinda</option><option>Camarosa</option><option>Camino Real</option><option>Chandler</option>
-            <option>Diamante</option><option>Douglas</option><option>Evie 2</option><option>Festival</option>
-            <option>Festival Florida</option><option>Florentina</option><option>Fortuna</option><option>Fronteras</option>
-            <option>Kabarla</option><option>Medallion</option><option>Monterey</option><option>Oso Grande</option>
-            <option>Pajaro</option><option>Palomar</option><option>Parker</option><option>Portola</option>
-            <option>Radiance</option><option>Redlands Hope</option><option>Rubygem</option><option>Sabrina</option>
-            <option>San Andreas</option><option>Seascape</option><option>Selva</option><option>Splendor</option>
-            <option>Sweet Charlie</option><option>Sweet Sensation</option><option>Tioga</option><option>Tufts</option>
-            <option>Ventana</option><option>Winter Dawn</option>
-          </select>
+          <input type="text" id="edit-variedad" list="dl-edit-variedad" placeholder="Escribi o selecciona..." autocomplete="off" style="margin:0;padding:7px 9px;font-size:13px;height:34px;box-sizing:border-box;width:100%;">
+          <datalist id="dl-edit-variedad"></datalist>
+          <input type="hidden" id="edit-variedad-id">
         </div>
       </div>
 
@@ -370,7 +350,7 @@
       function btnEditar(l) {
         return '<button class="btn-icon" onclick="abrirEditar('+l.id+',\''+encodeURIComponent(l.nombre||'')+'\',' +
           (l.hectareas||'')+',' +
-          '\''+encodeURIComponent(l.variedad||'')+'\',' +
+          (l.variedad_id||'')+',' +
           (l.cantidad_plantines||'')+')" title="Editar">' +
           '<i data-lucide="pencil" style="width:14px;height:14px;"></i></button>';
       }
@@ -378,7 +358,7 @@
       if (!data.length) { tbody.innerHTML='<tr><td colspan="6" class="empty">Sin parcelas en la campaña activa</td></tr>'; return; }
       tbody.innerHTML=data.map(function(l){
         return '<tr><td><strong>'+l.nombre+'</strong></td>'+
-          '<td>'+(l.hectareas?l.hectareas+' ha':'-')+'</td><td>'+(l.variedad||'-')+'</td>'+
+          '<td>'+(l.hectareas?l.hectareas+' ha':'-')+'</td><td>'+(l.variedad_nombre||l.variedad||'-')+'</td>'+
           '<td>'+renderImplantacion(l)+'</td>'+
           '<td><span class="'+(l.activo?'badge-activo':'badge-inactivo')+'">'+(l.activo?'Activo':'Inactivo')+'</span></td>'+
           '<td>'+btnEditar(l)+'</td></tr>';
@@ -390,7 +370,7 @@
       function btnEditar(l) {
         return '<button class="btn-icon" onclick="abrirEditar('+l.id+',\''+encodeURIComponent(l.nombre||'')+'\',' +
           (l.hectareas||'')+',' +
-          '\''+encodeURIComponent(l.variedad||'')+'\',' +
+          (l.variedad_id||'')+',' +
           (l.cantidad_plantines||'')+')" title="Editar">' +
           '<i data-lucide="pencil" style="width:14px;height:14px;"></i></button>';
       }
@@ -398,7 +378,7 @@
       if (!data.length) { tbody.innerHTML='<tr><td colspan="7" class="empty">Sin parcelas</td></tr>'; return; }
       tbody.innerHTML=data.map(function(l){
         return '<tr><td><strong>'+l.nombre+'</strong></td><td>'+(l.temporada||'-')+'</td>'+
-          '<td>'+(l.hectareas?l.hectareas+' ha':'-')+'</td><td>'+(l.variedad||'-')+'</td>'+
+          '<td>'+(l.hectareas?l.hectareas+' ha':'-')+'</td><td>'+(l.variedad_nombre||l.variedad||'-')+'</td>'+
           '<td>'+renderImplantacion(l)+'</td>'+
           '<td><span class="'+(l.activo?'badge-activo':'badge-inactivo')+'">'+(l.activo?'Activo':'Inactivo')+'</span></td>'+
           '<td>'+btnEditar(l)+'</td></tr>';
@@ -471,38 +451,82 @@
       var esSiembra = CULTIVOS_SIEMBRA.indexOf(c) >= 0;
       var btn=document.getElementById('btn-guardar');
       btn.disabled=true; btn.textContent='Guardando...';
-      fetch('/api/parcelas',{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-          nombre:          nombre,
-          temporada_id:    temporada_id,
-          hectareas:       document.getElementById('hectareas').value||null,
-          cantidad_plantines: !esSiembra ? (document.getElementById('plantines').value||null) : null,
-          densidad_siembra:   esSiembra  ? (document.getElementById('densidad_siembra').value||null) : null,
-          fecha_siembra:      esSiembra  ? (document.getElementById('fecha_siembra').value||null) : null,
-          distancia_plantas:  !esSiembra ? (document.getElementById('distancia_plantas').value||null) : null,
-          variedad:        document.getElementById('variedad').value||null,
-        })})
-      .then(function(r){return r.json();}).then(function(data){
-        if(data.ok){
-          mostrarMensaje('mensaje','success','Parcela agregada correctamente');
-          ['nombre','hectareas','plantines','densidad_siembra','distancia_plantas','variedad'].forEach(function(id){
-            var el=document.getElementById(id); if(el) el.value='';
-          });
-          document.getElementById('fecha_siembra').value='';
-          document.getElementById('form-nuevo').classList.remove('visible');
-          cargar();
-        } else { mostrarMensaje('mensaje','error',data.error||'Error al guardar'); }
-        btn.disabled=false; btn.textContent='Guardar parcela';
-      }).catch(function(){ mostrarMensaje('mensaje','error','Error de conexion'); btn.disabled=false; btn.textContent='Guardar parcela'; });
+      var varInput = document.getElementById('variedad').value;
+      resolverVariedadId(varInput, function(vid, vname) {
+        if (varInput && !vid) { btn.disabled=false; btn.textContent='Guardar parcela'; return; }
+        fetch('/api/parcelas',{method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({
+            nombre:          nombre,
+            temporada_id:    temporada_id,
+            hectareas:       document.getElementById('hectareas').value||null,
+            cantidad_plantines: !esSiembra ? (document.getElementById('plantines').value||null) : null,
+            densidad_siembra:   esSiembra  ? (document.getElementById('densidad_siembra').value||null) : null,
+            fecha_siembra:      esSiembra  ? (document.getElementById('fecha_siembra').value||null) : null,
+            distancia_plantas:  !esSiembra ? (document.getElementById('distancia_plantas').value||null) : null,
+            variedad_id:     vid,
+            variedad:        vname || '',
+          })})
+        .then(function(r){return r.json();}).then(function(data){
+          if(data.ok){
+            mostrarMensaje('mensaje','success','Parcela agregada correctamente');
+            ['nombre','hectareas','plantines','densidad_siembra','distancia_plantas','variedad'].forEach(function(id){
+              var el=document.getElementById(id); if(el) el.value='';
+            });
+            document.getElementById('fecha_siembra').value='';
+            document.getElementById('form-nuevo').classList.remove('visible');
+            cargar();
+          } else { mostrarMensaje('mensaje','error',data.error||'Error al guardar'); }
+          btn.disabled=false; btn.textContent='Guardar parcela';
+        }).catch(function(){ mostrarMensaje('mensaje','error','Error de conexion'); btn.disabled=false; btn.textContent='Guardar parcela'; });
+      });
     }
     cargarTemporadas();
+    cargarVariedades();
     cargar();
+
+    var _variedadesCache = [];
+    function cargarVariedades() {
+      fetch('/api/variedades-frutilla', { headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') } })
+        .then(function(r){ return r.json(); }).then(function(data) {
+          _variedadesCache = data;
+          ['dl-variedad', 'dl-edit-variedad'].forEach(function(dlId) {
+            var dl = document.getElementById(dlId);
+            dl.innerHTML = '';
+            data.forEach(function(v) {
+              var o = document.createElement('option');
+              o.value = v.nombre;
+              o.setAttribute('data-id', v.id);
+              dl.appendChild(o);
+            });
+          });
+        });
+    }
+
+    function resolverVariedadId(nombreInput, callback) {
+      var nombre = (nombreInput || '').trim();
+      if (!nombre) { callback(null, ''); return; }
+      var match = _variedadesCache.find(function(v) { return v.nombre.toLowerCase() === nombre.toLowerCase(); });
+      if (match) { callback(match.id, match.nombre); return; }
+      if (!confirm('La variedad "' + nombre + '" no existe en el catalogo.\n¿Queres agregarla?')) { callback(null, ''); return; }
+      fetch('/api/variedades-frutilla', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('token') },
+        body: JSON.stringify({ nombre: nombre })
+      }).then(function(r){ return r.json(); }).then(function(data) {
+        if (data.error) { alert('Error: ' + data.error); callback(null, ''); return; }
+        _variedadesCache.push(data);
+        cargarVariedades();
+        callback(data.id, data.nombre);
+      }).catch(function(){ alert('Error de conexion'); callback(null, ''); });
+    }
     
-    function abrirEditar(id, nombre, hectareas, variedad, plantines) {
+    function abrirEditar(id, nombre, hectareas, variedadId, plantines) {
       document.getElementById('edit-id').value = id;
       document.getElementById('edit-nombre').value = decodeURIComponent(nombre||'');
       document.getElementById('edit-hectareas').value = hectareas||'';
-      document.getElementById('edit-variedad').value = decodeURIComponent(variedad||'');
+      var vMatch = _variedadesCache.find(function(v){ return v.id === variedadId; });
+      document.getElementById('edit-variedad').value = vMatch ? vMatch.nombre : '';
+      document.getElementById('edit-variedad-id').value = variedadId || '';
       document.getElementById('edit-plantines').value = plantines||'';
       document.getElementById('msg-edit').innerHTML = '';
       var modal = document.getElementById('modal-editar');
@@ -516,16 +540,20 @@
       var nombre = document.getElementById('edit-nombre').value.trim();
       if (!nombre) { showAlert('El nombre es obligatorio', 'warning'); return; }
       btn.disabled = true; btn.textContent = 'Guardando...';
-      fetch('/api/parcelas/' + id, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nombre: nombre,
-          hectareas: document.getElementById('edit-hectareas').value || null,
-          variedad: document.getElementById('edit-variedad').value || null,
-          cantidad_plantines: document.getElementById('edit-plantines').value || null
-        })
-      }).then(function(r){ return r.json(); }).then(function(data) {
+      var varInput = document.getElementById('edit-variedad').value;
+      resolverVariedadId(varInput, function(vid, vname) {
+        if (varInput && !vid) { btn.disabled = false; btn.textContent = 'Guardar cambios'; return; }
+        fetch('/api/parcelas/' + id, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nombre: nombre,
+            hectareas: document.getElementById('edit-hectareas').value || null,
+            variedad_id: vid,
+            variedad: vname || '',
+            cantidad_plantines: document.getElementById('edit-plantines').value || null
+          })
+        }).then(function(r){ return r.json(); }).then(function(data) {
         btn.disabled = false; btn.textContent = 'Guardar cambios';
         if (data.ok) {
           document.getElementById('msg-edit').innerHTML = '<div class="msg-success">Guardado correctamente</div>';
@@ -536,6 +564,7 @@
       }).catch(function(){
         btn.disabled = false; btn.textContent = 'Guardar cambios';
         document.getElementById('msg-edit').innerHTML = '<div class="msg-error">Error de conexión</div>';
+      });
       });
     }
 

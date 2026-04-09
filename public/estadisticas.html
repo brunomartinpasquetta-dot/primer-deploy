@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1A2E0A">
+  <title>Estadisticas — Cosecha</title>
+  <link rel="icon" href="img/logo.png">
+  <script src="js/utils.js"></script>
+  <link rel="stylesheet" href="cosecha.css">
+  <style>
+    .empty { text-align:center; color:var(--texto-suave); padding:20px; }
+    .mono { font-family:'JetBrains Mono',monospace; }
+    /* KPIs */
+    .st-kpis { display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:12px; margin-bottom:16px; }
+    .st-kpi { background:#fff; border-radius:10px; padding:16px 18px; box-shadow:0 2px 10px rgba(0,0,0,.08); }
+    .st-kpi-icon { width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; margin-bottom:8px; }
+    .st-kpi-icon.verde { background:#eef7ee; color:#2D5016; }
+    .st-kpi-icon.azul  { background:#e8f0fe; color:#1565c0; }
+    .st-kpi-icon.naranja { background:#fff3cd; color:#856404; }
+    .st-kpi-icon.rojo  { background:#fde8e8; color:#c0392b; }
+    .st-kpi-icon svg { width:18px; height:18px; }
+    .st-kpi-valor { font-size:22px; font-weight:700; font-family:'JetBrains Mono',monospace; line-height:1; }
+    .st-kpi-label { font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:var(--texto-suave); margin-top:4px; }
+    /* Tabs */
+    .tabs { display:flex; gap:0; margin-bottom:16px; border-bottom:2px solid var(--borde); }
+    .tab-btn { padding:10px 20px; font-size:13px; font-weight:700; cursor:pointer; border:none; background:none; color:var(--texto-suave); border-bottom:2px solid transparent; margin-bottom:-2px; }
+    .tab-btn.active { color:var(--verde); border-bottom-color:var(--verde); }
+    .tab-content { display:none; }
+    .tab-content.active { display:block; }
+    /* Charts */
+    .chart-wrap { background:#fff; border-radius:10px; padding:16px; box-shadow:0 2px 10px rgba(0,0,0,.08); margin-bottom:16px; }
+    .chart-wrap h4 { font-size:13px; font-weight:700; color:var(--texto); margin:0 0 12px 0; }
+    .chart-wrap canvas { max-height:300px; }
+    /* Tables */
+    .st-table { width:100%; border-collapse:collapse; font-size:12px; }
+    .st-table th { background:var(--fondo-dark); font-size:10px; text-transform:uppercase; letter-spacing:.5px; font-weight:700; padding:8px 10px; text-align:left; }
+    .st-table td { padding:6px 10px; border-bottom:1px solid var(--borde); }
+    .st-table tr:hover { background:var(--fondo); }
+    .st-section { margin-bottom:20px; }
+    .st-section h4 { font-size:14px; font-weight:700; margin:0 0 8px 0; color:var(--texto); }
+    /* Grid 2 col */
+    .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    @media (max-width:768px) { .grid-2 { grid-template-columns:1fr; } .st-kpis { grid-template-columns:1fr 1fr; } }
+    @media (max-width:400px) { .st-kpis { grid-template-columns:1fr; } }
+    /* Filtros inline */
+    .fi-inline { display:flex; flex-direction:column; gap:3px; }
+    .fi-inline label { font-size:10px; font-weight:600; color:var(--texto-suave); text-transform:uppercase; }
+    .fi-inline select, .fi-inline input { height:34px; padding:0 8px; border:1px solid var(--borde); border-radius:6px; font-size:12px; background:#fff; }
+    .loading-msg { text-align:center; color:var(--texto-suave); padding:30px; font-size:13px; }
+  </style>
+  <script src="js/auth-check.js"></script>
+</head>
+<body>
+<div class="app-shell">
+
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="img/logo-icon.png" class="brand-icon"><div class="brand-info"><span class="brand-name">CO<em>SE</em>CHA</span><span class="brand-sub">SISTEMA DE CULTIVOS</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-item"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard</a>
+      <div class="nav-section">Campo</div>
+      <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
+      <a href="despalillado.html" class="nav-item"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
+      <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
+      <a href="trabajos-campo.html" class="nav-item"><span class="nav-icon"><i data-lucide="hammer"></i></span> Trabajos de Campo</a>
+      <div class="nav-section">Sistema</div>
+      <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
+      <a href="menu-comercial.html" class="nav-item active"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
+      <a href="menu-admin.html" class="nav-item"><span class="nav-icon"><i data-lucide="landmark"></i></span> Administracion</a>
+      <a href="mercado.html" class="nav-item"><span class="nav-icon"><i data-lucide="trending-up"></i></span> Mercado</a>
+      <a href="menu-config.html" class="nav-item"><span class="nav-icon"><i data-lucide="settings"></i></span> Configuracion</a>
+    </nav>
+    <div class="sidebar-footer">Cosecha · Sistema de Cultivos</div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left" style="display:flex;align-items:center;gap:10px;">
+        <img src="img/logo-icon.png" class="brand-icon"><div class="brand-info"><span class="brand-name">CO<em>SE</em>CHA</span><span class="brand-sub">SISTEMA DE CULTIVOS</span></div><span id="temporada-activa-badge" class="temporada-badge">Cargando...</span>
+      </div>
+      <div class="topbar-right"><span class="topbar-date" id="topbar-date"></span></div>
+    </header>
+
+    <div class="content">
+      <a href="menu-comercial.html" class="btn-volver">← Volver</a>
+      <div class="content-header">
+        <div class="content-title">Estadisticas</div>
+        <div class="content-sub">Indicadores productivos, comerciales y financieros</div>
+      </div>
+
+      <!-- Filtros -->
+      <div class="filtros-barra" style="flex-wrap:wrap;">
+        <div class="fi-inline"><label>Temporada</label><select id="f-temporada"></select></div>
+        <div class="fi-inline"><label>Desde</label><input type="date" id="f-desde"></div>
+        <div class="fi-inline"><label>Hasta</label><input type="date" id="f-hasta"></div>
+        <div class="fi-inline"><label>Variedad</label><select id="f-variedad"><option value="">Todas</option></select></div>
+        <div class="fi-inline"><label>Parcela</label><select id="f-parcela"><option value="">Todas</option></select></div>
+        <div class="fi-inline"><label>Cliente</label><select id="f-cliente"><option value="">Todos</option></select></div>
+        <button class="ins-btn ins-btn-primary" style="align-self:flex-end;height:34px;" onclick="aplicarFiltros()">Aplicar</button>
+        <button class="fb-limpiar" style="align-self:flex-end;" onclick="limpiarFiltros()">✕ Limpiar</button>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('productivo')">Productivo</button>
+        <button class="tab-btn" onclick="switchTab('comercial')">Comercial</button>
+        <button class="tab-btn" onclick="switchTab('financiero')">Financiero</button>
+      </div>
+
+      <!-- TAB 1: PRODUCTIVO -->
+      <div class="tab-content active" id="tab-productivo">
+        <div class="st-kpis" id="kpis-prod"></div>
+        <div class="grid-2">
+          <div class="chart-wrap"><h4>Rinde kg/ha por variedad</h4><canvas id="chart-rinde-var"></canvas></div>
+          <div class="chart-wrap"><h4>Cosecha diaria + acumulado</h4><canvas id="chart-evol-cosecha"></canvas></div>
+        </div>
+        <div class="st-section"><h4>Rinde por parcela</h4><div class="card" style="padding:0;overflow:hidden;"><div class="table-wrap"><table class="st-table"><thead><tr><th>Parcela</th><th>Variedad</th><th>Ha</th><th>Kg</th><th>Kg/ha</th><th>Juntadas</th><th>Primera</th><th>Ultima</th></tr></thead><tbody id="tbl-rinde-parcela"><tr><td colspan="8" class="loading-msg">Cargando...</td></tr></tbody></table></div></div></div>
+        <div class="grid-2">
+          <div class="st-section"><h4>Descarte por variedad</h4><div class="card" style="padding:0;overflow:hidden;"><div class="table-wrap"><table class="st-table"><thead><tr><th>Variedad</th><th>Kg totales</th><th>Kg descarte</th><th>% descarte</th></tr></thead><tbody id="tbl-descarte"><tr><td colspan="4" class="loading-msg">Cargando...</td></tr></tbody></table></div></div></div>
+          <div class="st-section"><h4>Productividad por cosechero</h4><div class="card" style="padding:0;overflow:hidden;"><div class="table-wrap"><table class="st-table"><thead><tr><th>Cosechero</th><th>Juntadas</th><th>Kg totales</th><th>Kg/juntada</th></tr></thead><tbody id="tbl-cosecheros"><tr><td colspan="4" class="loading-msg">Cargando...</td></tr></tbody></table></div></div></div>
+        </div>
+      </div>
+
+      <!-- TAB 2: COMERCIAL -->
+      <div class="tab-content" id="tab-comercial">
+        <div class="st-kpis" id="kpis-com"></div>
+        <div class="grid-2">
+          <div class="chart-wrap"><h4>Ranking clientes por monto</h4><canvas id="chart-ranking-cli"></canvas></div>
+          <div class="chart-wrap"><h4>Ventas por categoria</h4><canvas id="chart-ventas-cat"></canvas></div>
+        </div>
+        <div class="chart-wrap"><h4>Evolucion ventas diarias</h4><canvas id="chart-evol-ventas"></canvas></div>
+        <div class="grid-2">
+          <div class="st-section"><h4>Ranking de clientes</h4><div class="card" style="padding:0;overflow:hidden;"><div class="table-wrap"><table class="st-table"><thead><tr><th>Cliente</th><th>Ventas</th><th>Kg</th><th>Monto</th><th>Ticket prom.</th><th>Ultima</th></tr></thead><tbody id="tbl-ranking"><tr><td colspan="6" class="loading-msg">Cargando...</td></tr></tbody></table></div></div></div>
+          <div class="st-section"><h4>Ventas por categoria</h4><div class="card" style="padding:0;overflow:hidden;"><div class="table-wrap"><table class="st-table"><thead><tr><th>Categoria</th><th>Subcategoria</th><th>Kg</th><th>Monto</th><th>$/kg</th><th>%</th></tr></thead><tbody id="tbl-ventas-cat"><tr><td colspan="6" class="loading-msg">Cargando...</td></tr></tbody></table></div></div></div>
+        </div>
+      </div>
+
+      <!-- TAB 3: FINANCIERO -->
+      <div class="tab-content" id="tab-financiero">
+        <div class="st-kpis" id="kpis-fin"></div>
+        <div class="chart-wrap"><h4>Ingresos vs egresos por mes</h4><canvas id="chart-ing-eg"></canvas></div>
+        <div class="grid-2">
+          <div class="st-section"><h4>Margen por categoria</h4><div class="card" style="padding:0;overflow:hidden;"><div class="table-wrap"><table class="st-table"><thead><tr><th>Categoria</th><th>Kg vendidos</th><th>Ingreso bruto</th><th>Costo est.</th><th>Margen</th></tr></thead><tbody id="tbl-margen"><tr><td colspan="5" class="loading-msg">Cargando...</td></tr></tbody></table></div></div></div>
+          <div class="st-section"><h4>Saldos CC por cliente</h4><div class="card" style="padding:0;overflow:hidden;"><div class="table-wrap"><table class="st-table"><thead><tr><th>Cliente</th><th>Debe</th><th>Haber</th><th>Saldo neto</th><th>Ultimo mov.</th></tr></thead><tbody id="tbl-saldos"><tr><td colspan="5" class="loading-msg">Cargando...</td></tr></tbody></table></div></div></div>
+        </div>
+        <div class="st-section"><h4>Rotacion de stock (dias cosecha → venta)</h4><div class="card" style="padding:0;overflow:hidden;"><div class="table-wrap"><table class="st-table"><thead><tr><th>Sub-lote</th><th>Variedad</th><th>Fecha cosecha</th><th>Primera venta</th><th>Dias</th><th>Kg</th><th>Etapa</th></tr></thead><tbody id="tbl-rotacion"><tr><td colspan="7" class="loading-msg">Cargando...</td></tr></tbody></table></div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="home"></i></span><span>Inicio</span></a>
+    <a href="juntada.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="wheat"></i></span><span>Cosecha</span></a>
+    <a href="menu-stock.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="package"></i></span><span>Stock</span></a>
+    <a href="menu-comercial.html" class="bottom-nav-item active"><span class="bottom-nav-icon"><i data-lucide="users"></i></span><span>Comercial</span></a>
+    <a href="menu-admin.html" class="bottom-nav-item"><span class="bottom-nav-icon"><i data-lucide="landmark"></i></span><span>Admin</span></a>
+  </nav>
+</div>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script>
+var _token = localStorage.getItem('token');
+var _h = { 'Authorization': 'Bearer ' + _token };
+var _charts = {};
+
+function _fmt(n) { return n != null ? Number(n).toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2}) : '-'; }
+function _fmtKg(n) { return n != null ? Number(n).toLocaleString('es-AR', {minimumFractionDigits:1, maximumFractionDigits:3}) : '-'; }
+function _fmtFecha(f) { if (!f) return '-'; return new Date(f).toLocaleDateString('es-AR'); }
+function _fmtFechaCorta(f) { if (!f) return '-'; var d = new Date(f); return d.getDate()+'/'+(d.getMonth()+1); }
+
+var COLORES = ['#2D5016','#1565c0','#f39c12','#c0392b','#8e44ad','#16a085','#d35400','#2c3e50','#27ae60','#e74c3c'];
+
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof cargarTemporadaActiva === 'function') cargarTemporadaActiva();
+  if (typeof mostrarFecha === 'function') mostrarFecha();
+  cargarFiltros();
+  lucide.createIcons();
+});
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+  document.querySelectorAll('.tab-content').forEach(function(c){ c.classList.remove('active'); });
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.querySelector('[onclick="switchTab(\'' + tab + '\')"]').classList.add('active');
+}
+
+function getParams() {
+  var p = [];
+  var tid = document.getElementById('f-temporada').value; if (tid) p.push('temporada_id=' + tid);
+  var fd = document.getElementById('f-desde').value; if (fd) p.push('fecha_desde=' + fd);
+  var fh = document.getElementById('f-hasta').value; if (fh) p.push('fecha_hasta=' + fh);
+  var vid = document.getElementById('f-variedad').value; if (vid) p.push('variedad_id=' + vid);
+  var pid = document.getElementById('f-parcela').value; if (pid) p.push('parcela_id=' + pid);
+  var cid = document.getElementById('f-cliente').value; if (cid) p.push('cliente_id=' + cid);
+  return p.length ? '?' + p.join('&') : '';
+}
+
+function cargarFiltros() {
+  Promise.all([
+    fetch('/api/temporadas', { headers: _h }).then(function(r){ return r.json(); }),
+    fetch('/api/variedades-frutilla', { headers: _h }).then(function(r){ return r.json(); }),
+    fetch('/api/parcelas', { headers: _h }).then(function(r){ return r.json(); }),
+    fetch('/api/clientes', { headers: _h }).then(function(r){ return r.json(); })
+  ]).then(function(results) {
+    var temps = results[0], vars = results[1], parcs = results[2], clis = results[3];
+    var selT = document.getElementById('f-temporada');
+    temps.forEach(function(t) { var o = document.createElement('option'); o.value = t.id; o.textContent = t.nombre; if (t.activa) o.selected = true; selT.appendChild(o); });
+    var selV = document.getElementById('f-variedad');
+    vars.forEach(function(v) { var o = document.createElement('option'); o.value = v.id; o.textContent = v.nombre; selV.appendChild(o); });
+    var selP = document.getElementById('f-parcela');
+    parcs.forEach(function(p) { var o = document.createElement('option'); o.value = p.id; o.textContent = p.nombre; selP.appendChild(o); });
+    var selC = document.getElementById('f-cliente');
+    clis.forEach(function(c) { var o = document.createElement('option'); o.value = c.id; o.textContent = c.nombre; selC.appendChild(o); });
+    aplicarFiltros();
+  });
+}
+
+function limpiarFiltros() {
+  document.getElementById('f-desde').value = '';
+  document.getElementById('f-hasta').value = '';
+  document.getElementById('f-variedad').value = '';
+  document.getElementById('f-parcela').value = '';
+  document.getElementById('f-cliente').value = '';
+  aplicarFiltros();
+}
+
+function aplicarFiltros() {
+  var q = getParams();
+  var base = '/api/estadisticas';
+  Promise.all([
+    fetch(base + '/rinde-variedad' + q, { headers: _h }).then(function(r){ return r.json(); }),
+    fetch(base + '/rinde-parcela' + q, { headers: _h }).then(function(r){ return r.json(); }),
+    fetch(base + '/evolucion-cosecha' + q, { headers: _h }).then(function(r){ return r.json(); }),
+    fetch(base + '/descarte-por-variedad' + q, { headers: _h }).then(function(r){ return r.json(); }),
+    fetch(base + '/productividad-cosecheros' + q, { headers: _h }).then(function(r){ return r.json(); }),
+    fetch(base + '/ranking-clientes' + q, { headers: _h }).then(function(r){ return r.json(); }),
+    fetch(base + '/ventas-por-categoria' + q, { headers: _h }).then(function(r){ return r.json(); }),
+    fetch(base + '/evolucion-ventas' + q, { headers: _h }).then(function(r){ return r.json(); }),
+    fetch(base + '/ingresos-vs-egresos' + q, { headers: _h }).then(function(r){ return r.json(); }),
+    fetch(base + '/margen-por-categoria' + q, { headers: _h }).then(function(r){ return r.json(); }),
+    fetch(base + '/saldos-cuentas-corrientes' + q, { headers: _h }).then(function(r){ return r.json(); }),
+    fetch(base + '/rotacion-stock' + q, { headers: _h }).then(function(r){ return r.json(); })
+  ]).then(function(d) {
+    renderProductivo(d[0], d[1], d[2], d[3], d[4]);
+    renderComercial(d[5], d[6], d[7]);
+    renderFinanciero(d[8], d[9], d[10], d[11]);
+  });
+}
+
+// ── PRODUCTIVO ──
+function renderProductivo(rindeVar, rindePar, evol, descarte, cosecheros) {
+  var totalKg = rindeVar.reduce(function(s,r){ return s + parseFloat(r.kg_cosechados||0); }, 0);
+  var totalHa = rindeVar.reduce(function(s,r){ return s + parseFloat(r.superficie_ha||0); }, 0);
+  var rindeAvg = totalHa > 0 ? (totalKg / totalHa).toFixed(1) : '-';
+  var descAvg = descarte.length ? descarte.reduce(function(s,r){ return s + r.porcentaje_descarte; },0) / descarte.length : 0;
+  document.getElementById('kpis-prod').innerHTML =
+    kpi('verde','wheat',_fmtKg(totalKg)+' kg','Kg cosechados') +
+    kpi('azul','map',_fmtKg(totalHa)+' ha','Superficie productiva') +
+    kpi('naranja','trending-up',rindeAvg+' kg/ha','Rinde promedio') +
+    kpi('rojo','trash-2',descAvg.toFixed(1)+'%','Descarte promedio');
+  lucide.createIcons();
+
+  // Chart rinde variedad
+  destroyChart('chart-rinde-var');
+  if (rindeVar.length) {
+    _charts['chart-rinde-var'] = new Chart(document.getElementById('chart-rinde-var'), {
+      type: 'bar', data: { labels: rindeVar.map(function(r){ return r.variedad||'?'; }), datasets: [{ label: 'Kg/ha', data: rindeVar.map(function(r){ return r.kg_por_ha; }), backgroundColor: COLORES.slice(0, rindeVar.length) }] },
+      options: { responsive:true, plugins:{ legend:{display:false} }, scales:{ y:{beginAtZero:true} } }
+    });
+  }
+
+  // Chart evolucion cosecha
+  destroyChart('chart-evol-cosecha');
+  if (evol.length) {
+    _charts['chart-evol-cosecha'] = new Chart(document.getElementById('chart-evol-cosecha'), {
+      type: 'line', data: { labels: evol.map(function(r){ return _fmtFechaCorta(r.fecha); }),
+        datasets: [
+          { label: 'Kg/dia', data: evol.map(function(r){ return r.kg_dia; }), borderColor:'#2D5016', backgroundColor:'rgba(45,80,22,0.1)', fill:true, tension:0.3 },
+          { label: 'Acumulado', data: evol.map(function(r){ return r.acumulado; }), borderColor:'#1565c0', borderDash:[5,5], fill:false, tension:0.3, yAxisID:'y1' }
+        ] },
+      options: { responsive:true, scales:{ y:{beginAtZero:true,position:'left'}, y1:{beginAtZero:true,position:'right',grid:{drawOnChartArea:false}} } }
+    });
+  }
+
+  // Tabla rinde parcela
+  document.getElementById('tbl-rinde-parcela').innerHTML = rindePar.length ? rindePar.map(function(r) {
+    return '<tr><td><strong>'+r.parcela+'</strong></td><td>'+r.variedad+'</td><td class="mono">'+_fmtKg(r.hectareas)+'</td><td class="mono">'+_fmtKg(r.kg_cosechados)+'</td><td class="mono" style="font-weight:700;">'+_fmtKg(r.kg_por_ha)+'</td><td>'+r.cantidad_juntadas+'</td><td>'+_fmtFecha(r.fecha_primera)+'</td><td>'+_fmtFecha(r.fecha_ultima)+'</td></tr>';
+  }).join('') : '<tr><td colspan="8" class="empty">Sin datos</td></tr>';
+
+  // Tabla descarte
+  document.getElementById('tbl-descarte').innerHTML = descarte.length ? descarte.map(function(r) {
+    return '<tr><td>'+r.variedad+'</td><td class="mono">'+_fmtKg(r.kg_totales)+'</td><td class="mono">'+_fmtKg(r.kg_descarte)+'</td><td class="mono" style="font-weight:700;">'+r.porcentaje_descarte+'%</td></tr>';
+  }).join('') : '<tr><td colspan="4" class="empty">Sin datos</td></tr>';
+
+  // Tabla cosecheros
+  document.getElementById('tbl-cosecheros').innerHTML = cosecheros.length ? cosecheros.map(function(r) {
+    return '<tr><td><strong>'+r.cosechero.trim()+'</strong></td><td>'+r.cantidad_juntadas+'</td><td class="mono">'+_fmtKg(r.kg_totales)+'</td><td class="mono">'+_fmtKg(r.kg_promedio_por_juntada)+'</td></tr>';
+  }).join('') : '<tr><td colspan="4" class="empty">Sin datos</td></tr>';
+}
+
+// ── COMERCIAL ──
+function renderComercial(ranking, ventasCat, evolVentas) {
+  var totalMonto = ranking.reduce(function(s,r){ return s + parseFloat(r.monto_total||0); },0);
+  var totalKgV = ranking.reduce(function(s,r){ return s + parseFloat(r.kg_comprados||0); },0);
+  var cantVentas = ranking.reduce(function(s,r){ return s + parseInt(r.cantidad_ventas||0); },0);
+  var precioAvg = totalKgV > 0 ? (totalMonto / totalKgV).toFixed(0) : '-';
+  document.getElementById('kpis-com').innerHTML =
+    kpi('verde','dollar-sign','$'+_fmt(totalMonto),'Monto vendido') +
+    kpi('azul','package',_fmtKg(totalKgV)+' kg','Kg vendidos') +
+    kpi('naranja','tag','$'+precioAvg+'/kg','Precio promedio') +
+    kpi('rojo','file-text',cantVentas,'Cantidad ventas');
+  lucide.createIcons();
+
+  // Chart ranking clientes
+  destroyChart('chart-ranking-cli');
+  if (ranking.length) {
+    _charts['chart-ranking-cli'] = new Chart(document.getElementById('chart-ranking-cli'), {
+      type: 'bar', data: { labels: ranking.map(function(r){ return r.cliente; }), datasets: [{ label: 'Monto $', data: ranking.map(function(r){ return r.monto_total; }), backgroundColor: COLORES.slice(0, ranking.length) }] },
+      options: { indexAxis:'y', responsive:true, plugins:{ legend:{display:false} } }
+    });
+  }
+
+  // Chart ventas por categoria (torta)
+  destroyChart('chart-ventas-cat');
+  if (ventasCat.length) {
+    _charts['chart-ventas-cat'] = new Chart(document.getElementById('chart-ventas-cat'), {
+      type: 'doughnut', data: { labels: ventasCat.map(function(r){ return r.categoria + (r.subcategoria ? ' / ' + r.subcategoria : ''); }), datasets: [{ data: ventasCat.map(function(r){ return r.monto_total; }), backgroundColor: COLORES.slice(0, ventasCat.length) }] },
+      options: { responsive:true }
+    });
+  }
+
+  // Chart evolucion ventas
+  destroyChart('chart-evol-ventas');
+  if (evolVentas.length) {
+    _charts['chart-evol-ventas'] = new Chart(document.getElementById('chart-evol-ventas'), {
+      type: 'line', data: { labels: evolVentas.map(function(r){ return _fmtFechaCorta(r.fecha); }),
+        datasets: [
+          { label: 'Kg', data: evolVentas.map(function(r){ return r.kg_vendidos; }), borderColor:'#2D5016', fill:false, tension:0.3 },
+          { label: 'Monto $', data: evolVentas.map(function(r){ return r.monto_vendido; }), borderColor:'#1565c0', fill:false, tension:0.3, yAxisID:'y1' }
+        ] },
+      options: { responsive:true, scales:{ y:{beginAtZero:true,position:'left'}, y1:{beginAtZero:true,position:'right',grid:{drawOnChartArea:false}} } }
+    });
+  }
+
+  // Tabla ranking
+  document.getElementById('tbl-ranking').innerHTML = ranking.length ? ranking.map(function(r) {
+    return '<tr><td><strong>'+r.cliente+'</strong></td><td>'+r.cantidad_ventas+'</td><td class="mono">'+_fmtKg(r.kg_comprados)+'</td><td class="mono" style="font-weight:700;">$'+_fmt(r.monto_total)+'</td><td class="mono">$'+_fmt(r.ticket_promedio)+'</td><td>'+_fmtFecha(r.ultima_compra)+'</td></tr>';
+  }).join('') : '<tr><td colspan="6" class="empty">Sin datos</td></tr>';
+
+  // Tabla ventas cat
+  document.getElementById('tbl-ventas-cat').innerHTML = ventasCat.length ? ventasCat.map(function(r) {
+    return '<tr><td><strong>'+r.categoria+'</strong></td><td>'+r.subcategoria+'</td><td class="mono">'+_fmtKg(r.kg_vendidos)+'</td><td class="mono">$'+_fmt(r.monto_total)+'</td><td class="mono">$'+_fmt(r.precio_promedio_kg)+'</td><td class="mono">'+r.porcentaje_del_total+'%</td></tr>';
+  }).join('') : '<tr><td colspan="6" class="empty">Sin datos</td></tr>';
+}
+
+// ── FINANCIERO ──
+function renderFinanciero(ingEg, margen, saldos, rotacion) {
+  var totalIng = ingEg.reduce(function(s,r){ return s + parseFloat(r.ingresos||0); },0);
+  var totalEg = ingEg.reduce(function(s,r){ return s + parseFloat(r.egresos||0); },0);
+  var neto = totalIng - totalEg;
+  var totalCC = saldos.reduce(function(s,r){ return s + parseFloat(r.saldo_neto||0); },0);
+  document.getElementById('kpis-fin').innerHTML =
+    kpi('verde','trending-up','$'+_fmt(totalIng),'Ingresos totales') +
+    kpi('rojo','trending-down','$'+_fmt(totalEg),'Egresos totales') +
+    kpi(neto >= 0 ? 'verde' : 'rojo','activity','$'+_fmt(neto),'Resultado neto') +
+    kpi('azul','credit-card','$'+_fmt(totalCC),'Saldo CC a cobrar');
+  lucide.createIcons();
+
+  // Chart ingresos vs egresos
+  destroyChart('chart-ing-eg');
+  if (ingEg.length) {
+    _charts['chart-ing-eg'] = new Chart(document.getElementById('chart-ing-eg'), {
+      type: 'bar', data: { labels: ingEg.map(function(r){ return r.mes; }),
+        datasets: [
+          { label: 'Ingresos', data: ingEg.map(function(r){ return r.ingresos; }), backgroundColor:'#2D5016' },
+          { label: 'Egresos', data: ingEg.map(function(r){ return r.egresos; }), backgroundColor:'#c0392b' }
+        ] },
+      options: { responsive:true, scales:{ y:{beginAtZero:true} } }
+    });
+  }
+
+  // Tabla margen
+  document.getElementById('tbl-margen').innerHTML = margen.length ? margen.map(function(r) {
+    return '<tr><td><strong>'+r.categoria+'</strong></td><td class="mono">'+_fmtKg(r.kg_vendidos)+'</td><td class="mono">$'+_fmt(r.ingreso_bruto)+'</td><td class="mono" style="color:var(--texto-suave);">'+(r.costo_estimado != null ? '$'+_fmt(r.costo_estimado) : 'N/D')+'</td><td class="mono">'+(r.margen_bruto != null ? '$'+_fmt(r.margen_bruto) : 'N/D')+'</td></tr>';
+  }).join('') : '<tr><td colspan="5" class="empty">Sin datos</td></tr>';
+
+  // Tabla saldos CC
+  document.getElementById('tbl-saldos').innerHTML = saldos.length ? saldos.map(function(r) {
+    return '<tr><td><strong>'+r.cliente+'</strong></td><td class="mono">$'+_fmt(r.saldo_debe)+'</td><td class="mono">$'+_fmt(r.saldo_haber)+'</td><td class="mono" style="font-weight:700;">$'+_fmt(r.saldo_neto)+'</td><td>'+_fmtFecha(r.ultimo_movimiento)+'</td></tr>';
+  }).join('') : '<tr><td colspan="5" class="empty">Sin datos</td></tr>';
+
+  // Tabla rotacion
+  document.getElementById('tbl-rotacion').innerHTML = rotacion.length ? rotacion.map(function(r) {
+    return '<tr><td class="mono">'+r.sub_lote+'</td><td>'+r.variedad+'</td><td>'+_fmtFecha(r.fecha_cosecha)+'</td><td>'+_fmtFecha(r.fecha_primera_venta)+'</td><td class="mono" style="font-weight:700;">'+(r.dias_en_stock != null ? r.dias_en_stock+' d' : '-')+'</td><td class="mono">'+_fmtKg(r.kg)+'</td><td>'+r.destino+'</td></tr>';
+  }).join('') : '<tr><td colspan="7" class="empty">Sin datos</td></tr>';
+}
+
+// ── Helpers ──
+function kpi(color, icon, valor, label) {
+  return '<div class="st-kpi"><div class="st-kpi-icon '+color+'"><i data-lucide="'+icon+'"></i></div><div class="st-kpi-valor">'+valor+'</div><div class="st-kpi-label">'+label+'</div></div>';
+}
+function destroyChart(id) { if (_charts[id]) { _charts[id].destroy(); delete _charts[id]; } }
+</script>
+</body>
+</html>

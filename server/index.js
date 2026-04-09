@@ -55,8 +55,10 @@ app.use('/api/despalillado',      requireAuth, encargadoOAdmin, require('./route
 app.use('/api/clasificacion-embalaje', requireAuth, encargadoOAdmin, require('./routes/clasificacion-embalaje'));
 app.use('/api/trabajos-campo',       requireAuth, encargadoOAdmin, require('./routes/trabajos-campo'));
 app.use('/api/categorias-fruta', requireAuth, encargadoOAdmin, require('./routes/categorias-fruta'));
+app.use('/api/variedades-frutilla', requireAuth, encargadoOAdmin, require('./routes/variedades-frutilla'));
 app.use('/api/categorias-clasificacion', requireAuth, encargadoOAdmin, require('./routes/categorias-clasificacion'));
 app.use('/api/reportes',          requireAuth, encargadoOAdmin, require('./routes/reportes'));
+app.use('/api/estadisticas',     requireAuth, encargadoOAdmin, require('./routes/estadisticas'));
 app.use('/api/temporadas',        requireAuth, encargadoOAdmin, require('./routes/temporadas'));
 app.use('/api/productos',         requireAuth, encargadoOAdmin, require('./routes/productos'));
 app.use('/api/stock-insumos',     requireAuth, encargadoOAdmin, require('./routes/stock-insumos'));
