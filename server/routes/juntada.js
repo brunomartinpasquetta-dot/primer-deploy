@@ -36,10 +36,6 @@ router.post('/crear-lote', async (req, res) => {
     // Generar código interno
     const now = new Date();
     const fecha = now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0');
-    const seqRes = await pool.request()
-      .input('temporada_id', sql.Int, temporada_id)
-      .query("SELECT COUNT(*) AS cnt FROM LotesMercaderia WHERE temporada_id = @temporada_id AND codigo_interno LIKE 'L' + @fecha + '%'", { fecha });
-    // Simpler: count today's lotes
     const countRes = await pool.request().query(`SELECT COUNT(*) AS cnt FROM LotesMercaderia WHERE CAST(fecha_inicio AS DATE) = CAST(GETDATE() AS DATE)`);
     const seq = (countRes.recordset[0].cnt || 0) + 1;
     const codigo = 'L' + fecha + '-' + String(seq).padStart(3, '0');

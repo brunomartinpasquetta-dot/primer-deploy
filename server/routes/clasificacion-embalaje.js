@@ -27,8 +27,11 @@ router.get('/lote/:id/clasificadores', async (req, res) => {
 // POST /lote/:id/clasificador — Agregar empleado a la jornada de hoy
 router.post('/lote/:id/clasificador', async (req, res) => {
   try {
-    const { empleado_id, hora_inicio } = req.body;
-    if (!empleado_id) return res.status(400).json({ error: 'empleado_id es obligatorio' });
+    // empleado_id es el campo canónico (matchea LoteClasificadores.empleado_id en DB).
+    // clasificador_id se acepta como alias semántico desde frontend que prefiere ese nombre.
+    const empleado_id = req.body.empleado_id || req.body.clasificador_id;
+    const { hora_inicio } = req.body;
+    if (!empleado_id) return res.status(400).json({ error: 'empleado_id (o clasificador_id) es obligatorio' });
 
     const pool = await getPool();
     await pool.request()

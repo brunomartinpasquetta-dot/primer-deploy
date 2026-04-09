@@ -18,12 +18,14 @@ router.get('/qr/:codigo', async (req, res) => {
   }
 });
 
-// Obtener todos los juntadores
+// Obtener todos los juntadores (filtrable por ?tipo=cosechero/despalillador/clasificador)
 router.get('/', async (req, res) => {
   try {
     const pool = await getPool();
-    const result = await pool.request()
-      .query('SELECT id, nombre, apellido, qr_codigo FROM Juntadores WHERE activo = 1 ORDER BY apellido');
+    const r = pool.request();
+    let where = 'activo = 1';
+    if (req.query.tipo) { r.input('tipo', sql.NVarChar, req.query.tipo); where += ' AND tipo = @tipo'; }
+    const result = await r.query('SELECT id, nombre, apellido, qr_codigo, tipo FROM Juntadores WHERE ' + where + ' ORDER BY apellido');
     res.json(result.recordset);
   } catch (err) {
     console.error(err); res.status(500).json({ error: "Error interno del servidor" });

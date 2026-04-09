@@ -2,35 +2,9 @@ const express = require('express');
 const router = express.Router();
 const { getPool, sql } = require('../db');
 
-router.get('/:codigo', async (req, res) => {
-  try {
-    const pool = await getPool();
-    const codigo = req.params.codigo.trim();
-
-    // Buscar lote por codigo_externo, codigo_interno o id numérico
-    const isNumeric = /^\d+$/.test(codigo);
-    const loteRes = await pool.request()
-      .input('codigo', sql.NVarChar, codigo)
-      .input('id', sql.Int, isNumeric ? parseInt(codigo) : 0)
-      .query(`SELECT l.id, l.codigo_interno, l.codigo_externo, l.lote_padre_id,
-                     l.etapa, l.estado, l.kilos, l.fecha_inicio, l.fecha_fin,
-                     l.temporada_id, l.parcela_id, l.categoria_clasif_id, l.sub_categoria_id,
-                     p.nombre AS parcela, t.nombre AS temporada,
-                     cc.nombre AS categoria, sc.nombre AS sub_categoria
-              FROM LotesMercaderia l
-              LEFT JOIN Parcelas p ON l.parcela_id = p.id
-              LEFT JOIN Temporadas t ON l.temporada_id = t.id
-              LEFT JOIN CategoriasClasificacion cc ON l.categoria_clasif_id = cc.id
-              LEFT JOIN SubCategoriasClasificacion sc ON l.sub_categoria_id = sc.id
-              WHERE l.codigo_externo = @codigo
-                 OR l.codigo_interno = @codigo
-                 OR l.id = @id`);
-
-    if (!loteRes.recordset.length) {
-      return res.status(404).json({ error: 'Lote no encontrado con código: ' + codigo });
-    }
-
-    const lote = loteRes.recordset[0];
+// Helper compartido: dado un lote (registro de LotesMercaderia), devuelve la trazabilidad completa.
+// Usado por GET /:codigo (busca por codigo_interno/externo/id) y GET /sub-lote/:id (busca por id numérico).
+async function buildTrazabilidad(lote, pool) {
 
     // Determinar lote padre e IDs de sub-lotes para consultas
     const esSubLote = !!lote.lote_padre_id;
@@ -155,7 +129,7 @@ router.get('/:codigo', async (req, res) => {
     const kgVendidos = ventaRes.recordset.reduce((s, r) => s + (parseFloat(r.kilos) || 0), 0);
     const mermaTotal = kgCosechados > 0 ? ((kgCosechados - kgDespalillados) / kgCosechados * 100) : 0;
 
-    res.json({
+    return {
       lote: {
         id: lote.id,
         codigo_interno: lote.codigo_interno,
@@ -183,7 +157,72 @@ router.get('/:codigo', async (req, res) => {
       embalaje: embalajeRes.recordset,
       stock: stockRes.recordset,
       venta: ventaRes.recordset
-    });
+    };
+}
+
+// GET /api/trazabilidad/sub-lote/:id — acceso directo por ID numérico de LotesMercaderia
+// IMPORTANTE: debe ir ANTES de GET /:codigo para que el matching de Express priorice esta ruta.
+router.get('/sub-lote/:id', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const id = parseInt(req.params.id);
+    if (!id) return res.status(400).json({ error: 'ID inválido' });
+
+    const loteRes = await pool.request()
+      .input('id', sql.Int, id)
+      .query(`SELECT l.id, l.codigo_interno, l.codigo_externo, l.lote_padre_id,
+                     l.etapa, l.estado, l.kilos, l.fecha_inicio, l.fecha_fin,
+                     l.temporada_id, l.parcela_id, l.categoria_clasif_id, l.sub_categoria_id,
+                     p.nombre AS parcela, t.nombre AS temporada,
+                     cc.nombre AS categoria, sc.nombre AS sub_categoria
+              FROM LotesMercaderia l
+              LEFT JOIN Parcelas p ON l.parcela_id = p.id
+              LEFT JOIN Temporadas t ON l.temporada_id = t.id
+              LEFT JOIN CategoriasClasificacion cc ON l.categoria_clasif_id = cc.id
+              LEFT JOIN SubCategoriasClasificacion sc ON l.sub_categoria_id = sc.id
+              WHERE l.id = @id`);
+
+    if (!loteRes.recordset.length) {
+      return res.status(404).json({ error: 'Sub-lote no encontrado con ID: ' + id });
+    }
+
+    const result = await buildTrazabilidad(loteRes.recordset[0], pool);
+    res.json(result);
+  } catch (err) {
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
+  }
+});
+
+// GET /api/trazabilidad/:codigo — busca por codigo_externo, codigo_interno o id numérico
+router.get('/:codigo', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const codigo = req.params.codigo.trim();
+
+    const isNumeric = /^\d+$/.test(codigo);
+    const loteRes = await pool.request()
+      .input('codigo', sql.NVarChar, codigo)
+      .input('id', sql.Int, isNumeric ? parseInt(codigo) : 0)
+      .query(`SELECT l.id, l.codigo_interno, l.codigo_externo, l.lote_padre_id,
+                     l.etapa, l.estado, l.kilos, l.fecha_inicio, l.fecha_fin,
+                     l.temporada_id, l.parcela_id, l.categoria_clasif_id, l.sub_categoria_id,
+                     p.nombre AS parcela, t.nombre AS temporada,
+                     cc.nombre AS categoria, sc.nombre AS sub_categoria
+              FROM LotesMercaderia l
+              LEFT JOIN Parcelas p ON l.parcela_id = p.id
+              LEFT JOIN Temporadas t ON l.temporada_id = t.id
+              LEFT JOIN CategoriasClasificacion cc ON l.categoria_clasif_id = cc.id
+              LEFT JOIN SubCategoriasClasificacion sc ON l.sub_categoria_id = sc.id
+              WHERE l.codigo_externo = @codigo
+                 OR l.codigo_interno = @codigo
+                 OR l.id = @id`);
+
+    if (!loteRes.recordset.length) {
+      return res.status(404).json({ error: 'Lote no encontrado con código: ' + codigo });
+    }
+
+    const result = await buildTrazabilidad(loteRes.recordset[0], pool);
+    res.json(result);
   } catch (err) {
     console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
