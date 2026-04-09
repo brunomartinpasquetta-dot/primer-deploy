@@ -34,7 +34,8 @@ router.get('/', async (req, res) => {
           COUNT(DISTINCT j.juntador_id)        AS cosechadores_hoy,
           COUNT(*)                             AS registros_hoy
         FROM Juntada j
-        WHERE CAST(j.fecha_hora AS DATE) = CAST(GETDATE() AS DATE)`),
+        WHERE CAST(j.fecha_hora AS DATE) = CAST(GETDATE() AS DATE)
+          AND ISNULL(j.estado, 'activa') != 'anulada'`),
 
       pool.request().query(`
         SELECT ISNULL(SUM(kilos), 0) AS kilos_hoy
@@ -63,6 +64,7 @@ router.get('/', async (req, res) => {
       JOIN Juntadores  ju ON j.juntador_id  = ju.id
       LEFT JOIN Depositos d ON j.deposito_id = d.id
       WHERE CAST(j.fecha_hora AS DATE) = CAST(GETDATE() AS DATE)
+        AND ISNULL(j.estado, 'activa') != 'anulada'
       ORDER BY j.fecha_hora DESC`);
 
     // ── Flujo del día: destinos de la cosecha ────────────────────
@@ -74,7 +76,8 @@ router.get('/', async (req, res) => {
         ISNULL(SUM(CASE WHEN destino = 'mixto'         THEN kilos ELSE 0 END), 0) AS kg_mixto,
         ISNULL(SUM(CASE WHEN destino IS NULL            THEN kilos ELSE 0 END), 0) AS kg_sin_destino
       FROM Juntada
-      WHERE CAST(fecha_hora AS DATE) = CAST(GETDATE() AS DATE)`);
+      WHERE CAST(fecha_hora AS DATE) = CAST(GETDATE() AS DATE)
+        AND ISNULL(estado, 'activa') != 'anulada'`);
 
     // ── Acumulados de la temporada (solo si hay temporada activa) ─
     let temporadaStats = {
@@ -161,6 +164,7 @@ router.get('/', async (req, res) => {
         JOIN Juntadores ju ON j.juntador_id = ju.id
         LEFT JOIN Depositos d ON j.deposito_id = d.id
         WHERE j.stock_pendiente = 1
+          AND ISNULL(j.estado, 'activa') != 'anulada'
         ORDER BY j.fecha_hora ASC`),
     ]);
 

@@ -544,10 +544,11 @@ router.post('/egreso', async (req, res) => {
             .input('monto',         sql.Decimal(12,2), total)
             .input('forma_pago_id', sql.Int,           forma_pago_id || null)
             .input('temporada_id',  sql.Int,           temporada_id)
+            .input('mov_dep_id',    sql.Int,           movId)
             .input('observacion',   sql.NVarChar,      concepto + (observacion ? ' — ' + observacion : ''))
             .query(`INSERT INTO CuentaCorrienteClientes
-                    (cliente_id, tipo, monto, forma_pago_id, temporada_id, stock_mercaderia_id, observacion)
-                    VALUES (@cliente_id, 'debito', @monto, @forma_pago_id, @temporada_id, NULL, @observacion)`);
+                    (cliente_id, tipo, monto, forma_pago_id, temporada_id, movimiento_deposito_id, observacion)
+                    VALUES (@cliente_id, 'debito', @monto, @forma_pago_id, @temporada_id, @mov_dep_id, @observacion)`);
         } else {
           await new sql.Request(transaction)
             .input('concepto',       sql.NVarChar,      concepto)

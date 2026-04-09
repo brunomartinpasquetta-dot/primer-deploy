@@ -59,94 +59,6 @@ router.post('/ingreso', async (req, res) => {
   }
 });
 
-// Registrar egreso / venta de mercaderia
-router.post('/egreso', async (req, res) => {
-  const { temporada_id, parcela_id, kilos, destino, precio_kilo,
-          comprador, cliente_id, forma_pago_id, observacion } = req.body;
-  const pool = await getPool();
-  const transaction = new sql.Transaction(pool);
-  try {
-    await transaction.begin();
-    const kilosNum  = parseFloat(kilos);
-    const precioNum = precio_kilo ? parseFloat(precio_kilo) : null;
-    const total     = (precioNum && precioNum > 0) ? kilosNum * precioNum : 0;
-    const uid       = req.user ? req.user.id : null;
-
-    // Determinar si la forma de pago es Cuenta Corriente
-    let esCuentaCorriente = false;
-    if (forma_pago_id) {
-      const fpRes = await new sql.Request(transaction)
-        .input('id', sql.Int, forma_pago_id)
-        .query('SELECT es_cuenta_corriente FROM FormasPago WHERE id = @id');
-      esCuentaCorriente = !!(fpRes.recordset[0]?.es_cuenta_corriente);
-    }
-
-    // Nombre del comprador para concepto
-    let compradorNombre = comprador || '';
-    if (cliente_id && !compradorNombre) {
-      const cliRes = await new sql.Request(transaction)
-        .input('id', sql.Int, cliente_id)
-        .query('SELECT nombre FROM Clientes WHERE id = @id');
-      compradorNombre = cliRes.recordset[0]?.nombre || '';
-    }
-
-    // 1. StockMercaderia — egreso
-    const smResult = await new sql.Request(transaction)
-      .input('temporada_id',  sql.Int,           temporada_id)
-      .input('parcela_id',       sql.Int,           parcela_id)
-      .input('kilos',         sql.Decimal(10,2), kilosNum)
-      .input('destino',       sql.NVarChar,      destino || 'fresco')
-      .input('precio_kilo',   sql.Decimal(10,2), precioNum)
-      .input('comprador',     sql.NVarChar,      compradorNombre)
-      .input('cliente_id',    sql.Int,           cliente_id || null)
-      .input('forma_pago_id', sql.Int,           forma_pago_id || null)
-      .input('usuario_id',    sql.Int,           uid)
-      .input('observacion',   sql.NVarChar,      observacion || '')
-      .query(`INSERT INTO StockMercaderia
-                (temporada_id, parcela_id, tipo, kilos, destino, precio_kilo,
-                 comprador, cliente_id, forma_pago_id, usuario_id, observacion)
-              OUTPUT INSERTED.id
-              VALUES (@temporada_id, @parcela_id, 'egreso_venta', @kilos, @destino, @precio_kilo,
-                      @comprador, @cliente_id, @forma_pago_id, @usuario_id, @observacion)`);
-    const sm_id = smResult.recordset[0].id;
-
-    if (total > 0) {
-      if (esCuentaCorriente && cliente_id) {
-        // 2a. Cuenta Corriente: débito en CuentaCorrienteClientes (se cobra después)
-        await new sql.Request(transaction)
-          .input('cliente_id',          sql.Int,           cliente_id)
-          .input('monto',               sql.Decimal(12,2), total)
-          .input('forma_pago_id',       sql.Int,           forma_pago_id)
-          .input('temporada_id',        sql.Int,           temporada_id || null)
-          .input('stock_mercaderia_id', sql.Int,           sm_id)
-          .input('observacion',         sql.NVarChar,      `Venta ${kilosNum} kg${observacion ? ' - ' + observacion : ''}`)
-          .query(`INSERT INTO CuentaCorrienteClientes
-                    (cliente_id, tipo, monto, forma_pago_id, temporada_id,
-                     stock_mercaderia_id, observacion, fecha_hora)
-                  VALUES (@cliente_id, 'debito', @monto, @forma_pago_id, @temporada_id,
-                          @stock_mercaderia_id, @observacion, GETDATE())`);
-      } else {
-        // 2b. Pago contado: ingreso directo en Caja
-        await new sql.Request(transaction)
-          .input('concepto',        sql.NVarChar,      `Venta mercadería${compradorNombre ? ' a ' + compradorNombre : ''}`)
-          .input('monto',           sql.Decimal(12,2), total)
-          .input('forma_pago_id',   sql.Int,           forma_pago_id || null)
-          .input('temporada_id',    sql.Int,           temporada_id || null)
-          .input('observacion',     sql.NVarChar,      observacion || '')
-          .input('usuario_nombre',  sql.NVarChar,      req.user ? req.user.nombre : null)
-          .query(`INSERT INTO Caja (tipo, concepto, monto, forma_pago_id, temporada_id, observacion, usuario_nombre)
-                  VALUES ('ingreso', @concepto, @monto, @forma_pago_id, @temporada_id, @observacion, @usuario_nombre)`);
-      }
-    }
-
-    await transaction.commit();
-    res.json({ ok: true });
-  } catch (err) {
-    await transaction.rollback();
-    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
-  }
-});
-
 // Stock actual basado en LotesMercaderia (lotes y sub-lotes en depósitos)
 router.get('/actual', async (req, res) => {
   try {
@@ -472,21 +384,23 @@ router.post('/historial/:id/anular', async (req, res) => {
 
     const total = parseFloat(m.kilos) * (parseFloat(m.precio_kilo) || 0);
 
-    // 1. Revertir Caja (insertar egreso para compensar el ingreso original)
+    // 1. Revertir financiero (CC o Caja)
     if (total > 0) {
-      // Verificar si fue CC o caja
+      // Buscar débito CC por FK directa movimiento_deposito_id
       const ccExists = await new sql.Request(transaction)
-        .input('sm_id', sql.Int, movId)
-        .query('SELECT id FROM CuentaCorrienteClientes WHERE stock_mercaderia_id = @sm_id');
+        .input('mov_id', sql.Int, movId)
+        .query(`SELECT id FROM CuentaCorrienteClientes
+                WHERE movimiento_deposito_id = @mov_id AND tipo = 'debito'
+                  AND ISNULL(estado, 'confirmada') != 'anulada'`);
 
       if (ccExists.recordset.length > 0) {
+        // Soft-delete: marcar el débito como anulado (sin crédito compensatorio)
         await new sql.Request(transaction)
-          .input('cliente_id', sql.Int, m.cliente_id)
-          .input('monto', sql.Decimal(12,2), total)
-          .input('sm_id', sql.Int, movId)
-          .query(`INSERT INTO CuentaCorrienteClientes (cliente_id, tipo, monto, stock_mercaderia_id, observacion, fecha_hora)
-                  VALUES (@cliente_id, 'credito', @monto, @sm_id, 'Anulación venta #' + CAST(@sm_id AS VARCHAR), GETDATE())`);
+          .input('cc_id', sql.Int, ccExists.recordset[0].id)
+          .input('mov_id', sql.Int, movId)
+          .query("UPDATE CuentaCorrienteClientes SET estado = 'anulada', observacion = ISNULL(observacion,'') + ' [anulada mov #' + CAST(@mov_id AS VARCHAR) + ']' WHERE id = @cc_id");
       } else {
+        // Fue pago contado — revertir en Caja
         await new sql.Request(transaction)
           .input('monto', sql.Decimal(12,2), total)
           .input('mov_id', sql.Int, movId)
@@ -532,7 +446,7 @@ router.post('/historial/:id/anular', async (req, res) => {
       }
     }
 
-    // 5. Si todos los movimientos del remito están anulados, marcar remito como anulado
+    // 5. Recalcular totales del remito y verificar si todos los items están anulados
     if (m.remito_id) {
       const remCheck = await new sql.Request(transaction)
         .input('rem_id', sql.Int, m.remito_id)
@@ -543,7 +457,19 @@ router.post('/historial/:id/anular', async (req, res) => {
       if (rc.total > 0 && rc.anulados >= rc.total) {
         await new sql.Request(transaction)
           .input('rem_id', sql.Int, m.remito_id)
-          .query("UPDATE Remitos SET estado = 'anulado' WHERE id = @rem_id");
+          .query("UPDATE Remitos SET estado = 'anulado', kilos_total = 0, total = 0 WHERE id = @rem_id");
+      } else {
+        // Recalcular totales con items activos
+        await new sql.Request(transaction)
+          .input('rem_id', sql.Int, m.remito_id)
+          .query(`UPDATE Remitos SET
+                    kilos_total = ISNULL((SELECT SUM(ri.kilos) FROM RemitoItems ri
+                                         JOIN MovimientosDeposito md ON ri.movimiento_id = md.id
+                                         WHERE ri.remito_id = @rem_id AND ISNULL(md.estado, '') != 'anulada'), 0),
+                    total = ISNULL((SELECT SUM(ri.subtotal) FROM RemitoItems ri
+                                    JOIN MovimientosDeposito md ON ri.movimiento_id = md.id
+                                    WHERE ri.remito_id = @rem_id AND ISNULL(md.estado, '') != 'anulada'), 0)
+                  WHERE id = @rem_id`);
       }
     }
 

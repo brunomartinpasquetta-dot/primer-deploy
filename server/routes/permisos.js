@@ -104,6 +104,8 @@ router.get('/mi-rol', async (req, res) => {
 
 // PUT /api/permisos/:rol/:permiso  — actualizar un permiso (solo admin)
 router.put('/:rol/:permiso', async (req, res) => {
+  if (!req.user || req.user.rol !== 'administrador')
+    return res.status(403).json({ error: 'Solo administradores pueden modificar permisos' });
   const { rol, permiso } = req.params;
   const { habilitado } = req.body;
   if (!ROLES.includes(rol))                   return res.status(400).json({ error: 'Rol inválido' });

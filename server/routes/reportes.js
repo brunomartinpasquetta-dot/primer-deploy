@@ -126,10 +126,10 @@ router.get('/cosecha', async (req, res) => {
         l.nombre AS parcela,
         j.kilos,
         j.destino
-      FROM Juntadas j
+      FROM Juntada j
       LEFT JOIN Parcelas l ON j.parcela_id = l.id
       LEFT JOIN Juntadores jt ON j.juntador_id = jt.id
-      WHERE ${where}
+      WHERE ${where} AND ISNULL(j.estado, 'activa') != 'anulada'
       ORDER BY j.fecha_hora DESC
     `);
 
@@ -157,9 +157,9 @@ router.get('/despalillado', async (req, res) => {
           jt.nombre + ' ' + jt.apellido AS trabajador,
           l.nombre AS parcela,
           d.kilos
-        FROM Despalillados d
+        FROM Despalillado d
         LEFT JOIN Parcelas l ON d.parcela_id = l.id
-        LEFT JOIN Juntadores jt ON d.juntador_id = jt.id
+        LEFT JOIN Juntadores jt ON d.despalillador_id = jt.id
         WHERE d.fecha_hora BETWEEN @desde AND @hasta
         ORDER BY d.fecha_hora DESC
       `);
@@ -193,8 +193,8 @@ router.get('/caja', async (req, res) => {
       SELECT
         CONVERT(varchar, fecha, 103) AS fecha,
         tipo,
-        descripcion,
-        forma_pago,
+        concepto AS descripcion,
+        ISNULL(medio_pago, '') AS forma_pago,
         monto
       FROM Caja
       WHERE ${where}
@@ -223,11 +223,12 @@ router.get('/gastos', async (req, res) => {
         SELECT
           CONVERT(varchar, g.fecha, 103) AS fecha,
           c.nombre AS categoria,
-          g.descripcion,
-          g.forma_pago,
+          g.concepto AS descripcion,
+          fp.nombre AS forma_pago,
           g.monto
         FROM Gastos g
         LEFT JOIN CategoriasGasto c ON g.categoria_id = c.id
+        LEFT JOIN FormasPago fp ON g.forma_pago_id = fp.id
         WHERE g.fecha BETWEEN @desde AND @hasta
         ORDER BY g.fecha DESC
       `);
@@ -309,7 +310,7 @@ router.get('/pagos', async (req, res) => {
         CONVERT(varchar, p.fecha, 103) AS fecha,
         j.nombre + ' ' + j.apellido AS trabajador,
         p.tipo,
-        p.descripcion,
+        p.observacion AS descripcion,
         p.monto
       FROM Pagos p
       LEFT JOIN Juntadores j ON p.juntador_id = j.id
@@ -346,11 +347,12 @@ router.get('/compras', async (req, res) => {
       SELECT
         CONVERT(varchar, c.fecha, 103) AS fecha,
         p.nombre AS proveedor,
-        c.descripcion,
-        c.forma_pago,
-        c.monto
+        c.observacion AS descripcion,
+        fp.nombre AS forma_pago,
+        c.total AS monto
       FROM Compras c
       LEFT JOIN Proveedores p ON c.proveedor_id = p.id
+      LEFT JOIN FormasPago fp ON c.forma_pago_id = fp.id
       WHERE ${where}
       ORDER BY c.fecha DESC
     `);
@@ -371,7 +373,7 @@ router.get('/stock-insumos', async (req, res) => {
     const { formato } = req.query;
     const pool = await getPool();
     const result = await pool.request().query(`
-      SELECT nombre, tipo, stock_actual, unidad
+      SELECT nombre, tipo, stock_actual, unidad_medida AS unidad
       FROM Productos
       WHERE activo = 1
       ORDER BY tipo, nombre

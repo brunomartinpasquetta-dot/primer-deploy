@@ -55,18 +55,14 @@ router.get('/:proveedor_id', async (req, res) => {
           c.id       AS compra_id,
           c.fecha    AS compra_fecha,
           -- Saldo acumulado (running total)
-          SUM(CASE WHEN cc2.tipo = 'debito' THEN cc2.monto ELSE -cc2.monto END)
-            OVER (PARTITION BY cc.proveedor_id ORDER BY cc.fecha_hora, cc.id
+          SUM(CASE WHEN cc.tipo = 'debito' THEN cc.monto ELSE -cc.monto END)
+            OVER (ORDER BY cc.fecha_hora, cc.id
                   ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS saldo_acumulado
         FROM CuentaCorrienteProveedores cc
         LEFT JOIN FormasPago                fp ON cc.forma_pago_id  = fp.id
         LEFT JOIN Temporadas                t  ON cc.temporada_id   = t.id
         LEFT JOIN Compras                   c  ON cc.compra_id      = c.id
-        LEFT JOIN CuentaCorrienteProveedores cc2 ON cc2.proveedor_id = cc.proveedor_id
         WHERE cc.proveedor_id = @proveedor_id
-        GROUP BY cc.id, cc.tipo, cc.monto, cc.fecha, cc.fecha_hora,
-                 cc.observacion, cc.proveedor_id, fp.nombre, fp.es_cuenta_corriente,
-                 t.nombre, c.id, c.fecha
         ORDER BY cc.fecha_hora DESC, cc.id DESC`);
     res.json(result.recordset);
   } catch (err) {

@@ -39,26 +39,8 @@
   // Exponer usuario globalmente para uso en páginas
   window.cosechaUser = { id: payload.id, nombre: nombre, rol: rol };
 
-  // Cargar permisos desde caché localStorage, refrescar async
-  var _cachedPerms = [];
-  try { _cachedPerms = JSON.parse(localStorage.getItem('cosecha_permisos') || '[]'); } catch(e) {}
-  window.cosechaPermisos = _cachedPerms;
-  window.tienePermiso = function(p) { return window.cosechaPermisos.includes(p); };
-  // Refresh async (sin bloquear)
-  fetch('/api/permisos/mi-rol').then(function(r){ return r.json(); }).then(function(data){
-    if (Array.isArray(data)) {
-      localStorage.setItem('cosecha_permisos', JSON.stringify(data));
-      window.cosechaPermisos = data;
-    }
-  }).catch(function(){});
-
-  // No-admin intenta acceder a página admin → redirigir
-  if (rol !== 'administrador' && ADMIN_ONLY_PAGES.includes(currentPage)) {
-    location.href = 'index.html';
-    return;
-  }
-
   // Interceptar fetch global para inyectar Authorization header automáticamente
+  // IMPORTANTE: debe montarse ANTES de cualquier fetch a /api/
   var _fetch = window.fetch;
   window.fetch = function (url, options) {
     options = options || {};
@@ -75,6 +57,25 @@
       return res;
     });
   };
+
+  // Cargar permisos desde caché localStorage, refrescar async
+  var _cachedPerms = [];
+  try { _cachedPerms = JSON.parse(localStorage.getItem('cosecha_permisos') || '[]'); } catch(e) {}
+  window.cosechaPermisos = _cachedPerms;
+  window.tienePermiso = function(p) { return window.cosechaPermisos.includes(p); };
+  // Refresh async (sin bloquear) — interceptor ya montado, envía Authorization
+  fetch('/api/permisos/mi-rol').then(function(r){ return r.json(); }).then(function(data){
+    if (Array.isArray(data)) {
+      localStorage.setItem('cosecha_permisos', JSON.stringify(data));
+      window.cosechaPermisos = data;
+    }
+  }).catch(function(){});
+
+  // No-admin intenta acceder a página admin → redirigir
+  if (rol !== 'administrador' && ADMIN_ONLY_PAGES.includes(currentPage)) {
+    location.href = 'index.html';
+    return;
+  }
 
   // Cuando el DOM esté listo, agregar UI de usuario
   document.addEventListener('DOMContentLoaded', function () {

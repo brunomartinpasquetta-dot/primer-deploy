@@ -357,9 +357,10 @@ router.post('/:id/anular', async (req, res) => {
     await new sql.Request(transaction)
       .input('compra_id', sql.Int, compraId)
       .input('monto', sql.Decimal(12,2), parseFloat(c.total))
+      .input('temporada_id', sql.Int, c.temporada_id || null)
       .input('uname', sql.NVarChar, uname)
       .query(`INSERT INTO Caja (tipo, concepto, monto, temporada_id, usuario_nombre)
-              VALUES ('ingreso', 'Anulación compra #' + CAST(@compra_id AS VARCHAR), @monto, NULL, @uname)`);
+              VALUES ('ingreso', 'Anulación compra #' + CAST(@compra_id AS VARCHAR), @monto, @temporada_id, @uname)`);
 
     // 3. Revertir Cuenta Corriente si existía
     await new sql.Request(transaction)

@@ -886,7 +886,7 @@
   function guardarEditarVenta(btn) {
     var id = document.getElementById('edit-venta-id').value;
     btn.disabled = true; btn.textContent = 'Guardando...';
-    fetch('/api/stock-mercaderia/historial/' + id, {
+    fetch('/api/stock-mercaderia/historial/' + id + '/auditado', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
