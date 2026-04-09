@@ -1,0 +1,48 @@
+# Dependencies (se instalan en el build)
+node_modules
+npm-debug.log
+
+# Secretos y configuración local
+.env
+.env.*
+!.env.example
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentación y contextos (no se necesitan en runtime)
+CONTEXTO_*.txt
+CONTEXTO_*.md
+CONTEXTO-*.txt
+AUDITORIA_*.md
+E2E_TEST_*.md
+*.md
+
+# Tests y screenshots
+e2e
+tests
+.playwright-mcp
+
+# IDE y sistema
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Claude Code
+.claude
+
+# Directorios locales no-runtime
+/tmp
+/backups
+uploads
+
+# Backups SQL locales
+scripts/_bkp_*
+
+# Docker (no auto-referencia)
+docker-compose*.yml
+Dockerfile*
+.dockerignore

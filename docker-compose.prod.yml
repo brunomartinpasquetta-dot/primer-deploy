@@ -1,0 +1,30 @@
+# ══════════════════════════════════════════════════════════════
+# CosechaApp — Docker Compose overrides para PRODUCCIÓN (VPS)
+# Uso:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# Variables leídas desde .env.production (crear manualmente en el VPS)
+# En el VPS: copiar .env.example a .env.production y rellenar con secretos reales.
+# ══════════════════════════════════════════════════════════════
+
+services:
+
+  db:
+    # En producción NO exponer 1433 al host — solo red interna del compose
+    ports: []
+    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  app:
+    environment:
+      NODE_ENV: production
+    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"

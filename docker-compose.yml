@@ -1,0 +1,66 @@
+# ══════════════════════════════════════════════════════════════
+# CosechaApp — Docker Compose base
+# Uso (desarrollo local):
+#   docker compose up -d --build
+#   docker compose logs -f app
+#   docker compose down         (preserva volúmenes)
+#   docker compose down -v      (borra volúmenes, cuidado!)
+#
+# Uso (producción VPS):
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# Variables leídas desde .env (ver .env.example)
+# ══════════════════════════════════════════════════════════════
+
+services:
+
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: cosecha-db
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${DB_PASSWORD}
+      MSSQL_PID: Express
+    volumes:
+      - mssql-data:/var/opt/mssql
+      - ./scripts:/scripts:ro
+    # El puerto 1433 NO se expone al host en producción (solo red interna).
+    # En docker-compose.yml (base) lo expongo en 127.0.0.1 para testing local.
+    ports:
+      - "127.0.0.1:${DB_HOST_PORT:-1434}:1433"
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$${MSSQL_SA_PASSWORD}" -Q "SELECT 1" -C -No
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cosecha-app
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_SERVER: db
+      DB_PORT: 1433
+      DB_USER: sa
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME:-CosechaFrutilla}
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: 3000
+      ADMIN_DEFAULT_PASSWORD: ${ADMIN_DEFAULT_PASSWORD}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      NODE_ENV: ${NODE_ENV:-production}
+    ports:
+      - "127.0.0.1:${APP_HOST_PORT:-3000}:3000"
+    volumes:
+      - ./uploads:/app/uploads
+    restart: unless-stopped
+
+volumes:
+  mssql-data:
+    driver: local
