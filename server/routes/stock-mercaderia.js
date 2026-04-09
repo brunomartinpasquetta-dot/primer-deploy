@@ -21,7 +21,7 @@ router.get('/actual', async (req, res) => {
       .query(`
         SELECT
           lm.etapa,
-          ISNULL(p.variedad, p.nombre) AS variedad,
+          ISNULL(vf.nombre, p.nombre) AS variedad,
           d.nombre   AS deposito,
           d.tipo     AS deposito_tipo,
           cc.nombre  AS categoria,
@@ -30,6 +30,7 @@ router.get('/actual', async (req, res) => {
           SUM(lm.kilos) AS kg_disponibles
         FROM LotesMercaderia lm
         LEFT JOIN Parcelas p                    ON lm.parcela_id          = p.id
+        LEFT JOIN variedades_frutilla vf         ON p.variedad_id          = vf.id
         LEFT JOIN Depositos d                   ON lm.deposito_actual_id  = d.id
         LEFT JOIN CategoriasClasificacion cc     ON lm.categoria_clasif_id = cc.id
         LEFT JOIN SubCategoriasClasificacion sc  ON lm.sub_categoria_id    = sc.id
@@ -37,7 +38,7 @@ router.get('/actual', async (req, res) => {
           AND lm.estado != 'anulada'
           AND lm.etapa NOT IN ('vendido')
           AND lm.kilos > 0
-        GROUP BY lm.etapa, ISNULL(p.variedad, p.nombre), d.nombre, d.tipo, cc.nombre, sc.nombre
+        GROUP BY lm.etapa, ISNULL(vf.nombre, p.nombre), d.nombre, d.tipo, cc.nombre, sc.nombre
         ORDER BY d.nombre, lm.etapa, cc.nombre
       `);
 
@@ -242,7 +243,7 @@ router.get('/etapas', async (req, res) => {
         j.deposito_id,
         j.destino,
         l.nombre AS parcela,
-        l.variedad,
+        vf.nombre AS variedad,
         ju.nombre + ' ' + ju.apellido AS juntador,
         j.fecha_hora,
         d.nombre      AS deposito_nombre,
@@ -266,6 +267,7 @@ router.get('/etapas', async (req, res) => {
         END AS etapa
       FROM Juntada j
       JOIN Parcelas l       ON j.parcela_id     = l.id
+      LEFT JOIN variedades_frutilla vf ON l.variedad_id = vf.id
       JOIN Juntadores ju ON j.juntador_id = ju.id
       LEFT JOIN Depositos d    ON j.deposito_id = d.id
       LEFT JOIN Despalillado desp ON desp.juntada_id = j.id
@@ -294,13 +296,36 @@ router.get('/etapas', async (req, res) => {
 
 // PATCH /historial/:id — ELIMINADO: usar PATCH /historial/:id/auditado en su lugar
 
-// GET /auditoria — historial de auditoría de ventas
+// GET /auditoria — historial de auditoría de ventas con paginación
+// Sin ?page → retrocompat: devuelve array plano con todos los registros (sin tope 100).
+// Con ?page → paginado: { items, page, pageSize, total, totalPages }
 router.get('/auditoria', async (req, res) => {
   try {
     const pool = await getPool();
-    const result = await pool.request()
-      .query('SELECT TOP 100 * FROM AuditoriaVentas ORDER BY fecha_hora DESC');
-    res.json(result.recordset);
+    const paginated = req.query.page !== undefined;
+
+    if (!paginated) {
+      const result = await pool.request()
+        .query('SELECT * FROM AuditoriaVentas ORDER BY fecha_hora DESC, id DESC');
+      return res.json(result.recordset);
+    }
+
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const pageSize = Math.min(200, Math.max(1, parseInt(req.query.pageSize) || 50));
+    const offset = (page - 1) * pageSize;
+
+    const countRes = await pool.request().query('SELECT COUNT(*) AS total FROM AuditoriaVentas');
+    const total = parseInt(countRes.recordset[0].total) || 0;
+    const totalPages = Math.ceil(total / pageSize) || 1;
+
+    const itemsRes = await pool.request()
+      .input('offset', sql.Int, offset)
+      .input('pageSize', sql.Int, pageSize)
+      .query(`SELECT * FROM AuditoriaVentas
+              ORDER BY fecha_hora DESC, id DESC
+              OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY`);
+
+    res.json({ items: itemsRes.recordset, page, pageSize, total, totalPages });
   } catch (err) {
     console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }

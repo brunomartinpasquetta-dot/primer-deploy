@@ -91,7 +91,7 @@ router.get('/stock-vendible', async (req, res) => {
              cc.nombre             AS categoria,
              sc.nombre             AS sub_categoria,
              p.nombre              AS parcela,
-             ISNULL(p.variedad, '') AS variedad,
+             ISNULL(vf.nombre, '')  AS variedad,
              lp.codigo_interno     AS lote_padre_codigo,
              sl.fecha_envasado,
              ISNULL((SELECT SUM(ri.kilos) FROM RemitoItems ri JOIN MovimientosDeposito md ON ri.movimiento_id = md.id WHERE ri.sub_lote_id = sl.id AND ISNULL(md.estado, '') != 'anulada'), 0) AS kilos_vendidos
@@ -100,6 +100,7 @@ router.get('/stock-vendible', async (req, res) => {
       LEFT JOIN CategoriasClasificacion cc    ON sl.categoria_clasif_id  = cc.id
       LEFT JOIN SubCategoriasClasificacion sc ON sl.sub_categoria_id     = sc.id
       LEFT JOIN Parcelas p                   ON sl.parcela_id           = p.id
+      LEFT JOIN variedades_frutilla vf       ON p.variedad_id           = vf.id
       LEFT JOIN Depositos d                  ON sl.deposito_actual_id   = d.id
       WHERE ${where}
       ORDER BY d.nombre, cc.nombre, sc.nombre`);
@@ -160,10 +161,11 @@ router.post('/egreso', async (req, res) => {
     const slRes = await dbReq.query(`
       SELECT sl.id, sl.codigo_interno, sl.kilos, sl.etapa, sl.deposito_actual_id,
              sl.temporada_id, sl.parcela_id,
-             ISNULL(p.variedad, '') AS variedad, ISNULL(p.nombre, '') AS parcela,
+             ISNULL(vf.nombre, '') AS variedad, ISNULL(p.nombre, '') AS parcela,
              ISNULL((SELECT SUM(ri.kilos) FROM RemitoItems ri JOIN MovimientosDeposito md ON ri.movimiento_id = md.id WHERE ri.sub_lote_id = sl.id AND ISNULL(md.estado, '') != 'anulada'), 0) AS kilos_vendidos
       FROM LotesMercaderia sl
       LEFT JOIN Parcelas p ON sl.parcela_id = p.id
+      LEFT JOIN variedades_frutilla vf ON p.variedad_id = vf.id
       WHERE ${where}
       ORDER BY sl.fecha_envasado ASC, sl.id ASC`);
 

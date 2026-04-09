@@ -204,13 +204,14 @@ router.get('/stock-disponible', async (req, res) => {
       SELECT
         l.id   AS parcela_id,
         l.nombre AS parcela,
-        ISNULL(l.variedad, 'Sin variedad') AS variedad,
+        ISNULL(vf.nombre, 'Sin variedad') AS variedad,
         ISNULL(SUM(CASE WHEN m.tipo='ingreso'      THEN m.kilos ELSE 0 END),0) -
         ISNULL(SUM(CASE WHEN m.tipo LIKE 'egreso%' AND m.tipo != 'egreso_anulacion' THEN m.kilos ELSE 0 END),0) AS kg_disponibles
       FROM MovimientosDeposito m
       JOIN Parcelas l ON m.parcela_id = l.id
+      LEFT JOIN variedades_frutilla vf ON l.variedad_id = vf.id
       WHERE ${where}
-      GROUP BY l.id, l.nombre, l.variedad
+      GROUP BY l.id, l.nombre, vf.nombre
       HAVING
         ISNULL(SUM(CASE WHEN m.tipo='ingreso'      THEN m.kilos ELSE 0 END),0) -
         ISNULL(SUM(CASE WHEN m.tipo LIKE 'egreso%' AND m.tipo != 'egreso_anulacion' THEN m.kilos ELSE 0 END),0) > 0
