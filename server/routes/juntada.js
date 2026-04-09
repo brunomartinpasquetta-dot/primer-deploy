@@ -673,20 +673,6 @@ router.post('/:id/anular', async (req, res) => {
                     (temporada_id, parcela_id, tipo, kilos, fecha, observacion, juntada_id, juntador_id, usuario_id, destino_venta)
                     VALUES (@temporada_id, @parcela_id, 'ingreso_anulacion', @kilos, @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id, 'venta_directa')`);
 
-          // LEGACY — pendiente migración CC
-          await transaction.request()
-            .input('temporada_id', sql.Int,          temporada_id)
-            .input('parcela_id',   sql.Int,          parcela_id)
-            .input('kilos',        sql.Decimal(10,3), d.kilos)
-            .input('fecha',        sql.DateTime,     now)
-            .input('observacion',  sql.NVarChar,     `Anulación venta directa juntada #${juntadaId}`)
-            .input('juntada_id',   sql.Int,          juntadaId)
-            .input('juntador_id',  sql.Int,          juntador_id)
-            .input('usuario_id',   sql.Int,          uid)
-            .query(`INSERT INTO StockMercaderia
-                    (temporada_id, parcela_id, tipo, kilos, destino, fecha, observacion, juntada_id, juntador_id, usuario_id)
-                    VALUES (@temporada_id, @parcela_id, 'ingreso_anulacion', @kilos, 'venta_directa', @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id)`);
-
           // Revertir ingreso de caja
           const precioKilo = d.precio_kilo ? parseFloat(d.precio_kilo) : 0;
           if (precioKilo > 0) {
@@ -715,19 +701,6 @@ router.post('/:id/anular', async (req, res) => {
                     (temporada_id, parcela_id, tipo, kilos, fecha, observacion, juntada_id, juntador_id, usuario_id, destino_venta)
                     VALUES (@temporada_id, @parcela_id, 'ingreso_anulacion', @kilos, @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id, 'descarte')`);
 
-          // LEGACY — pendiente migración CC
-          await transaction.request()
-            .input('temporada_id', sql.Int,          temporada_id)
-            .input('parcela_id',   sql.Int,          parcela_id)
-            .input('kilos',        sql.Decimal(10,3), d.kilos)
-            .input('fecha',        sql.DateTime,     now)
-            .input('observacion',  sql.NVarChar,     `Anulación descarte juntada #${juntadaId}`)
-            .input('juntada_id',   sql.Int,          juntadaId)
-            .input('juntador_id',  sql.Int,          juntador_id)
-            .input('usuario_id',   sql.Int,          uid)
-            .query(`INSERT INTO StockMercaderia
-                    (temporada_id, parcela_id, tipo, kilos, destino, fecha, observacion, juntada_id, juntador_id, usuario_id)
-                    VALUES (@temporada_id, @parcela_id, 'ingreso_anulacion', @kilos, 'descarte', @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id)`);
         }
       }
 

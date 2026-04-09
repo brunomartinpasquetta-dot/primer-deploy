@@ -37,28 +37,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-// LEGACY - deprecar en próxima versión
-// Ingreso real se hace vía POST /api/depositos/ingreso (que sí usa transacción + MovimientosDeposito)
-// Ningún frontend consume esta ruta — verificado 2026-04-03
-router.post('/ingreso', async (req, res) => {
-  console.warn('[DEPRECADO] POST /api/stock-mercaderia/ingreso llamado — usar /api/depositos/ingreso en su lugar');
-  try {
-    const { temporada_id, parcela_id, kilos, destino, observacion } = req.body;
-    const pool = await getPool();
-    await pool.request()
-      .input('temporada_id', sql.Int, temporada_id)
-      .input('parcela_id', sql.Int, parcela_id)
-      .input('kilos', sql.Decimal(10,2), kilos)
-      .input('destino', sql.NVarChar, destino || 'fresco')
-      .input('observacion', sql.NVarChar, observacion || '')
-      .query(`INSERT INTO StockMercaderia (temporada_id, parcela_id, tipo, kilos, destino, observacion)
-              VALUES (@temporada_id, @parcela_id, 'ingreso', @kilos, @destino, @observacion)`);
-    res.json({ ok: true });
-  } catch (err) {
-    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
-  }
-});
-
 // Stock actual basado en LotesMercaderia (lotes y sub-lotes en depósitos)
 router.get('/actual', async (req, res) => {
   try {

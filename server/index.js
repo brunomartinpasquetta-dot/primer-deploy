@@ -27,6 +27,8 @@ app.use('/api/cotizaciones', require('./routes/cotizaciones'));  // GET público
 // ── Dashboard ───────────────────────────────────────────────────
 app.use('/api/dashboard',  requireAuth, encargadoOAdmin, require('./routes/dashboard'));
 
+// ── Ventas (endpoints extraídos de depositos, mismo prefijo para compatibilidad frontend)
+app.use('/api/depositos',  requireAuth, encargadoOAdmin, require('./routes/ventas'));
 // ── Depósitos ────────────────────────────────────────────────────
 app.use('/api/depositos',  requireAuth, encargadoOAdmin, require('./routes/depositos'));
 

@@ -418,21 +418,7 @@ router.post('/', async (req, res) => {
                   (deposito_id, temporada_id, parcela_id, tipo, kilos, fecha, observacion, juntada_id, juntador_id, usuario_id)
                   VALUES (@deposito_id, @temporada_id, @parcela_id, 'ingreso', @kilos, @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id)`);
 
-        // 3. StockMercaderia
-        await transaction.request()
-          .input('temporada_id', sql.Int,          temporada_id)
-          .input('parcela_id',      sql.Int,          jParcelaId)
-          .input('kilos',        sql.Decimal(10,3),kilos)
-          .input('fecha',        sql.DateTime,     now)
-          .input('observacion',  sql.NVarChar,     `Despalillado juntada #${juntada_id}`)
-          .input('juntada_id',   sql.Int,          juntada_id)
-          .input('juntador_id',  sql.Int,          juntador_id)
-          .input('usuario_id',   sql.Int,          uid)
-          .query(`INSERT INTO StockMercaderia
-                  (temporada_id, parcela_id, tipo, kilos, destino, fecha, observacion, juntada_id, juntador_id, usuario_id)
-                  VALUES (@temporada_id, @parcela_id, 'ingreso', @kilos, 'deposito', @fecha, @observacion, @juntada_id, @juntador_id, @usuario_id)`);
-
-        // 4. Marcar este tramo como procesado
+        // 3. Marcar este tramo como procesado
         await transaction.request()
           .input('id', sql.Int, juntada_destino_id)
           .query(`UPDATE JuntadaDestino SET stock_pendiente = 0 WHERE id = @id`);
@@ -492,15 +478,6 @@ router.post('/', async (req, res) => {
                   (deposito_id, temporada_id, tipo, kilos, fecha, observacion, usuario_id)
                   VALUES (@deposito_id, @temporada_id, 'egreso_despalillado', @kilos, @fecha, 'Egreso para despalillado fresco', @usuario_id)`);
 
-        await transaction.request()
-          .input('temporada_id', sql.Int,          temporada_id)
-          .input('kilos',        sql.Decimal(10,3),kilosOrigenNum)
-          .input('fecha',        sql.DateTime,     now)
-          .input('usuario_id',   sql.Int,          uid)
-          .query(`INSERT INTO StockMercaderia
-                  (temporada_id, tipo, kilos, destino, fecha, observacion, usuario_id)
-                  VALUES (@temporada_id, 'egreso_despalillado', @kilos, 'deposito', @fecha, 'Egreso para despalillado fresco', @usuario_id)`);
-
         // 2. Registrar el despalillado con merma
         await transaction.request()
           .input('despalillador_id', sql.Int,          despalillador_id)
@@ -523,15 +500,6 @@ router.post('/', async (req, res) => {
           .query(`INSERT INTO MovimientosDeposito
                   (deposito_id, temporada_id, tipo, kilos, fecha, observacion, usuario_id)
                   VALUES (@deposito_id, @temporada_id, 'ingreso', @kilos, @fecha, 'Ingreso fruta despalillada', @usuario_id)`);
-
-        await transaction.request()
-          .input('temporada_id', sql.Int,          temporada_id)
-          .input('kilos',        sql.Decimal(10,3),kilosNum)
-          .input('fecha',        sql.DateTime,     now)
-          .input('usuario_id',   sql.Int,          uid)
-          .query(`INSERT INTO StockMercaderia
-                  (temporada_id, tipo, kilos, destino, fecha, observacion, usuario_id)
-                  VALUES (@temporada_id, 'ingreso', @kilos, 'deposito', @fecha, 'Ingreso fruta despalillada', @usuario_id)`);
 
         await transaction.commit();
         res.json({ ok: true, merma_kg, merma_pct });
@@ -767,17 +735,6 @@ router.post('/:id/anular', async (req, res) => {
                   (deposito_id, temporada_id, tipo, kilos, fecha, observacion, usuario_id)
                   VALUES (@deposito_id, @temporada_id, 'egreso_anulacion', @kilos, @fecha, @observacion, @usuario_id)`);
 
-        // Egreso anulación en StockMercaderia
-        await transaction.request()
-          .input('temporada_id', sql.Int,           temporada_id)
-          .input('kilos',        sql.Decimal(10,3), kilos)
-          .input('fecha',        sql.DateTime,      now)
-          .input('observacion',  sql.NVarChar,      obs)
-          .input('usuario_id',   sql.Int,           uid)
-          .query(`INSERT INTO StockMercaderia
-                  (temporada_id, tipo, kilos, destino, fecha, observacion, usuario_id)
-                  VALUES (@temporada_id, 'egreso_anulacion', @kilos, 'deposito', @fecha, @observacion, @usuario_id)`);
-
         // Reabrir JuntadaDestino
         await transaction.request()
           .input('juntada_id',  sql.Int, desp.juntada_id)
@@ -821,27 +778,6 @@ router.post('/:id/anular', async (req, res) => {
                   (deposito_id, temporada_id, tipo, kilos, fecha, observacion, usuario_id)
                   VALUES (@deposito_id, @temporada_id, 'ingreso_anulacion', @kilos, @fecha, @observacion, @usuario_id)`);
 
-        // Reversar ingreso en StockMercaderia (egreso_anulacion)
-        await transaction.request()
-          .input('temporada_id', sql.Int,           temporada_id)
-          .input('kilos',        sql.Decimal(10,3), kilos)
-          .input('fecha',        sql.DateTime,      now)
-          .input('observacion',  sql.NVarChar,      obs)
-          .input('usuario_id',   sql.Int,           uid)
-          .query(`INSERT INTO StockMercaderia
-                  (temporada_id, tipo, kilos, destino, fecha, observacion, usuario_id)
-                  VALUES (@temporada_id, 'egreso_anulacion', @kilos, 'deposito', @fecha, @observacion, @usuario_id)`);
-
-        // Reversar egreso_despalillado en StockMercaderia (ingreso_anulacion)
-        await transaction.request()
-          .input('temporada_id', sql.Int,           temporada_id)
-          .input('kilos',        sql.Decimal(10,3), kilos)
-          .input('fecha',        sql.DateTime,      now)
-          .input('observacion',  sql.NVarChar,      obs)
-          .input('usuario_id',   sql.Int,           uid)
-          .query(`INSERT INTO StockMercaderia
-                  (temporada_id, tipo, kilos, destino, fecha, observacion, usuario_id)
-                  VALUES (@temporada_id, 'ingreso_anulacion', @kilos, 'deposito', @fecha, @observacion, @usuario_id)`);
       }
 
       // Marcar como anulada
