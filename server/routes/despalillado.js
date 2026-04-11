@@ -165,6 +165,8 @@ router.put('/:id', async (req, res) => {
       }
     }
 
+    let loteReabierto = false;
+    let advertenciaEnvios = null;
     const transaction = new sql.Transaction(pool);
     await transaction.begin();
     try {
@@ -186,13 +188,75 @@ router.put('/:id', async (req, res) => {
         .query(`INSERT INTO EdicionesHistorial (tabla, registro_id, campo, valor_anterior, valor_nuevo, usuario_id, motivo)
                 VALUES (@tabla, @registro_id, @campo, @valor_anterior, @valor_nuevo, @usuario_id, @motivo)`);
 
+      // ═══ Recalcular estado del lote si corresponde ═══
+      if (loteId) {
+        const loteCheck = new sql.Request(transaction);
+        const loteData = await loteCheck
+          .input('lote_id', sql.Int, loteId)
+          .query(`SELECT l.kilos AS kg_cosecha, l.estado, l.merma_despalillado,
+                  ISNULL((SELECT SUM(d2.kilos) FROM Despalillado d2 WHERE d2.lote_id = l.id AND d2.estado != 'anulada'), 0) AS kg_desp,
+                  ISNULL((SELECT SUM(e.kilos) FROM EnviosClasificacion e WHERE e.lote_id = l.id AND e.estado = 'enviado'), 0) AS kg_enviados
+                  FROM LotesMercaderia l WHERE l.id = @lote_id`);
+
+        if (loteData.recordset.length) {
+          const lt = loteData.recordset[0];
+          const kgCos = parseFloat(lt.kg_cosecha || 0);
+          const kgDesp = parseFloat(lt.kg_desp || 0);
+          const kgEnviados = parseFloat(lt.kg_enviados || 0);
+
+          // Safety: rechazar si despalillado excede cosecha
+          if (kgDesp > kgCos && kgCos > 0) {
+            await transaction.rollback();
+            return res.status(400).json({ error: 'Los kg despalillados (' + kgDesp.toFixed(1) + ') superan los kg cosechados (' + kgCos.toFixed(1) + '). Edición rechazada.' });
+          }
+
+          // CASO C: lote cerrado y ecuación rota → reabrir
+          if (lt.estado === 'despalillado') {
+            const mermaGuardada = parseFloat(lt.merma_despalillado || 0);
+            const ecuacionOk = Math.abs(kgCos - kgDesp - mermaGuardada) < 0.01;
+
+            if (!ecuacionOk) {
+              const r3 = new sql.Request(transaction);
+              await r3.input('lote_id', sql.Int, loteId)
+                .query(`UPDATE LotesMercaderia SET estado = 'en_despalillado', merma_despalillado = 0 WHERE id = @lote_id`);
+
+              // Audit trail de reapertura
+              const r4 = new sql.Request(transaction);
+              await r4
+                .input('tabla', sql.NVarChar, 'LotesMercaderia')
+                .input('registro_id', sql.Int, loteId)
+                .input('campo', sql.NVarChar, 'estado_reapertura')
+                .input('valor_anterior', sql.NVarChar, 'despalillado')
+                .input('valor_nuevo', sql.NVarChar, 'en_despalillado')
+                .input('usuario_id', sql.Int, uid)
+                .input('motivo', sql.NVarChar, 'Edición de pesaje #' + id + ' rompió ecuación (merma guardada: ' + mermaGuardada.toFixed(3) + ' kg, merma real: ' + (kgCos - kgDesp).toFixed(3) + ' kg)')
+                .query(`INSERT INTO EdicionesHistorial (tabla, registro_id, campo, valor_anterior, valor_nuevo, usuario_id, fecha_hora, motivo)
+                        VALUES (@tabla, @registro_id, @campo, @valor_anterior, @valor_nuevo, @usuario_id, GETDATE(), @motivo)`);
+
+              loteReabierto = true;
+            }
+          }
+
+          // Advertencia si kg despalillados cayeron debajo de lo ya enviado
+          if (kgDesp < kgEnviados && kgEnviados > 0) {
+            advertenciaEnvios = 'Los kg despalillados (' + kgDesp.toFixed(1) + ') son menores a los ya enviados a clasificación (' + kgEnviados.toFixed(1) + ' kg). Los envíos previos no se revierten.';
+          }
+        }
+      }
+
       await transaction.commit();
     } catch (err) {
       await transaction.rollback();
       throw err;
     }
 
-    res.json({ ok: true, kilos_anterior: kilosAnterior, kilos_nuevo: kilosNuevo });
+    const resp = { ok: true, kilos_anterior: kilosAnterior, kilos_nuevo: kilosNuevo };
+    if (loteReabierto) {
+      resp.lote_reabierto = true;
+      resp.motivo_reapertura = 'La edición rompió la ecuación de cierre del lote. Verifique los pesajes y vuelva a finalizar.';
+    }
+    if (advertenciaEnvios) resp.advertencia_envios = advertenciaEnvios;
+    res.json(resp);
   } catch (err) {
     console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }

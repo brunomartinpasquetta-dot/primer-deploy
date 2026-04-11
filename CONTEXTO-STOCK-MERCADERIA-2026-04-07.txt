@@ -1,0 +1,170 @@
+CONTEXTO ACTUALIZADO — STOCK MERCADERÍA — 2026-04-07
+=====================================================
+
+COMMIT: 4bc1495
+BRANCH: main
+ARCHIVOS MODIFICADOS: 4
+  - server/routes/stock-mercaderia.js (258 líneas cambiadas)
+  - server/routes/clasificacion-embalaje.js (52 líneas)
+  - server/routes/juntada.js (101 líneas)
+  - public/stock-mercaderia.html (reescritura completa ~800 líneas)
+
+=====================================================
+RESUMEN EJECUTIVO
+=====================================================
+
+Se unificó el módulo Stock Mercadería para usar MovimientosDeposito como fuente
+canónica, eliminando dependencias de la tabla legacy StockMercaderia.
+Se reescribió completamente el frontend con 6 secciones definidas por el usuario.
+
+=====================================================
+BACKEND — stock-mercaderia.js (~750 líneas)
+=====================================================
+
+ENDPOINTS NUEVOS:
+  GET /stock-envases
+    - Stock agrupado por TiposEmbalaje + CategoriasClasificacion + SubCategoriasClasificacion + Depositos
+    - HAVING kg_disponibles > 0 (solo muestra stock real)
+    - Filtro: ?temporada_id=N
+    - Retorna: tipo_envase, categoria, sub_categoria, deposito, unidades_disponibles, kg_disponibles
+
+  GET /estado-lotes
+    - Lee LotesMercaderia con joins a Embalaje (SUM cantidad_envases), TiposEmbalaje, SubCategoriasClasificacion
+    - Filtros: ?temporada_id=N&etapa=embalado
+    - Retorna: id, codigo_externo, etapa, kilos, parcela, categoria, sub_categoria, deposito, deposito_actual, lote_padre, tipo_envase, unidades_embaladas
+
+  POST /descarte
+    - Endpoint transaccional para descarte desde sub-lote embalado
+    - Body: { sub_lote_id, kilos, cantidad_envases, observacion }
+    - Valida stock del sub-lote
+    - Inserta MovimientosDeposito tipo=egreso_descarte con sub_lote_id + cantidad_envases
+    - Actualiza kilos del LotesMercaderia (etapa=descartado si llega a 0)
+
+ENDPOINTS MODIFICADOS:
+  GET /historial
+    - Agregado: m.cantidad_envases, sl.codigo_externo AS lote_codigo, te.nombre AS tipo_envase
+    - Nuevos JOINs: LotesMercaderia sl ON m.sub_lote_id, TiposEmbalaje te ON m.tipo_embalaje_id
+    - Filtro tipo: ingreso, egreso_venta, egreso_descarte
+
+ENDPOINTS SIN CAMBIOS:
+  GET /kpis — Juntada + LotesMercaderia + MovimientosDeposito (correcto)
+  GET /actual — LotesMercaderia agrupado por etapa/variedad/deposito
+  GET /etapas — legacy por juntada (ya no usado en frontend)
+  GET /historial-lotes — Embalaje agrupado por sub_lote
+  GET /auditoria — AuditoriaVentas
+  POST /egreso — legacy StockMercaderia (aún usado por CuentaCorrienteClientes FK)
+  PATCH /historial/:id/auditado — edición con auditoría
+  POST /historial/:id/anular — anulación transaccional
+
+BUG FIX CRÍTICO:
+  - /stock-envases y /estado-lotes joinaban CategoriasFruta (tabla incorrecta)
+  - Corregido a SubCategoriasClasificacion (FK real: LotesMercaderia.sub_categoria_id → SubCategoriasClasificacion.id)
+
+=====================================================
+BACKEND — clasificacion-embalaje.js (cambios previos en sesión)
+=====================================================
+  - POST /embalar: tipo cambiado a 'ingreso_embalaje'
+  - INSERT ahora incluye sub_lote_id, cantidad_envases, tipo_embalaje_id
+  - lote_id = lote_padre_id (no sub_lote_id como antes)
+  - StockMercaderia INSERT eliminado (era dual write)
+
+=====================================================
+BACKEND — juntada.js (cambios previos en sesión)
+=====================================================
+  - POST /registrar y POST /:id/destino: tipo cambiado a 'ingreso_juntada'
+  - StockMercaderia INSERT eliminado para depósito
+  - Venta directa y descarte: AGREGADO MovimientosDeposito INSERT + MANTENIDO StockMercaderia (LEGACY por FK CuentaCorrienteClientes)
+
+=====================================================
+FRONTEND — stock-mercaderia.html (reescritura completa)
+=====================================================
+
+SECCIÓN 1 — KPIs (6 cards):
+  - KG Cosechados → kpi-cosechados → k.kg_cosechados
+  - KG Disponibles para Venta → kpi-disponible → k.kg_embalado (solo embalado)
+  - Listo para Venta → kpi-listo → k.kg_embalado
+  - KG Vendidos → kpi-vendidos → k.kg_vendidos
+  - KG Descartados → kpi-descartados → k.kg_descartados
+  - En Proceso → kpi-en-proceso → k.kg_en_proceso
+  - ELIMINADO: Cajones en circulación
+  - Usa ins-kpi-* pattern (design system unificado)
+  - CSS variables: var(--sem-azul-bg), var(--sem-rojo-bg), var(--sem-amarillo-bg), etc.
+
+SECCIÓN 2 — Stock Disponible por Envase:
+  - Tabla desde GET /stock-envases
+  - Columnas: Tipo Envase | Categoría | Subcategoría | Depósito | Unidades | KG
+  - Filtro: temporada (select #filtro-temporada)
+  - Exportar CSV / Imprimir
+
+SECCIÓN 3 — Estado por Lote:
+  - Tabla desde GET /estado-lotes
+  - Columnas: Código | Categoría+sub | Tipo Envase | Unidades | KG | Depósito | Etapa (badge) | Acciones
+  - Acciones: link a trazabilidad.html?codigo=X
+  - Filtro: etapa (select #lote-filtro-etapa)
+  - Exportar CSV / Imprimir
+
+SECCIÓN 4 — Historial de Movimientos (collapsible):
+  - Vista UNIFICADA (eliminado toggle Movimientos/Por lotes)
+  - Columnas: Fecha | Tipo (badge) | Lote | Tipo Envase | Unidades | KG | Depósito | Operador
+  - Badges por tipo:
+      ingreso_juntada  → verde
+      ingreso_embalaje → teal (#00796b)
+      ingreso          → verde
+      egreso_venta     → rojo
+      egreso_descarte  → naranja
+      egreso_anulacion → gris
+      ingreso_anulacion→ gris
+  - Filtros: temporada, tipo movimiento, rango fechas, búsqueda libre
+  - Exportar CSV / Imprimir
+
+SECCIÓN 5 — Header:
+  - ELIMINADOS: botones "Registrar Ingreso" y "Registrar Egreso"
+  - MANTENIDOS: "Registrar Descarte" (abre modal) + "Exportar" + "Historial"
+  - Usa ins-btn ins-btn-gray pattern
+
+SECCIÓN 6 — Modal Descarte:
+  - Dropdown de sub-lotes en etapa embalado (carga desde /estado-lotes?etapa=embalado)
+  - Info panel: muestra depósito, stock kg, tipo envase y unidades del lote seleccionado
+  - Tipo envase auto-detectado (disabled)
+  - Campos: cantidad envases descartados, kg descartados, motivo, observación
+  - Llama POST /api/stock-mercaderia/descarte (nuevo endpoint, NO legacy)
+  - Motivos: calidad, plaga, daño_fisico, vencimiento, otro
+
+ELIMINADOS del HTML anterior:
+  - Modal Ingreso a depósito (modal-ingreso-merc)
+  - Modal Egreso (modal-egreso-merc)
+  - Script cotizaciones.js (ya no necesario)
+  - Sección "Stock Actual" (reemplazada por Stock por Envase)
+  - Sección "Estado por Juntada" (reemplazada por Estado por Lote)
+  - Toggle vista Movimientos/Lotes en historial
+  - funciones: cargarHistorialLotes(), cambiarVistaHist(), registrarIngreso(), registrarEgreso(), actualizarHelperPrecio(), actualizarHelperRosario()
+
+=====================================================
+SCHEMA DB — Estado actual relevante
+=====================================================
+
+MovimientosDeposito:
+  - tipo CHECK: ingreso, ingreso_juntada, ingreso_embalaje, egreso_venta, egreso_descarte, egreso_anulacion, ingreso_anulacion
+  - deposito_id: INT NULL (permite venta_directa/descarte sin depósito)
+  - tipo_embalaje_id: INT NULL → FK TiposEmbalaje(id)
+  - cantidad_envases: INT NULL
+  - sub_lote_id: INT NULL → referencia LotesMercaderia(id)
+
+LotesMercaderia:
+  - sub_categoria_id → FK SubCategoriasClasificacion (NO CategoriasFruta)
+  - categoria_clasif_id → FK CategoriasClasificacion
+  - etapas: cosecha, despalillado, en_clasificacion, clasificado, embalado, vendido_parcial, vendido, descartado
+  - deposito_actual_id: depósito donde está actualmente
+
+TiposEmbalaje:
+  - 5 tipos activos: Cajón plástico 15kg, Caja cartón 5kg, Bandeja plástica 500g, Bandeja plástica 250g, Cajón madera 20kg
+
+=====================================================
+PENDIENTES / NO TOCADOS
+=====================================================
+  - depositos.js: aún tiene dual writes (StockMercaderia + MovimientosDeposito)
+  - despalillado.js: aún tiene dual writes
+  - balance.js / dashboard.js: aún consultan StockMercaderia en algunos cálculos
+  - CuentaCorrienteClientes: FK stock_mercaderia_id impide eliminar StockMercaderia
+  - GET /etapas (por juntada): legacy endpoint, frontend ya no lo usa
+  - POST /egreso (StockMercaderia): legacy, usado por CuentaCorrienteClientes

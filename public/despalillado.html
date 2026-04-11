@@ -786,6 +786,12 @@
       if (data.ok) {
         cerrarEditForm(id);
         mostrarMensaje('mensaje', 'success', 'Corregido: ' + fmt(data.kilos_anterior) + ' → ' + fmt(data.kilos_nuevo) + ' kg');
+        if (data.lote_reabierto) {
+          mostrarMensaje('mensaje', 'warning', 'El lote fue reabierto porque la edición rompió la ecuación de cierre. Verifique los pesajes y vuelva a finalizar.');
+        }
+        if (data.advertencia_envios) {
+          mostrarMensaje('mensaje', 'warning', data.advertencia_envios);
+        }
         refreshLote();
       } else { mostrarMensaje('mensaje', 'error', data.error || 'Error'); }
     }).catch(function() { mostrarMensaje('mensaje', 'error', 'Error de conexión'); });
@@ -1002,8 +1008,16 @@
     fetch('/api/despalillado/' + id, {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ kilos: newKilos, motivo: motivo })
-    }).then(function(r) { return r.json(); }).then(function(data) {
-      if (data.ok) { cargarHistorialCompleto(); if (loteSeleccionado) refreshLote(); cargarKpis(); }
+    }).then(function(r) { return r.json(); }).then(async function(data) {
+      if (data.ok) {
+        if (data.lote_reabierto) {
+          await showAlert('El lote fue reabierto porque la edición rompió la ecuación de cierre. Verifique los pesajes y vuelva a finalizar.', 'warning');
+        }
+        if (data.advertencia_envios) {
+          await showAlert(data.advertencia_envios, 'warning');
+        }
+        cargarHistorialCompleto(); if (loteSeleccionado) refreshLote(); else cargarLotesPendientes(); cargarKpis();
+      }
       else { showAlert(data.error || 'Error', 'error'); }
     }).catch(function() { showAlert('Error de conexión', 'error'); });
   }
