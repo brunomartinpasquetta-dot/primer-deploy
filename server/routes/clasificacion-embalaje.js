@@ -140,7 +140,7 @@ router.post('/lote/:id/finalizar-jornada', async (req, res) => {
 // ══════════════════════════════════════════════════════════════════════════════
 
 // GET /pendientes — Lotes disponibles para clasificación Y embalaje
-// Incluye: despalillados pendientes de clasificar + clasificados pendientes de embalar
+// Incluye: despalillados + en_despalillado con envíos parciales + clasificados pendientes de embalar
 router.get('/pendientes', async (req, res) => {
   try {
     const pool = await getPool();
@@ -158,6 +158,7 @@ router.get('/pendientes', async (req, res) => {
                      p.nombre                  AS parcela,
                      dep.nombre                AS deposito,
                      ISNULL(dsp.kilos_despalillados, 0) AS kilos_despalillados,
+                     ISNULL(env.kilos_enviados, 0)      AS kilos_enviados,
                      ISNULL(cls.kilos_clasificados, 0)  AS kilos_clasificados,
                      ISNULL(emb.kilos_embalados, 0)     AS kilos_embalados
               FROM LotesMercaderia l
@@ -168,6 +169,11 @@ router.get('/pendientes', async (req, res) => {
                 FROM Despalillado WHERE estado != 'anulada'
                 GROUP BY lote_id
               ) dsp ON dsp.lote_id = l.id
+              LEFT JOIN (
+                SELECT lote_id, SUM(kilos) AS kilos_enviados
+                FROM EnviosClasificacion WHERE estado = 'enviado'
+                GROUP BY lote_id
+              ) env ON env.lote_id = l.id
               LEFT JOIN (
                 SELECT lote_id, SUM(kilos) AS kilos_clasificados
                 FROM Clasificacion WHERE estado != 'anulada'
@@ -185,10 +191,11 @@ router.get('/pendientes', async (req, res) => {
                 GROUP BY sl.lote_padre_id
               ) emb ON emb.lote_padre_id = l.id
               WHERE l.lote_padre_id IS NULL
-                AND l.estado IN ('despalillado', 'en_clasificacion', 'clasificado')
                 AND (
-                  ISNULL(dsp.kilos_despalillados, 0) > ISNULL(cls.kilos_clasificados, 0)
-                  OR ISNULL(cls.kilos_clasificados, 0) > ISNULL(emb.kilos_embalados, 0)
+                  (l.estado IN ('despalillado', 'en_clasificacion', 'clasificado', 'en_despalillado')
+                   AND ISNULL(env.kilos_enviados, 0) > 0
+                   AND (ISNULL(env.kilos_enviados, 0) > ISNULL(cls.kilos_clasificados, 0)
+                        OR ISNULL(cls.kilos_clasificados, 0) > ISNULL(emb.kilos_embalados, 0)))
                 )
               ORDER BY l.fecha_inicio ASC`);
     res.json(result.recordset);
@@ -358,11 +365,11 @@ router.post('/clasificar', async (req, res) => {
     if (!loteRes.recordset.length) return res.status(404).json({ error: 'Lote no encontrado' });
     const lote = loteRes.recordset[0];
 
-    // 4. Validar que no supere kg despalillados
-    const despRes = await pool.request()
-      .input('lote_id', sql.Int, lote_id)
-      .query(`SELECT ISNULL(SUM(kilos), 0) AS total FROM Despalillado WHERE lote_id = @lote_id AND estado != 'anulada'`);
-    const kilosDesp = parseFloat(despRes.recordset[0].total);
+    // 4. Validar que no supere kg enviados a clasificación
+    const loteEstRes = await pool.request().input('lote_id', sql.Int, lote_id)
+      .query(`SELECT ISNULL((SELECT SUM(e.kilos) FROM EnviosClasificacion e WHERE e.lote_id = l.id AND e.estado = 'enviado'), 0) AS kg_enviados
+              FROM LotesMercaderia l WHERE l.id = @lote_id`);
+    const kilosDesp = parseFloat(loteEstRes.recordset[0].kg_enviados) || 0;
 
     const clasifRes = await pool.request()
       .input('lote_id', sql.Int, lote_id)

@@ -274,6 +274,37 @@
             <button class="btn" onclick="toggleCamaraSelector()">Cancelar</button>
           </div>
 
+          <!-- Envíos a clasificación -->
+          <div id="sec-envios" style="display:none;margin-top:12px;">
+            <div class="juntada-historial">
+              <div class="juntada-historial-header">
+                <h3 style="font-size:13px;">Envíos a clasificación</h3>
+                <small id="envio-disponible" style="color:var(--verde);font-weight:700;"></small>
+                <div style="margin-left:auto;display:flex;gap:6px;align-items:center;">
+                  <input type="number" inputmode="decimal" id="envio-kg-input" placeholder="Kg..." min="0" step="any"
+                    style="height:32px;width:80px;font-size:13px;font-weight:700;border:1.5px solid var(--sem-azul-borde);border-radius:8px;padding:4px 10px;text-align:center;font-family:'JetBrains Mono',monospace;">
+                  <button class="btn btn-primary" onclick="enviarAClasificacion()" style="height:32px;font-size:12px;padding:4px 14px;background:var(--sem-azul);">
+                    Enviar
+                  </button>
+                </div>
+              </div>
+              <div class="juntada-historial-body" style="max-height:200px;">
+                <table>
+                  <thead><tr>
+                    <th>Fecha</th>
+                    <th style="text-align:left;">Sesión</th>
+                    <th style="text-align:right;">Kg</th>
+                    <th style="text-align:left;">Usuario</th>
+                    <th style="text-align:center;"></th>
+                  </tr></thead>
+                  <tbody id="tbody-envios">
+                    <tr><td colspan="5" class="empty">Sin envíos</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
           <div id="mensaje" style="margin-top:8px;"></div>
         </div>
 
@@ -525,13 +556,16 @@
     if (!loteSeleccionado) return;
     Promise.all([
       fetch('/api/despalillado/lote/' + loteSeleccionado.id + '/despalilladores').then(function(r) { return r.json(); }),
-      fetch('/api/despalillado/lote/' + loteSeleccionado.id + '/registros').then(function(r) { return r.json(); })
+      fetch('/api/despalillado/lote/' + loteSeleccionado.id + '/registros').then(function(r) { return r.json(); }),
+      fetch('/api/despalillado/lote/' + loteSeleccionado.id + '/envios').then(function(r) { return r.json(); })
     ]).then(function(results) {
       var despalilladores = results[0];
       var registros = results[1];
+      var envios = results[2];
       _registrosLote = registros;
       agruparDespalilladores(despalilladores, registros);
       renderDespalilladores();
+      renderEnvios(envios);
       var totalKg = registros.filter(function(r) { return r.estado !== 'anulada'; })
         .reduce(function(s, r) { return s + parseFloat(r.kilos || 0); }, 0);
       loteSeleccionado.kg_despalillados = totalKg;
@@ -612,7 +646,8 @@
         '<td colspan="4" style="background:var(--fondo);padding:6px 10px;">';
       if (d.registros.length) {
         html += '<table style="width:100%;border-collapse:collapse;font-size:12px;">' +
-          '<thead><tr><th style="text-align:left;padding:4px 6px;font-size:10px;color:var(--texto-suave);">Fecha</th>' +
+          '<thead><tr><th style="text-align:left;padding:4px 6px;font-size:10px;color:var(--texto-suave);">Sesión</th>' +
+          '<th style="text-align:left;padding:4px 6px;font-size:10px;color:var(--texto-suave);">Fecha</th>' +
           '<th style="text-align:right;padding:4px 6px;font-size:10px;color:var(--texto-suave);">Kg</th>' +
           '<th style="text-align:right;padding:4px 6px;font-size:10px;color:var(--texto-suave);">Merma</th>' +
           '<th style="text-align:left;padding:4px 6px;font-size:10px;color:var(--texto-suave);">Usuario</th>' +
@@ -626,6 +661,7 @@
               '<button class="btn-icon-danger" title="Anular" onclick="anularDespalillado(' + r.id + ')" style="padding:2px 4px;">' +
                 '<i data-lucide="ban" style="width:12px;height:12px;"></i></button>';
           html += '<tr' + (anulada ? ' style="opacity:.5;text-decoration:line-through;"' : '') + '>' +
+            '<td style="padding:4px 6px;font-size:10px;font-weight:700;color:var(--sem-azul);">' + (r.codigo_sesion || '') + '</td>' +
             '<td style="padding:4px 6px;">' + fmtF(r.fecha_hora) + '</td>' +
             '<td style="text-align:right;padding:4px 6px;' + mono + 'font-weight:700;color:var(--verde);">' + fmt(r.kilos) + ' kg</td>' +
             '<td style="text-align:right;padding:4px 6px;' + mono + 'color:var(--sem-rojo);">' + fmt(r.merma_kg || 0) + ' kg</td>' +
@@ -1043,6 +1079,65 @@
             '<td style="font-size:11px;color:var(--texto-suave);">' + (r.usuario || '-') + '</td></tr>';
         }).join('');
       }).catch(function() { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:#c0392b;">Error</td></tr>'; });
+  }
+
+  // ══ ENVÍOS A CLASIFICACIÓN ══
+  function renderEnvios(envios) {
+    var sec = document.getElementById('sec-envios');
+    if (!loteSeleccionado) { sec.style.display = 'none'; return; }
+    sec.style.display = '';
+
+    var kgDesp = parseFloat(loteSeleccionado.kg_despalillados) || 0;
+    var kgEnviados = envios.filter(function(e) { return e.estado === 'enviado'; })
+      .reduce(function(s, e) { return s + parseFloat(e.kilos || 0); }, 0);
+    var disponible = Math.max(0, kgDesp - kgEnviados);
+    document.getElementById('envio-disponible').textContent = 'Disponible: ' + fmt(disponible) + ' kg';
+
+    var tbody = document.getElementById('tbody-envios');
+    if (!envios.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty">Sin envíos</td></tr>'; return; }
+    var mono = "font-family:'JetBrains Mono',monospace;";
+    tbody.innerHTML = envios.map(function(e) {
+      var anulado = e.estado === 'anulado';
+      var acciones = anulado
+        ? '<span class="badge-anulada">Anulado</span>'
+        : '<button class="btn-icon-danger" title="Anular envío" onclick="anularEnvio(' + e.id + ')" style="padding:2px 4px;"><i data-lucide="ban" style="width:12px;height:12px;"></i></button>';
+      return '<tr' + (anulado ? ' style="opacity:.5;text-decoration:line-through;"' : '') + '>' +
+        '<td style="font-size:12px;">' + fmtF(e.fecha_hora) + '</td>' +
+        '<td style="font-size:10px;font-weight:700;color:var(--sem-azul);">' + (e.codigo_sesion_origen || '-') + '</td>' +
+        '<td style="text-align:right;' + mono + 'font-weight:700;color:var(--sem-azul);">' + fmt(e.kilos) + ' kg</td>' +
+        '<td style="font-size:11px;color:var(--texto-suave);">' + (e.usuario || '-') + '</td>' +
+        '<td style="text-align:center;">' + acciones + '</td></tr>';
+    }).join('');
+    lucide.createIcons();
+  }
+
+  function enviarAClasificacion() {
+    if (!loteSeleccionado) return;
+    var input = document.getElementById('envio-kg-input');
+    var kg = parseFloat(input.value);
+    if (!kg || kg <= 0) { mostrarMensaje('mensaje', 'error', 'Ingresá los kg a enviar'); return; }
+
+    fetch('/api/despalillado/lote/' + loteSeleccionado.id + '/enviar-clasificacion', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kg: kg })
+    }).then(function(r) { return r.json(); }).then(function(data) {
+      if (data.ok) {
+        input.value = '';
+        mostrarMensaje('mensaje', 'success', fmt(data.kg_enviados) + ' kg enviados a clasificación (sesión ' + (data.codigo_sesion_origen || '-') + ')');
+        cargarRegistrosLote();
+      } else { mostrarMensaje('mensaje', 'error', data.error || 'Error'); }
+    }).catch(function() { mostrarMensaje('mensaje', 'error', 'Error de conexión'); });
+  }
+
+  async function anularEnvio(envioId) {
+    if (!await showConfirm('¿Anular envío #' + envioId + ' a clasificación?')) return;
+    fetch('/api/despalillado/envios/' + envioId + '/anular', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    }).then(function(r) { return r.json(); }).then(function(data) {
+      if (data.ok) { mostrarMensaje('mensaje', 'success', 'Envío anulado'); cargarRegistrosLote(); }
+      else { mostrarMensaje('mensaje', 'error', data.error || 'Error'); }
+    }).catch(function() { mostrarMensaje('mensaje', 'error', 'Error de conexión'); });
   }
 
   // ══ TABS ══

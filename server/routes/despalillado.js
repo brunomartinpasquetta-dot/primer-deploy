@@ -41,7 +41,7 @@ router.get('/lote/:id/registros', async (req, res) => {
     const pool = await getPool();
     const result = await pool.request()
       .input('lote_id', sql.Int, parseInt(req.params.id))
-      .query(`SELECT d.id, d.despalillador_id, d.kilos, d.merma_kg, d.fecha_hora, d.estado, d.usuario_id,
+      .query(`SELECT d.id, d.despalillador_id, d.kilos, d.merma_kg, d.codigo_sesion, d.fecha_hora, d.estado, d.usuario_id,
                      ju.apellido + ', ' + ju.nombre AS despalillador,
                      u.nombre AS usuario
               FROM Despalillado d
@@ -91,6 +91,19 @@ router.post('/registrar', async (req, res) => {
 
     const loteCompleto = totalNuevo >= kgCosecha;
 
+    // Calcular código de sesión (D1, D2... según días distintos de despalillado)
+    const sesionRes = await pool.request().input('lote_id', sql.Int, lote_id)
+      .query(`SELECT
+        (SELECT TOP 1 codigo_sesion FROM Despalillado
+         WHERE lote_id = @lote_id AND estado != 'anulada'
+         AND CAST(fecha_hora AS DATE) = CAST(GETDATE() AS DATE)
+         AND codigo_sesion IS NOT NULL) AS sesion_hoy,
+        ISNULL((SELECT MAX(CAST(REPLACE(codigo_sesion, 'D', '') AS INT))
+         FROM Despalillado WHERE lote_id = @lote_id AND estado != 'anulada'
+         AND codigo_sesion IS NOT NULL), 0) AS max_num`);
+    const { sesion_hoy, max_num } = sesionRes.recordset[0];
+    const codigoSesion = sesion_hoy || ('D' + ((max_num || 0) + 1));
+
     const transaction = new sql.Transaction(pool);
     await transaction.begin();
     try {
@@ -100,16 +113,17 @@ router.post('/registrar', async (req, res) => {
         .input('lote_id', sql.Int, lote_id)
         .query(`UPDATE LotesMercaderia SET estado = 'en_despalillado' WHERE id = @lote_id AND estado = 'cerrado'`);
 
-      // Insert despalillado record con merma
+      // Insert despalillado record con merma y sesión
       const req2 = new sql.Request(transaction);
       await req2
         .input('lote_id', sql.Int, lote_id)
         .input('despalillador_id', sql.Int, despalillador_id)
         .input('kilos', sql.Decimal(10, 3), kilosNum)
         .input('merma_kg', sql.Decimal(10, 3), mermaNum)
+        .input('codigo_sesion', sql.NVarChar, codigoSesion)
         .input('usuario_id', sql.Int, uid)
-        .query(`INSERT INTO Despalillado (lote_id, despalillador_id, kilos, merma_kg, usuario_id)
-                VALUES (@lote_id, @despalillador_id, @kilos, @merma_kg, @usuario_id)`);
+        .query(`INSERT INTO Despalillado (lote_id, despalillador_id, kilos, merma_kg, codigo_sesion, usuario_id)
+                VALUES (@lote_id, @despalillador_id, @kilos, @merma_kg, @codigo_sesion, @usuario_id)`);
 
       // Auto-cierre: si la ecuación cuadra, marcar lote como despalillado
       if (loteCompleto) {
@@ -126,7 +140,7 @@ router.post('/registrar', async (req, res) => {
       throw err;
     }
 
-    res.json({ ok: true, lote_completo: loteCompleto });
+    res.json({ ok: true, lote_completo: loteCompleto, codigo_sesion: codigoSesion });
   } catch (err) {
     console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
@@ -846,6 +860,154 @@ router.post('/:id/anular', async (req, res) => {
       await transaction.rollback();
       throw innerErr;
     }
+  } catch (err) {
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
+  }
+});
+
+// ══ ENVÍOS PARCIALES A CLASIFICACIÓN ══
+
+// GET /api/despalillado/lote/:id/envios — lista de envíos del lote
+router.get('/lote/:id/envios', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const result = await pool.request()
+      .input('lote_id', sql.Int, parseInt(req.params.id))
+      .query(`SELECT e.id, e.kilos, e.codigo_sesion_origen, e.fecha_hora, e.estado,
+                     u.nombre AS usuario
+              FROM EnviosClasificacion e
+              LEFT JOIN Usuarios u ON e.usuario_id = u.id
+              WHERE e.lote_id = @lote_id
+              ORDER BY e.fecha_hora DESC`);
+    res.json(result.recordset);
+  } catch (err) {
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
+  }
+});
+
+// POST /api/despalillado/lote/:id/enviar-clasificacion — envío parcial
+router.post('/lote/:id/enviar-clasificacion', async (req, res) => {
+  try {
+    const { kg } = req.body;
+    if (!kg || parseFloat(kg) <= 0) return res.status(400).json({ error: 'Kg debe ser mayor a 0' });
+    const kilosEnviar = parseFloat(kg);
+    const loteId = parseInt(req.params.id);
+
+    const pool = await getPool();
+    const uid = req.user ? req.user.id : null;
+
+    // Calcular kg disponibles: despalillado_acum - enviados_acum
+    const infoRes = await pool.request().input('lote_id', sql.Int, loteId)
+      .query(`SELECT
+        ISNULL((SELECT SUM(d.kilos) FROM Despalillado d WHERE d.lote_id = @lote_id AND d.estado != 'anulada'), 0) AS kg_despalillados,
+        ISNULL((SELECT SUM(e.kilos) FROM EnviosClasificacion e WHERE e.lote_id = @lote_id AND e.estado = 'enviado'), 0) AS kg_enviados`);
+    const info = infoRes.recordset[0];
+    const kgDesp = parseFloat(info.kg_despalillados) || 0;
+    const kgEnviados = parseFloat(info.kg_enviados) || 0;
+    const disponible = kgDesp - kgEnviados;
+
+    if (kilosEnviar > disponible + 0.01) {
+      return res.status(400).json({ error: 'Solo hay ' + disponible.toFixed(1) + ' kg disponibles para enviar a clasificación' });
+    }
+
+    // FIFO real: recorrer registros de despalillado en orden cronológico,
+    // saltear los kg ya enviados, y determinar de qué registros proviene este envío
+    const despFifoRes = await pool.request().input('lote_id', sql.Int, loteId)
+      .query(`SELECT id, kilos, codigo_sesion, CAST(fecha_hora AS DATE) AS fecha
+              FROM Despalillado
+              WHERE lote_id = @lote_id AND estado != 'anulada'
+              ORDER BY fecha_hora ASC`);
+
+    let acumSkip = kgEnviados; // kg ya enviados a saltear
+    let sesiones = [];
+    let ids = [];
+    let restante = kilosEnviar;
+    // Calcular sesión por fecha si falta (fallback para registros sin codigo_sesion)
+    let fechaSesionMap = {};
+    let sesionCounter = 0;
+    let lastFecha = null;
+    for (const d of despFifoRes.recordset) {
+      const f = d.fecha ? d.fecha.toISOString().slice(0, 10) : '';
+      if (f !== lastFecha) { sesionCounter++; lastFecha = f; }
+      fechaSesionMap[d.id] = d.codigo_sesion || ('D' + sesionCounter);
+    }
+
+    for (const d of despFifoRes.recordset) {
+      const dkg = parseFloat(d.kilos);
+      if (acumSkip >= dkg) { acumSkip -= dkg; continue; }
+      const disponibleReg = dkg - acumSkip;
+      acumSkip = 0;
+      const tomar = Math.min(disponibleReg, restante);
+      if (tomar > 0) {
+        ids.push(d.id);
+        const ses = fechaSesionMap[d.id];
+        if (ses && !sesiones.includes(ses)) sesiones.push(ses);
+        restante -= tomar;
+        if (restante <= 0.001) break;
+      }
+    }
+
+    const sesionOrigen = sesiones.length ? sesiones.join('+') : null;
+    const despIdsStr = ids.length ? ids.join(',') : null;
+
+    await pool.request()
+      .input('lote_id', sql.Int, loteId)
+      .input('kilos', sql.Decimal(10, 3), kilosEnviar)
+      .input('codigo_sesion_origen', sql.NVarChar, sesionOrigen)
+      .input('despalillado_ids', sql.NVarChar, despIdsStr)
+      .input('usuario_id', sql.Int, uid)
+      .query(`INSERT INTO EnviosClasificacion (lote_id, kilos, codigo_sesion_origen, despalillado_ids, usuario_id)
+              VALUES (@lote_id, @kilos, @codigo_sesion_origen, @despalillado_ids, @usuario_id)`);
+
+    res.json({ ok: true, kg_enviados: kilosEnviar, codigo_sesion_origen: sesionOrigen, disponible_restante: +(disponible - kilosEnviar).toFixed(3) });
+  } catch (err) {
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
+  }
+});
+
+// POST /api/despalillado/envios/:id/anular — anular envío
+router.post('/envios/:id/anular', async (req, res) => {
+  try {
+    const envioId = parseInt(req.params.id);
+    const pool = await getPool();
+    const uid = req.user ? req.user.id : null;
+
+    // Verificar estado del envío
+    const envRes = await pool.request().input('id', sql.Int, envioId)
+      .query(`SELECT id, lote_id, kilos, estado FROM EnviosClasificacion WHERE id = @id`);
+    if (!envRes.recordset.length) return res.status(404).json({ error: 'Envío no encontrado' });
+    const envio = envRes.recordset[0];
+    if (envio.estado === 'anulado') return res.status(400).json({ error: 'El envío ya está anulado' });
+
+    // Verificar que no se haya iniciado clasificación con estos kg
+    const clasifRes = await pool.request().input('lote_id', sql.Int, envio.lote_id)
+      .query(`SELECT ISNULL(SUM(kilos), 0) AS kg_clasificados FROM Clasificacion WHERE lote_id = @lote_id AND estado != 'anulada'`);
+    const enviosRes = await pool.request().input('lote_id', sql.Int, envio.lote_id)
+      .query(`SELECT ISNULL(SUM(kilos), 0) AS kg_enviados_activos FROM EnviosClasificacion WHERE lote_id = @lote_id AND estado = 'enviado'`);
+    const kgClasif = parseFloat(clasifRes.recordset[0].kg_clasificados) || 0;
+    const kgEnvActivos = parseFloat(enviosRes.recordset[0].kg_enviados_activos) || 0;
+
+    // Si anular este envío dejaría kg_enviados < kg_clasificados, rechazar
+    if ((kgEnvActivos - parseFloat(envio.kilos)) < kgClasif) {
+      return res.status(400).json({ error: 'No se puede anular: ya se clasificaron kg de este lote. Anule la clasificación primero.' });
+    }
+
+    await pool.request().input('id', sql.Int, envioId)
+      .query(`UPDATE EnviosClasificacion SET estado = 'anulado' WHERE id = @id`);
+
+    // Audit trail
+    await pool.request()
+      .input('tabla', sql.NVarChar, 'EnviosClasificacion')
+      .input('registro_id', sql.Int, envioId)
+      .input('campo', sql.NVarChar, 'estado')
+      .input('valor_anterior', sql.NVarChar, 'enviado')
+      .input('valor_nuevo', sql.NVarChar, 'anulado')
+      .input('usuario_id', sql.Int, uid)
+      .input('motivo', sql.NVarChar, 'Anulación de envío a clasificación')
+      .query(`INSERT INTO EdicionesHistorial (tabla, registro_id, campo, valor_anterior, valor_nuevo, usuario_id, fecha_hora, motivo)
+              VALUES (@tabla, @registro_id, @campo, @valor_anterior, @valor_nuevo, @usuario_id, GETDATE(), @motivo)`);
+
+    res.json({ ok: true });
   } catch (err) {
     console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
