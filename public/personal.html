@@ -78,7 +78,10 @@
           <div class="content-title">Personal</div>
           <div class="content-sub">Gestión de empleados</div>
         </div>
-        <button class="btn btn-primary" style="width:auto;margin:0;" onclick="toggleForm()">+ Nuevo empleado</button>
+        <div style="display:flex;gap:8px;">
+          <button class="ins-btn ins-btn-gray" style="height:36px;" onclick="abrirAuditoria()"><i data-lucide="history" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i>Auditoría</button>
+          <button class="btn btn-primary" style="width:auto;margin:0;" onclick="toggleForm()">+ Nuevo empleado</button>
+        </div>
       </div>
 
       <!-- ── FORMULARIO NUEVO EMPLEADO ── -->
@@ -153,6 +156,8 @@
         <input type="date" id="fecha_ingreso">
         <label>Observaciones</label>
         <textarea id="observaciones" placeholder="Notas adicionales..."></textarea>
+        <label>Roles <span style="color:var(--texto-suave);font-weight:400;font-size:11px;">(seleccionar uno o más)</span></label>
+        <div id="roles-checkboxes" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;"></div>
         <button class="btn btn-primary" id="btn-guardar" onclick="guardar()" style="width:auto;">Guardar empleado</button>
         <div id="mensaje"></div>
       </div>
@@ -178,6 +183,7 @@
               <th>Apellido y nombre</th>
               <th>CUIL</th>
               <th>Tipo contrato</th>
+              <th>Roles</th>
               <th>Fecha ingreso</th>
               <th>Estado</th>
               <th></th>
@@ -253,13 +259,16 @@
   function renderTabla(data) {
     var tbody = document.getElementById('tbody');
     if (!data.length) {
-      tbody.innerHTML = '<tr><td colspan="6" class="empty">Sin empleados registrados</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="empty">Sin empleados registrados</td></tr>';
       return;
     }
     tbody.innerHTML = data.map(function(e) {
       var badge = e.activo
         ? '<span class="badge badge-activo">Activo</span>'
         : '<span class="badge badge-inactivo">Inactivo</span>';
+      var btnEditar = e.activo
+        ? '<button class="btn-icon" title="Editar" onclick="abrirEditar(event,' + e.id + ')"><i data-lucide="pencil"></i></button>'
+        : '';
       var btnBaja = e.activo
         ? '<button class="btn-icon-danger" title="Dar de baja" onclick="darBaja(event,' + e.id + ')"><i data-lucide="power"></i></button>'
         : '<span style="color:#aaa;font-size:13px;">—</span>';
@@ -267,9 +276,10 @@
         '<td><strong>' + esc(e.apellido) + '</strong>, ' + esc(e.nombre) + '</td>' +
         '<td>' + (e.cuil ? esc(e.cuil) : '—') + '</td>' +
         '<td>' + fmtContrato(e.tipo_contrato) + '</td>' +
+        '<td>' + (e.roles || '—') + '</td>' +
         '<td>' + fmtFecha(e.fecha_ingreso) + '</td>' +
         '<td>' + badge + '</td>' +
-        '<td onclick="event.stopPropagation()">' + btnBaja + '</td>' +
+        '<td onclick="event.stopPropagation()">' + btnEditar + btnBaja + '</td>' +
         '</tr>';
     }).join('');
     lucide.createIcons();
@@ -306,6 +316,10 @@
     var btn = document.getElementById('btn-guardar');
     setLoading(btn, true);
 
+    // Recoger roles seleccionados
+    var rolesChecked = [];
+    document.querySelectorAll('input[name="rol"]:checked').forEach(function(cb) { rolesChecked.push(cb.value); });
+
     var payload = {
       nombre:           nombre,
       apellido:         apellido,
@@ -321,6 +335,7 @@
       tipo_contrato:    document.getElementById('tipo_contrato').value || null,
       fecha_ingreso:    document.getElementById('fecha_ingreso').value || null,
       observaciones:    document.getElementById('observaciones').value.trim() || null,
+      roles:            rolesChecked,
     };
 
     fetch('/api/personal', {
@@ -439,6 +454,102 @@
       .replace(/</g,'&lt;')
       .replace(/>/g,'&gt;')
       .replace(/"/g,'&quot;');
+  }
+
+  // ── Roles checkboxes en form de alta ────────────────────────────
+  function cargarRolesCheckboxes() {
+    fetch('/api/personal/roles-disponibles').then(function(r){return r.json();}).then(function(roles){
+      var html = roles.map(function(r) {
+        return '<label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;padding:4px 8px;border:1px solid var(--borde);border-radius:6px;background:var(--fondo);">' +
+          '<input type="checkbox" name="rol" value="' + r.id + '"> ' + r.nombre + '</label>';
+      }).join('');
+      document.getElementById('roles-checkboxes').innerHTML = html;
+    });
+  }
+  cargarRolesCheckboxes();
+
+  // ── Modal edición ────────────────────────────────────────────────
+  var _editId = null;
+  function abrirEditar(evt, id) {
+    evt.stopPropagation();
+    _editId = id;
+    fetch('/api/personal/' + id).then(function(r){return r.json();}).then(function(e) {
+      var html = '<div class="modal-title">Editar: ' + esc(e.apellido) + ', ' + esc(e.nombre) + '</div>';
+      var campos = [
+        {id:'edit-nombre',label:'Nombre',val:e.nombre,type:'text'},
+        {id:'edit-apellido',label:'Apellido',val:e.apellido,type:'text'},
+        {id:'edit-documento',label:'Documento',val:e.documento,type:'text'},
+        {id:'edit-cuil',label:'CUIL',val:e.cuil,type:'text'},
+        {id:'edit-telefono',label:'Teléfono',val:e.telefono,type:'text'},
+        {id:'edit-email',label:'Email',val:e.email,type:'email'},
+        {id:'edit-direccion',label:'Dirección',val:e.direccion,type:'text'},
+        {id:'edit-localidad',label:'Localidad',val:e.localidad,type:'text'},
+        {id:'edit-observaciones',label:'Observaciones',val:e.observaciones,type:'textarea'}
+      ];
+      campos.forEach(function(c) {
+        if (c.type === 'textarea') {
+          html += '<div style="margin-bottom:8px;"><label style="font-size:12px;font-weight:600;color:var(--texto-suave);">' + c.label + '</label><textarea id="' + c.id + '" style="width:100%;height:50px;padding:6px 8px;border:1px solid var(--borde);border-radius:6px;font-size:13px;resize:vertical;">' + esc(c.val || '') + '</textarea></div>';
+        } else {
+          html += '<div style="margin-bottom:8px;"><label style="font-size:12px;font-weight:600;color:var(--texto-suave);">' + c.label + '</label><input type="' + c.type + '" id="' + c.id + '" value="' + esc(c.val || '') + '" style="width:100%;height:34px;padding:0 8px;border:1px solid var(--borde);border-radius:6px;font-size:13px;"></div>';
+        }
+      });
+      html += '<div style="display:flex;gap:8px;margin-top:12px;">' +
+        '<button class="btn btn-primary" style="flex:1;" onclick="guardarEdicion()">Guardar cambios</button>' +
+        '<button class="btn btn-cerrar" style="flex:1;" onclick="cerrarModalBtn()">Cancelar</button></div>';
+      document.getElementById('modal-contenido').innerHTML = html;
+      document.getElementById('modal-titulo').textContent = '';
+      document.getElementById('modal-overlay').classList.add('open');
+    });
+  }
+
+  function guardarEdicion() {
+    if (!_editId) return;
+    var payload = {
+      nombre: document.getElementById('edit-nombre').value.trim(),
+      apellido: document.getElementById('edit-apellido').value.trim(),
+      documento: document.getElementById('edit-documento').value.trim() || null,
+      cuil: document.getElementById('edit-cuil').value.trim() || null,
+      telefono: document.getElementById('edit-telefono').value.trim() || null,
+      email: document.getElementById('edit-email').value.trim() || null,
+      direccion: document.getElementById('edit-direccion').value.trim() || null,
+      localidad: document.getElementById('edit-localidad').value.trim() || null,
+      observaciones: document.getElementById('edit-observaciones').value.trim() || null
+    };
+    if (!payload.nombre) { showAlert('Nombre obligatorio', 'warning'); return; }
+    if (!payload.apellido) { showAlert('Apellido obligatorio', 'warning'); return; }
+    fetch('/api/personal/' + _editId, {
+      method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)
+    }).then(function(r){return r.json();}).then(function(data) {
+      if (data.ok) { cerrarModalBtn(); cargar(); showAlert('Empleado actualizado', 'success'); }
+      else showAlert(data.error || 'Error', 'error');
+    }).catch(function(){ showAlert('Error de conexión', 'error'); });
+  }
+
+  // ── Modal auditoría ──────────────────────────────────────────────
+  function abrirAuditoria() {
+    fetch('/api/personal/auditoria').then(function(r){return r.json();}).then(function(data) {
+      var html = '<div class="modal-title">Auditoría de personal</div>';
+      if (!data.length) { html += '<p style="color:var(--texto-suave);text-align:center;">Sin registros de auditoría</p>'; }
+      else {
+        html += '<div style="max-height:50vh;overflow-y:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">';
+        html += '<thead><tr style="background:var(--fondo);"><th style="padding:6px 8px;text-align:left;">Fecha</th><th style="padding:6px 8px;">Empleado</th><th style="padding:6px 8px;">Campo</th><th style="padding:6px 8px;">Anterior</th><th style="padding:6px 8px;">Nuevo</th><th style="padding:6px 8px;">Usuario</th></tr></thead><tbody>';
+        data.forEach(function(a) {
+          var f = a.fecha_hora ? new Date(a.fecha_hora).toLocaleString('es-AR') : '—';
+          html += '<tr style="border-bottom:1px solid var(--borde);">' +
+            '<td style="padding:4px 8px;font-size:11px;white-space:nowrap;">' + f + '</td>' +
+            '<td style="padding:4px 8px;">' + esc(a.empleado_nombre || '-') + '</td>' +
+            '<td style="padding:4px 8px;font-weight:600;">' + esc(a.campo) + '</td>' +
+            '<td style="padding:4px 8px;color:var(--texto-suave);max-width:100px;overflow:hidden;text-overflow:ellipsis;">' + esc(a.valor_anterior || '—') + '</td>' +
+            '<td style="padding:4px 8px;font-weight:600;max-width:100px;overflow:hidden;text-overflow:ellipsis;">' + esc(a.valor_nuevo || '—') + '</td>' +
+            '<td style="padding:4px 8px;font-size:11px;">' + esc(a.usuario_nombre || '-') + '</td></tr>';
+        });
+        html += '</tbody></table></div>';
+      }
+      html += '<button class="btn btn-cerrar" onclick="cerrarModalBtn()" style="width:100%;margin-top:12px;">Cerrar</button>';
+      document.getElementById('modal-contenido').innerHTML = html;
+      document.getElementById('modal-titulo').textContent = '';
+      document.getElementById('modal-overlay').classList.add('open');
+    }).catch(function(){ showAlert('Error al cargar auditoría', 'error'); });
   }
 
   cargar();
