@@ -193,12 +193,16 @@ router.post('/lote/:id/registrar', async (req, res) => {
           VALUES (@parcela_id, @juntador_id, @kilos, GETDATE(), @usuario_id, 'confirmada', 0, @lote_id, @carencia_advertida)
         `);
 
-      // Actualizar kilos del lote y estado
+      // Actualizar kilos del lote, estado y parcela_id si aún no tiene
       const req2 = new sql.Request(transaction);
-      await req2.input('lote_id', sql.Int, lote_id).query(`
+      await req2
+        .input('lote_id', sql.Int, lote_id)
+        .input('parcela_id', sql.Int, parcela_id)
+        .query(`
         UPDATE LotesMercaderia
         SET kilos = ISNULL((SELECT SUM(kilos) FROM Juntada WHERE lote_id = @lote_id AND estado = 'confirmada'), 0),
-            estado = 'en_cosecha'
+            estado = 'en_cosecha',
+            parcela_id = ISNULL(parcela_id, @parcela_id)
         WHERE id = @lote_id
       `);
 
@@ -353,18 +357,22 @@ router.post('/lote/:id/cerrar', async (req, res) => {
     const pool = await getPool();
     const lote_id = parseInt(req.params.id);
 
-    // Verificar que tiene juntadas
+    // Verificar que tiene juntadas + obtener parcela mayoritaria
     const jRes = await pool.request().input('lote_id', sql.Int, lote_id)
-      .query("SELECT COUNT(*) AS cnt, SUM(kilos) AS total FROM Juntada WHERE lote_id = @lote_id AND estado = 'confirmada'");
+      .query(`SELECT COUNT(*) AS cnt, SUM(kilos) AS total,
+              (SELECT TOP 1 j2.parcela_id FROM Juntada j2 WHERE j2.lote_id = @lote_id AND j2.estado = 'confirmada' GROUP BY j2.parcela_id ORDER BY SUM(j2.kilos) DESC) AS parcela_mayoritaria
+              FROM Juntada WHERE lote_id = @lote_id AND estado = 'confirmada'`);
     if (!jRes.recordset[0].cnt) return res.status(400).json({ error: 'El lote no tiene juntadas' });
 
     await pool.request()
       .input('id', sql.Int, lote_id)
       .input('deposito_id', sql.Int, deposito_id)
       .input('kilos', sql.Decimal(10,3), parseFloat(jRes.recordset[0].total))
+      .input('parcela_id', sql.Int, jRes.recordset[0].parcela_mayoritaria)
       .query(`
         UPDATE LotesMercaderia
-        SET estado = 'cerrado', deposito_id = @deposito_id, deposito_actual_id = @deposito_id, kilos = @kilos, fecha_fin = GETDATE()
+        SET estado = 'cerrado', deposito_id = @deposito_id, deposito_actual_id = @deposito_id, kilos = @kilos, fecha_fin = GETDATE(),
+            parcela_id = @parcela_id
         WHERE id = @id
       `);
 
