@@ -216,7 +216,8 @@ router.get('/lote/:id/detalle', async (req, res) => {
       .query(`SELECT l.id, l.codigo_interno, l.kilos AS kilos_cosecha,
                      l.merma_despalillado AS merma, l.temporada_id, l.parcela_id,
                      p.nombre AS parcela,
-                     ISNULL(dsp.total, 0) AS kilos_despalillados
+                     ISNULL(dsp.total, 0) AS kilos_despalillados,
+                     ISNULL(env.total, 0) AS kilos_enviados
               FROM LotesMercaderia l
               LEFT JOIN Parcelas p ON l.parcela_id = p.id
               LEFT JOIN (
@@ -224,6 +225,11 @@ router.get('/lote/:id/detalle', async (req, res) => {
                 FROM Despalillado WHERE estado != 'anulada'
                 GROUP BY lote_id
               ) dsp ON dsp.lote_id = l.id
+              LEFT JOIN (
+                SELECT lote_id, SUM(kilos) AS total
+                FROM EnviosClasificacion WHERE estado = 'enviado'
+                GROUP BY lote_id
+              ) env ON env.lote_id = l.id
               WHERE l.id = @id`);
 
     if (!loteRes.recordset.length) return res.status(404).json({ error: 'Lote no encontrado' });

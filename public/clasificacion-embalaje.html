@@ -472,7 +472,7 @@
     }
     el.innerHTML = lotesPendientes.map(function(l,i) {
       var sel = loteSeleccionado && loteSeleccionado.id === l.id ? ' seleccionado' : '';
-      var kgDesp = parseFloat(l.kilos_despalillados) || 0;
+      var kgDesp = parseFloat(l.kilos_enviados) || parseFloat(l.kilos_despalillados) || 0;
       var kgClasif = parseFloat(l.kilos_clasificados) || 0;
       var kgEmb = parseFloat(l.kilos_embalados) || 0;
       var pctClasif = kgDesp > 0 ? Math.min(100, Math.round(kgClasif / kgDesp * 100)) : 0;
@@ -519,7 +519,7 @@
     } catch(e) { loteDetalle = null; return; }
 
     var lote = loteDetalle.lote;
-    var kgDesp = parseFloat(lote.kilos_despalillados) || 0;
+    var kgDesp = parseFloat(lote.kilos_enviados) || parseFloat(lote.kilos_despalillados) || 0;
     var kgClasif = 0;
     loteDetalle.resumen_categorias.forEach(function(r) { kgClasif += parseFloat(r.kilos_clasificados) || 0; });
     var kgDisp = Math.max(0, kgDesp - kgClasif);

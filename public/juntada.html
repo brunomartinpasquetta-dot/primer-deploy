@@ -559,7 +559,7 @@
           '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">' +
             '<input type="number" inputmode="decimal" id="juntada-kg-' + jid + '" placeholder="Kg" min="0" step="any" ' +
               'style="height:32px;width:80px;font-size:14px;font-weight:700;border:1.5px solid var(--verde);border-radius:8px;padding:4px 8px;text-align:center;' + mono + '">' +
-            '<select id="juntada-parcela-' + jid + '" onchange="verificarCarencia(' + jid + ')" style="height:32px;font-size:11px;border:1.5px solid var(--borde);border-radius:6px;padding:2px 4px;max-width:100px;">' + parcelaOpts + '</select>' +
+            '<select id="juntada-parcela-' + jid + '" onchange="verificarCarencia(' + jid + ')" style="height:32px;font-size:11px;border:1.5px solid var(--borde);border-radius:6px;padding:2px 6px;min-width:120px;flex:1;max-width:200px;">' + parcelaOpts + '</select>' +
             '<button class="btn btn-primary" onclick="registrarJuntadaInline(' + jid + ')" style="height:32px;font-size:12px;padding:4px 12px;">Confirmar</button>' +
             '<button class="btn" onclick="toggleJuntadaForm(' + jid + ')" style="height:32px;font-size:12px;padding:4px 10px;">✕</button>' +
           '</div>' +

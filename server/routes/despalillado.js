@@ -55,41 +55,33 @@ router.get('/lote/:id/registros', async (req, res) => {
   }
 });
 
-// POST /api/despalillado/registrar — pesaje por lote con merma obligatoria
+// POST /api/despalillado/registrar — pesaje por lote (sin merma, cierre manual)
 router.post('/registrar', async (req, res) => {
   try {
-    const { lote_id, despalillador_id, kilos, merma_kg } = req.body;
+    const { lote_id, despalillador_id, kilos } = req.body;
     if (!lote_id) return res.status(400).json({ error: 'Lote es obligatorio' });
     if (!despalillador_id) return res.status(400).json({ error: 'Despalillador es obligatorio' });
     if (!kilos || parseFloat(kilos) <= 0) return res.status(400).json({ error: 'Kilos debe ser mayor a 0' });
-    if (merma_kg === undefined || merma_kg === null || merma_kg === '') return res.status(400).json({ error: 'Merma es obligatoria (puede ser 0)' });
-    const mermaNum = parseFloat(merma_kg);
-    if (isNaN(mermaNum) || mermaNum < 0) return res.status(400).json({ error: 'Merma debe ser un número >= 0' });
 
     const pool = await getPool();
     const uid = req.user ? req.user.id : null;
     const kilosNum = parseFloat(kilos);
 
-    // Validar tope de lote: (desp_acum + merma_acum + nuevo_kg + nueva_merma) no puede superar kg cosechados
+    // Validar tope de lote: desp_acum + nuevo_kg no puede superar kg cosechados
     const loteRes = await pool.request().input('lote_id', sql.Int, lote_id)
       .query(`SELECT l.kilos AS kg_cosecha, l.estado AS lote_estado,
-              ISNULL((SELECT SUM(d.kilos) FROM Despalillado d WHERE d.lote_id = l.id AND d.estado != 'anulada'), 0) AS kg_despalillados,
-              ISNULL((SELECT SUM(d.merma_kg) FROM Despalillado d WHERE d.lote_id = l.id AND d.estado != 'anulada'), 0) AS merma_acumulada
+              ISNULL((SELECT SUM(d.kilos) FROM Despalillado d WHERE d.lote_id = l.id AND d.estado != 'anulada'), 0) AS kg_despalillados
               FROM LotesMercaderia l WHERE l.id = @lote_id`);
     if (!loteRes.recordset.length) return res.status(404).json({ error: 'Lote no encontrado' });
     const lote = loteRes.recordset[0];
     if (lote.lote_estado === 'despalillado') return res.status(400).json({ error: 'Este lote ya está completamente despalillado' });
     const kgCosecha = parseFloat(lote.kg_cosecha) || 0;
     const kgDespalillados = parseFloat(lote.kg_despalillados) || 0;
-    const mermaAcumulada = parseFloat(lote.merma_acumulada) || 0;
     if (kgCosecha <= 0) return res.status(400).json({ error: 'El lote no tiene kilos de cosecha registrados' });
-    const totalNuevo = kgDespalillados + kilosNum + mermaAcumulada + mermaNum;
-    if (totalNuevo > kgCosecha) {
-      const disponible = Math.max(0, kgCosecha - kgDespalillados - mermaAcumulada);
-      return res.status(400).json({ error: 'Excede los kg del lote (' + kgCosecha.toFixed(1) + ' kg juntados). Disponible: ' + disponible.toFixed(1) + ' kg (despalillado + merma)' });
+    if ((kgDespalillados + kilosNum) > kgCosecha) {
+      const disponible = Math.max(0, kgCosecha - kgDespalillados);
+      return res.status(400).json({ error: 'Excede los kg del lote (' + kgCosecha.toFixed(1) + ' kg juntados). Disponible: ' + disponible.toFixed(1) + ' kg' });
     }
-
-    const loteCompleto = totalNuevo >= kgCosecha;
 
     // Calcular código de sesión (D1, D2... según días distintos de despalillado)
     const sesionRes = await pool.request().input('lote_id', sql.Int, lote_id)
@@ -113,26 +105,16 @@ router.post('/registrar', async (req, res) => {
         .input('lote_id', sql.Int, lote_id)
         .query(`UPDATE LotesMercaderia SET estado = 'en_despalillado' WHERE id = @lote_id AND estado = 'cerrado'`);
 
-      // Insert despalillado record con merma y sesión
+      // Insert despalillado record con sesión (sin merma — merma se calcula al cierre)
       const req2 = new sql.Request(transaction);
       await req2
         .input('lote_id', sql.Int, lote_id)
         .input('despalillador_id', sql.Int, despalillador_id)
         .input('kilos', sql.Decimal(10, 3), kilosNum)
-        .input('merma_kg', sql.Decimal(10, 3), mermaNum)
         .input('codigo_sesion', sql.NVarChar, codigoSesion)
         .input('usuario_id', sql.Int, uid)
-        .query(`INSERT INTO Despalillado (lote_id, despalillador_id, kilos, merma_kg, codigo_sesion, usuario_id)
-                VALUES (@lote_id, @despalillador_id, @kilos, @merma_kg, @codigo_sesion, @usuario_id)`);
-
-      // Auto-cierre: si la ecuación cuadra, marcar lote como despalillado
-      if (loteCompleto) {
-        const req3 = new sql.Request(transaction);
-        await req3
-          .input('lote_id', sql.Int, lote_id)
-          .input('merma', sql.Decimal(10, 3), mermaAcumulada + mermaNum)
-          .query(`UPDATE LotesMercaderia SET estado = 'despalillado', etapa = 'despalillado', merma_despalillado = @merma WHERE id = @lote_id`);
-      }
+        .query(`INSERT INTO Despalillado (lote_id, despalillador_id, kilos, codigo_sesion, usuario_id)
+                VALUES (@lote_id, @despalillador_id, @kilos, @codigo_sesion, @usuario_id)`);
 
       await transaction.commit();
     } catch (err) {
@@ -140,7 +122,7 @@ router.post('/registrar', async (req, res) => {
       throw err;
     }
 
-    res.json({ ok: true, lote_completo: loteCompleto, codigo_sesion: codigoSesion });
+    res.json({ ok: true, codigo_sesion: codigoSesion });
   } catch (err) {
     console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
@@ -255,30 +237,94 @@ router.post('/:lote_id/retomar', async (req, res) => {
   }
 });
 
-// POST /api/despalillado/:lote_id/finalizar
+// POST /api/despalillado/:lote_id/finalizar — cierre manual con merma calculada + auto-envío
 router.post('/:lote_id/finalizar', async (req, res) => {
   try {
     const pool = await getPool();
     const loteId = parseInt(req.params.lote_id);
+    const uid = req.user ? req.user.id : null;
 
-    // Get lote info
+    // Leer datos del lote
     const lRes = await pool.request().input('id', sql.Int, loteId)
-      .query(`SELECT kilos FROM LotesMercaderia WHERE id = @id`);
+      .query(`SELECT l.kilos AS kg_cosecha, l.estado,
+              ISNULL((SELECT SUM(d.kilos) FROM Despalillado d WHERE d.lote_id = l.id AND d.estado != 'anulada'), 0) AS kg_despalillados,
+              ISNULL((SELECT SUM(e.kilos) FROM EnviosClasificacion e WHERE e.lote_id = l.id AND e.estado = 'enviado'), 0) AS kg_ya_enviados
+              FROM LotesMercaderia l WHERE l.id = @id`);
     if (!lRes.recordset.length) return res.status(404).json({ error: 'Lote no encontrado' });
-    const kilosOrig = parseFloat(lRes.recordset[0].kilos);
+    const lote = lRes.recordset[0];
+    const kgCosecha = parseFloat(lote.kg_cosecha) || 0;
+    const kgDesp = parseFloat(lote.kg_despalillados) || 0;
+    const kgYaEnviados = parseFloat(lote.kg_ya_enviados) || 0;
 
-    // Get total despalillado
-    const tRes = await pool.request().input('lote_id', sql.Int, loteId)
-      .query(`SELECT ISNULL(SUM(kilos), 0) AS total FROM Despalillado WHERE lote_id = @lote_id AND estado != 'anulada'`);
-    const kilosDesp = parseFloat(tRes.recordset[0].total);
-    const merma = Math.max(0, kilosOrig - kilosDesp);
+    // Calcular merma
+    const merma = kgCosecha - kgDesp;
 
-    await pool.request()
-      .input('id', sql.Int, loteId)
-      .input('merma', sql.Decimal(10, 3), merma)
-      .query(`UPDATE LotesMercaderia SET estado = 'despalillado', etapa = 'despalillado', merma_despalillado = @merma, fecha_fin = GETDATE() WHERE id = @id`);
+    // Validaciones de merma
+    if (merma < 0) return res.status(400).json({ error: 'Los kg despalillados (' + kgDesp.toFixed(1) + ') superan los kg cosechados (' + kgCosecha.toFixed(1) + '). Revisá los registros.' });
+    if (merma === 0) return res.status(400).json({ error: 'No es posible cerrar sin merma. Kg cosechados: ' + kgCosecha.toFixed(1) + ', kg despalillados: ' + kgDesp.toFixed(1) });
 
-    res.json({ ok: true, merma });
+    let autoEnvioKg = 0;
+    const transaction = new sql.Transaction(pool);
+    await transaction.begin();
+    try {
+      // Auto-envío de kg no enviados previamente
+      const kgPendienteEnvio = Math.max(0, kgDesp - kgYaEnviados);
+
+      if (kgPendienteEnvio > 0.001) {
+        autoEnvioKg = kgPendienteEnvio;
+
+        // FIFO: determinar sesiones origen
+        const fifoRes = await (new sql.Request(transaction))
+          .input('lote_id', sql.Int, loteId)
+          .query(`SELECT id, kilos, codigo_sesion, CAST(fecha_hora AS DATE) AS fecha
+                  FROM Despalillado WHERE lote_id = @lote_id AND estado != 'anulada'
+                  ORDER BY fecha_hora ASC`);
+        let skipKg = kgYaEnviados;
+        let sesiones = []; let ids = [];
+        let lastFecha = null; let sesCounter = 0; let fechaMap = {};
+        for (const d of fifoRes.recordset) {
+          const f = d.fecha ? d.fecha.toISOString().slice(0, 10) : '';
+          if (f !== lastFecha) { sesCounter++; lastFecha = f; }
+          fechaMap[d.id] = d.codigo_sesion || ('D' + sesCounter);
+        }
+        let restante = autoEnvioKg;
+        for (const d of fifoRes.recordset) {
+          const dkg = parseFloat(d.kilos);
+          if (skipKg >= dkg) { skipKg -= dkg; continue; }
+          const disp = dkg - skipKg; skipKg = 0;
+          const tomar = Math.min(disp, restante);
+          if (tomar > 0) {
+            ids.push(d.id);
+            const ses = fechaMap[d.id];
+            if (ses && !sesiones.includes(ses)) sesiones.push(ses);
+            restante -= tomar;
+            if (restante <= 0.001) break;
+          }
+        }
+
+        await (new sql.Request(transaction))
+          .input('lote_id', sql.Int, loteId)
+          .input('kilos', sql.Decimal(10, 3), autoEnvioKg)
+          .input('codigo_sesion_origen', sql.NVarChar, sesiones.length ? sesiones.join('+') : null)
+          .input('despalillado_ids', sql.NVarChar, ids.length ? ids.join(',') : null)
+          .input('usuario_id', sql.Int, uid)
+          .query(`INSERT INTO EnviosClasificacion (lote_id, kilos, codigo_sesion_origen, despalillado_ids, usuario_id)
+                  VALUES (@lote_id, @kilos, @codigo_sesion_origen, @despalillado_ids, @usuario_id)`);
+      }
+
+      // Marcar lote como despalillado
+      await (new sql.Request(transaction))
+        .input('id', sql.Int, loteId)
+        .input('merma', sql.Decimal(10, 3), merma)
+        .query(`UPDATE LotesMercaderia SET estado = 'despalillado', etapa = 'despalillado', merma_despalillado = @merma, fecha_fin = GETDATE() WHERE id = @id`);
+
+      await transaction.commit();
+    } catch (err) {
+      await transaction.rollback();
+      throw err;
+    }
+
+    res.json({ ok: true, merma, auto_envio_kg: autoEnvioKg });
   } catch (err) {
     console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }

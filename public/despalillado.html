@@ -263,6 +263,7 @@
             <button class="btn-retomar" id="btn-retomar" onclick="retomarLote()" style="display:none;">
               <i data-lucide="play" style="width:14px;height:14px;"></i> Retomar
             </button>
+            <div id="merma-calculada" style="display:none;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:700;border:1.5px solid var(--borde);background:var(--fondo);font-family:'JetBrains Mono',monospace;"></div>
             <button class="btn-finalizar" id="btn-finalizar" onclick="finalizarLote()">
               <i data-lucide="check-circle" style="width:14px;height:14px;"></i> Finalizar despalillado
             </button>
@@ -630,12 +631,9 @@
       html += '<tr class="pesaje-form-row" id="pesaje-form-' + did + '" style="display:none;">' +
         '<td colspan="4" style="background:var(--verde-suave);padding:8px 10px;">' +
           '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">' +
-            '<label style="font-size:11px;font-weight:600;color:var(--texto-secundario);">Kg desp.:</label>' +
+            '<label style="font-size:11px;font-weight:600;color:var(--texto-secundario);">Kg:</label>' +
             '<input type="number" inputmode="decimal" id="pesaje-kg-' + did + '" placeholder="0.00" min="0" step="any" ' +
               'style="height:32px;width:90px;font-size:14px;font-weight:700;border:1.5px solid var(--verde);border-radius:8px;padding:4px 10px;text-align:center;' + mono + '">' +
-            '<label style="font-size:11px;font-weight:600;color:var(--sem-rojo);" title="Merma: cascarones, hojas, podredumbre">Merma kg:</label>' +
-            '<input type="number" inputmode="decimal" id="pesaje-merma-' + did + '" placeholder="0.00" min="0" step="any" value="0" ' +
-              'style="height:32px;width:80px;font-size:14px;font-weight:700;border:1.5px solid var(--sem-rojo-borde);border-radius:8px;padding:4px 10px;text-align:center;' + mono + '">' +
             '<button class="btn btn-primary" onclick="registrarPesaje(' + did + ')" style="height:32px;font-size:12px;padding:4px 14px;">Confirmar</button>' +
             '<button class="btn" onclick="togglePesajeForm(' + did + ')" style="height:32px;font-size:12px;padding:4px 14px;">Cancelar</button>' +
           '</div>' +
@@ -748,28 +746,18 @@
   function registrarPesaje(did) {
     if (!loteSeleccionado) return;
     var input = document.getElementById('pesaje-kg-' + did);
-    var inputMerma = document.getElementById('pesaje-merma-' + did);
     var kilos = parseFloat(input.value);
     if (!kilos || kilos <= 0) { mostrarMensaje('mensaje', 'error', 'Ingresá los kilos'); return; }
-    var mermaVal = inputMerma.value;
-    if (mermaVal === '' || mermaVal === undefined) { mostrarMensaje('mensaje', 'error', 'Ingresá la merma (puede ser 0)'); return; }
-    var merma = parseFloat(mermaVal);
-    if (isNaN(merma) || merma < 0) { mostrarMensaje('mensaje', 'error', 'Merma debe ser >= 0'); return; }
 
     fetch('/api/despalillado/registrar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ lote_id: loteSeleccionado.id, despalillador_id: did, kilos: kilos, merma_kg: merma })
+      body: JSON.stringify({ lote_id: loteSeleccionado.id, despalillador_id: did, kilos: kilos })
     }).then(function(r) { return r.json(); }).then(function(data) {
       if (data.ok) {
         input.value = '';
-        inputMerma.value = '0';
         togglePesajeForm(did);
-        if (data.lote_completo) {
-          showAlert('Lote ' + loteSeleccionado.codigo_interno + ' completado (' + fmt(kilos) + ' kg + ' + fmt(merma) + ' kg merma)', 'success');
-        } else {
-          mostrarMensaje('mensaje', 'success', 'Pesaje registrado (' + fmt(kilos) + ' kg + ' + fmt(merma) + ' kg merma)');
-        }
+        mostrarMensaje('mensaje', 'success', 'Pesaje registrado: ' + fmt(kilos) + ' kg');
         refreshLote();
       } else {
         mostrarMensaje('mensaje', 'error', data.error || 'Error');
@@ -824,6 +812,7 @@
   function actualizarAcciones() {
     if (!loteSeleccionado) { document.getElementById('desp-acciones').style.display = 'none'; return; }
     var kgDesp = parseFloat(loteSeleccionado.kg_despalillados) || 0;
+    var kgCosecha = parseFloat(loteSeleccionado.kilos) || 0;
     var enCamara = parseFloat(loteSeleccionado.kilos_en_camara) > 0;
     var hasRegistros = kgDesp > 0;
     document.getElementById('desp-acciones').style.display = hasRegistros ? '' : 'none';
@@ -831,6 +820,31 @@
     document.getElementById('btn-retomar').style.display = enCamara ? '' : 'none';
     document.getElementById('btn-finalizar').style.display = hasRegistros ? '' : 'none';
     document.getElementById('camara-selector').classList.remove('open');
+
+    // Merma calculada en tiempo real
+    var mermaEl = document.getElementById('merma-calculada');
+    var btnFin = document.getElementById('btn-finalizar');
+    if (hasRegistros && kgCosecha > 0) {
+      var merma = kgCosecha - kgDesp;
+      mermaEl.style.display = '';
+      if (merma < 0) {
+        mermaEl.textContent = 'Merma: ' + fmt(merma) + ' kg (EXCEDE)';
+        mermaEl.style.borderColor = 'var(--sem-rojo)'; mermaEl.style.color = 'var(--sem-rojo)';
+        btnFin.disabled = true; btnFin.title = 'Revisar pesajes: hay más despalillado que cosechado';
+      } else if (merma === 0) {
+        mermaEl.textContent = 'Merma: 0 kg';
+        mermaEl.style.borderColor = 'var(--sem-rojo)'; mermaEl.style.color = 'var(--sem-rojo)';
+        btnFin.disabled = true; btnFin.title = 'No es posible cerrar sin merma';
+      } else {
+        var mermaPct = (merma / kgCosecha * 100).toFixed(1);
+        mermaEl.textContent = 'Merma: ' + fmt(merma) + ' kg (' + mermaPct + '%)';
+        mermaEl.style.borderColor = 'var(--verde)'; mermaEl.style.color = 'var(--verde)';
+        btnFin.disabled = false; btnFin.title = '';
+      }
+    } else {
+      mermaEl.style.display = 'none';
+      btnFin.disabled = false; btnFin.title = '';
+    }
   }
 
   async function guardarEnCamara() {
@@ -860,26 +874,30 @@
     if (!loteSeleccionado) return;
     var kgOrig = parseFloat(loteSeleccionado.kilos) || 0;
     var kgDesp = parseFloat(loteSeleccionado.kg_despalillados) || 0;
-    var merma = Math.max(0, kgOrig - kgDesp);
+    var merma = kgOrig - kgDesp;
+    if (merma <= 0) { await showAlert(merma < 0 ? 'Los kg despalillados superan los cosechados. Revisá los registros.' : 'No es posible cerrar sin merma.', 'warning'); return; }
     var mermaPct = kgOrig > 0 ? ((merma / kgOrig) * 100).toFixed(1) : 0;
     var resumen = Object.keys(_despAgrupados).map(function(did) {
       var d = _despAgrupados[did];
-      return d.nombre + ': ' + fmt(d.totalKg) + ' kg (' + d.registros.length + ' pesajes)';
+      return d.nombre + ': ' + fmt(d.totalKg) + ' kg (' + d.registros.filter(function(r){return r.estado!=='anulada';}).length + ' pesajes)';
     }).join('\n');
     if (!await showConfirm('¿Finalizar despalillado del lote ' + loteSeleccionado.codigo_interno + '?\n\n' + resumen + '\n\nKg cosechados: ' + fmt(kgOrig) + '\nKg despalillados: ' + fmt(kgDesp) + '\nMerma: ' + fmt(merma) + ' kg (' + mermaPct + '%)')) return;
     fetch('/api/despalillado/' + loteSeleccionado.id + '/finalizar', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }
     }).then(function(r) { return r.json(); }).then(function(data) {
       if (data.ok) {
-        mostrarMensaje('mensaje', 'success', 'Lote finalizado. Merma: ' + fmt(data.merma) + ' kg');
+        var msg = 'Lote finalizado. Merma: ' + fmt(data.merma) + ' kg';
+        if (data.auto_envio_kg > 0) msg += ' · ' + fmt(data.auto_envio_kg) + ' kg enviados a clasificación';
+        mostrarMensaje('mensaje', 'success', msg);
         loteSeleccionado = null; _despAgrupados = {}; _registrosLote = [];
         document.getElementById('sec-despalilladores').style.display = 'none';
+        document.getElementById('sec-envios').style.display = 'none';
         document.getElementById('tbody-desp-grid').innerHTML = '<tr><td colspan="4" class="empty">Agregá despalilladores con + Despalillador</td></tr>';
         document.getElementById('hist-total').textContent = '—';
         document.getElementById('hist-lote-badge').textContent = '';
         document.getElementById('hist-contador').textContent = '';
         cargarLotesPendientes(); cargarKpis(); cargarHistorialCompleto();
-      } else { mostrarMensaje('mensaje', 'error', data.error || 'Error'); }
+      } else { showAlert(data.error || 'Error al finalizar', 'error'); }
     }).catch(function() { mostrarMensaje('mensaje', 'error', 'Error de conexión'); });
   }
 
