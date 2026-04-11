@@ -41,7 +41,7 @@ router.get('/lote/:id/registros', async (req, res) => {
     const pool = await getPool();
     const result = await pool.request()
       .input('lote_id', sql.Int, parseInt(req.params.id))
-      .query(`SELECT d.id, d.despalillador_id, d.kilos, d.fecha_hora, d.estado, d.usuario_id,
+      .query(`SELECT d.id, d.despalillador_id, d.kilos, d.merma_kg, d.fecha_hora, d.estado, d.usuario_id,
                      ju.apellido + ', ' + ju.nombre AS despalillador,
                      u.nombre AS usuario
               FROM Despalillado d
@@ -55,31 +55,41 @@ router.get('/lote/:id/registros', async (req, res) => {
   }
 });
 
-// POST /api/despalillado/registrar — pesaje por lote
+// POST /api/despalillado/registrar — pesaje por lote con merma obligatoria
 router.post('/registrar', async (req, res) => {
   try {
-    const { lote_id, despalillador_id, kilos } = req.body;
+    const { lote_id, despalillador_id, kilos, merma_kg } = req.body;
     if (!lote_id) return res.status(400).json({ error: 'Lote es obligatorio' });
     if (!despalillador_id) return res.status(400).json({ error: 'Despalillador es obligatorio' });
     if (!kilos || parseFloat(kilos) <= 0) return res.status(400).json({ error: 'Kilos debe ser mayor a 0' });
+    if (merma_kg === undefined || merma_kg === null || merma_kg === '') return res.status(400).json({ error: 'Merma es obligatoria (puede ser 0)' });
+    const mermaNum = parseFloat(merma_kg);
+    if (isNaN(mermaNum) || mermaNum < 0) return res.status(400).json({ error: 'Merma debe ser un número >= 0' });
 
     const pool = await getPool();
     const uid = req.user ? req.user.id : null;
     const kilosNum = parseFloat(kilos);
 
-    // Validar tope de lote: no superar kg de cosecha
+    // Validar tope de lote: (desp_acum + merma_acum + nuevo_kg + nueva_merma) no puede superar kg cosechados
     const loteRes = await pool.request().input('lote_id', sql.Int, lote_id)
-      .query(`SELECT l.kilos AS kg_cosecha,
-              ISNULL((SELECT SUM(d.kilos) FROM Despalillado d WHERE d.lote_id = l.id AND d.estado != 'anulada'), 0) AS kg_despalillados
+      .query(`SELECT l.kilos AS kg_cosecha, l.estado AS lote_estado,
+              ISNULL((SELECT SUM(d.kilos) FROM Despalillado d WHERE d.lote_id = l.id AND d.estado != 'anulada'), 0) AS kg_despalillados,
+              ISNULL((SELECT SUM(d.merma_kg) FROM Despalillado d WHERE d.lote_id = l.id AND d.estado != 'anulada'), 0) AS merma_acumulada
               FROM LotesMercaderia l WHERE l.id = @lote_id`);
     if (!loteRes.recordset.length) return res.status(404).json({ error: 'Lote no encontrado' });
     const lote = loteRes.recordset[0];
+    if (lote.lote_estado === 'despalillado') return res.status(400).json({ error: 'Este lote ya está completamente despalillado' });
     const kgCosecha = parseFloat(lote.kg_cosecha) || 0;
     const kgDespalillados = parseFloat(lote.kg_despalillados) || 0;
-    if (kgCosecha > 0 && (kgDespalillados + kilosNum) > kgCosecha) {
-      const disponible = Math.max(0, kgCosecha - kgDespalillados);
-      return res.status(400).json({ error: 'Supera el total del lote (' + kgCosecha.toFixed(1) + ' kg). Disponible: ' + disponible.toFixed(1) + ' kg' });
+    const mermaAcumulada = parseFloat(lote.merma_acumulada) || 0;
+    if (kgCosecha <= 0) return res.status(400).json({ error: 'El lote no tiene kilos de cosecha registrados' });
+    const totalNuevo = kgDespalillados + kilosNum + mermaAcumulada + mermaNum;
+    if (totalNuevo > kgCosecha) {
+      const disponible = Math.max(0, kgCosecha - kgDespalillados - mermaAcumulada);
+      return res.status(400).json({ error: 'Excede los kg del lote (' + kgCosecha.toFixed(1) + ' kg juntados). Disponible: ' + disponible.toFixed(1) + ' kg (despalillado + merma)' });
     }
+
+    const loteCompleto = totalNuevo >= kgCosecha;
 
     const transaction = new sql.Transaction(pool);
     await transaction.begin();
@@ -90,15 +100,25 @@ router.post('/registrar', async (req, res) => {
         .input('lote_id', sql.Int, lote_id)
         .query(`UPDATE LotesMercaderia SET estado = 'en_despalillado' WHERE id = @lote_id AND estado = 'cerrado'`);
 
-      // Insert despalillado record
+      // Insert despalillado record con merma
       const req2 = new sql.Request(transaction);
       await req2
         .input('lote_id', sql.Int, lote_id)
         .input('despalillador_id', sql.Int, despalillador_id)
         .input('kilos', sql.Decimal(10, 3), kilosNum)
+        .input('merma_kg', sql.Decimal(10, 3), mermaNum)
         .input('usuario_id', sql.Int, uid)
-        .query(`INSERT INTO Despalillado (lote_id, despalillador_id, kilos, usuario_id)
-                VALUES (@lote_id, @despalillador_id, @kilos, @usuario_id)`);
+        .query(`INSERT INTO Despalillado (lote_id, despalillador_id, kilos, merma_kg, usuario_id)
+                VALUES (@lote_id, @despalillador_id, @kilos, @merma_kg, @usuario_id)`);
+
+      // Auto-cierre: si la ecuación cuadra, marcar lote como despalillado
+      if (loteCompleto) {
+        const req3 = new sql.Request(transaction);
+        await req3
+          .input('lote_id', sql.Int, lote_id)
+          .input('merma', sql.Decimal(10, 3), mermaAcumulada + mermaNum)
+          .query(`UPDATE LotesMercaderia SET estado = 'despalillado', etapa = 'despalillado', merma_despalillado = @merma WHERE id = @lote_id`);
+      }
 
       await transaction.commit();
     } catch (err) {
@@ -106,7 +126,7 @@ router.post('/registrar', async (req, res) => {
       throw err;
     }
 
-    res.json({ ok: true });
+    res.json({ ok: true, lote_completo: loteCompleto });
   } catch (err) {
     console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
@@ -702,7 +722,7 @@ router.post('/:id/anular', async (req, res) => {
     // 1. Leer el registro de Despalillado
     const dRes = await pool.request()
       .input('id', sql.Int, id)
-      .query(`SELECT id, juntada_id, deposito_id, kilos, parcela_id, estado FROM Despalillado WHERE id = @id`);
+      .query(`SELECT id, juntada_id, deposito_id, kilos, parcela_id, estado, lote_id FROM Despalillado WHERE id = @id`);
     if (!dRes.recordset.length) return res.status(404).json({ error: 'Despalillado no encontrado' });
     const desp = dRes.recordset[0];
 
@@ -786,6 +806,39 @@ router.post('/:id/anular', async (req, res) => {
       await transaction.request()
         .input('id', sql.Int, id)
         .query(`UPDATE Despalillado SET estado = 'anulada' WHERE id = @id`);
+
+      // Audit trail
+      await transaction.request()
+        .input('tabla', sql.NVarChar, 'Despalillado')
+        .input('registro_id', sql.Int, id)
+        .input('campo', sql.NVarChar, 'estado')
+        .input('valor_anterior', sql.NVarChar, 'confirmada')
+        .input('valor_nuevo', sql.NVarChar, 'anulada')
+        .input('usuario_id', sql.Int, uid)
+        .input('motivo', sql.NVarChar, motivo)
+        .query(`INSERT INTO EdicionesHistorial (tabla, registro_id, campo, valor_anterior, valor_nuevo, usuario_id, fecha_hora, motivo)
+                VALUES (@tabla, @registro_id, @campo, @valor_anterior, @valor_nuevo, @usuario_id, GETDATE(), @motivo)`);
+
+      // Si el lote estaba cerrado ('despalillado'), verificar si debe reabrirse
+      if (desp.lote_id) {
+        const loteCheck = await transaction.request()
+          .input('lote_id', sql.Int, desp.lote_id)
+          .query(`SELECT l.kilos AS kg_cosecha, l.estado,
+                  ISNULL((SELECT SUM(d2.kilos) FROM Despalillado d2 WHERE d2.lote_id = l.id AND d2.estado != 'anulada'), 0) AS kg_desp,
+                  ISNULL((SELECT SUM(d2.merma_kg) FROM Despalillado d2 WHERE d2.lote_id = l.id AND d2.estado != 'anulada'), 0) AS kg_merma
+                  FROM LotesMercaderia l WHERE l.id = @lote_id`);
+        if (loteCheck.recordset.length) {
+          const lt = loteCheck.recordset[0];
+          const totalActual = parseFloat(lt.kg_desp || 0) + parseFloat(lt.kg_merma || 0);
+          const kgCos = parseFloat(lt.kg_cosecha || 0);
+          if (lt.estado === 'despalillado' && totalActual < kgCos) {
+            await transaction.request()
+              .input('lote_id', sql.Int, desp.lote_id)
+              .input('merma', sql.Decimal(10, 3), parseFloat(lt.kg_merma || 0))
+              .query(`UPDATE LotesMercaderia SET estado = 'en_despalillado', merma_despalillado = @merma WHERE id = @lote_id`);
+          }
+        }
+      }
 
       await transaction.commit();
       res.json({ ok: true });

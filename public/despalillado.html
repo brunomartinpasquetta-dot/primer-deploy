@@ -543,17 +543,18 @@
     _despAgrupados = {};
     // Primero los persistidos (aunque no tengan registros)
     despalilladores.forEach(function(d) {
-      _despAgrupados[d.despalillador_id] = { id: d.despalillador_id, nombre: d.nombre, registros: [], totalKg: 0 };
+      _despAgrupados[d.despalillador_id] = { id: d.despalillador_id, nombre: d.nombre, registros: [], totalKg: 0, totalMerma: 0 };
     });
     // Luego overlay con TODOS los registros (incluyendo anulados para mostrar en detalle)
     registros.forEach(function(r) {
       var did = r.despalillador_id;
       if (!_despAgrupados[did]) {
-        _despAgrupados[did] = { id: did, nombre: r.despalillador, registros: [], totalKg: 0 };
+        _despAgrupados[did] = { id: did, nombre: r.despalillador, registros: [], totalKg: 0, totalMerma: 0 };
       }
       _despAgrupados[did].registros.push(r);
       if (r.estado !== 'anulada') {
         _despAgrupados[did].totalKg += parseFloat(r.kilos) || 0;
+        _despAgrupados[did].totalMerma += parseFloat(r.merma_kg) || 0;
       }
     });
   }
@@ -595,9 +596,12 @@
       html += '<tr class="pesaje-form-row" id="pesaje-form-' + did + '" style="display:none;">' +
         '<td colspan="4" style="background:var(--verde-suave);padding:8px 10px;">' +
           '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">' +
-            '<label style="font-size:11px;font-weight:600;color:var(--texto-secundario);">Kg:</label>' +
+            '<label style="font-size:11px;font-weight:600;color:var(--texto-secundario);">Kg desp.:</label>' +
             '<input type="number" inputmode="decimal" id="pesaje-kg-' + did + '" placeholder="0.00" min="0" step="any" ' +
               'style="height:32px;width:90px;font-size:14px;font-weight:700;border:1.5px solid var(--verde);border-radius:8px;padding:4px 10px;text-align:center;' + mono + '">' +
+            '<label style="font-size:11px;font-weight:600;color:var(--sem-rojo);" title="Merma: cascarones, hojas, podredumbre">Merma kg:</label>' +
+            '<input type="number" inputmode="decimal" id="pesaje-merma-' + did + '" placeholder="0.00" min="0" step="any" value="0" ' +
+              'style="height:32px;width:80px;font-size:14px;font-weight:700;border:1.5px solid var(--sem-rojo-borde);border-radius:8px;padding:4px 10px;text-align:center;' + mono + '">' +
             '<button class="btn btn-primary" onclick="registrarPesaje(' + did + ')" style="height:32px;font-size:12px;padding:4px 14px;">Confirmar</button>' +
             '<button class="btn" onclick="togglePesajeForm(' + did + ')" style="height:32px;font-size:12px;padding:4px 14px;">Cancelar</button>' +
           '</div>' +
@@ -610,6 +614,7 @@
         html += '<table style="width:100%;border-collapse:collapse;font-size:12px;">' +
           '<thead><tr><th style="text-align:left;padding:4px 6px;font-size:10px;color:var(--texto-suave);">Fecha</th>' +
           '<th style="text-align:right;padding:4px 6px;font-size:10px;color:var(--texto-suave);">Kg</th>' +
+          '<th style="text-align:right;padding:4px 6px;font-size:10px;color:var(--texto-suave);">Merma</th>' +
           '<th style="text-align:left;padding:4px 6px;font-size:10px;color:var(--texto-suave);">Usuario</th>' +
           '<th style="text-align:center;padding:4px 6px;font-size:10px;color:var(--texto-suave);"></th></tr></thead><tbody>';
         d.registros.forEach(function(r) {
@@ -623,6 +628,7 @@
           html += '<tr' + (anulada ? ' style="opacity:.5;text-decoration:line-through;"' : '') + '>' +
             '<td style="padding:4px 6px;">' + fmtF(r.fecha_hora) + '</td>' +
             '<td style="text-align:right;padding:4px 6px;' + mono + 'font-weight:700;color:var(--verde);">' + fmt(r.kilos) + ' kg</td>' +
+            '<td style="text-align:right;padding:4px 6px;' + mono + 'color:var(--sem-rojo);">' + fmt(r.merma_kg || 0) + ' kg</td>' +
             '<td style="padding:4px 6px;font-size:11px;color:var(--texto-suave);">' + (r.usuario || '') + '</td>' +
             '<td style="text-align:center;padding:4px 6px;">' + acciones + '</td></tr>';
           // Edit form row
@@ -644,8 +650,17 @@
       html += '</td></tr>';
     });
 
+    var totalMerma = 0;
+    ids.forEach(function(did) { totalMerma += _despAgrupados[did].totalMerma; });
+
     tbody.innerHTML = html;
-    document.getElementById('hist-total').textContent = fmt(totalKg) + ' kg';
+    var kgLote = loteSeleccionado ? parseFloat(loteSeleccionado.kilos) || 0 : 0;
+    var faltante = Math.max(0, kgLote - totalKg - totalMerma);
+    var balanceText = fmt(totalKg) + ' kg desp.';
+    if (totalMerma > 0) balanceText += ' + ' + fmt(totalMerma) + ' kg merma';
+    if (kgLote > 0 && faltante > 0) balanceText += ' · Faltan ' + fmt(faltante) + ' kg';
+    else if (kgLote > 0 && faltante === 0) balanceText += ' · Completo';
+    document.getElementById('hist-total').textContent = balanceText;
     document.getElementById('hist-contador').textContent = '(' + ids.length + ' desp. — ' + fmt(totalKg) + ' kg)';
     lucide.createIcons();
   }
@@ -697,18 +712,28 @@
   function registrarPesaje(did) {
     if (!loteSeleccionado) return;
     var input = document.getElementById('pesaje-kg-' + did);
+    var inputMerma = document.getElementById('pesaje-merma-' + did);
     var kilos = parseFloat(input.value);
     if (!kilos || kilos <= 0) { mostrarMensaje('mensaje', 'error', 'Ingresá los kilos'); return; }
+    var mermaVal = inputMerma.value;
+    if (mermaVal === '' || mermaVal === undefined) { mostrarMensaje('mensaje', 'error', 'Ingresá la merma (puede ser 0)'); return; }
+    var merma = parseFloat(mermaVal);
+    if (isNaN(merma) || merma < 0) { mostrarMensaje('mensaje', 'error', 'Merma debe ser >= 0'); return; }
 
     fetch('/api/despalillado/registrar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ lote_id: loteSeleccionado.id, despalillador_id: did, kilos: kilos })
+      body: JSON.stringify({ lote_id: loteSeleccionado.id, despalillador_id: did, kilos: kilos, merma_kg: merma })
     }).then(function(r) { return r.json(); }).then(function(data) {
       if (data.ok) {
         input.value = '';
+        inputMerma.value = '0';
         togglePesajeForm(did);
-        mostrarMensaje('mensaje', 'success', 'Pesaje registrado');
+        if (data.lote_completo) {
+          showAlert('Lote ' + loteSeleccionado.codigo_interno + ' completado (' + fmt(kilos) + ' kg + ' + fmt(merma) + ' kg merma)', 'success');
+        } else {
+          mostrarMensaje('mensaje', 'success', 'Pesaje registrado (' + fmt(kilos) + ' kg + ' + fmt(merma) + ' kg merma)');
+        }
         refreshLote();
       } else {
         mostrarMensaje('mensaje', 'error', data.error || 'Error');
