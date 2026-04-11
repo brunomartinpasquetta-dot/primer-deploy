@@ -163,10 +163,11 @@
       <a href="index.html" class="nav-item"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard</a>
       <div class="nav-section">Campo</div>
       <a href="juntada.html" class="nav-item"><span class="nav-icon"><i data-lucide="wheat"></i></span> Cosecha</a>
-      <a href="despalillado.html" class="nav-item active"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
-      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
       <a href="aplicaciones.html" class="nav-item"><span class="nav-icon"><i data-lucide="droplets"></i></span> Aplicaciones</a>
       <a href="trabajos-campo.html" class="nav-item"><span class="nav-icon"><i data-lucide="hammer"></i></span> Trabajos de Campo</a>
+      <div class="nav-section">Galpón</div>
+      <a href="despalillado.html" class="nav-item active"><span class="nav-icon"><i data-lucide="scissors"></i></span> Despalillado</a>
+      <a href="clasificacion-embalaje.html" class="nav-item"><span class="nav-icon"><i data-lucide="layers"></i></span> Clasif. + Embalaje</a>
       <div class="nav-section">Sistema</div>
       <a href="menu-stock.html" class="nav-item"><span class="nav-icon"><i data-lucide="package"></i></span> Stock</a>
       <a href="menu-comercial.html" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span> Comercial</a>
@@ -418,6 +419,7 @@
   cargarTemporadaActiva().then(function() { cargarKpis(); });
   cargarHistorialCompleto();
   cargarTotales();
+  cargarTotalesLote();
 
   function cargarDatosBase() {
     fetch('/api/juntadores').then(function(r) { return r.json(); }).then(function(data) {
@@ -827,7 +829,19 @@
       if (lote) { loteSeleccionado = lote; cargarRegistrosLote(); }
       cargarLotesPendientes();
       cargarKpis();
+      // Refrescar el tab de historial activo para feedback inmediato
+      refreshTabActivo();
     });
+  }
+
+  function refreshTabActivo() {
+    var activo = document.querySelector('.tab-content.active');
+    if (!activo) return;
+    var id = activo.id;
+    if (id === 'tab-historial') cargarHistorialCompleto();
+    else if (id === 'tab-totales') cargarTotales();
+    else if (id === 'tab-lotes') cargarTotalesLote();
+    else if (id === 'tab-auditoria') cargarAuditoria();
   }
 
   // ══ KPIs ══
