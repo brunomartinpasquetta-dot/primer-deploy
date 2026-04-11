@@ -242,6 +242,7 @@
             <span><strong>Clasificado:</strong> <span id="info-kg-clasif" class="mono">—</span> kg</span>
             <span><strong>Disp. clasif:</strong> <span id="info-kg-disp" class="mono" style="color:var(--sem-azul);font-weight:700;">—</span> kg</span>
             <span><strong>Embalado:</strong> <span id="info-kg-emb" class="mono">—</span> kg</span>
+            <span id="info-merma-row" style="display:none;"><strong>Merma clasif:</strong> <span id="info-kg-merma-clasif" class="mono" style="color:var(--sem-rojo);font-weight:700;">—</span> kg</span>
           </div>
           <div id="panel-sublotes-detalle" style="display:none;margin-bottom:12px;border:1px solid var(--borde);border-radius:8px;overflow:hidden;">
             <table class="ce-historial" style="width:100%;">
@@ -351,7 +352,9 @@
           <!-- Barra: Finalizar clasificación -->
           <div class="barra-acciones" id="barra-finalizar" style="display:none;">
             <i data-lucide="check-circle" style="width:18px;height:18px;color:var(--verde);"></i>
-            <span style="font-size:13px;font-weight:600;">Clasificación completa</span>
+            <span style="font-size:13px;font-weight:600;">Merma:</span>
+            <input type="text" id="txt-merma-clasificacion" readonly style="width:70px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;padding:2px 6px;background:var(--fondo);border:1px solid var(--borde);border-radius:4px;" value="—">
+            <span style="font-size:12px;color:var(--texto-suave);">kg</span>
             <button class="btn btn-confirmar" style="margin-left:auto;" onclick="finalizarClasificacion()">Finalizar clasificación</button>
           </div>
 
@@ -532,10 +535,25 @@
     // Formulario clasificación siempre visible si hay lote seleccionado
     document.getElementById('form-clasificar').style.display = '';
 
-    // Barra finalizar clasificación: solo si completa y no finalizada
-    var clasificacionCompleta = kgDisp <= 0.01;
+    // Barra finalizar clasificación: si hay clasificaciones, hay merma > 0 y no finalizada
+    var hayClasificaciones = kgClasif > 0;
+    var mermaClasif = kgDesp - kgClasif;
     var etapaClasificado = loteSeleccionado.etapa === 'clasificado';
-    document.getElementById('barra-finalizar').style.display = (clasificacionCompleta && !etapaClasificado) ? '' : 'none';
+    var mostrarFinalizar = hayClasificaciones && mermaClasif > 0.01 && !etapaClasificado;
+    document.getElementById('barra-finalizar').style.display = mostrarFinalizar ? '' : 'none';
+    document.getElementById('txt-merma-clasificacion').value = mermaClasif > 0 ? formatearNumero(mermaClasif) : '0';
+    // Mostrar merma en info-bar si lote ya fue clasificado con merma guardada
+    var mermaGuardada = parseFloat(loteSeleccionado.merma_clasificacion) || 0;
+    var infoMermaRow = document.getElementById('info-merma-row');
+    if (mermaGuardada > 0) {
+      document.getElementById('info-kg-merma-clasif').textContent = formatearNumero(mermaGuardada);
+      infoMermaRow.style.display = '';
+    } else if (mermaClasif > 0.01 && hayClasificaciones) {
+      document.getElementById('info-kg-merma-clasif').textContent = formatearNumero(mermaClasif) + ' (pendiente)';
+      infoMermaRow.style.display = '';
+    } else {
+      infoMermaRow.style.display = 'none';
+    }
 
     // Barra cerrar lote: se evalúa después de cargar sub-lotes (en cargarSubLotes)
     document.getElementById('barra-cerrar-lote').style.display = 'none';
@@ -998,14 +1016,15 @@
 
   async function finalizarClasificacion() {
     if (!loteSeleccionado) return;
-    if (!await showConfirm('¿Finalizar clasificación del lote ' + (loteSeleccionado.codigo_interno||'') + '?')) return;
+    var mermaVal = document.getElementById('txt-merma-clasificacion').value;
+    if (!await showConfirm('¿Finalizar clasificación del lote ' + (loteSeleccionado.codigo_interno||'') + '?\nMerma: ' + mermaVal + ' kg')) return;
 
     try {
-      await fetchApi('/api/clasificacion-embalaje/finalizar-clasificacion/' + loteSeleccionado.id, {
+      var resp = await fetchApi('/api/clasificacion-embalaje/finalizar-clasificacion/' + loteSeleccionado.id, {
         method:'POST',
         headers:{'Content-Type':'application/json'}
       });
-      mostrarMensaje('mensaje','success','Clasificación finalizada');
+      mostrarMensaje('mensaje','success','Clasificación finalizada · Merma: ' + formatearNumero(resp.merma) + ' kg');
       loteSeleccionado = null;
       loteDetalle = null;
       document.getElementById('panel-derecho').style.display = 'none';

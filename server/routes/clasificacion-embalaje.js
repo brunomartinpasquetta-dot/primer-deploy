@@ -149,6 +149,7 @@ router.get('/pendientes', async (req, res) => {
                      l.codigo_interno,
                      l.kilos                   AS kilos_cosecha,
                      l.merma_despalillado       AS merma,
+                     l.merma_clasificacion,
                      l.estado,
                      l.etapa,
                      l.fecha_inicio,
@@ -214,7 +215,7 @@ router.get('/lote/:id/detalle', async (req, res) => {
     const loteRes = await pool.request()
       .input('id', sql.Int, loteId)
       .query(`SELECT l.id, l.codigo_interno, l.kilos AS kilos_cosecha,
-                     l.merma_despalillado AS merma, l.temporada_id, l.parcela_id,
+                     l.merma_despalillado AS merma, l.merma_clasificacion, l.temporada_id, l.parcela_id,
                      p.nombre AS parcela,
                      ISNULL(dsp.total, 0) AS kilos_despalillados,
                      ISNULL(env.total, 0) AS kilos_enviados
@@ -486,27 +487,41 @@ router.post('/clasificar', async (req, res) => {
   }
 });
 
-// POST /finalizar-clasificacion/:lote_id — Marcar lote como completamente clasificado
+// POST /finalizar-clasificacion/:lote_id — Marcar lote como completamente clasificado + merma
 router.post('/finalizar-clasificacion/:lote_id', async (req, res) => {
   try {
     const pool = await getPool();
     const loteId = parseInt(req.params.lote_id);
 
-    // Verificar que hay clasificaciones
-    const clasRes = await pool.request()
+    // Leer kg enviados y kg clasificados
+    const dataRes = await pool.request()
       .input('lote_id', sql.Int, loteId)
-      .query(`SELECT ISNULL(SUM(kilos), 0) AS total FROM Clasificacion WHERE lote_id = @lote_id AND estado != 'anulada'`);
-    const totalClasif = parseFloat(clasRes.recordset[0].total);
+      .query(`SELECT
+              ISNULL((SELECT SUM(e.kilos) FROM EnviosClasificacion e WHERE e.lote_id = @lote_id AND e.estado = 'enviado'), 0) AS kg_enviados,
+              ISNULL((SELECT SUM(c.kilos) FROM Clasificacion c WHERE c.lote_id = @lote_id AND c.estado != 'anulada'), 0) AS kg_clasificados`);
+    const kgEnviados = parseFloat(dataRes.recordset[0].kg_enviados);
+    const kgClasificados = parseFloat(dataRes.recordset[0].kg_clasificados);
 
-    if (totalClasif <= 0) {
+    if (kgClasificados <= 0) {
       return res.status(400).json({ error: 'No hay clasificaciones registradas para este lote' });
+    }
+
+    // Calcular merma
+    const merma = kgEnviados - kgClasificados;
+
+    if (merma < 0) {
+      return res.status(400).json({ error: 'Los kg clasificados (' + kgClasificados.toFixed(1) + ') superan los kg enviados (' + kgEnviados.toFixed(1) + '). Revisá los registros.' });
+    }
+    if (merma < 0.01) {
+      return res.status(400).json({ error: 'No es posible finalizar sin merma. Kg enviados: ' + kgEnviados.toFixed(1) + ', kg clasificados: ' + kgClasificados.toFixed(1) + '. Debe quedar al menos algo de merma.' });
     }
 
     await pool.request()
       .input('id', sql.Int, loteId)
-      .query(`UPDATE LotesMercaderia SET etapa = 'clasificado' WHERE id = @id`);
+      .input('merma', sql.Decimal(10, 3), merma)
+      .query(`UPDATE LotesMercaderia SET etapa = 'clasificado', merma_clasificacion = @merma WHERE id = @id`);
 
-    res.json({ ok: true, kilos_clasificados: totalClasif });
+    res.json({ ok: true, merma, kilos_clasificados: kgClasificados, kilos_enviados: kgEnviados });
   } catch (err) {
     console.error(err); res.status(500).json({ error: "Error interno del servidor" });
   }
