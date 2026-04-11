@@ -416,13 +416,15 @@
   // ══ INIT ══
   cargarDatosBase();
   cargarLotesPendientes();
-  cargarTemporadaActiva().then(function() { cargarKpis(); });
-  cargarHistorialCompleto();
-  cargarTotales();
-  cargarTotalesLote();
+  cargarTemporadaActiva().then(function() {
+    cargarKpis();
+    cargarHistorialCompleto();
+    cargarTotales();
+    cargarTotalesLote();
+  });
 
   function cargarDatosBase() {
-    fetch('/api/juntadores').then(function(r) { return r.json(); }).then(function(data) {
+    fetch('/api/juntadores?tipo=despalillador').then(function(r) { return r.json(); }).then(function(data) {
       _despData = data;
       poblarSelectorDespalilladores();
     });

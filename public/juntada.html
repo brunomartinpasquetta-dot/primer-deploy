@@ -379,13 +379,10 @@
   // ══ INIT ══
   cargarDatosBase();
   cargarLotesActivos();
-  cargarKpis();
-  cargarHistorialCompleto();
-  cargarTotales();
 
   function cargarDatosBase() {
     // Cosechadores
-    fetch('/api/juntadores').then(function(r) { return r.json(); }).then(function(data) {
+    fetch('/api/juntadores?tipo=cosechero').then(function(r) { return r.json(); }).then(function(data) {
       _juntadoresData = data;
       poblarSelectorJuntadores();
     });
@@ -1056,7 +1053,11 @@
     else if (tab === 'auditoria') cargarAuditoria();
   }
 
-  cargarTemporadaActiva();
+  cargarTemporadaActiva().then(function() {
+    cargarKpis();
+    cargarHistorialCompleto();
+    cargarTotales();
+  });
 </script>
 </body>
 </html>

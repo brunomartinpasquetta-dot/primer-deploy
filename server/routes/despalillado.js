@@ -583,10 +583,12 @@ router.get('/historial', async (req, res) => {
              d.estado,
              dep.nombre AS deposito,
              d.usuario_id, u.nombre AS usuario,
-             t.nombre AS temporada
+             t.nombre AS temporada,
+             lm.codigo_interno AS lote_codigo
       FROM Despalillado d
       LEFT JOIN Parcelas   l  ON d.parcela_id      = l.id
-      LEFT JOIN Temporadas t  ON l.temporada_id    = t.id
+      LEFT JOIN LotesMercaderia lm ON d.lote_id    = lm.id
+      LEFT JOIN Temporadas t  ON COALESCE(lm.temporada_id, l.temporada_id) = t.id
       JOIN  Juntadores ju ON d.despalillador_id = ju.id
       LEFT JOIN Depositos  dep ON d.deposito_id   = dep.id
       LEFT JOIN Usuarios   u   ON d.usuario_id    = u.id
@@ -618,7 +620,8 @@ router.get('/totales-por-despalillador', async (req, res) => {
       FROM Despalillado d
       JOIN  Juntadores ju ON d.despalillador_id = ju.id
       LEFT JOIN Parcelas   l  ON d.parcela_id   = l.id
-      LEFT JOIN Temporadas t  ON l.temporada_id = t.id
+      LEFT JOIN LotesMercaderia lm ON d.lote_id = lm.id
+      LEFT JOIN Temporadas t  ON COALESCE(lm.temporada_id, l.temporada_id) = t.id
       WHERE ${where} AND d.estado != 'anulada'
       GROUP BY ju.id, ju.apellido, ju.nombre
       ORDER BY kg_total DESC`);
@@ -649,8 +652,7 @@ router.get('/auditoria', async (req, res) => {
       LEFT JOIN Despalillado d ON eh.registro_id = d.id
       LEFT JOIN Juntadores ju ON d.despalillador_id = ju.id
       LEFT JOIN LotesMercaderia lm ON d.lote_id = lm.id
-      LEFT JOIN Parcelas p ON d.parcela_id = p.id
-      LEFT JOIN Temporadas t ON p.temporada_id = t.id
+      LEFT JOIN Temporadas t ON COALESCE(lm.temporada_id, (SELECT p2.temporada_id FROM Parcelas p2 WHERE p2.id = d.parcela_id)) = t.id
       WHERE ${where}
       ORDER BY eh.fecha_hora DESC`);
     res.json(result.recordset);
