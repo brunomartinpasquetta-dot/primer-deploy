@@ -122,7 +122,18 @@
           </div>
           <div>
             <label>Nacionalidad</label>
-            <input type="text" id="nacionalidad" placeholder="Ej: Argentina">
+            <input type="text" id="nacionalidad" placeholder="Ej: Argentina" value="Argentina" list="dl-nacionalidad" autocomplete="off">
+            <datalist id="dl-nacionalidad">
+              <option value="Argentina">
+              <option value="Boliviana">
+              <option value="Paraguaya">
+              <option value="Peruana">
+              <option value="Uruguaya">
+              <option value="Brasileña">
+              <option value="Colombiana">
+              <option value="Venezolana">
+              <option value="Chilena">
+            </datalist>
           </div>
         </div>
         <div class="two-col">
@@ -142,7 +153,19 @@
           </div>
           <div>
             <label>Localidad</label>
-            <input type="text" id="localidad" placeholder="Ciudad / localidad">
+            <input type="text" id="localidad" placeholder="Ciudad / localidad" list="dl-localidad" autocomplete="off">
+            <datalist id="dl-localidad">
+              <option value="Coronda">
+              <option value="Desvío Arijón">
+              <option value="Villa Ángela">
+              <option value="Santa Fe">
+              <option value="Rosario">
+              <option value="Rafaela">
+              <option value="San Lorenzo">
+              <option value="Esperanza">
+              <option value="Sauce Viejo">
+              <option value="Santo Tomé">
+            </datalist>
           </div>
         </div>
         <label>Tipo de contrato</label>
@@ -369,6 +392,7 @@
       var el = document.getElementById(id);
       if (el) el.value = '';
     });
+    document.getElementById('nacionalidad').value = 'Argentina';
   }
 
   // ── Dar de baja ──────────────────────────────────────────────────
@@ -483,14 +507,15 @@
         {id:'edit-telefono',label:'Teléfono',val:e.telefono,type:'text'},
         {id:'edit-email',label:'Email',val:e.email,type:'email'},
         {id:'edit-direccion',label:'Dirección',val:e.direccion,type:'text'},
-        {id:'edit-localidad',label:'Localidad',val:e.localidad,type:'text'},
+        {id:'edit-localidad',label:'Localidad',val:e.localidad,type:'text',list:'dl-localidad'},
         {id:'edit-observaciones',label:'Observaciones',val:e.observaciones,type:'textarea'}
       ];
       campos.forEach(function(c) {
         if (c.type === 'textarea') {
           html += '<div style="margin-bottom:8px;"><label style="font-size:12px;font-weight:600;color:var(--texto-suave);">' + c.label + '</label><textarea id="' + c.id + '" style="width:100%;height:50px;padding:6px 8px;border:1px solid var(--borde);border-radius:6px;font-size:13px;resize:vertical;">' + esc(c.val || '') + '</textarea></div>';
         } else {
-          html += '<div style="margin-bottom:8px;"><label style="font-size:12px;font-weight:600;color:var(--texto-suave);">' + c.label + '</label><input type="' + c.type + '" id="' + c.id + '" value="' + esc(c.val || '') + '" style="width:100%;height:34px;padding:0 8px;border:1px solid var(--borde);border-radius:6px;font-size:13px;"></div>';
+          var listAttr = c.list ? ' list="' + c.list + '" autocomplete="off"' : '';
+          html += '<div style="margin-bottom:8px;"><label style="font-size:12px;font-weight:600;color:var(--texto-suave);">' + c.label + '</label><input type="' + c.type + '" id="' + c.id + '" value="' + esc(c.val || '') + '"' + listAttr + ' style="width:100%;height:34px;padding:0 8px;border:1px solid var(--borde);border-radius:6px;font-size:13px;"></div>';
         }
       });
       html += '<div style="display:flex;gap:8px;margin-top:12px;">' +
