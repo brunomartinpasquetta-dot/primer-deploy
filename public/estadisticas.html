@@ -123,6 +123,7 @@
           <div class="st-section"><h4>Descarte por variedad</h4><div class="card" style="padding:0;overflow:hidden;"><div class="table-wrap"><table class="st-table"><thead><tr><th>Variedad</th><th>Kg totales</th><th>Kg descarte</th><th>% descarte</th></tr></thead><tbody id="tbl-descarte"><tr><td colspan="4" class="loading-msg">Cargando...</td></tr></tbody></table></div></div></div>
           <div class="st-section"><h4>Productividad por cosechero</h4><div class="card" style="padding:0;overflow:hidden;"><div class="table-wrap"><table class="st-table"><thead><tr><th>Cosechero</th><th>Juntadas</th><th>Kg totales</th><th>Kg/juntada</th></tr></thead><tbody id="tbl-cosecheros"><tr><td colspan="4" class="loading-msg">Cargando...</td></tr></tbody></table></div></div></div>
         </div>
+        <div class="st-section"><h4>Merma por variedad</h4><div class="card" style="padding:0;overflow:hidden;"><div class="table-wrap"><table class="st-table"><thead><tr><th>Variedad</th><th>Lotes</th><th>Kg cosecha</th><th>Merma desp.</th><th>Merma clasif.</th><th>Merma total</th><th>% merma</th></tr></thead><tbody id="tbl-merma-variedad"><tr><td colspan="7" class="loading-msg">Cargando...</td></tr></tbody></table></div></div></div>
       </div>
 
       <!-- TAB 2: COMERCIAL -->
@@ -238,6 +239,7 @@ function aplicarFiltros() {
     fetch(base + '/evolucion-cosecha' + q, { headers: _h }).then(function(r){ return r.json(); }),
     fetch(base + '/descarte-por-variedad' + q, { headers: _h }).then(function(r){ return r.json(); }),
     fetch(base + '/productividad-cosecheros' + q, { headers: _h }).then(function(r){ return r.json(); }),
+    fetch(base + '/merma-por-variedad' + q, { headers: _h }).then(function(r){ return r.json(); }),
     fetch(base + '/ranking-clientes' + q, { headers: _h }).then(function(r){ return r.json(); }),
     fetch(base + '/ventas-por-categoria' + q, { headers: _h }).then(function(r){ return r.json(); }),
     fetch(base + '/evolucion-ventas' + q, { headers: _h }).then(function(r){ return r.json(); }),
@@ -246,14 +248,14 @@ function aplicarFiltros() {
     fetch(base + '/saldos-cuentas-corrientes' + q, { headers: _h }).then(function(r){ return r.json(); }),
     fetch(base + '/rotacion-stock' + q, { headers: _h }).then(function(r){ return r.json(); })
   ]).then(function(d) {
-    renderProductivo(d[0], d[1], d[2], d[3], d[4]);
-    renderComercial(d[5], d[6], d[7]);
-    renderFinanciero(d[8], d[9], d[10], d[11]);
+    renderProductivo(d[0], d[1], d[2], d[3], d[4], d[5]);
+    renderComercial(d[6], d[7], d[8]);
+    renderFinanciero(d[9], d[10], d[11], d[12]);
   });
 }
 
 // ── PRODUCTIVO ──
-function renderProductivo(rindeVar, rindePar, evol, descarte, cosecheros) {
+function renderProductivo(rindeVar, rindePar, evol, descarte, cosecheros, mermaVar) {
   var totalKg = rindeVar.reduce(function(s,r){ return s + parseFloat(r.kg_cosechados||0); }, 0);
   var totalHa = rindeVar.reduce(function(s,r){ return s + parseFloat(r.superficie_ha||0); }, 0);
   var rindeAvg = totalHa > 0 ? (totalKg / totalHa).toFixed(1) : '-';
@@ -301,6 +303,11 @@ function renderProductivo(rindeVar, rindePar, evol, descarte, cosecheros) {
   document.getElementById('tbl-cosecheros').innerHTML = cosecheros.length ? cosecheros.map(function(r) {
     return '<tr><td><strong>'+r.cosechero.trim()+'</strong></td><td>'+r.cantidad_juntadas+'</td><td class="mono">'+_fmtKg(r.kg_totales)+'</td><td class="mono">'+_fmtKg(r.kg_promedio_por_juntada)+'</td></tr>';
   }).join('') : '<tr><td colspan="4" class="empty">Sin datos</td></tr>';
+
+  // Tabla merma por variedad
+  document.getElementById('tbl-merma-variedad').innerHTML = mermaVar.length ? mermaVar.map(function(r) {
+    return '<tr><td><strong>'+r.variedad+'</strong></td><td>'+r.cantidad_lotes+'</td><td class="mono">'+_fmtKg(r.kg_cosechados)+'</td><td class="mono">'+_fmtKg(r.merma_despalillado_kg)+'</td><td class="mono">'+_fmtKg(r.merma_clasificacion_kg)+'</td><td class="mono" style="font-weight:700;">'+_fmtKg(r.merma_total_kg)+'</td><td class="mono" style="font-weight:700;color:var(--sem-rojo);">'+r.merma_porcentual+'%</td></tr>';
+  }).join('') : '<tr><td colspan="7" class="empty">Sin datos</td></tr>';
 }
 
 // ── COMERCIAL ──

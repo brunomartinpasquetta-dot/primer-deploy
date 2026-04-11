@@ -126,6 +126,41 @@ router.get('/descarte-por-variedad', async (req, res) => {
   } catch (err) { console.error(err); res.status(500).json({ error: 'Error interno' }); }
 });
 
+// ── B4b: Merma por variedad ──────────────────────────────────
+router.get('/merma-por-variedad', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const f = buildFiltros(req);
+    const r = pool.request();
+    const conds = [];
+    if (f.temporada_id) { r.input('tid', sql.Int, f.temporada_id); conds.push('lm.temporada_id = @tid'); }
+    if (f.variedad_id) { r.input('vid', sql.Int, f.variedad_id); conds.push('p.variedad_id = @vid'); }
+    if (f.parcela_id) { r.input('pid', sql.Int, f.parcela_id); conds.push('lm.parcela_id = @pid'); }
+    conds.push("lm.estado != 'anulada'");
+    conds.push('lm.lote_padre_id IS NULL');
+    const where = conds.join(' AND ');
+    const result = await r.query(`
+      SELECT ISNULL(vf.nombre, 'Sin variedad') AS variedad,
+             SUM(lm.kilos) AS kg_cosechados,
+             SUM(ISNULL(lm.merma_despalillado, 0)) AS merma_despalillado_kg,
+             SUM(ISNULL(lm.merma_clasificacion, 0)) AS merma_clasificacion_kg,
+             SUM(ISNULL(lm.merma_despalillado, 0) + ISNULL(lm.merma_clasificacion, 0)) AS merma_total_kg,
+             COUNT(DISTINCT lm.id) AS cantidad_lotes
+      FROM LotesMercaderia lm
+      LEFT JOIN Parcelas p ON lm.parcela_id = p.id
+      LEFT JOIN variedades_frutilla vf ON p.variedad_id = vf.id
+      WHERE ${where}
+      GROUP BY vf.nombre
+      HAVING SUM(lm.kilos) > 0`);
+    const rows = result.recordset.map(function(row) {
+      const kg = parseFloat(row.kg_cosechados);
+      const total = parseFloat(row.merma_total_kg);
+      return { ...row, merma_porcentual: kg > 0 ? parseFloat(((total / kg) * 100).toFixed(1)) : 0 };
+    });
+    res.json(rows);
+  } catch (err) { console.error(err); res.status(500).json({ error: 'Error interno' }); }
+});
+
 // ── B5: Productividad cosecheros ──────────────────────────────
 router.get('/productividad-cosecheros', async (req, res) => {
   try {
