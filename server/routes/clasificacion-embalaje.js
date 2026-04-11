@@ -190,7 +190,7 @@ router.get('/pendientes', async (req, res) => {
                 WHERE sl.lote_padre_id IS NOT NULL AND sl.estado != 'anulada'
                 GROUP BY sl.lote_padre_id
               ) emb ON emb.lote_padre_id = l.id
-              WHERE l.lote_padre_id IS NULL
+              WHERE (l.lote_padre_id IS NULL OR ISNULL(env.kilos_enviados, 0) > 0)
                 AND (
                   (l.estado IN ('despalillado', 'en_clasificacion', 'clasificado', 'en_despalillado')
                    AND ISNULL(env.kilos_enviados, 0) > 0
