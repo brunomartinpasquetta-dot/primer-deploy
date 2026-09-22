@@ -2,6 +2,21 @@ const express = require('express');
 const router = express.Router();
 const { getPool, sql } = require('../db');
 
+// GET /subcategorias — Todas las sub-categorías activas (lista plana, usada por notas-credito)
+router.get('/subcategorias', async (req, res) => {
+  try {
+    const pool = await getPool();
+    const result = await pool.request()
+      .query(`SELECT id, categoria_padre_id, categoria_padre_id AS categoria_id, nombre, codigo, activo
+              FROM SubCategoriasClasificacion
+              WHERE activo = 1
+              ORDER BY nombre`);
+    res.json(result.recordset);
+  } catch (err) {
+    console.error(err); res.status(500).json({ error: "Error interno del servidor" });
+  }
+});
+
 // ══════════════════════════════════════════════════════════════════
 // CATEGORÍAS PADRE (fijas: Chica, Mediana, Grande, Descarte)
 // ══════════════════════════════════════════════════════════════════

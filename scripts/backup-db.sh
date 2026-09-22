@@ -32,7 +32,8 @@ if [ -z "$DB_PASSWORD" ]; then
   exit 1
 fi
 
-SQLCMD="/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $DB_PASSWORD -C -No"
+# -b: sqlcmd sale con código != 0 si el BACKUP falla (para que set -e frene el script)
+SQLCMD="/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $DB_PASSWORD -C -No -b"
 
 echo "═══ Backup DB: $DB_NAME ═══"
 echo "  Fecha: $FECHA"
@@ -45,7 +46,9 @@ docker exec $CONTAINER mkdir -p /var/opt/mssql/backups
 # 2. Ejecutar BACKUP DATABASE
 echo "→ Generando .bak dentro del container..."
 docker exec $CONTAINER $SQLCMD -Q \
-  "BACKUP DATABASE [$DB_NAME] TO DISK = '${FILE_IN_CONTAINER}' WITH INIT, COMPRESSION, STATS = 10;"
+  "BACKUP DATABASE [$DB_NAME] TO DISK = '${FILE_IN_CONTAINER}' WITH INIT, STATS = 10;"
+# Sin COMPRESSION: la edición Express (MSSQL_PID=Express en docker-compose) no la soporta
+# (Msg 1844). El .bak se comprime igual con gzip en el paso 4.
 echo "  OK"
 
 # 3. Copiar al host

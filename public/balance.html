@@ -190,8 +190,10 @@
       html += '<div class="kpi-grid">';
       html += '<div class="kpi"><div class="kpi-valor verde">$' + parseFloat(data.ingresos).toLocaleString('es-AR') + '</div><div class="kpi-label">Ingresos</div>' +
               '<div style="font-size:11px;color:#888;font-family:\'JetBrains Mono\',monospace;">' + formatDolares(parseFloat(data.ingresos)) + '</div></div>';
-      html += '<div class="kpi"><div class="kpi-valor rojo">$' + parseFloat(data.costos.total || data.costos).toLocaleString('es-AR') + '</div><div class="kpi-label">Costos totales</div>' +
-              '<div style="font-size:11px;color:#888;font-family:\'JetBrains Mono\',monospace;">' + formatDolares(parseFloat(data.costos.total || data.costos)) + '</div></div>';
+      // costos puede ser objeto {total,...} o número; total=0 es válido (no usar ||)
+      var costosTotal = (data.costos && typeof data.costos === 'object') ? (data.costos.total || 0) : (data.costos || 0);
+      html += '<div class="kpi"><div class="kpi-valor rojo">$' + parseFloat(costosTotal).toLocaleString('es-AR') + '</div><div class="kpi-label">Costos totales</div>' +
+              '<div style="font-size:11px;color:#888;font-family:\'JetBrains Mono\',monospace;">' + formatDolares(parseFloat(costosTotal)) + '</div></div>';
       if (data.kilos_cosechados !== undefined) {
         html += '<div class="kpi"><div class="kpi-valor azul">' + parseFloat(data.kilos_cosechados).toLocaleString('es-AR') + ' kg</div><div class="kpi-label">Kilos cosechados</div></div>';
         html += '<div class="kpi"><div class="kpi-valor naranja">$' + parseFloat(data.costo_por_kilo).toLocaleString('es-AR') + '</div><div class="kpi-label">Costo por kilo</div></div>';

@@ -39,7 +39,7 @@ router.post('/asignar', async (req, res) => {
   try {
     const { personal_id, rol } = req.body;
     if (!personal_id || !rol) return res.status(400).json({ error: 'personal_id y rol son requeridos' });
-    const rolesValidos = ['cosechero', 'despalillador', 'aplicador'];
+    const rolesValidos = ['cosechero', 'despalillador', 'clasificador', 'aplicador', 'campo_general'];
     if (!rolesValidos.includes(rol)) return res.status(400).json({ error: 'Rol no válido' });
 
     const pool = await getPool();

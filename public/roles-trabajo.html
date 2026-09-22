@@ -18,6 +18,8 @@
     .rol-badge.cosechero        { background:var(--sem-verde-bg); color:var(--sem-verde); border-color:var(--sem-verde-borde); }
     .rol-badge.despalillador    { background:var(--sem-azul-bg,#EFF6FF); color:#1D4ED8; border-color:#BFDBFE; }
     .rol-badge.aplicador        { background:var(--sem-amarillo-bg); color:var(--sem-amarillo); border-color:var(--sem-amarillo-borde); }
+    .rol-badge.clasificador     { background:#F5F3FF; color:#6D28D9; border-color:#DDD6FE; }
+    .rol-badge.campo_general    { background:var(--fondo); color:var(--texto); border-color:var(--borde); }
     .rol-badge.inactivo         { background:var(--fondo); color:var(--texto-secundario); border-color:var(--borde); opacity:.6; }
     .rol-badge.agregar          { background:var(--fondo); color:var(--texto-secundario); border-color:var(--borde); }
     .rol-badge.agregar:hover    { border-color:var(--verde); color:var(--verde); }
@@ -120,7 +122,9 @@
           <option value="">Todos los roles</option>
           <option value="cosechero">Cosechero</option>
           <option value="despalillador">Despalillador</option>
+          <option value="clasificador">Clasificador</option>
           <option value="aplicador">Aplicador</option>
+          <option value="campo_general">Campo general</option>
           <option value="sin-rol">Sin rol</option>
         </select>
       </div>
@@ -156,8 +160,8 @@
     new Date().toLocaleDateString('es-AR', { weekday:'long', day:'numeric', month:'long' });
 
   var _personal = [];
-  var ROLES = ['cosechero', 'despalillador', 'aplicador'];
-  var ROLES_LABEL = { cosechero: '🌾 Cosechero', despalillador: '✂️ Despalillador', aplicador: '💧 Aplicador' };
+  var ROLES = ['cosechero', 'despalillador', 'clasificador', 'aplicador', 'campo_general'];
+  var ROLES_LABEL = { cosechero: '🌾 Cosechero', despalillador: '✂️ Despalillador', clasificador: '🧺 Clasificador', aplicador: '💧 Aplicador', campo_general: '🚜 Campo general' };
 
   function cargar() {
     fetch('/api/roles-trabajo')

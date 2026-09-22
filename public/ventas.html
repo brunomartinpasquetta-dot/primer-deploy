@@ -269,15 +269,20 @@
 
   // Cotización frutilla en topbar
   (function() {
-    fetch('/api/cotizaciones').then(function(r){ return r.json(); }).then(function(data) {
-      var el = document.getElementById('cotiz-frutilla');
-      if (!el || !Array.isArray(data)) return;
-      var frutilla = data.find(function(c){ return (c.cultivo||c.nombre||'').toLowerCase().indexOf('frutilla') >= 0; });
-      if (frutilla) {
-        var p = parseFloat(frutilla.precio_kg || frutilla.precio || 0);
-        el.textContent = '🍓 $' + p.toLocaleString('es-AR', {minimumFractionDigits:2}) + '/kg';
-      }
-    }).catch(function(){});
+    // Misma fuente que el KPI: Mercado Central (/frutilla) con fallback a precios locales
+    var elTop = document.getElementById('cotiz-frutilla');
+    if (elTop) {
+      fetch('/api/cotizaciones/frutilla').then(function(r){ return r.json(); }).then(function(d) {
+        if (d && !d.error && d.precio_modal) {
+          elTop.textContent = '🍓 $' + Math.round(d.precio_modal).toLocaleString('es-AR') + '/kg';
+          return;
+        }
+        return fetch('/api/cotizaciones/locales?cultivo=frutilla').then(function(r){ return r.json(); }).then(function(arr) {
+          var it = Array.isArray(arr) ? arr.find(function(x){ return x.precio; }) : null;
+          if (it) elTop.textContent = '🍓 $' + parseFloat(it.precio).toLocaleString('es-AR', {minimumFractionDigits:2}) + '/kg';
+        });
+      }).catch(function(){});
+    }
   })();
 
   var hoy = new Date().toISOString().split('T')[0];
